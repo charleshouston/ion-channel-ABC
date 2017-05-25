@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import myokit
 
-import pdb
+# Experimental data
+import Deng2009
 
 # Get the model and protocol, create simulation
 m, p, x = myokit.load('Kurata2002_iCaT.mmt')
@@ -22,9 +23,12 @@ s = myokit.Simulation(m)
 '''
 I-V CURVE
 '''
-steps = np.arange(-80, 50, 10)
+steps,I_exp = Deng2009.fig1B()
+steps = np.array(steps)
+I_exp = np.array(I_exp)
+#steps = np.arange(-80, 50, 10)
 p1 = myokit.pacing.steptrain(
-    vsteps=steps,
+    vsteps=np.array(steps),
     vhold = -80,    # Holding potential -80mV
     tpre  = 5000,   # 5000ms pre-conditioning at Vhold
     tstep = 300,    # 0.3s at step potential
@@ -58,22 +62,33 @@ for k, d in enumerate(ds1):
     plt.plot(d['environment.time'], d['icat.i_CaT'], label=label)
 
 plt.subplot(3,2,2)
-plt.plot(steps,act_pks,'o')
-
+plt.plot(steps,act_pks,'o',label="Simulated")
+plt.plot(steps,I_exp,'x',label="Experimental")
+plt.legend(loc='lower right')
 
 '''
 ACTIVATION/INACTIVATION RATES
 '''
+# Experimental data
+steps_exp,act_exp = Deng2009.fig3Bact()
+prepulse,inact_exp = Deng2009.fig3Binact()
+
+steps_exp = np.array(steps_exp)
+act_exp = np.array(act_exp)
+prepulse = np.array(prepulse)
+inact_exp = np.array(inact_exp)
+
+# Reset simulation and remove previous protocol
 s.reset()
 s.set_protocol(None)
 
 # Pre pulse potentials between -100 and 0 mV
-holding_potentials = np.arange(-100,-39.9,10)
+#holding_potentials = np.arange(-100,-39.9,10)
 
 # Prepare datalogs
-ds2 = [myokit.DataLog()]*len(holding_potentials)
+ds2 = [myokit.DataLog()]*len(prepulse)
 
-for i in range(len(holding_potentials)):
+for i in range(len(prepulse)):
 
     # Reset the simulation
     s.reset()
@@ -83,7 +98,7 @@ for i in range(len(holding_potentials)):
 
     # Generate stimulation protocol
     p2 = myokit.Protocol()
-    p2.schedule(holding_potentials[i],0,1000) # 1 second at holding potential
+    p2.schedule(prepulse[i],0,1000) # 1 second at holding potential
     p2.schedule(-80,1000,5) # Briefly back to -80mV
     p2.schedule(-20,1005,300) # Final pulse to -20mV
     t2 = p2.characteristic_time()
@@ -94,8 +109,8 @@ for i in range(len(holding_potentials)):
 
 # Trim each new log to contain only the 100ms of peak current
 for d in ds2:
-    d.trim_left(1005, adjust=True)
-    d.trim_right(200)
+    d.trim_left(900,adjust=True)
+    d.trim_right(305)
 
 # Create list to store peak currents in for inactivation experiment
 inact_pks = []
@@ -120,25 +135,36 @@ act = act_pks / (steps - reversal_potential)
 act = act / np.max(act)
 
 # Now calculate the inactivation (i.e. availability of current)
+# Defined as the current at a given pre-pulse potential
+# divided by the maximum current in absence of a pre-pulse.
 inact_pks = np.array(inact_pks)
-inact = np.abs(inact_pks) / np.max(np.abs(inact_pks))
+inact = np.abs(inact_pks) / np.max(np.abs(act_pks))
 
 # Display the activation measured in the protocol
 plt.subplot(3,2,4)
-plt.plot(steps, act, 'o',label="Activation")
-plt.plot(holding_potentials, inact,'o',label="Inactivation")
+plt.plot(steps, act, 'go',label="Sim. Act.")
+plt.plot(steps_exp,act_exp, 'gx', label="Exp. Act.")
+plt.plot(prepulse, inact,'ro',label="Sim. Inact.")
+plt.plot(prepulse, inact_exp, 'rx', label="Exp. Inact.")
+plt.legend(loc='lower right')
+
 plt.xlim(-100,0)
 
 '''
 RECOVERY CURVES
 '''
+# Recovery experimental data
+interval_times,recovery_exp = Deng2009.fig4B()
+interval_times = np.array(interval_times)
+recovery_exp = np.array(recovery_exp)
+
 s.reset()
 s.set_protocol(None)
 d3 = myokit.DataLog()
 
 # Intervals between pulses between 30 and 350ms
-interval_times = np.arange(30,350,30)
-interval_times = np.insert(interval_times, 0, 5)
+# interval_times = np.arange(30,350,30)
+# interval_times = np.insert(interval_times, 0, 5)
 
 peaks = []
 
@@ -174,12 +200,12 @@ for interval in interval_times:
     peak = current[index]
     peaks.append(peak)
 
-
 peaks = np.array(peaks)
 recovery = -1*peaks / np.max(np.abs(peaks))
 
 plt.subplot(3,2,6)
-plt.plot(interval_times,recovery,'o')
+plt.plot(interval_times,recovery,'bo',label="Sim. Recovery")
+plt.plot(interval_times,recovery_exp,'bx',label="Exp. Recovery")
 plt.ylim([0,1])
-# plt.legend(loc='lower right')
+plt.legend(loc='lower right')
 plt.show()
