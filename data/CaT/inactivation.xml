@@ -1,0 +1,13 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Thu May 25 12:44:25 WEST 2017 -->
+<data>
+<image file='null' />
+<axesnames x='voltage'  y='inactivation' />
+<calibpoints minXaxisX='126.0' minXaxisY='1298.0' maxXaxisX='960.0' maxXaxisY='1297.0' minYaxisX='126.0' minYaxisY='1298.0' maxYaxisX='126.0' maxYaxisY='327.0' aX1='-100.0' aX2='-40.0' aY1='0.0' aY2='0.8' isXLog='false' isYLog='false' />
+<point n='0' x='127.0' y='84.0' dx='-99.82333583013326' dy='1.0002049853423132' />
+<point n='1' x='405.0' y='99.0' dx='-79.82465851109255' dy='0.987571960968815' />
+<point n='2' x='543.0' y='110.0' dx='-69.89756411048987' dy='0.9783728115345005' />
+<point n='3' x='682.0' y='190.0' dx='-59.90447943159224' dy='0.9123240645382766' />
+<point n='4' x='821.0' y='651.0' dx='-49.944260499139546' dy='0.5323721249570889' />
+<point n='5' x='961.0' y='938.0' dx='-39.89708967058057' dy='0.29577656103747274' />
+</data>
