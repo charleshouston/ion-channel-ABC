@@ -1,0 +1,81 @@
+[[model]]
+name: Kurata 2002 T-type calcium channel
+author: Charles Houston
+desc: The Kurata 2002 model for the T-type calcium channel from rabbit sinoatrial node cell.
+ref: """
+Y Kurata et al. (2002) Dynamical description of sinoatrial node pacemaking: improved
+mathematical model for primary pacemaker cell.
+"""
+# Initial values
+membrane.V = -80
+icat_d_gate.d = 0.01
+icat_f_gate.f = 0.99
+
+[environment]
+time = 0 bind time
+     in [ms]
+
+[membrane]
+Cm = 1
+   in [pF/cm^2]
+dot(V) = icat.i_CaT / Cm
+       in [mV]
+
+[icat]
+use membrane.V as V
+g_CaT = 0.4122 [nS/pF]
+E_CaT = 45 [mV]
+G_CaT = g_CaT * icat_d_gate.d * icat_f_gate.f
+      in [mS/cm^2]
+i_CaT = G_CaT * (V - E_CaT)
+      in [uA/cm^2]
+
+[icat_d_gate]
+use membrane.V as V
+dss = (1 + exp(-(V+dssk1)/dssk2))^(-1)
+    in [1]
+dssk1 = 30
+      in [mV]
+dssk2 = 6.0
+      in [mV]
+
+tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk2)/dtauk5))^(-1)
+      in [1]
+dtauk1 = 1.068
+       in [1]
+dtauk2 = 26.3
+       in [mV]
+dtauk3 = 30
+       in [mV]
+dtauk4 = 1.068
+       in [1]
+dtauk5 = 30
+       in [mV]
+
+dot(d) = (dss - d)/tau_d
+       in [1]
+
+[icat_f_gate]
+use membrane.V as V
+fss = (1 + exp((V+fssk1)/fssk2))^(-1)
+    in [1]
+fssk1 = 48
+      in [mV]
+fssk2 = 7.0
+      in [mV]
+
+tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk2)/ftauk5))^(-1)
+      in [1]
+ftauk1 = 0.0153
+       in [1]
+ftauk2 = 61.7
+       in [mV]
+ftauk3 = 83.3
+       in [mV]
+ftauk4 = 0.015
+       in [1]
+ftauk5 = 30
+       in [mV]
+ 
+dot(f) = (fss - f)/tau_f
+       in [1]
