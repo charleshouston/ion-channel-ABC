@@ -16,7 +16,7 @@ from pympler import tracker
 	INPUTS:
 		params: initial list of parameters (for sizing purposes)
 		priors:	list of Distribution objects
-		x,y: 	list of experimental recording times, list of recorded conductances
+		exp_vals: 	list of experimental values
 		prior_func:	takes priors, param vector and returns probability of vector under prior
 			(this allows for dependent prior distributions)
 		kern: 	a perturbation kernel function to be applied to parameter draws;
@@ -29,8 +29,8 @@ from pympler import tracker
 	OUTPUTS:
 		distributions.Arbitrary object containing final posterior estimating population
 '''
-def approx_bayes_smc_adaptive(params,priors,x,y,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
-        
+def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
+
         tr = tracker.SummaryTracker()
 
 	post, wts = [None]*post_size, [1.0/post_size]*post_size
@@ -43,7 +43,7 @@ def approx_bayes_smc_adaptive(params,priors,x,y,prior_func,kern,dist,post_size=1
 		curr_err = float("inf")
 		while curr_err == float("inf"):
 			post[i] = [p.draw() for p in priors]
-			curr_err = dist(post[i],x,y)
+			curr_err = dist(post[i],exp_vals)
 
 		total_err = total_err + curr_err
 		max_err = max(curr_err,max_err)
@@ -56,7 +56,7 @@ def approx_bayes_smc_adaptive(params,priors,x,y,prior_func,kern,dist,post_size=1
 	while K > err_cutoff:
                 tr.print_diff()
 		print "Target = "+str(thresh_val-K)+" (K = "+str(K)+")"
-		next_post, next_wts = abc_inner(params,priors,x,y,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter)
+		next_post, next_wts = abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter)
 
 		if next_post != None and next_wts != None:
 			post = next_post
@@ -86,7 +86,7 @@ def approx_bayes_smc_adaptive(params,priors,x,y,prior_func,kern,dist,post_size=1
 		If a full posterior is accepted within maxiter, returns [particles, weights] 
 		If a full posterior is not accepted withing maxiter, returns [None, None]
 '''
-def abc_inner(params,priors,x,y,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
+def abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
 	next_post, next_wts = [None]*post_size, [0]*post_size
 	total_iters = 0
 
@@ -114,7 +114,7 @@ def abc_inner(params,priors,x,y,prior_func,kern,dist,thresh_val,post,wts,post_si
 			if prior_func(priors,draw) == 0:
 				draw = None
 				continue
-			if dist(draw,x,y) > thresh_val:
+			if dist(draw,exp_vals) > thresh_val:
 				draw = None
 
 			# Check if the maximum allowed iterations have been exceeded.
