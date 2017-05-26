@@ -9,7 +9,7 @@ import myokit
 import protocols
 import numpy as np
 
-def activation_sim(s,d,steps,reversal_potential):
+def activation_sim(s,steps,reversal_potential):
     '''
     Runs the activation simulation protocol from Deng2009.
     '''
@@ -51,7 +51,7 @@ def activation_sim(s,d,steps,reversal_potential):
     act = act / np.max(act)
     return np.hstack((act_peaks,act))
 
-def inactivation_sim(s,d,prepulse):
+def inactivation_sim(s,prepulse):
     '''
     Runs the inactivation stimulation protocol from Deng 2009.
     '''
@@ -93,7 +93,7 @@ def inactivation_sim(s,d,prepulse):
 
     return inact
 
-def recovery_sim(s,d,intervals):
+def recovery_sim(s,intervals):
     '''
     Runs the recovery simulation from Deng 2009.
     '''

@@ -32,28 +32,9 @@ class TestICaTProto():
         # Set voltage to pacing variable
         v.set_binding('pace')
 
-        # Get d_gate parameters
-        dssk1 = m.get('icat_d_gate.dssk1')
-        dssk2 = m.get('icat_d_gate.dssk2')
-        dtauk1 = m.get('icat_d_gate.dtauk1')
-        dtauk2 = m.get('icat_d_gate.dtauk2')
-        dtauk3 = m.get('icat_d_gate.dtauk3')
-        dtauk4 = m.get('icat_d_gate.dtauk4')
-        dtauk5 = m.get('icat_d_gate.dtauk5')
-
-        # Get f gate parameters
-        fssk1 = m.get('icat_f_gate.fssk1')
-        fssk2 = m.get('icat_f_gate.fssk2')
-        ftauk1 = m.get('icat_f_gate.ftauk1')
-        ftauk2 = m.get('icat_f_gate.ftauk2')
-        ftauk3 = m.get('icat_f_gate.ftauk3')
-        ftauk4 = m.get('icat_f_gate.ftauk4')
-        ftauk5 = m.get('icat_f_gate.ftauk5')
-
         # Create the simulation
         s = myokit.Simulation(m)
         reversal_potential = m.get('icat.E_CaT').value()
-        d = myokit.DataLog()
 
         # Output file
         outfile = open('ABCPredCalciumTType.txt','w')
@@ -82,11 +63,11 @@ class TestICaTProto():
 
             ResetSim(s,params)
             # Run simulations
-            act_pred = simulations.activation_sim(s,d,vsteps,reversal_potential)
+            act_pred = simulations.activation_sim(s,vsteps,reversal_potential)
             ResetSim(s,params)
-            inact_pred = simulations.inactivation_sim(s,d,prepulses)
+            inact_pred = simulations.inactivation_sim(s,prepulses)
             ResetSim(s,params)
-            rec_pred = simulations.recovery_sim(s,d,intervals)
+            rec_pred = simulations.recovery_sim(s,intervals)
 
             # Return RMSE for all simulations
             predVals = np.hstack((act_pred,inact_pred,rec_pred))
