@@ -21,20 +21,6 @@ class TestICaTProto():
 
     # Fits the parameters controlling T-type calcium conductance
     def TestICaTFitting(self):
-        # Get the Takeuchi formulation model
-        m,p,x = myokit.load('Takeuchi2013_iCaT.mmt')
-
-        # Get membrane potential
-        v = m.get('membrane.V')
-        # Demote v from a state to an ordinary variable
-        v.demote()
-        v.set_rhs(0)
-        # Set voltage to pacing variable
-        v.set_binding('pace')
-
-        # Create the simulation
-        s = myokit.Simulation(m)
-        reversal_potential = m.get('icat.E_CaT').value()
 
         # Output file
         outfile = open('ABCPredCalciumTType.txt','w')
@@ -60,8 +46,23 @@ class TestICaTProto():
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
         def distance(params,vals):
+            # Get the Takeuchi formulation model
+            m,p,x = myokit.load('Takeuchi2013_iCaT.mmt')
 
-            ResetSim(s,params)
+            # Get membrane potential
+            v = m.get('membrane.V')
+            # Demote v from a state to an ordinary variable
+            v.demote()
+            v.set_rhs(0)
+            # Set voltage to pacing variable
+            v.set_binding('pace')
+
+            # Create the simulation
+            s = myokit.Simulation(m)
+            reversal_potential = m.get('icat.E_CaT').value()
+
+            #ResetSim(s,params)
+
             # Run simulations
             act_pred = simulations.activation_sim(s,vsteps,reversal_potential)
             ResetSim(s,params)
@@ -148,7 +149,7 @@ class TestICaTProto():
         expVals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
 
         # Calculate result by approximate Bayesian computation
-        result = fitting.approx_bayes_smc_adaptive(init,priors,expVals,prior_func,kern,distance,50,200,0.003)
+        result = fitting.approx_bayes_smc_adaptive(init,priors,expVals,prior_func,kern,distance,30,2000,0.003)
 
         # Write results to the standard output and ABCPredPotassium.txt
         print result.getmean()

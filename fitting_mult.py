@@ -8,7 +8,7 @@
 import math
 from numpy import *
 import distributions
-#from pympler import tracker
+from pympler import tracker
 
 from pathos.multiprocessing import ProcessPool as Pool
 
@@ -90,7 +90,7 @@ class Engine(object):
 
 def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
 
-#        tr = tracker.SummaryTracker()
+    tr = tracker.SummaryTracker()
 
     post, wts = [None]*post_size, [1.0/post_size]*post_size
     total_err, max_err = 0.0, 0.0
@@ -110,13 +110,18 @@ def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_s
     # Initialize K to half the average population error
     K = total_err/(2.0*post_size)
     thresh_val = max_err
-        
+
+    try:
+        pool = Pool()
+    except:
+        print "Could not start parallel pool."
+
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
     while K > err_cutoff:
-                #tr.print_diff()
+        tr.print_diff()
         print "Target = "+str(thresh_val-K)+" (K = "+str(K)+")"
                 
-        next_post, next_wts = abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter)
+        next_post, next_wts = abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool)
 
         if next_post != None and next_wts != None:
             post = next_post
@@ -149,20 +154,29 @@ def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_s
 
 
 
-def abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
+def abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,pool):
     next_post, next_wts = [None]*post_size, [0]*post_size
     total_iters = 0
+    engine = Engine(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
+    outputs = pool.map(engine, range(post_size))
+
 
     # Update each particle in the current posterior estimation:
-    try:
-        pool = Pool()
-        engine = Engine(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
-        outputs = pool.map(engine, range(post_size))
-    finally:
-        pool.close()
-        pool.join()
+#    try:
+#        pool = Pool()
 
-    import pdb;pdb.set_trace()
+    # finally:
+    #     pool.close()
+    #     pool.join()
+
+
+    # Process outputs from parallel simulation
+    total_iters = 0
+    for output in outputs:
+        next_post[output[0]] = output[1]
+        next_wts[output[0]] = output[2]
+        total_iters += output[3] # sum total iterations
+
     print "ACCEPTANCE RATE: "+str(float(post_size)/total_iters)
 
     # Normalize weights and update posterior
