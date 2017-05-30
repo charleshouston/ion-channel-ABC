@@ -8,20 +8,22 @@
 import math
 from numpy import *
 import distributions
-from pympler import tracker
+#from pympler import tracker
+
+from tqdm import tqdm
 
 ''' 
 	ABC-SMC as Described by Toni et al. (2009), modified with adaptive error shrinking
 
 	INPUTS:
 		params: initial list of parameters (for sizing purposes)
-		priors:	list of Distribution objects
-		exp_vals: 	list of experimental values
-		prior_func:	takes priors, param vector and returns probability of vector under prior
+		priors:		list of Distribution objects
+		exp_vals:	list of experimental values
+		prior_func:		takes priors, param vector and returns probability of vector under prior
 			(this allows for dependent prior distributions)
-		kern: 	a perturbation kernel function to be applied to parameter draws;
+		kern:	a perturbation kernel function to be applied to parameter draws;
 			with 1 argument returns perturbation, with 2 returns probability of that perturbation
-		dist: 	a distance function that takes parameters, an x and y vector, and outputs
+		dist:	a distance function that takes parameters, an x and y vector, and outputs
 		post_size:	number of particles to maintain in posterior population
 		maxiter:	number of iterations after which to adjust error cutoff and reattempt sampling
 		err_cutoff: minimum decrease in error between rounds; algorithm terminates otherwise
@@ -29,9 +31,10 @@ from pympler import tracker
 	OUTPUTS:
 		distributions.Arbitrary object containing final posterior estimating population
 '''
+
 def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
 
-        tr = tracker.SummaryTracker()
+#		 tr = tracker.SummaryTracker()
 
 	post, wts = [None]*post_size, [1.0/post_size]*post_size
 	total_err, max_err = 0.0, 0.0
@@ -51,10 +54,10 @@ def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_s
 	# Initialize K to half the average population error
 	K = total_err/(2.0*post_size)
 	thresh_val = max_err
-
+		
 	# Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
 	while K > err_cutoff:
-                tr.print_diff()
+				#tr.print_diff()
 		print "Target = "+str(thresh_val-K)+" (K = "+str(K)+")"
 		next_post, next_wts = abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter)
 
@@ -91,7 +94,7 @@ def abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,po
 	total_iters = 0
 
 	# Update each particle in the current posterior estimation:
-	for i in range(post_size):
+	for i in tqdm(range(post_size)):
 		draw = None
 		iters = 0
 		while draw == None:
@@ -142,4 +145,3 @@ def abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,po
 	next_wts = [next_wts[idx]/total_wt for idx in range(post_size)]
 	
 	return next_post, next_wts
-			

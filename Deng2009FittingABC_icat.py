@@ -6,7 +6,7 @@ Calcium channel for HL-1 myocytes.
 Following process in Daly et al, 2015. Re-written to use with myokit.
 '''
 
-import fitting       # import ABC fitting procedure
+import fitting_mult as fitting       # import ABC fitting procedure
 import distributions as Dist # prob dist functions
 import Deng2009 # Experimental data from Deng et al, 2009
 
@@ -146,8 +146,9 @@ class TestICaTProto():
 
         # Concatenate all experimental data
         expVals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
-        
-        result = fitting.approx_bayes_smc_adaptive(init,priors,expVals,prior_func,kern,distance,100,10000,0.003)
+
+        # Calculate result by approximate Bayesian computation
+        result = fitting.approx_bayes_smc_adaptive(init,priors,expVals,prior_func,kern,distance,50,200,0.003)
 
         # Write results to the standard output and ABCPredPotassium.txt
         print result.getmean()
