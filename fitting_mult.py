@@ -8,9 +8,11 @@
 import math
 from numpy import *
 import distributions
-from pympler import tracker
+#from pympler import tracker
+import myokit
+import random
 
-from pathos.multiprocessing import ProcessPool as Pool
+from pathos.pools import ProcessPool as Pool
 
 '''
     ABC-SMC as Described by Toni et al. (2009), modified with adaptive error shrinking
@@ -32,7 +34,8 @@ from pathos.multiprocessing import ProcessPool as Pool
         distributions.Arbitrary object containing final posterior estimating population
 '''
 class Engine(object):
-    def __init__(self,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
+    def __init__(self,cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
+        self.cell_file=cell_file
         self.params=params
         self.priors=priors
         self.exp_vals=exp_vals
@@ -44,7 +47,25 @@ class Engine(object):
         self.wts=wts
         self.post_size=post_size
         self.maxiter=maxiter
+
     def __call__(self, i):
+        #print "Starting simulation " + str(i) + "..."
+
+        # Get the cell model
+        m,p,x = myokit.load(self.cell_file)
+
+        # Get membrane potential
+        v = m.get('membrane.V')
+        # Demote v from a state to an ordinary variable
+        v.demote()
+        v.set_rhs(0)
+        # Set voltage to pacing variable
+        v.set_binding('pace')
+
+        # Create the simulation
+        sim = myokit.Simulation(m)
+        reversal_potential = m.get('icat.E_CaT').value()
+
         draw = None
         iters = 0
         while draw == None:
@@ -54,7 +75,8 @@ class Engine(object):
             # Otherwise, draw the posterior distribution
             else:
                 sum = 0.0
-                r = random.rand()
+                random.jumpahead(i)
+                r = random.random()
                 for idx in range(self.post_size):
                     sum = sum + self.wts[idx]
                     if sum >= r:
@@ -67,14 +89,14 @@ class Engine(object):
             if self.prior_func(self.priors,draw) == 0:
                 draw = None
                 continue
-            if self.dist(draw,self.exp_vals) > self.thresh_val:
+            if self.dist(draw,self.exp_vals,sim,reversal_potential) > self.thresh_val:
                 draw = None
 
             # Check if the maximum allowed iterations have been exceeded.
             # If so, exit with failing condition indicating to adjust error threshold.
             iters = iters + 1
             if iters >= self.maxiter:
-                return None,None
+                return None
 
         # Draw now accepted - calculate (non-normalized) weight and add to updated posterior
         next_post = draw
@@ -85,24 +107,41 @@ class Engine(object):
             for idx,el in enumerate(self.post):
                 denom = denom + self.wts[idx]*self.kern(el,draw)
             next_wt = self.prior_func(self.priors,draw)/denom
+
+        #print "Finished sim " + str(i) + " in " + str(iters) + " iterations"
+
         return [i, next_post, next_wt, iters]
 
 
-def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
+def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
 
-    tr = tracker.SummaryTracker()
+    #tr = tracker.SummaryTracker()
 
     post, wts = [None]*post_size, [1.0/post_size]*post_size
     total_err, max_err = 0.0, 0.0
 
+    # Get the cell model
+    m,p,x = myokit.load(cell_file)
+
+    # Get membrane potential
+    v = m.get('membrane.V')
+    # Demote v from a state to an ordinary variable
+    v.demote()
+    v.set_rhs(0)
+    # Set voltage to pacing variable
+    v.set_binding('pace')
+    # Create the simulation
+    sim = myokit.Simulation(m)
+    reversal_potential = m.get('icat.E_CaT').value()
+
     # Initializes posterior to be a draw of particles from prior
     for i in range(post_size):
-        
+
         # Distance function returns "inf" in the case of overflow error
         curr_err = float("inf")
         while curr_err == float("inf"):
             post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i],exp_vals)
+            curr_err = dist(post[i],exp_vals,sim,reversal_potential)
 
         total_err = total_err + curr_err
         max_err = max(curr_err,max_err)
@@ -118,10 +157,10 @@ def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_s
 
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
     while K > err_cutoff:
-        tr.print_diff()
+        #tr.print_diff()
         print "Target = "+str(thresh_val-K)+" (K = "+str(K)+")"
-                
-        next_post, next_wts = abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool)
+
+        next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool)
 
         if next_post != None and next_wts != None:
             post = next_post
@@ -154,12 +193,32 @@ def approx_bayes_smc_adaptive(params,priors,exp_vals,prior_func,kern,dist,post_s
 
 
 
-def abc_inner(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,pool):
+def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,pool):
     next_post, next_wts = [None]*post_size, [0]*post_size
     total_iters = 0
-    engine = Engine(params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
-    outputs = pool.map(engine, range(post_size))
+    engine = Engine(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
 
+    # Checks whether the worker managed to accept the threshold value
+    def check_output(output):
+        print output
+        if output == None:
+            pool.terminate()
+            pool.join()
+
+    outputs = []
+    # Get number of nodes in process pool
+    node_num = pool.ncpus
+
+    i = 0
+    while i < post_size:
+        res = pool.map(engine, range(i, min(i+node_num, post_size)))
+        # Check no results failed
+        for r in res:
+            if r == None: return None, None
+        outputs = outputs + res
+        i += node_num
+
+    #outputs = pool.map(engine, range(post_size), callback=check_output)
 
     # Update each particle in the current posterior estimation:
 #    try:
