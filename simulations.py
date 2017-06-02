@@ -9,6 +9,10 @@ import myokit
 import protocols
 import numpy as np
 
+from collections import namedtuple
+
+ActSimResult = namedtuple('ActSimResult', ['peaks', 'cond'])
+
 def activation_sim(s,steps,reversal_potential):
     '''
     Runs the activation simulation protocol from Deng2009.
@@ -28,7 +32,8 @@ def activation_sim(s,steps,reversal_potential):
     try:
         d = s.run(t, log=['environment.time', 'membrane.V', 'icat.i_CaT'],log_interval=.1)
     except:
-        return np.zeros(20)
+        res = ActSimResult(np.zeros(12), cond=np.zeros(8))
+        return res
 
     # Split the log into chunks for each step
     ds = d.split_periodic(5300, adjust=True)
@@ -49,9 +54,11 @@ def activation_sim(s,steps,reversal_potential):
     act = act_peaks[:8] / (steps[:8] - reversal_potential)
     # - Normalise by dividing by the biggest value
     act = act / np.max(act)
-    return np.hstack((act_peaks,act))
 
-def inactivation_sim(s,prepulse):
+    res = ActSimResult(act_peaks, cond=act)
+    return res
+
+def inactivation_sim(s,prepulse,act_pks):
     '''
     Runs the inactivation stimulation protocol from Deng 2009.
     '''
@@ -80,7 +87,6 @@ def inactivation_sim(s,prepulse):
         d.trim_left(5900,adjust=True)
         d.trim_right(305)
 
-    # Create list to store peak currents in for inactivation experiment
     inact = []
 
     # Find peak current
@@ -89,7 +95,9 @@ def inactivation_sim(s,prepulse):
         index = np.argmax(np.abs(current))
         peak = current[index]
         inact.append(peak)
+
     inact = np.array(inact)
+    inact = np.abs(inact) / np.max(np.abs(act_pks))
 
     return inact
 
@@ -119,24 +127,25 @@ def recovery_sim(s,intervals):
     # Trim each new log to contain only the 100ms of peak current
     ds = []
     d = d.npview()
-    for t in intervals:
+    for interval in intervals:
         # Split each experiment
-        d_split,d = d.split(t+5600)
+        d_split,d = d.split(interval+5600)
         ds.append(d_split)
 
-    # Adjust times of remaining data
-    if len(d['environment.time']):
-        d['environment.time'] -= d['environment.time'][0]
+        # Adjust times of remaining data
+        if len(d['environment.time']):
+            d['environment.time'] -= d['environment.time'][0]
 
     rec_peaks = []
 
-    for d in ds:
-        d.trim_left(5200,adjust=True)
-        current = d['icat.i_CaT']
+    for trace in ds:
+        trace.trim_left(5200,adjust=True)
+        current = trace['icat.i_CaT']
         index = np.argmax(np.abs(current))
         peak = current[index]
         rec_peaks.append(peak)
 
     rec_peaks = np.array(rec_peaks)
+    rec_peaks = -1*rec_peaks / np.max(np.abs(rec_peaks))
 
     return rec_peaks

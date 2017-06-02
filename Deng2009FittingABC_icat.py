@@ -46,43 +46,33 @@ class TestICaTProto():
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
         def distance(params,vals,s,reversal_potential):
-            # # Get the Takeuchi formulation model
-            # m,p,x = myokit.load('Takeuchi2013_iCaT.mmt')
-
-            # # Get membrane potential
-            # v = m.get('membrane.V')
-            # # Demote v from a state to an ordinary variable
-            # v.demote()
-            # v.set_rhs(0)
-            # # Set voltage to pacing variable
-            # v.set_binding('pace')
-
-            # # Create the simulation
-            # s = myokit.Simulation(m)
-
-            #reversal_potential = m.get('icat.E_CaT').value()
 
             # Run simulations
             ResetSim(s,params)
             act_pred = simulations.activation_sim(s,vsteps,reversal_potential)
-            ResetSim(s,params)
-            inact_pred = simulations.inactivation_sim(s,prepulses)
-            ResetSim(s,params)
-            rec_pred = simulations.recovery_sim(s,intervals)
+            # If this simulation failed, it will return all zeros
+            # No point in running the rest!
+            if not act_pred[0].any():
+                inact_pred = np.zeros(7)
+                # rec_pred = np.zeros(11)
+            else:
+                ResetSim(s,params)
+                inact_pred = simulations.inactivation_sim(s,prepulses,act_pred[0])
+                # ResetSim(s,params)
+                # rec_pred = simulations.recovery_sim(s,intervals)
+
+            if not inact_pred.any():
+                rec_pred = np.zeros(11)
+            else:
+                ResetSim(s,params)
+                rec_pred = simulations.recovery_sim(s,intervals)
 
             # Return RMSE for all simulations
-            predVals = np.hstack((act_pred,inact_pred,rec_pred))
+            #predVals = np.hstack((act_pred,inact_pred,rec_pred))
+            pred_vals = [act_pred[0], act_pred[1], inact_pred, rec_pred]
 
-            return LossFunction(predVals, vals)
+            return LossFunction(pred_vals, vals)
 
-            # Iterate through voltage clamp experiments and average RMSE
-            # tot_rmse = 0.0
-            # for i,d in enumerate(ds):
-            #     tot_rmse = tot_rmse = CheckAgainst(d['environment.time'],
-            #                                        d['potassium_channel.G_K'],
-            #                                        times[i],
-            #                                        vals[i])
-            # return tot_rmse/11
 
         def kern(orig,new=None):
             g1 = Dist.Normal(0.0,0.01)
@@ -167,13 +157,29 @@ class TestICaTProto():
 
 # Loss function for three voltage clamp experiments from Deng 2009.
 # Predicted and experimental values are concatenated before using the function.
-def LossFunction(predVals, expVals):
-    # Calculate squared error
-    sq_err = np.sum(np.square(predVals-expVals))
+def LossFunction(pred_vals, exp_vals):
+    # If the simulation failed, the arrays will be filled with zeros
+    # We return infinite loss
+    if not pred_vals[3].any():
+        return float("inf")
 
-    # Return RMSE
-    rmse = pow(sq_err/len(expVals),0.5)
-    return rmse
+    # Calculate normalised RMSE for each experiment
+    tot_err = 0
+    i = 0
+    for p in pred_vals:
+        e = exp_vals[i:i+len(p)]
+        err = np.sum(np.square(p-e))
+        err = pow(err/len(p),0.5)
+        err = err/abs(np.mean(e))
+
+        i += len(p)
+        tot_err += err
+
+    # Forces overflow to infinity
+    if tot_err > 15:
+        return float("inf")
+
+    return tot_err
 
 def ResetSim(s, params):
     # Reset the model state before evaluating again

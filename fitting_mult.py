@@ -1,8 +1,9 @@
-''' 
-    Written by Aidan Daly, DPhil candidate, University of Oxford Department of Computer Science
-    
-    Part of a paper tutorial on ABC parameter estimation for the Hodgkin-Huxley 
-    action potential model.
+'''
+Author: Charles Houston
+Date : 01/06/2017
+
+ABC parameter estimation, adapted from Daly et al, 2015 for use in myokit.
+Parallel processing version.
 '''
 
 import math
@@ -198,17 +199,14 @@ def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,p
     total_iters = 0
     engine = Engine(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
 
-    # Checks whether the worker managed to accept the threshold value
-    def check_output(output):
-        print output
-        if output == None:
-            pool.terminate()
-            pool.join()
-
     outputs = []
+
     # Get number of nodes in process pool
     node_num = pool.ncpus
 
+    # Map the simulations to multiple processes in batches.
+    # pathos doesn't support the use of callbacks so this method is a compromise
+    # to check whether a result was produced after each set of simulations.
     i = 0
     while i < post_size:
         res = pool.map(engine, range(i, min(i+node_num, post_size)))
@@ -219,15 +217,6 @@ def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,p
         i += node_num
 
     #outputs = pool.map(engine, range(post_size), callback=check_output)
-
-    # Update each particle in the current posterior estimation:
-#    try:
-#        pool = Pool()
-
-    # finally:
-    #     pool.close()
-    #     pool.join()
-
 
     # Process outputs from parallel simulation
     total_iters = 0
@@ -243,48 +232,3 @@ def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,p
     next_wts = [next_wts[idx]/total_wt for idx in range(post_size)]
 
     return next_post, next_wts
-
-    # for i in range(post_size):
-    #   draw = None
-    #   iters = 0
-    #   while draw == None:
-    #       # At time 0, draw from prior distribution
-    #       if post == None:
-    #           draw = [p.draw() for p in priors]
-    #       # Otherwise, draw from posterior distribution
-    #       else:
-    #           sum = 0.0
-
-    #           for idx in range(post_size):
-    #               sum = sum + wts[idx]
-    #               if sum >= r:
-    #                   break
-    #           draw = post[idx]
-
-    #       # Apply perturbation kernel, the check if new distribution is valid and 
-    #       #   meets distance requirements
-    #       draw = kern(draw)
-    #       if prior_func(priors,draw) == 0:
-    #           draw = None
-    #           continue
-    #       if dist(draw,exp_vals) > thresh_val:
-    #           draw = None
-
-    #       # Check if the maximum allowed iterations have been exceeded.
-    #       # If so, exit with failing condition indicating to adjust error threshold
-    #       iters = iters + 1
-    #       if iters >= maxiter:
-    #           return None,None
-
-    #   # Draw now accepted - calculate (non-normalized) weight and add to updated posterior
-    #   next_post[i] = draw
-    #   if wts == None:
-    #       next_wts[i] = prior_func(priors,draw)
-    #   else:
-    #       denom = 0
-    #       for idx,el in enumerate(post):
-    #           denom = denom + wts[idx]*kern(el,draw)
-    #       next_wts[i] = prior_func(priors,draw)/denom
-
-    #   total_iters = total_iters+iters
-
