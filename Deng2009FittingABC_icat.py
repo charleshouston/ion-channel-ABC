@@ -34,6 +34,7 @@ class TestICaTProto():
                   Dist.Uniform(0,100),
                   Dist.Uniform(1,100),
                   Dist.Uniform(0,10),
+                  Dist.Uniform(0,100),
                   Dist.Uniform(1,100),
                   Dist.Uniform(0,100),
                   Dist.Uniform(1,10),
@@ -41,8 +42,9 @@ class TestICaTProto():
                   Dist.Uniform(0,100),
                   Dist.Uniform(1,100),
                   Dist.Uniform(0,0.1),
+                  Dist.Uniform(0,100),
                   Dist.Uniform(1,100)]
-        init = [50, 5, 5, 50, 50, 5, 50, 50, 5, 0.05, 50, 50, 0.05, 50]
+        init = [50, 5, 5, 50, 50, 5, 50, 50, 50, 5, 0.05, 50, 50, 0.05, 50, 50]
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
         def distance(params,vals,s,reversal_potential):
@@ -89,14 +91,16 @@ class TestICaTProto():
                            g10.draw(),
                            g100.draw(),
                            g100.draw(),
+                           g100.draw(),
                            g10.draw(),
                            g1.draw(),
                            g100.draw(),
                            g100.draw(),
                            g1.draw(),
+                           g100.draw(),
                            g100.draw()]
                 for i in range(len(orig)):
-					new = new + [orig[i]+perturb[i]]
+		    new = new + [orig[i]+perturb[i]]
                 return new
             else:
                 prob = 1.0
@@ -108,12 +112,14 @@ class TestICaTProto():
                 prob = prob*g10.pdf(new[5]-orig[5])
                 prob = prob*g100.pdf(new[6]-orig[6])
                 prob = prob*g100.pdf(new[7]-orig[7])
-                prob = prob*g10.pdf(new[8]-orig[8])
-                prob = prob*g1.pdf(new[9]-orig[9])
-                prob = prob*g100.pdf(new[10]-orig[10])
+                prob = prob*g100.pdf(new[8]-orig[8])
+                prob = prob*g10.pdf(new[9]-orig[9])
+                prob = prob*g1.pdf(new[10]-orig[10])
                 prob = prob*g100.pdf(new[11]-orig[11])
-                prob = prob*g1.pdf(new[12]-orig[12])
-                prob = prob*g100.pdf(new[13]-orig[13])
+                prob = prob*g100.pdf(new[12]-orig[12])
+                prob = prob*g1.pdf(new[13]-orig[13])
+                prob = prob*g100.pdf(new[14]-orig[14])
+                prob = prob*g100.pdf(new[15]-orig[15])
 
                 return prob
 
@@ -193,14 +199,16 @@ def ResetSim(s, params):
     s.set_constant('icat_d_gate.dtauk3',params[4])
     s.set_constant('icat_d_gate.dtauk4',params[5])
     s.set_constant('icat_d_gate.dtauk5',params[6])
+    s.set_constant('icat_d_gate.dtauk6',params[7])
 
-    s.set_constant('icat_f_gate.fssk1',params[7])
-    s.set_constant('icat_f_gate.fssk2',params[8])
-    s.set_constant('icat_f_gate.ftauk1',params[9])
-    s.set_constant('icat_f_gate.ftauk2',params[10])
-    s.set_constant('icat_f_gate.ftauk3',params[11])
-    s.set_constant('icat_f_gate.ftauk4',params[12])
-    s.set_constant('icat_f_gate.ftauk5',params[13])
+    s.set_constant('icat_f_gate.fssk1',params[8])
+    s.set_constant('icat_f_gate.fssk2',params[9])
+    s.set_constant('icat_f_gate.ftauk1',params[10])
+    s.set_constant('icat_f_gate.ftauk2',params[11])
+    s.set_constant('icat_f_gate.ftauk3',params[12])
+    s.set_constant('icat_f_gate.ftauk4',params[13])
+    s.set_constant('icat_f_gate.ftauk5',params[14])
+    s.set_constant('icat_f_gate.ftauk6',params[15])
 
 
 # Evaluates RMSE between experimental and predicted values

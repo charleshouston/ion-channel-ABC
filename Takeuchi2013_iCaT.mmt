@@ -39,7 +39,7 @@ dssk1 = 30
 dssk2 = 6.0
       in [mV]
 
-tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk2)/dtauk5))^(-1)
+tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk5)/dtauk6))^(-1)
       in [1]
 dtauk1 = 1.068
        in [1]
@@ -49,7 +49,9 @@ dtauk3 = 30
        in [mV]
 dtauk4 = 1.068
        in [1]
-dtauk5 = 30
+dtauk5 = 26.3
+       in [mV]
+dtauk6 = 30
        in [mV]
 
 dot(d) = (dss - d)/tau_d
@@ -64,7 +66,7 @@ fssk1 = 48
 fssk2 = 7.0
       in [mV]
 
-tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk2)/ftauk5))^(-1)
+tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk5)/ftauk6))^(-1)
       in [1]
 ftauk1 = 0.0153
        in [1]
@@ -74,7 +76,9 @@ ftauk3 = 83.3
        in [mV]
 ftauk4 = 0.015
        in [1]
-ftauk5 = 30
+ftauk5 = 61.7
+       in [mV]
+ftauk6 = 30
        in [mV]
  
 dot(f) = (fss - f)/tau_f
