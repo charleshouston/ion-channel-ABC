@@ -171,10 +171,11 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
             print "Current mean posterior estimate: "+str(mean(post,0))
             print "Current posterior variance: "+str(var(post,0))
 
-            # Should K exceed the current max error, it will be adjusted downwards
+            # Should K exceed half the current max error, it will be adjusted downwards
             thresh_val = thresh_val - K
-            if K >= thresh_val:
+            if K >= thresh_val*0.5:
                 K = thresh_val*0.5
+            
         else:
             print "Target not met"
             K = K*0.5

@@ -136,13 +136,13 @@ class TestICaTProto():
         rec_exp = np.array(rec_exp)
 
         # Concatenate all experimental data
-        expVals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
+        exp_vals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
 
         # Cell configuration filename
         cell_file = 'Takeuchi2013_iCaT.mmt'
 
         # Calculate result by approximate Bayesian computation
-        result = fitting.approx_bayes_smc_adaptive(cell_file,init,priors,expVals,prior_func,kern,distance,100,1000,0.003)
+        result = fitting.approx_bayes_smc_adaptive(cell_file,init,priors,exp_vals,prior_func,kern,distance,20,50,0.003)
 
         # Write results to the standard output and ABCPredPotassium.txt
         print result.getmean()

@@ -36,10 +36,13 @@ res = simulations.activation_sim(s,steps,m.get('icat.E_CaT').value())
 
 # Show the results
 plt.figure()
+plt.suptitle('Simulations using Takeuchi 2013 Least Squares Fitted Parameters')
 plt.subplot(1,4,1)
+plt.title('I-V curve')
+plt.xlabel('Voltage (V)')
 plt.plot(steps,res[0],'bo',label='Simulated')
 plt.plot(steps,I_exp,'rx',label='Experimental')
-plt.legend(loc='lower right')
+# plt.legend(loc='lower right')
 
 
 '''
@@ -56,7 +59,9 @@ inact_exp = np.array(inact_exp)
 plt.subplot(1,4,2)
 plt.plot(steps_exp,res[1],'bo',label='Simulated')
 plt.plot(steps_exp,act_exp,'rx',label='Experimental')
-plt.legend(loc='lower right')
+plt.title('Activation')
+plt.xlabel('Voltage (V)')
+# plt.legend(loc='lower right')
 
 # Reset simulation and remove previous protocol
 s.reset()
@@ -68,7 +73,9 @@ res = simulations.inactivation_sim(s,prepulse,act_pks)
 plt.subplot(1,4,3)
 plt.plot(prepulse, res, 'bo', label='Simulated')
 plt.plot(prepulse, inact_exp, 'rx', label='Experimental')
-plt.legend(loc='lower right')
+plt.title('Inactivation')
+plt.xlabel('Voltage (V)')
+# plt.legend(loc='lower right')
 
 '''
 RECOVERY CURVES
@@ -87,4 +94,7 @@ res = simulations.recovery_sim(s,interval_times)
 plt.subplot(1,4,4)
 plt.plot(interval_times, res, 'bo', label='Simulated')
 plt.plot(interval_times,recovery_exp, 'rx', label='Experimental')
+plt.title('Recovery')
+plt.xlabel('Voltage (V)')
+plt.legend(loc='lower right')
 plt.show()
