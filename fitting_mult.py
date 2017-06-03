@@ -52,6 +52,9 @@ class Engine(object):
     def __call__(self, i):
         #print "Starting simulation " + str(i) + "..."
 
+        # Seed random number generator
+        random.seed()
+
         # Get the cell model
         m,p,x = myokit.load(self.cell_file)
 
@@ -76,7 +79,6 @@ class Engine(object):
             # Otherwise, draw the posterior distribution
             else:
                 sum = 0.0
-                random.jumpahead(i)
                 r = random.random()
                 for idx in range(self.post_size):
                     sum = sum + self.wts[idx]
