@@ -158,20 +158,26 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
     except:
         print "Could not start parallel pool."
 
+    logfile = open('fitting_abc.log','w')
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
     while K > err_cutoff:
         #tr.print_diff()
-        print "Target = "+str(thresh_val-K)+" (K = "+str(K)+")"
+        logfile.write("Target = "+str(thresh_val-K)+" (K = "+str(K)+")\n")
+        #print "Target = "+str(thresh_val-K)+" (K = "+str(K)+")"
 
-        next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool)
+        next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool,logfile)
 
         if next_post != None and next_wts != None:
             post = next_post
             wts = next_wts
 
-            print "Target met"
-            print "Current mean posterior estimate: "+str(mean(post,0))
-            print "Current posterior variance: "+str(var(post,0))
+            logfile.write("Target met\n")
+            logfile.write("Current mean posterior estimate: "+str(mean(post,0))+"\n")
+            logfile.write("Current posterior variance: "+str(var(post,0))+"\n")
+            logfile.write(str(distributions.Arbitrary(post,wts).pool)+"\n")
+            #print "Target met"
+            #print "Current mean posterior estimate: "+str(mean(post,0))
+            #print "Current posterior variance: "+str(var(post,0))
 
             # Should K exceed half the current max error, it will be adjusted downwards
             thresh_val = thresh_val - K
@@ -179,10 +185,12 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
                 K = thresh_val*0.5
             
         else:
-            print "Target not met"
+            logfile.write("Target not met\n")
+            #print "Target not met"
             K = K*0.5
 
     print thresh_val
+    logfile.close()
     return distributions.Arbitrary(post,wts)
 
 
@@ -197,7 +205,7 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
 
 
 
-def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,pool):
+def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,pool,logfile):
     next_post, next_wts = [None]*post_size, [0]*post_size
     total_iters = 0
     engine = Engine(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
@@ -228,7 +236,8 @@ def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,p
         next_wts[output[0]] = output[2]
         total_iters += output[3] # sum total iterations
 
-    print "ACCEPTANCE RATE: "+str(float(post_size)/total_iters)
+    logfile.write("ACCEPTANCE RATE: "+str(float(post_size)/total_iters)+"\n")
+    #print "ACCEPTANCE RATE: "+str(float(post_size)/total_iters)
 
     # Normalize weights and update posterior
     total_wt = math.fsum(next_wts)
