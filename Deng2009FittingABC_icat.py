@@ -23,7 +23,7 @@ class TestICaTProto():
     def TestICaTFitting(self):
 
         # Output file
-        outfile = open('ABCPredCalciumTType.txt','w')
+        outfile = open('results/ABCPredCalciumTType.txt','w')
 
         # Initial values and priors
         # - Prior is uniform distribution ({0,1},order of mag larger than proposed value)

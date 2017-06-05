@@ -50,8 +50,6 @@ class Engine(object):
         self.maxiter=maxiter
 
     def __call__(self, i):
-        #print "Starting simulation " + str(i) + "..."
-
         # Seed random number generator
         random.seed()
 
@@ -111,8 +109,6 @@ class Engine(object):
                 denom = denom + self.wts[idx]*self.kern(el,draw)
             next_wt = self.prior_func(self.priors,draw)/denom
 
-        #print "Finished sim " + str(i) + " in " + str(iters) + " iterations"
-
         return [i, next_post, next_wt, iters]
 
 
@@ -158,12 +154,13 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
     except:
         print "Could not start parallel pool."
 
+    # Log results at intermediary stages
     logfile = open('fitting_abc.log','w')
+
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
     while K > err_cutoff:
         #tr.print_diff()
         logfile.write("Target = "+str(thresh_val-K)+" (K = "+str(K)+")\n")
-        #print "Target = "+str(thresh_val-K)+" (K = "+str(K)+")"
 
         next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool,logfile)
 
@@ -175,18 +172,14 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
             logfile.write("Current mean posterior estimate: "+str(mean(post,0))+"\n")
             logfile.write("Current posterior variance: "+str(var(post,0))+"\n")
             logfile.write(str(distributions.Arbitrary(post,wts).pool)+"\n")
-            #print "Target met"
-            #print "Current mean posterior estimate: "+str(mean(post,0))
-            #print "Current posterior variance: "+str(var(post,0))
-
+            
             # Should K exceed half the current max error, it will be adjusted downwards
             thresh_val = thresh_val - K
             if K >= thresh_val*0.5:
                 K = thresh_val*0.5
-            
+
         else:
             logfile.write("Target not met\n")
-            #print "Target not met"
             K = K*0.5
 
     print thresh_val
@@ -237,7 +230,6 @@ def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,p
         total_iters += output[3] # sum total iterations
 
     logfile.write("ACCEPTANCE RATE: "+str(float(post_size)/total_iters)+"\n")
-    #print "ACCEPTANCE RATE: "+str(float(post_size)/total_iters)
 
     # Normalize weights and update posterior
     total_wt = math.fsum(next_wts)
