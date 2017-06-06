@@ -8,7 +8,7 @@ Following process in Daly et al, 2015. Re-written to use with myokit.
 
 import fitting_mult as fitting       # import ABC fitting procedure
 import distributions as Dist # prob dist functions
-import Deng2009 # Experimental data from Deng et al, 2009
+import data.icat.data_icat as data_exp # Import experimental data for t-type calcium channel
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,7 +23,7 @@ class TestICaTProto():
     def TestICaTFitting(self):
 
         # Output file
-        outfile = open('results/ABCPredCalciumTType.txt','w')
+        outfile = open('results/icat/results_icat.txt','w')
 
         # Initial values and priors
         # - Prior is uniform distribution ({0,1},order of mag larger than proposed value)
@@ -70,7 +70,6 @@ class TestICaTProto():
                 rec_pred = simulations.recovery_sim(s,intervals)
 
             # Return RMSE for all simulations
-            #predVals = np.hstack((act_pred,inact_pred,rec_pred))
             pred_vals = [act_pred[0], act_pred[1], inact_pred, rec_pred]
 
             return LossFunction(pred_vals, vals)
@@ -80,7 +79,7 @@ class TestICaTProto():
             g1 = Dist.Normal(0.0,0.01)
             g10 = Dist.Normal(0.0,1.0)
             g100 = Dist.Normal(0.0,10.0)
-            
+
             if new == None:
                 new = []
                 perturb = [g100.draw(),
@@ -124,20 +123,20 @@ class TestICaTProto():
                 return prob
 
 
-        # Load experimental data
+        # Load icat experimental data
         # - IV data
-        vsteps,i_exp = Deng2009.fig1B()
+        vsteps,i_exp = data_exp.fig1B()
         vsteps = np.array(vsteps)
         i_exp = np.array(i_exp)
         # - Activation/Inactivation data
-        vsteps_act,act_exp = Deng2009.fig3Bact()
-        prepulses,inact_exp = Deng2009.fig3Binact()
+        vsteps_act,act_exp = data_exp.fig3Bact()
+        prepulses,inact_exp = data_exp.fig3Binact()
         vsteps_act = np.array(vsteps_act)
         act_exp = np.array(act_exp)
         prepulses = np.array(prepulses)
         inact_exp = np.array(inact_exp)
         # - Recovery data
-        intervals,rec_exp = Deng2009.fig4B()
+        intervals,rec_exp = data_exp.fig4B()
         intervals = np.array(intervals)
         rec_exp = np.array(rec_exp)
 
@@ -145,7 +144,7 @@ class TestICaTProto():
         exp_vals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
 
         # Cell configuration filename
-        cell_file = 'Takeuchi2013_iCaT.mmt'
+        cell_file = 'models/Takeuchi2013_iCaT.mmt'
 
         # Calculate result by approximate Bayesian computation
         result = fitting.approx_bayes_smc_adaptive(cell_file,init,priors,exp_vals,prior_func,kern,distance,20,50,0.003)

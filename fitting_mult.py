@@ -149,13 +149,14 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
     K = total_err/(2.0*post_size)
     thresh_val = max_err
 
+    # Start parallel pool
     try:
-        pool = Pool()
+        pool = Pool() # can specify number of nodes here
     except:
         print "Could not start parallel pool."
 
     # Log results at intermediary stages
-    logfile = open('fitting_abc.log','w')
+    logfile = open('logs/fitting_mult.log','w')
 
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
     while K > err_cutoff:
@@ -172,7 +173,7 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
             logfile.write("Current mean posterior estimate: "+str(mean(post,0))+"\n")
             logfile.write("Current posterior variance: "+str(var(post,0))+"\n")
             logfile.write(str(distributions.Arbitrary(post,wts).pool)+"\n")
-            
+
             # Should K exceed half the current max error, it will be adjusted downwards
             thresh_val = thresh_val - K
             if K >= thresh_val*0.5:

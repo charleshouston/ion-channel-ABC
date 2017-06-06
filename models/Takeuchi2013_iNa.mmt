@@ -1,0 +1,87 @@
+[[model]]
+name: Takeuchi 2013 fast sodium channel
+author: Charles Houston
+desc: The Takeuchi 2013 model for the fast sodium channel in HL-1 myocytes.
+ref: """
+A Takeuchi et al. (2013) The mitochondrial Na+-Ca2+ exchanger, NCLX, regulates
+automaticity of HL-1 cardiomyocytes.
+"""
+# Initial values
+membrane.V = -80
+icat_d_gate.d = 0.01
+icat_f_gate.f = 0.99
+
+[environment]
+time = 0 bind time
+     in [ms]
+
+[membrane]
+Cm = 1
+   in [pF/cm^2]
+dot(V) = icat.i_CaT / Cm
+       in [mV]
+
+[ina]
+use membrane.V as V
+g_Na = 0.4122 [nS/pF]
+E_Na = 45 [mV]
+G_Na = g_CaT * ina_m_gate.m^3 * ina_h_gate.h * ina_j_gate.j
+      in [mS/cm^2]
+i_Na = G_CaT * (V - E_CaT)
+      in [uA/cm^2]
+
+[ina_m_gate]
+use membrane.V as V
+mss = (1 + exp(-(V+mssk1)/mssk2))^(-2)
+    in [1]
+mssk1 = 58.86
+      in [mV]
+mssk2 = 9.03
+      in [mV]
+
+tau_m = (mtauk1*exp(-((V+mtauk2)/mtauk3)^2) + mtauk4*exp(-((V+mtauk5)/mtauk6)^2))^(-1)
+      in [1]
+mtauk1 = 0.1292
+       in [1]
+mtauk2 = 45.79
+       in [mV]
+mtauk3 = 15.54
+       in [mV]
+mtauk4 = 0.06487
+       in [1]
+mtauk5 = 4.823
+       in [mV]
+mtauk6 = 51.12
+       in [mV]
+
+dot(m) = (mss - m)/tau_m
+       in [1]
+
+[ina_h_gate]
+use membrane.V as V
+hss = (1 + exp((V+hssk1)/hssk2))^(-1)
+    in [1]
+hssk1 = 48
+      in [mV]
+hssk2 = 7.0
+      in [mV]
+
+tau_h = (htauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk5)/ftauk6))^(-1)
+      in [1]
+htauk1 = 0.0153
+       in [1]
+htauk2 = 61.7
+       in [mV]
+htauk3 = 83.3
+       in [mV]
+htauk4 = 0.015
+       in [1]
+htauk5 = 61.7
+       in [mV]
+htauk6 = 30
+       in [mV]
+ 
+dot(f) = (hss - f)/tau_f
+       in [1]
+
+[ina_j_gate]

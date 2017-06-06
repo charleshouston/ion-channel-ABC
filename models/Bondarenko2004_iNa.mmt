@@ -1,0 +1,140 @@
+[[model]]
+name: Bondarenko 2004 Fast Sodium Channel
+author: Charles Houston
+desc: The Bondarenko 2004 model for the fast sodium channel in HL-1 myocytes.
+ref: """
+Bondarenko et al. (2004)
+"""
+# Initial values
+membrane.V                                                       = -82.4202
+ina.C_Na2                                        = 0.020752
+ina.C_Na1                                        =  2.79132000000000024e-4
+ina.O_Na                                         =  7.13482999999999984e-7
+ina.IF_Na                                        =  1.53176000000000012e-4
+ina.I1_Na                                        =  6.73345000000000052e-7
+ina.I2_Na                                        =  1.55786999999999992e-9
+ina.IC_Na2                                       = 0.0113879
+ina.IC_Na3                                       = 0.34278
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+Cm = 1
+   in [pF/cm^2]
+dot(V) = ina.i_Na / Cm
+       in [mV]
+
+[ina]
+use membrane.V as V
+g_Na = 13
+    in [mS/uF]
+E_Na = 23.2
+     in [mV]
+G_Na = g_Na * O_Na
+i_Na = G_Na * (V - E_Na)
+    in [uA/cm^2]
+
+dot(C_Na1) = alpha_Na12 * C_Na2 + beta_Na13 * O_Na + alpha_Na3 * IF_Na - (beta_Na12 * C_Na1 + alpha_Na13 * C_Na1 + beta_Na3 * C_Na1)
+    in [1]
+dot(C_Na2) = alpha_Na11 * C_Na3 + beta_Na12 * C_Na1 + alpha_Na3 * IC_Na2 - (beta_Na11 * C_Na2 + alpha_Na12 * C_Na2 + beta_Na3 * C_Na2)
+    in [1]
+C_Na3 = 1 - (O_Na + C_Na1 + C_Na2 + IF_Na + I1_Na + I2_Na + IC_Na2 + IC_Na3)
+    in [1]
+dot(I1_Na) = alpha_Na4 * IF_Na + beta_Na5 * I2_Na - (beta_Na4 * I1_Na + alpha_Na5 * I1_Na)
+    in [1]
+dot(I2_Na) = alpha_Na5 * I1_Na - beta_Na5 * I2_Na
+    in [1]
+dot(IC_Na2) = alpha_Na11 * IC_Na3 + beta_Na12 * IF_Na + beta_Na3 * C_Na2 - (beta_Na11 * IC_Na2 + alpha_Na12 * IC_Na2 + alpha_Na3 * IC_Na2)
+    in [1]
+dot(IC_Na3) = beta_Na11 * IC_Na2 + beta_Na3 * C_Na3 - (alpha_Na11 * IC_Na3 + alpha_Na3 * IC_Na3)
+    in [1]
+dot(IF_Na) = alpha_Na2 * O_Na + beta_Na3 * C_Na1 + beta_Na4 * I1_Na + alpha_Na12 * IC_Na2 - (beta_Na2 * IF_Na + alpha_Na3 * IF_Na + alpha_Na4 * IF_Na + beta_Na12 * IF_Na)
+    in [1]
+dot(O_Na) = alpha_Na13 * C_Na1 + beta_Na2 * IF_Na - (beta_Na13 * O_Na + alpha_Na2 * O_Na)
+    in [1]
+
+k_alpha1 = 3.802
+         in [mS/uF]
+k_alpha2 = 0.1027
+         in [1]
+k_alpha3 = 2.5
+         in [mV]
+k_alpha4 = 150
+         in [mV]
+k_alpha5_11 = 17
+            in [mV]
+k_alpha5_12 = 15
+            in [mV]
+k_alpha5_13 = 12
+            in [mV]
+k_alpha6_11 = 0.2
+            in [1]
+k_alpha6_12 = 0.23
+            in [1]
+k_alpha6_13 = 0.25
+            in [1]
+k_alpha7 = 0.188495
+         in [1]
+k_alpha8 = 7
+         in [mV]
+k_alpha9 = 16.6
+         in [mV]
+k_alpha10 = 0.393956
+          in [1]
+k_alpha11 = 7e-7
+          in [mS/uF]
+k_alpha12 = 7.7
+          in [mV]
+
+k_beta1 = 0.1917
+        in [mS/uF]
+k_beta2_11 = 2.5
+           in [mV]
+k_beta2_12 = -2.5
+           in [mV]
+k_beta2_13 = -7.5
+           in [mV]
+k_beta3 = 20.3
+        in [mV]
+k_beta4 = 0.2
+        in [mS/uF]
+k_beta5 = 0.22
+        in [mS/uF]
+k_beta6 = 0.0084
+        in [mS/uF]
+k_beta7 = 2e-5
+        in [1/mV/ms]
+k_beta8 = 7
+        in [mV]
+
+alpha_Na11 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / k_alpha5_11) + k_alpha6_11 * exp(-(V + k_alpha3) / k_alpha4))
+    in [mS/uF]
+alpha_Na12 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / k_alpha5_12) + k_alpha6_12 * exp(-(V + k_alpha3) / k_alpha4))
+    in [mS/uF]
+alpha_Na13 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / k_alpha5_13) + k_alpha6_13 * exp(-(V + k_alpha3) / k_alpha4))
+    in [mS/uF]
+alpha_Na2 = 1 [mS/uF] / (k_alpha7 * exp(-(V + k_alpha8) / k_alpha9) + k_alpha10)
+    in [mS/uF]
+alpha_Na3 = k_alpha11 * exp(-(V + k_alpha8) / k_alpha12)
+    in [mS/uF]
+alpha_Na4 = alpha_Na2 / 1000
+    in [mS/uF]
+alpha_Na5 = alpha_Na2 / 95000
+    in [mS/uF]
+
+beta_Na11 = k_beta1 * exp(-(V + k_beta2_11) / k_beta3)
+    in [mS/uF]
+beta_Na12 = k_beta4 * exp(-(V + k_beta2_12) / k_beta3)
+    in [mS/uF]
+beta_Na13 = k_beta5 * exp(-(V + k_beta2_13) / k_beta3)
+    in [mS/uF]
+beta_Na2 = alpha_Na13 * alpha_Na2 * alpha_Na3 / (beta_Na13 * beta_Na3)
+    in [mS/uF]
+beta_Na3 = k_beta6 + k_beta7 * (V + k_beta8)
+    in [mS/uF]
+beta_Na4 = alpha_Na3
+    in [mS/uF]
+beta_Na5 = alpha_Na3 / 50
+    in [mS/uF]
