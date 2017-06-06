@@ -169,10 +169,13 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
             post = next_post
             wts = next_wts
 
+            # Write current output to log
+            # in case simulation trips up and we lose results.
             logfile.write("Target met\n")
             logfile.write("Current mean posterior estimate: "+str(mean(post,0))+"\n")
             logfile.write("Current posterior variance: "+str(var(post,0))+"\n")
-            logfile.write(str(distributions.Arbitrary(post,wts).pool)+"\n")
+            logfile.write(str(post)+"\n")
+            logfile.write(str(wts)+"\n")
 
             # Should K exceed half the current max error, it will be adjusted downwards
             thresh_val = thresh_val - K
@@ -182,6 +185,9 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
         else:
             logfile.write("Target not met\n")
             K = K*0.5
+
+        # Force empty buffer to file
+        logfile.flush()
 
     print thresh_val
     logfile.close()
