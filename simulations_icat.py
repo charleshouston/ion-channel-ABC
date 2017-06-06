@@ -12,47 +12,47 @@ import numpy as np
 from collections import namedtuple
 
 class AbstractSim(object):
-    self.protocol = None
     def run(s):
         raise NotImplementedError
 
 class ActivationSim(AbstractSim):
-    def __init__(vsteps):
+    def __init__(self, vsteps, reversal_potential):
         self.protocol = []
-        for vstep in vsteps:
-            p = protocols.steptrain(
-                vsteps = np.array([vstep]),
-                vhold = -80,
-                tpre = 5000,
-                tstep = 300,
-            )
-            self.protocol.append((p, p.characteristic_time))
+        self.vsteps = np.array(vsteps)
+        self.protocol = protocols.steptrain(
+            vsteps = self.vsteps,
+            vhold = -80,
+            tpre = 5000,
+            tstep = 300,
+        )
+        self.reversal_potential = reversal_potential
 
-    def run(s):
+    def run(self, s):
         s.reset()
-        # Pre-pace to move default state to semi-stable orbit
-        s.pre(5000)
-        # Run simulation for each voltage step
-        for p, t in self.protocol:
-            s.set_protocol(p)
-            try:
-                d = s.run(t, log=['icat.i_CaT'], log_interval=.1)
-                ds.append(np.array(d['icat.i_CaT']))
-            except:
-                return None
-            s.reset()
+        try:
+            d = s.run(t, log=['icat.i_CaT'], log_interval=.1)
+        except:
+            return None
 
-        # Get peak currents whether positive or negative
-        act_peaks = np.array([max(d.min(), d.max(), key=abs) for d in ds])
+        # Split the log into chunks for each step
+        ds = d.split_periodic(5300, adjust=True)
+
+        # Trim each new log to contain only the 100ms of peak current
+        act_peaks = np.array([])
+        for d in ds:
+            d.trim_left(5000, adjust=True)
+            d.trim_right(200)
+            d = np.array(d)
+            act_peaks.append(max(d.min(), d.max(), key=abs))
 
         # Calculate the activation (normalized condutance) from IV curve
         # - Divide the peak currents by (V-E)
-        act_relative = act_peaks / (steps - reversal_potential)
+        act_relative = act_peaks / (self.vsteps - self.reversal_potential)
         # - Normalise by dividing by the biggest value
         act_relative = act_relative / act_relative.max()
 
-    res = hstack((act_peaks, act_relative))
-    return res
+        res = np.hstack((act_peaks, act_relative))
+        return res
 
 
 def inactivation_sim(s,prepulse,act_pks):
