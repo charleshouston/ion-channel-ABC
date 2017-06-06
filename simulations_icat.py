@@ -91,7 +91,8 @@ class InactivationSim(AbstractSim):
         for d in ds:
             d.trim_left(5900,adjust=True)
             d.trim_right(305)
-            inact.append(max(abs(d['icat.i_CaT'])))
+            d.npview()
+            inact.append(max(np.abs(d['icat.i_CaT'])))
 
         inact = np.array(inact)
         inact = inact / max(np.abs(act_peaks))
