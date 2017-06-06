@@ -1,26 +1,25 @@
 '''
 Author: Charles Houston, MRes Biomedical Research student.
 
-ABC parameter estimation for the Takeuchi formulation of the T-type
-Calcium channel for HL-1 myocytes.
-Following process in Daly et al, 2015. Re-written to use with myokit.
+ABC parameter estimation for ion channel dynamics.
+Developed initially from work by Daly et al, 2015.
+Re-written to use with myokit, multi-processing and further channels.
 '''
 
 import fitting_mult as fitting       # import ABC fitting procedure
 import distributions as Dist # prob dist functions
 import data.icat.data_icat as data_exp # Import experimental data for t-type calcium channel
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import myokit
 
 import simulations
 
-class TestICaTProto():
+class ChannelProto():
 
-    # Fits the parameters controlling T-type calcium conductance
-    def TestICaTFitting(self):
+    # Fits the ion channel parameters
+    def fit(self):
 
         # Output file
         outfile = open('results/icat/results_icat.txt','w')
@@ -56,12 +55,9 @@ class TestICaTProto():
             # No point in running the rest!
             if not act_pred[0].any():
                 inact_pred = np.zeros(7)
-                # rec_pred = np.zeros(11)
             else:
                 ResetSim(s,params)
                 inact_pred = simulations.inactivation_sim(s,prepulses,act_pred[0])
-                # ResetSim(s,params)
-                # rec_pred = simulations.recovery_sim(s,intervals)
 
             if not inact_pred.any():
                 rec_pred = np.zeros(11)
@@ -241,5 +237,5 @@ def prior_func(priors,params):
     return prob
 
 if __name__ == '__main__':
-    x = TestICaTProto()
-    x.TestICaTFitting()
+    x = ChannelProto()
+    x.fit()
