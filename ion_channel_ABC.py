@@ -10,10 +10,11 @@ import fitting_mult as fitting       # import ABC fitting procedure
 import distributions as Dist # prob dist functions
 import data.icat.data_icat as data_exp # Import experimental data for t-type calcium channel
 
+import channel_setup.Setup_icat as ChannelSetup
+
 import numpy as np
 
 import myokit
-
 import simulations
 
 class ChannelProto():
@@ -22,28 +23,18 @@ class ChannelProto():
     def fit(self):
 
         # Output file
-        outfile = open('results/icat/results_icat.txt','w')
+        outfile = open('results/results_' + ChannelSetup.name + '+.txt','w')
 
         # Initial values and priors
         # - Prior is uniform distribution ({0,1},order of mag larger than proposed value)
         # - Init is mean of prior
-        priors = [Dist.Uniform(0,100),
-                  Dist.Uniform(1,10),
-                  Dist.Uniform(0,10),
-                  Dist.Uniform(0,100),
-                  Dist.Uniform(1,100),
-                  Dist.Uniform(0,10),
-                  Dist.Uniform(0,100),
-                  Dist.Uniform(1,100),
-                  Dist.Uniform(0,100),
-                  Dist.Uniform(1,10),
-                  Dist.Uniform(0,0.1),
-                  Dist.Uniform(0,100),
-                  Dist.Uniform(1,100),
-                  Dist.Uniform(0,0.1),
-                  Dist.Uniform(0,100),
-                  Dist.Uniform(1,100)]
-        init = [50, 5, 5, 50, 50, 5, 50, 50, 50, 5, 0.05, 50, 50, 0.05, 50, 50]
+        priors = []
+        init = []
+        for pr in ChannelSetup.prior_intervals:
+            priors.append(Dist.Uniform(pr[0]))
+            init.append(priors[-1].getmean())
+        import pdb;pdb.set_trace()
+        # init = [50, 5, 5, 50, 50, 5, 50, 50, 50, 5, 0.05, 50, 50, 0.05, 50, 50]
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
         def distance(params,vals,s,reversal_potential):
