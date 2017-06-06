@@ -2,7 +2,7 @@
 Author: Charles Houston
 Date: 26/5/17
 
-Helper functions to run simulations for ABC estimation.
+Helper functions to run simulations for t-type calcium channel ABC estimation.
 '''
 
 import myokit

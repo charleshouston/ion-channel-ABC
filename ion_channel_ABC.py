@@ -10,7 +10,7 @@ import fitting_mult as fitting       # import ABC fitting procedure
 import distributions as Dist # prob dist functions
 import data.icat.data_icat as data_exp # Import experimental data for t-type calcium channel
 
-import channel_setup.Setup_icat as ChannelSetup
+import channel_setup.TTypeCalcium as ChannelSetup
 
 import numpy as np
 
@@ -22,19 +22,20 @@ class ChannelProto():
     # Fits the ion channel parameters
     def fit(self):
 
+        # Bring in specific channel settings
+        channel = ChannelSetup()
+
         # Output file
-        outfile = open('results/results_' + ChannelSetup.name + '+.txt','w')
+        outfile = open('results/results_' + channel.name + '+.txt','w')
 
         # Initial values and priors
         # - Prior is uniform distribution ({0,1},order of mag larger than proposed value)
         # - Init is mean of prior
         priors = []
         init = []
-        for pr in ChannelSetup.prior_intervals:
-            priors.append(Dist.Uniform(pr[0]))
+        for pr in channel.prior_intervals:
+            priors.append(Dist.Uniform(pr[0],pr[1]))
             init.append(priors[-1].getmean())
-        import pdb;pdb.set_trace()
-        # init = [50, 5, 5, 50, 50, 5, 50, 50, 50, 5, 0.05, 50, 50, 0.05, 50, 50]
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
         def distance(params,vals,s,reversal_potential):
@@ -63,75 +64,46 @@ class ChannelProto():
 
 
         def kern(orig,new=None):
-            g1 = Dist.Normal(0.0,0.01)
-            g10 = Dist.Normal(0.0,1.0)
-            g100 = Dist.Normal(0.0,10.0)
-
+            # Get channel specific kernel
+            kernel = channel.kernel
             if new == None:
                 new = []
-                perturb = [g100.draw(),
-                           g10.draw(),
-                           g10.draw(),
-                           g100.draw(),
-                           g100.draw(),
-                           g10.draw(),
-                           g100.draw(),
-                           g100.draw(),
-                           g100.draw(),
-                           g10.draw(),
-                           g1.draw(),
-                           g100.draw(),
-                           g100.draw(),
-                           g1.draw(),
-                           g100.draw(),
-                           g100.draw()]
+                perturb = [g.draw() for g in kernel]
                 for i in range(len(orig)):
-		    new = new + [orig[i]+perturb[i]]
+		            new = new + [orig[i]+perturb[i]]
                 return new
             else:
                 prob = 1.0
-                prob = prob*g100.pdf(new[0]-orig[0])
-                prob = prob*g10.pdf(new[1]-orig[1])
-                prob = prob*g10.pdf(new[2]-orig[2])
-                prob = prob*g100.pdf(new[3]-orig[3])
-                prob = prob*g100.pdf(new[4]-orig[4])
-                prob = prob*g10.pdf(new[5]-orig[5])
-                prob = prob*g100.pdf(new[6]-orig[6])
-                prob = prob*g100.pdf(new[7]-orig[7])
-                prob = prob*g100.pdf(new[8]-orig[8])
-                prob = prob*g10.pdf(new[9]-orig[9])
-                prob = prob*g1.pdf(new[10]-orig[10])
-                prob = prob*g100.pdf(new[11]-orig[11])
-                prob = prob*g100.pdf(new[12]-orig[12])
-                prob = prob*g1.pdf(new[13]-orig[13])
-                prob = prob*g100.pdf(new[14]-orig[14])
-                prob = prob*g100.pdf(new[15]-orig[15])
-
+                for i,g in enumerate(kernel):
+                    prob = prob*g.pdf(new[i]-orig[i])
                 return prob
 
 
-        # Load icat experimental data
-        # - IV data
-        vsteps,i_exp = data_exp.fig1B()
-        vsteps = np.array(vsteps)
-        i_exp = np.array(i_exp)
-        # - Activation/Inactivation data
-        vsteps_act,act_exp = data_exp.fig3Bact()
-        prepulses,inact_exp = data_exp.fig3Binact()
-        vsteps_act = np.array(vsteps_act)
-        act_exp = np.array(act_exp)
-        prepulses = np.array(prepulses)
-        inact_exp = np.array(inact_exp)
-        # - Recovery data
-        intervals,rec_exp = data_exp.fig4B()
-        intervals = np.array(intervals)
-        rec_exp = np.array(rec_exp)
+        # # Load icat experimental data
+        # # - IV data
+        # vsteps,i_exp = data_exp.fig1B()
+        # vsteps = np.array(vsteps)
+        # i_exp = np.array(i_exp)
+        # # - Activation/Inactivation data
+        # vsteps_act,act_exp = data_exp.fig3Bact()
+        # prepulses,inact_exp = data_exp.fig3Binact()
+        # vsteps_act = np.array(vsteps_act)
+        # act_exp = np.array(act_exp)
+        # prepulses = np.array(prepulses)
+        # inact_exp = np.array(inact_exp)
+        # # - Recovery data
+        # intervals,rec_exp = data_exp.fig4B()
+        # intervals = np.array(intervals)
+        # rec_exp = np.array(rec_exp)
 
         # Concatenate all experimental data
-        exp_vals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
+        # exp_vals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
+
+        # Experimental data
+        exp_vals = channel.data_exp
 
         # Cell configuration filename
-        cell_file = 'models/Takeuchi2013_iCaT.mmt'
+        cell_file = 'models/' + channel.model_name
 
         # Calculate result by approximate Bayesian computation
         result = fitting.approx_bayes_smc_adaptive(cell_file,init,priors,exp_vals,prior_func,kern,distance,20,50,0.003)
@@ -177,24 +149,27 @@ def ResetSim(s, params):
     # Reset the model state before evaluating again
     s.reset()
 
-    # Set d gate and f gate to current parameter values
-    s.set_constant('icat_d_gate.dssk1',params[0])
-    s.set_constant('icat_d_gate.dssk2',params[1])
-    s.set_constant('icat_d_gate.dtauk1',params[2])
-    s.set_constant('icat_d_gate.dtauk2',params[3])
-    s.set_constant('icat_d_gate.dtauk3',params[4])
-    s.set_constant('icat_d_gate.dtauk4',params[5])
-    s.set_constant('icat_d_gate.dtauk5',params[6])
-    s.set_constant('icat_d_gate.dtauk6',params[7])
+    # Set parameters
+    for i,p in enumerate(params):
+        s.set_constant(channel.parameters[i],p)
 
-    s.set_constant('icat_f_gate.fssk1',params[8])
-    s.set_constant('icat_f_gate.fssk2',params[9])
-    s.set_constant('icat_f_gate.ftauk1',params[10])
-    s.set_constant('icat_f_gate.ftauk2',params[11])
-    s.set_constant('icat_f_gate.ftauk3',params[12])
-    s.set_constant('icat_f_gate.ftauk4',params[13])
-    s.set_constant('icat_f_gate.ftauk5',params[14])
-    s.set_constant('icat_f_gate.ftauk6',params[15])
+        # s.set_constant('icat_d_gate.dssk1',params[0])
+    # s.set_constant('icat_d_gate.dssk2',params[1])
+    # s.set_constant('icat_d_gate.dtauk1',params[2])
+    # s.set_constant('icat_d_gate.dtauk2',params[3])
+    # s.set_constant('icat_d_gate.dtauk3',params[4])
+    # s.set_constant('icat_d_gate.dtauk4',params[5])
+    # s.set_constant('icat_d_gate.dtauk5',params[6])
+    # s.set_constant('icat_d_gate.dtauk6',params[7])
+
+    # s.set_constant('icat_f_gate.fssk1',params[8])
+    # s.set_constant('icat_f_gate.fssk2',params[9])
+    # s.set_constant('icat_f_gate.ftauk1',params[10])
+    # s.set_constant('icat_f_gate.ftauk2',params[11])
+    # s.set_constant('icat_f_gate.ftauk3',params[12])
+    # s.set_constant('icat_f_gate.ftauk4',params[13])
+    # s.set_constant('icat_f_gate.ftauk5',params[14])
+    # s.set_constant('icat_f_gate.ftauk6',params[15])
 
 
 # Evaluates RMSE between experimental and predicted values
