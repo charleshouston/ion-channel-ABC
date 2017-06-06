@@ -25,12 +25,14 @@ class ActivationSim(AbstractSim):
             tpre = 5000,
             tstep = 300,
         )
+        self.t = self.protocol.characteristic_time()
         self.reversal_potential = reversal_potential
 
     def run(self, s):
         s.reset()
+        s.set_protocol(self.protocol)
         try:
-            d = s.run(t, log=['icat.i_CaT'], log_interval=.1)
+            d = s.run(self.t, log=['environment.time','icat.i_CaT'], log_interval=.1)
         except:
             return None
 
@@ -38,12 +40,13 @@ class ActivationSim(AbstractSim):
         ds = d.split_periodic(5300, adjust=True)
 
         # Trim each new log to contain only the 100ms of peak current
-        act_peaks = np.array([])
+        act_peaks = []
         for d in ds:
             d.trim_left(5000, adjust=True)
             d.trim_right(200)
-            d = np.array(d)
-            act_peaks.append(max(d.min(), d.max(), key=abs))
+            d = d.npview()
+            act_peaks.append(max(d['icat.i_CaT'].min(), d['icat.i_CaT'].max(), key=abs))
+        act_peaks = np.array(act_peaks)
 
         # Calculate the activation (normalized condutance) from IV curve
         # - Divide the peak currents by (V-E)
