@@ -15,11 +15,7 @@ import myokit
 class ChannelProto():
 
     # Fits the ion channel parameters
-    def fit(self):
-
-        # Bring in specific channel settings
-        channel = channel_setup.TTypeCalcium()
-
+    def fit(self, channel):
         # Output file
         outfile = open('results/results_' + channel.name + '.txt','w')
 
@@ -144,5 +140,9 @@ def prior_func(priors,params):
     return prob
 
 if __name__ == '__main__':
+
+    # Bring in specific channel settings
+    t_type_calcium = channel_setup.TTypeCalcium()
+
     x = ChannelProto()
-    x.fit()
+    x.fit(t_type_calcium)
