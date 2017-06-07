@@ -1,5 +1,5 @@
 '''
-Author: Charles Houston, MRes Biomedical Research student.
+Author: Charles Houston
 
 ABC parameter estimation for ion channel dynamics.
 Developed initially from work by Daly et al, 2015.
@@ -8,14 +8,9 @@ Re-written to use with myokit, multi-processing and further channels.
 
 import fitting_mult as fitting       # import ABC fitting procedure
 import distributions as Dist # prob dist functions
-import data.icat.data_icat as data_exp # Import experimental data for t-type calcium channel
-
-import channel_setup.TTypeCalcium as ChannelSetup
-
+import channel_setup # contains channel-specific settings
 import numpy as np
-
 import myokit
-import simulations
 
 class ChannelProto():
 
@@ -23,7 +18,7 @@ class ChannelProto():
     def fit(self):
 
         # Bring in specific channel settings
-        channel = ChannelSetup()
+        channel = channel_setup.TTypeCalcium()
 
         # Output file
         outfile = open('results/results_' + channel.name + '+.txt','w')
@@ -41,7 +36,7 @@ class ChannelProto():
         def distance(params,exp_vals,s,reversal_potential):
 
             # Reset simulation with new parameters
-            ResetSim(s,params)
+            ResetSim(s, params, channel)
 
             # Simulate channel with new parameters
             sim_vals = channel.simulate(s)
@@ -89,7 +84,7 @@ class ChannelProto():
 def LossFunction(pred_vals, exp_vals):
     # If the simulation failed, pred_vals should be None
     # We return infinite loss
-    if not pred_vals:
+    if pred_vals is None:
         return float("inf")
 
     # Calculate normalised (by mean of experimental values) RMSE for each experiment
@@ -110,7 +105,7 @@ def LossFunction(pred_vals, exp_vals):
 
     return tot_err
 
-def ResetSim(s, params):
+def ResetSim(s, params, channel):
     # Reset the model state before evaluating again
     s.reset()
 

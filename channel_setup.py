@@ -12,13 +12,13 @@ import distributions as Dist
 import data.icat.data_icat as data_icat
 
 # Experimental simulations import
-import simulations.simulations_icat as sim
+import simulations as sim
 
 class AbstractChannel(object):
     def __init__(self):
         self.parameters = []
         self.simulations = []
-    def simulate(s):
+    def simulate(self, s):
         # Run previously defined simulations
         for simulation in self.simulations:
             simulation.run(s)
@@ -100,12 +100,21 @@ class TTypeCalcium(AbstractChannel):
                                   tpre=5000, tstep=300, tpost=300)
         self.simulations = [sim_act, sim_inact, sim_rec]
 
-    def simulate(s):
+    def simulate(self, s):
+        '''
+        Run the simulations necessary to generate values to compare with
+        experimental results.
+        '''
         act_sim = self.simulations[0].run(s)
-        if not act_sim: return None
-        inact_sim = self.simulations[1].run(s, act_res[0:12])
-        if not inact_sim: return None
-        rec_sim = self.simulations[2].run(s)
-        if not rec_sim: return None
+        if act_sim is None:
+            return None
 
-        return np.hstack((act_sim, inact_sim, rec_sim))
+        inact_sim = self.simulations[1].run(s, act_sim[0])
+        if inact_sim is None:
+            return None
+
+        rec_sim = self.simulations[2].run(s)
+        if rec_sim is None:
+            return None
+
+        return [act_sim[0], act_sim[1][0:8], inact_sim, rec_sim]

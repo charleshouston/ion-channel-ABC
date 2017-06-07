@@ -3,7 +3,9 @@ Author: Charles Houston
 Date: 26/5/17
 
 Default experimental simulations.
-Originally taken from descriptions of how data was generated in Deng et al, 2009.
+Originally taken from descriptions of how data was generated
+in Deng et al, Pharmacological effects of carvedilol on T-type
+calcium current in murine HL-1 cells, 2009.
 '''
 
 import myokit
@@ -12,23 +14,29 @@ import numpy as np
 
 class AbstractSim(object):
     def run(s):
+        '''
+        General method to run the simulation and export relevant results.
+        '''
         raise NotImplementedError
 
 class ActivationSim(AbstractSim):
     '''
-    Runs the activation simulation protocol from Deng2009.
+    Runs activation simulation protocol (as described in Deng et al, 2009).
+    Voltage at ```vhold``` for ```tpre```.
+    Voltage to entry in ```vsteps``` for ```tstep```.
+    Repeated for each entry in ```vsteps```.
     '''
     def __init__(self, variable, vsteps, reversal_potential, vhold, tpre, tstep):
-        self.variable           = variable
-        self.vsteps             = np.array(vsteps)
+        self.variable           = variable # Variable of interest
+        self.vsteps             = np.array(vsteps) # Voltage steps in protocol
         self.protocol           = protocols.steptrain(
-            vsteps              = self.vsteps,
-            vhold               = vhold,
-            tpre                = tpre,
-            tstep               = tstep,
+            vsteps              = self.vsteps, 
+            vhold               = vhold, # Holding potential
+            tpre                = tpre, # Pre-conditioning simulation
+            tstep               = tstep, # Time held at ```vsteps```
         )
-        self.period             = tpre + tstep
-        self.pre                = tpre
+        self.period             = tpre + tstep # Length of each experiment
+        self.pre                = tpre # Time before experiment time of interest
         self.t                  = self.protocol.characteristic_time()
         self.reversal_potential = reversal_potential
 
@@ -57,18 +65,22 @@ class ActivationSim(AbstractSim):
         # - Normalise by dividing by the biggest value
         act_relative = act_relative / act_relative.max()
 
-        res = np.hstack((act_peaks, act_relative))
-        return res
+        return [act_peaks, act_relative]
 
 class InactivationSim(AbstractSim):
     '''
     Runs the inactivation stimulation protocol from Deng 2009.
+    Hold potential at ```vhold``` for ```tpre```.
+    Hold potential at entry from ```prepulses``` for ```tstep```.
+    Return potential to ```vhold``` for ```tbetween```.
+    Hold potential at ```vpost``` for ```tpost```.
+    Repeat for each entry in ```prepulses```.
     '''
     def __init__(self, variable, prepulses, vhold, vpost, tpre, tstep, tbetween, tpost):
         self.protocol = protocols.steptrain_double(
             vsteps    = prepulses, # Use prepulse values from experimental data
             vhold     = vhold, # Holding potential
-            vpost     = vpost, # Second step always
+            vpost     = vpost, # Second step
             tpre      = tpre, # Pre-conditioning
             tstep     = tstep, # Initial step
             tbetween  = tbetween, # Time between steps
@@ -107,6 +119,11 @@ class InactivationSim(AbstractSim):
 class RecoverySim(AbstractSim):
     '''
     Runs the recovery simulation from Deng 2009.
+    Hold potential at ```vhold``` for ```tpre```.
+    Step potential to ```vstep``` for ```tstep```.
+    Return potential to ```vhold``` for entry in ```intervals```.
+    Step potential to ```vstep``` for ```tpost```.
+    Repeat for each entry in ```intervals```.
     '''
     def __init__(self, variable, intervals, vstep, vhold, vpost, tpre, tstep, tpost):
         # Create intervaltrain protocol
