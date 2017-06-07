@@ -29,7 +29,7 @@ class ChannelProto():
             init.append(priors[-1].getmean())
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
-        def distance(params,exp_vals,s,reversal_potential):
+        def distance(params,exp_vals,s):
 
             # Reset simulation with new parameters
             ResetSim(s, params, channel)

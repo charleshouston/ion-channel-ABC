@@ -66,7 +66,6 @@ class Engine(object):
 
         # Create the simulation
         sim = myokit.Simulation(m)
-        reversal_potential = m.get('icat.E_CaT').value()
 
         draw = None
         iters = 0
@@ -90,7 +89,7 @@ class Engine(object):
             if self.prior_func(self.priors,draw) == 0:
                 draw = None
                 continue
-            if self.dist(draw,self.exp_vals,sim,reversal_potential) > self.thresh_val:
+            if self.dist(draw, self.exp_vals, sim) > self.thresh_val:
                 draw = None
 
             # Check if the maximum allowed iterations have been exceeded.
