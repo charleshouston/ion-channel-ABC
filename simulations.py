@@ -2,150 +2,157 @@
 Author: Charles Houston
 Date: 26/5/17
 
-Helper functions to run simulations for t-type calcium channel ABC estimation.
+Default experimental simulations.
+Originally taken from descriptions of how data was generated in Deng et al, 2009.
 '''
 
 import myokit
 import protocols
 import numpy as np
 
-from collections import namedtuple
+class AbstractSim(object):
+    def run(s):
+        raise NotImplementedError
 
-ActSimResult = namedtuple('ActSimResult', ['peaks', 'cond'])
-
-def activation_sim(s,steps,reversal_potential):
+class ActivationSim(AbstractSim):
     '''
     Runs the activation simulation protocol from Deng2009.
     '''
+    def __init__(self, variable, vsteps, reversal_potential, vhold, tpre, tstep):
+        self.variable           = variable
+        self.vsteps             = np.array(vsteps)
+        self.protocol           = protocols.steptrain(
+            vsteps              = self.vsteps,
+            vhold               = vhold,
+            tpre                = tpre,
+            tstep               = tstep,
+        )
+        self.period             = tpre + tstep
+        self.pre                = tpre
+        self.t                  = self.protocol.characteristic_time()
+        self.reversal_potential = reversal_potential
 
-    # Create protocol for step experiment
-    p = protocols.steptrain(
-        vsteps = np.array(steps), # Use voltage steps from experiments
-        vhold = -80, # Holding potential at -80mV
-        tpre = 5000, # 5000ms pre-conditioning before each step
-        tstep = 300, # 300ms at step potential
-    )
-    s.set_protocol(p)
-    t = p.characteristic_time()
+    def run(self, s):
+        s.reset()
+        s.set_protocol(self.protocol)
+        try:
+            d = s.run(self.t, log=['environment.time', self.variable], log_interval=.1)
+        except:
+            return None
 
-    # Run a simulation
-    try:
-        d = s.run(t, log=['environment.time', 'membrane.V', 'icat.i_CaT'],log_interval=.1)
-    except:
-        res = ActSimResult(np.zeros(12), cond=np.zeros(8))
+        # Split the log into chunks for each step
+        ds = d.split_periodic(self.period, adjust=True)
+
+        # Trim each new log to contain only the 100ms of peak current
+        act_peaks = []
+        for d in ds:
+            d.trim_left(self.pre, adjust=True)
+            d.trim_right(self.period - self.pre - 100)
+            act_peaks.append(max(min(d[self.variable]), max(d[self.variable]), key=abs))
+        act_peaks = np.array(act_peaks)
+
+        # Calculate the activation (normalized condutance) from IV curve
+        # - Divide the peak currents by (V-E)
+        act_relative = act_peaks / (self.vsteps - self.reversal_potential)
+        # - Normalise by dividing by the biggest value
+        act_relative = act_relative / act_relative.max()
+
+        res = np.hstack((act_peaks, act_relative))
         return res
 
-    # Split the log into chunks for each step
-    ds = d.split_periodic(5300, adjust=True)
-
-    # Trim each new log to contain only the 100ms of peak current
-    for d in ds:
-        d.trim_left(5000, adjust=True)
-        d.trim_right(200)
-
-    # Find and return current peaks
-    act_peaks = []
-    for d in ds:
-        act_peaks.append(np.min(d['icat.i_CaT']))
-    act_peaks = np.array(act_peaks)
-
-    # Calculate the activation (normalized condutance) from IV curve
-    # - Divide the peak currents by (V-E)
-    act = act_peaks[:8] / (steps[:8] - reversal_potential)
-    # - Normalise by dividing by the biggest value
-    act = act / np.max(act)
-
-    res = ActSimResult(act_peaks, cond=act)
-    return res
-
-def inactivation_sim(s,prepulse,act_pks):
+class InactivationSim(AbstractSim):
     '''
     Runs the inactivation stimulation protocol from Deng 2009.
     '''
-    # Create protocol
-    p = protocols.steptrain_double(
-        vsteps = prepulse, # Use prepulse values from experimental data
-        vhold = -80, # Holding potential at -80mV
-        vpost = -20, # Second step always -20mV
-        tpre = 5000, # Pre-conditioning at -80mV for 5000ms
-        tstep = 1000, # Initial step for 1000ms
-        tbetween = 5, # Time between steps is 5ms
-        tpost = 300, # Final pulse for 300ms
-    )
-    t = p.characteristic_time()
-    s.set_protocol(p)
+    def __init__(self, variable, prepulses, vhold, vpost, tpre, tstep, tbetween, tpost):
+        self.protocol = protocols.steptrain_double(
+            vsteps    = prepulses, # Use prepulse values from experimental data
+            vhold     = vhold, # Holding potential
+            vpost     = vpost, # Second step always
+            tpre      = tpre, # Pre-conditioning
+            tstep     = tstep, # Initial step
+            tbetween  = tbetween, # Time between steps
+            tpost     = tpost, # Final pulse
+        )
+        self.t        = self.protocol.characteristic_time()
+        self.period   = tpre+tstep+tbetween+tpost
+        # Variables for cutting output data
+        self.pre      = tpre + tstep - 100
+        self.post     = tbetween + tpost
+        self.variable = variable
 
-    # Run the simulation
-    try:
-        d = s.run(t, log=['environment.time','membrane.V','icat.i_CaT'],log_interval=.1)
-    except:
-        return np.zeros(7)
+    def run(self, s, act_peaks):
+        s.reset()
+        s.set_protocol(self.protocol)
 
-    # Trim each new log to contain only the 100ms of peak current
-    ds = d.split_periodic(6305, adjust=True)
-    for d in ds:
-        d.trim_left(5900,adjust=True)
-        d.trim_right(305)
+        # Run the simulation
+        try:
+            d = s.run(self.t, log=['environment.time', self.variable], log_interval=.1)
+        except:
+            return None
 
-    inact = []
+        # Trim each new log to contain only the 100ms of peak current
+        ds = d.split_periodic(self.period, adjust=True)
+        inact = []
+        for d in ds:
+            d.trim_left(self.pre, adjust=True)
+            d.trim_right(self.post)
+            d.npview()
+            inact.append(max(np.abs(d[self.variable])))
 
-    # Find peak current
-    for d in ds:
-        current = d['icat.i_CaT']
-        index = np.argmax(np.abs(current))
-        peak = current[index]
-        inact.append(peak)
+        inact = np.array(inact)
+        inact = inact / max(np.abs(act_peaks))
+        return inact
 
-    inact = np.array(inact)
-    inact = np.abs(inact) / np.max(np.abs(act_pks))
-
-    return inact
-
-def recovery_sim(s,intervals):
+class RecoverySim(AbstractSim):
     '''
     Runs the recovery simulation from Deng 2009.
     '''
-    # Create intervaltrain protocol
-    p = protocols.intervaltrain(
-        vstep = -20, # Voltage steps are to -20mV
-        vhold = -80, # Holding potential is -80mV
-        vpost = -20, # Final pulse also at -20mV
-        tpre = 5000, # Pre-conditioning each experiment for 5000ms
-        tstep = 300, # Initial step for 300ms
-        tintervals = intervals, # Varying interval times
-        tpost = 300, # Final pulse for 300ms
-    )
-    t = p.characteristic_time()
-    s.set_protocol(p)
+    def __init__(self, variable, intervals, vstep, vhold, vpost, tpre, tstep, tpost):
+        # Create intervaltrain protocol
+        self.intervals    = intervals
+        self.protocol     = protocols.intervaltrain(
+            vstep         = vstep, # Voltage steps
+            vhold         = vhold, # Holding potential
+            vpost         = vpost, # Final pulse
+            tpre          = tpre, # Pre-conditioning
+            tstep         = tstep, # Initial step
+            tintervals    = intervals, # Varying interval times
+            tpost         = tpost, # Final pulse
+        )
+        self.t            = self.protocol.characteristic_time()
+        self.period_const = tpre+tstep+tpost
+        self.pre          = tpre+tstep-100
+        self.variable     = variable
 
-    # Run the simulation
-    try:
-        d = s.run(t, log=['environment.time','membrane.V','icat.i_CaT'],log_interval=.1)
-    except:
-        return np.zeros(11)
+    def run(self, s):
+        s.reset()
+        s.set_protocol(self.protocol)
 
-    # Trim each new log to contain only the 100ms of peak current
-    ds = []
-    d = d.npview()
-    for interval in intervals:
-        # Split each experiment
-        d_split,d = d.split(interval+5600)
-        ds.append(d_split)
+        # Run the simulation
+        try:
+            d = s.run(self.t, log=['environment.time', self.variable], log_interval=.1)
+        except:
+            return None
 
-        # Adjust times of remaining data
-        if len(d['environment.time']):
-            d['environment.time'] -= d['environment.time'][0]
+        # Trim each new log to contain only the 100ms of peak current
+        ds = []
+        d = d.npview()
+        for interval in self.intervals:
+            # Split each experiment
+            d_split,d = d.split(interval+self.period_const)
+            ds.append(d_split)
 
-    rec_peaks = []
+            # Adjust times of remaining data
+            if len(d['environment.time']):
+                d['environment.time'] -= d['environment.time'][0]
 
-    for trace in ds:
-        trace.trim_left(5200,adjust=True)
-        current = trace['icat.i_CaT']
-        index = np.argmax(np.abs(current))
-        peak = current[index]
-        rec_peaks.append(peak)
+        rec = []
 
-    rec_peaks = np.array(rec_peaks)
-    rec_peaks = -1*rec_peaks / np.max(np.abs(rec_peaks))
+        for d in ds:
+            d.trim_left(self.pre, adjust=True)
+            rec.append(max(min(d[self.variable]), max(d[self.variable]), key=abs))
 
-    return rec_peaks
+        rec = np.array(rec)
+        rec = -1*rec / np.max(np.abs(rec))
+        return rec
