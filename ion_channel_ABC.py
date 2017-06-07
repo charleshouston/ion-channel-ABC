@@ -38,29 +38,15 @@ class ChannelProto():
             init.append(priors[-1].getmean())
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
-        def distance(params,vals,s,reversal_potential):
+        def distance(params,exp_vals,s,reversal_potential):
 
-            # Run simulations
+            # Reset simulation with new parameters
             ResetSim(s,params)
-            act_pred = simulations.activation_sim(s,vsteps,reversal_potential)
-            # If this simulation failed, it will return all zeros
-            # No point in running the rest!
-            if not act_pred[0].any():
-                inact_pred = np.zeros(7)
-            else:
-                ResetSim(s,params)
-                inact_pred = simulations.inactivation_sim(s,prepulses,act_pred[0])
 
-            if not inact_pred.any():
-                rec_pred = np.zeros(11)
-            else:
-                ResetSim(s,params)
-                rec_pred = simulations.recovery_sim(s,intervals)
+            # Simulate channel with new parameters
+            sim_vals = channel.simulate(s)
 
-            # Return RMSE for all simulations
-            pred_vals = [act_pred[0], act_pred[1], inact_pred, rec_pred]
-
-            return LossFunction(pred_vals, vals)
+            return LossFunction(sim_vals, exp_vals)
 
 
         def kern(orig,new=None):
@@ -70,7 +56,7 @@ class ChannelProto():
                 new = []
                 perturb = [g.draw() for g in kernel]
                 for i in range(len(orig)):
-		            new = new + [orig[i]+perturb[i]]
+                    new = new + [orig[i]+perturb[i]]
                 return new
             else:
                 prob = 1.0
@@ -78,29 +64,8 @@ class ChannelProto():
                     prob = prob*g.pdf(new[i]-orig[i])
                 return prob
 
-
-        # # Load icat experimental data
-        # # - IV data
-        # vsteps,i_exp = data_exp.fig1B()
-        # vsteps = np.array(vsteps)
-        # i_exp = np.array(i_exp)
-        # # - Activation/Inactivation data
-        # vsteps_act,act_exp = data_exp.fig3Bact()
-        # prepulses,inact_exp = data_exp.fig3Binact()
-        # vsteps_act = np.array(vsteps_act)
-        # act_exp = np.array(act_exp)
-        # prepulses = np.array(prepulses)
-        # inact_exp = np.array(inact_exp)
-        # # - Recovery data
-        # intervals,rec_exp = data_exp.fig4B()
-        # intervals = np.array(intervals)
-        # rec_exp = np.array(rec_exp)
-
-        # Concatenate all experimental data
-        # exp_vals = np.hstack((i_exp,act_exp,inact_exp,rec_exp))
-
         # Experimental data
-        exp_vals = channel.data_exp
+        exp_vals = channel.data_exp[1]
 
         # Cell configuration filename
         cell_file = 'models/' + channel.model_name
@@ -122,12 +87,12 @@ class ChannelProto():
 # Loss function for three voltage clamp experiments from Deng 2009.
 # Predicted and experimental values are concatenated before using the function.
 def LossFunction(pred_vals, exp_vals):
-    # If the simulation failed, the arrays will be filled with zeros
+    # If the simulation failed, pred_vals should be None
     # We return infinite loss
-    if not pred_vals[3].any():
+    if not pred_vals:
         return float("inf")
 
-    # Calculate normalised RMSE for each experiment
+    # Calculate normalised (by mean of experimental values) RMSE for each experiment
     tot_err = 0
     i = 0
     for p in pred_vals:
@@ -139,7 +104,7 @@ def LossFunction(pred_vals, exp_vals):
         i += len(p)
         tot_err += err
 
-    # Forces overflow to infinity
+    # Forces overflow to infinity for unreasonable values
     if tot_err > 15:
         return float("inf")
 
@@ -150,27 +115,8 @@ def ResetSim(s, params):
     s.reset()
 
     # Set parameters
-    for i,p in enumerate(params):
-        s.set_constant(channel.parameters[i],p)
-
-        # s.set_constant('icat_d_gate.dssk1',params[0])
-    # s.set_constant('icat_d_gate.dssk2',params[1])
-    # s.set_constant('icat_d_gate.dtauk1',params[2])
-    # s.set_constant('icat_d_gate.dtauk2',params[3])
-    # s.set_constant('icat_d_gate.dtauk3',params[4])
-    # s.set_constant('icat_d_gate.dtauk4',params[5])
-    # s.set_constant('icat_d_gate.dtauk5',params[6])
-    # s.set_constant('icat_d_gate.dtauk6',params[7])
-
-    # s.set_constant('icat_f_gate.fssk1',params[8])
-    # s.set_constant('icat_f_gate.fssk2',params[9])
-    # s.set_constant('icat_f_gate.ftauk1',params[10])
-    # s.set_constant('icat_f_gate.ftauk2',params[11])
-    # s.set_constant('icat_f_gate.ftauk3',params[12])
-    # s.set_constant('icat_f_gate.ftauk4',params[13])
-    # s.set_constant('icat_f_gate.ftauk5',params[14])
-    # s.set_constant('icat_f_gate.ftauk6',params[15])
-
+    for i, p in enumerate(params):
+        s.set_constant(channel.parameters[i], p)
 
 # Evaluates RMSE between experimental and predicted values
 # Uses time points in simulation that are closest to experimental
