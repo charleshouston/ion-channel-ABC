@@ -21,7 +21,7 @@ class ChannelProto():
         channel = channel_setup.TTypeCalcium()
 
         # Output file
-        outfile = open('results/results_' + channel.name + '+.txt','w')
+        outfile = open('results/results_' + channel.name + '.txt','w')
 
         # Initial values and priors
         # - Prior is uniform distribution ({0,1},order of mag larger than proposed value)
