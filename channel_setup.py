@@ -118,3 +118,75 @@ class TTypeCalcium(AbstractChannel):
             return None
 
         return [act_sim[0], act_sim[1][0:8], inact_sim, rec_sim]
+
+
+class FastSodium(AbstractChannel):
+    def __init__(self):
+        self.name = 'ina'
+        self.model_name = 'Bondarenko2004_iNa.mmt'
+
+        # Parameters involved in ABC process
+        self.parameters = ['ina.k_alpha1',
+                           'ina.k_alpha2',
+                           'ina.k_alpha3',
+                           'ina.k_alpha4',
+                           'ina.k_alpha5_11',
+                           'ina.k_alpha5_12',
+                           'ina.k_alpha5_13',
+                           'ina.k_alpha6_11',
+                           'ina.k_alpha6_12',
+                           'ina.k_alpha6_13',
+                           'ina.k_alpha7',
+                           'ina.k_alpha8',
+                           'ina.k_alpha9',
+                           'ina.k_alpha10',
+                           'ina.k_beta1',
+                           'ina.k_beta2_11',
+                           'ina.k_beta2_12',
+                           'ina.k_beta2_13',
+                           'ina.k_beta3',
+                           'ina.k_beta4',
+                           'ina.k_beta5',
+                           'ina.k_beta6',
+                           'ina.k_beta7',
+                           'ina.k_beta8']
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0,10),
+                                (0,1.0),
+                                (0,10),
+                                (1,1000),
+                                (1,100),
+                                (1,100),
+                                (1,100),
+                                (0,1.0),
+                                (0,1.0),
+                                (0,1.0),
+                                (0,1.0),
+                                (0,10),
+                                (1,100),
+                                (0,1.0),
+                                (0,1e-6),
+                                (1,10),
+                                (0,1.0),
+                                (-50,50),
+                                (-50,50),
+                                (-50,50),
+                                (1,100),
+                                (0,1.0),
+                                (0,1.0),
+                                (0,1e-2),
+                                (0,1e-4),
+                                (0,10)]
+
+        # Parameter specific distributions for perturbing parameters
+        g06 = Dist.Normal(0.0,1e-7)
+        g04 = Dist.Normal(0.0,1e-5)
+        g02 = Dist.Normal(0.0,1e-3)
+        g01 = Dist.Normal(0.0,0.01)
+        g1 = Dist.Normal(0.0,0.1)
+        g10 = Dist.Normal(0.0,1.0)
+        g100 = Dist.Normal(0.0,10.0)
+        g1000 = Dist.Normal(0.0,100.0)
+        self.kernel = [g10, g1, g10, g1000, g100, g100, g100, g1, g1,
+                       g1, g1, g10, g100, g1, g06, g10, g1, g100,
+                       g100, g100, g100, g1, g1, g02, g04, g10]
