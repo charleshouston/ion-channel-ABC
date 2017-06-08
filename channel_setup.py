@@ -10,6 +10,7 @@ import distributions as Dist
 
 # Data imports
 import data.icat.data_icat as data_icat
+import data.ina.data_ina as data_ina
 
 # Experimental simulations import
 import simulations as sim
@@ -105,19 +106,19 @@ class TTypeCalcium(AbstractChannel):
         Run the simulations necessary to generate values to compare with
         experimental results.
         '''
-        act_sim = self.simulations[0].run(s)
-        if act_sim is None:
+        sim_act_out = self.simulations[0].run(s)
+        if sim_act_out is None:
             return None
 
-        inact_sim = self.simulations[1].run(s, act_sim[0])
-        if inact_sim is None:
+        sim_inact_out = self.simulations[1].run(s, sim_act_out[0])
+        if sim_inact_out is None:
             return None
 
-        rec_sim = self.simulations[2].run(s)
-        if rec_sim is None:
+        sim_rec_out = self.simulations[2].run(s)
+        if sim_rec_out is None:
             return None
 
-        return [act_sim[0], act_sim[1][0:8], inact_sim, rec_sim]
+        return [sim_act_out[0], sim_act_out[1][0:8], sim_inact_out, sim_rec_out]
 
 
 class FastSodium(AbstractChannel):
@@ -190,3 +191,59 @@ class FastSodium(AbstractChannel):
         self.kernel = [g10, g1, g10, g1000, g100, g100, g100, g1, g1,
                        g1, g1, g10, g100, g1, g06, g10, g1, g100,
                        g100, g100, g100, g1, g1, g02, g04, g10]
+
+        # Loading fast Na channel experimental data
+        vsteps, act_peaks_exp = data_ina.IV_DiasFig6()
+        vsteps = np.array(vsteps)
+        act_peaks_exp = np.array(act_peaks_exp)
+
+        vsteps_act, act_exp = data_ina.Act_FukudaFig5B()
+        vsteps_act = np.array(vsteps_act)
+        act_exp = np.array(act_exp)
+
+        prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
+        prepulses = np.array(prepulses)
+        inact_exp = np.array(inact_exp)
+
+        intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
+        intervals = np.array(intervals)
+        rec_exp = np.array(rec_exp)
+
+        self.data_exp = np.hstack(([vsteps, act_peaks_exp],
+                                   [vsteps_act, act_exp],
+                                   [prepulses, inact_exp],
+                                   [intervals, rec_exp]))
+
+        # Setup simulations
+        sim_act = sim.ActivationSim('ina.i_Na', vsteps, reversal_potential=23.2, vhold=-80,
+                                    tpre=3000, tstep=100)
+        sim_act2 = sim.ActivationSim('ina.i_Na', vsteps_act, reversal_potential=23.2, vhold=-120,
+                                     tpre=3000, tstep=20)
+        sim_inact = sim.InactivationSim('ina.i_Na', prepulses, vhold=-120, vpost=-20,
+                                        tpre=3000, tstep=500, tbetween=5, tpost=20)
+        sim_rec = sim.RecoverySim('ina.i_Na', intervals, vstep=-40, vhold=-120, vpost=-30,
+                                  tpre=3000, tstep=20, tpost=20)
+        self.simulations = [sim_act, sim_act2, sim_inact, sim_rec]
+
+    def simulate(self, s):
+        '''
+        Run the simulations necessary to generate values to compare with
+        experimental results.
+        '''
+        sim_act_out = self.simulations[0].run(s)
+        if sim_act_out is None:
+            return None
+
+        sim_act2_out = self.simulations[1].run(s)
+        if sim_act2_out is None:
+            return None
+
+        sim_inact_out = self.simulations[2].run(s, sim_act2_out[0])
+        if sim_inact_out is None:
+            return None
+
+        sim_rec_out = self.simulations[3].run(s)
+        if sim_rec_out is None:
+            return None
+
+        return [sim_act_out[0], sim_act2_out[1], sim_inact_out, sim_rec_out]
