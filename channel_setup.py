@@ -110,7 +110,7 @@ class TTypeCalcium(AbstractChannel):
         if sim_act_out is None:
             return None
 
-        sim_inact_out = self.simulations[1].run(s, sim_act_out[0])
+        sim_inact_out = self.simulations[1].run(s)
         if sim_inact_out is None:
             return None
 
@@ -141,6 +141,8 @@ class FastSodium(AbstractChannel):
                            'ina.k_alpha8',
                            'ina.k_alpha9',
                            'ina.k_alpha10',
+                           'ina.k_alpha11',
+                           'ina.k_alpha12',
                            'ina.k_beta1',
                            'ina.k_beta2_11',
                            'ina.k_beta2_12',
@@ -152,45 +154,40 @@ class FastSodium(AbstractChannel):
                            'ina.k_beta7',
                            'ina.k_beta8']
         # Parameter specific prior intervals
-        self.prior_intervals = [(0,10),
-                                (0,1.0),
-                                (0,10),
-                                (1,1000),
-                                (1,100),
-                                (1,100),
-                                (1,100),
-                                (0,1.0),
-                                (0,1.0),
-                                (0,1.0),
-                                (0,1.0),
-                                (0,10),
-                                (1,100),
-                                (0,1.0),
-                                (0,1e-6),
-                                (1,10),
-                                (0,1.0),
-                                (-50,50),
-                                (-50,50),
-                                (-50,50),
-                                (1,100),
-                                (0,1.0),
-                                (0,1.0),
-                                (0,1e-2),
-                                (0,1e-4),
-                                (0,10)]
+        self.prior_intervals = [(0,10),  # 0
+                                (0,1.0), # 1
+                                (0,10),  # 2
+                                (1,1000),# 3
+                                (1,100), # 4
+                                (1,100), # 5
+                                (1,100), # 6
+                                (0,1.0), # 7
+                                (0,1.0), # 8
+                                (0,1.0), # 9
+                                (0,1.0), # 10
+                                (0,10),  # 11
+                                (1,100), # 12
+                                (0,1.0), # 13
+                                (0,1e-6),# 14
+                                (1,10),  # 15
+                                (0,1.0), # 16
+                                (-50,50),# 17
+                                (-50,50),# 18
+                                (-50,50),# 19
+                                (1,100), # 20
+                                (0,1.0), # 21
+                                (0,1.0), # 22
+                                (0,1e-2),# 23
+                                (0,1e-4),# 24
+                                (0,10)]  # 25
 
-        # Parameter specific distributions for perturbing parameters
-        g06 = Dist.Normal(0.0,1e-7)
-        g04 = Dist.Normal(0.0,1e-5)
-        g02 = Dist.Normal(0.0,1e-3)
-        g01 = Dist.Normal(0.0,0.01)
-        g1 = Dist.Normal(0.0,0.1)
-        g10 = Dist.Normal(0.0,1.0)
-        g100 = Dist.Normal(0.0,10.0)
-        g1000 = Dist.Normal(0.0,100.0)
-        self.kernel = [g10, g1, g10, g1000, g100, g100, g100, g1, g1,
-                       g1, g1, g10, g100, g1, g06, g10, g1, g100,
-                       g100, g100, g100, g1, g1, g02, g04, g10]
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        sigma = 0.1
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
 
         # Loading fast Na channel experimental data
         vsteps, act_peaks_exp = data_ina.IV_DiasFig6()
@@ -220,8 +217,8 @@ class FastSodium(AbstractChannel):
         sim_act2 = sim.ActivationSim('ina.i_Na', vsteps_act, reversal_potential=23.2, vhold=-120,
                                      tpre=3000, tstep=20)
         sim_inact = sim.InactivationSim('ina.i_Na', prepulses, vhold=-120, vpost=-20,
-                                        tpre=3000, tstep=500, tbetween=5, tpost=20)
-        sim_rec = sim.RecoverySim('ina.i_Na', intervals, vstep=-40, vhold=-120, vpost=-30,
+                                        tpre=3000, tstep=500, tbetween=0, tpost=20)
+        sim_rec = sim.RecoverySim('ina.i_Na', intervals, vstep=-30, vhold=-120, vpost=-30,
                                   tpre=3000, tstep=20, tpost=20)
         self.simulations = [sim_act, sim_act2, sim_inact, sim_rec]
 
@@ -238,7 +235,7 @@ class FastSodium(AbstractChannel):
         if sim_act2_out is None:
             return None
 
-        sim_inact_out = self.simulations[2].run(s, sim_act2_out[0])
+        sim_inact_out = self.simulations[2].run(s)
         if sim_inact_out is None:
             return None
 

@@ -68,6 +68,7 @@ class ChannelProto():
         print result.getmean()
         print result.getvar()
         outfile.write(str(result.pool)+"\n")
+        outfile.write(str(result.weights)+"\n")
         outfile.write(str(result.getmean())+"\n")
         outfile.write(str(result.getvar())+"\n")
 
@@ -95,8 +96,8 @@ def LossFunction(pred_vals, exp_vals):
         i += len(p)
         tot_err += err
 
-    # Forces overflow to infinity for unreasonable values
-    if tot_err > 15:
+    #Forces overflow to infinity for unreasonable values
+    if tot_err > 10:
         return float("inf")
 
     return tot_err
@@ -104,7 +105,6 @@ def LossFunction(pred_vals, exp_vals):
 def ResetSim(s, params, channel):
     # Reset the model state before evaluating again
     s.reset()
-
     # Set parameters
     for i, p in enumerate(params):
         s.set_constant(channel.parameters[i], p)
@@ -143,6 +143,7 @@ if __name__ == '__main__':
 
     # Bring in specific channel settings
     t_type_calcium = channel_setup.TTypeCalcium()
+    #fast_sodium = channel_setup.FastSodium()
 
     x = ChannelProto()
     x.fit(t_type_calcium)

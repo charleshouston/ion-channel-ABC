@@ -130,16 +130,14 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
     v.set_binding('pace')
     # Create the simulation
     sim = myokit.Simulation(m)
-    reversal_potential = m.get('icat.E_CaT').value()
 
     # Initializes posterior to be a draw of particles from prior
     for i in range(post_size):
-
         # Distance function returns "inf" in the case of overflow error
         curr_err = float("inf")
         while curr_err == float("inf"):
             post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i],exp_vals,sim,reversal_potential)
+            curr_err = dist(post[i],exp_vals,sim)
 
         total_err = total_err + curr_err
         max_err = max(curr_err,max_err)
@@ -161,6 +159,9 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
     while K > err_cutoff:
         #tr.print_diff()
         logfile.write("Target = "+str(thresh_val-K)+" (K = "+str(K)+")\n")
+
+        # Force empty buffer to file
+        logfile.flush()
 
         next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool,logfile)
 
@@ -185,8 +186,6 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
             logfile.write("Target not met\n")
             K = K*0.5
 
-        # Force empty buffer to file
-        logfile.flush()
 
     print thresh_val
     logfile.close()
