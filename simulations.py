@@ -21,6 +21,8 @@ class AbstractSim(object):
 
 class ActivationSim(AbstractSim):
     '''
+    MEASURE: Simple measure of peak current response to
+             different voltage pulses
     Runs activation simulation protocol (as described in Deng et al, 2009).
     Voltage at ```vhold``` for ```tpre```.
     Voltage to entry in ```vsteps``` for ```tstep```.
@@ -55,7 +57,7 @@ class ActivationSim(AbstractSim):
         act_peaks = []
         for d in ds:
             d.trim_left(self.pre, adjust=True)
-            d.trim_right(self.period - self.pre - 100)
+            d.trim_right(self.period - self.pre)
             act_peaks.append(max(min(d[self.variable]), max(d[self.variable]), key=abs))
         act_peaks = np.array(act_peaks)
 
@@ -69,6 +71,8 @@ class ActivationSim(AbstractSim):
 
 class InactivationSim(AbstractSim):
     '''
+    MEASURE: Comparing peak current values after being held at a prepulse
+             voltage prior to the pulse.
     Runs the inactivation stimulation protocol from Deng 2009.
     Hold potential at ```vhold``` for ```tpre```.
     Hold potential at entry from ```prepulses``` for ```tstep```.
@@ -87,37 +91,41 @@ class InactivationSim(AbstractSim):
             tpost     = tpost, # Final pulse
         )
         self.t        = self.protocol.characteristic_time()
-        self.period   = tpre+tstep+tbetween+tpost
-        # Variables for cutting output data
-        self.pre      = tpre + tstep - 100
-        self.post     = tbetween + tpost
+        self.pre      = tpre + tstep + tbetween
+        self.post     = tpost
         self.variable = variable
+        self.prepulses = prepulses
 
-    def run(self, s, act_peaks):
+    def run(self, s):
         s.reset()
         s.set_protocol(self.protocol)
 
         # Run the simulation
+        log_rate = 10.0 # Recording per ms
         try:
-            d = s.run(self.t, log=['environment.time', self.variable], log_interval=.1)
+            d = s.run(self.t, log=['environment.time', self.variable], log_interval=1/log_rate)
         except:
             return None
 
-        # Trim each new log to contain only the 100ms of peak current
-        ds = d.split_periodic(self.period, adjust=True)
+        # Get maximum current
+        max_peak = min(d[self.variable])
+
+        # Get normalised inactivation currents
         inact = []
-        for d in ds:
+        d.npview()
+        for pp in self.prepulses:
             d.trim_left(self.pre, adjust=True)
-            d.trim_right(self.post)
-            d.npview()
-            inact.append(max(np.abs(d[self.variable])))
+            inact.append(max(np.abs(d[self.variable][0:int(round(self.post*log_rate))])))
+            d.trim_left(self.post, adjust=True)
 
         inact = np.array(inact)
-        inact = inact / max(np.abs(act_peaks))
+        inact = inact / abs(max_peak)
         return inact
 
 class RecoverySim(AbstractSim):
     '''
+    MEASURE: Comparing difference in magnitude of current in two pulses
+             separated by variable time interval.
     Runs the recovery simulation from Deng 2009.
     Hold potential at ```vhold``` for ```tpre```.
     Step potential to ```vstep``` for ```tstep```.
@@ -138,8 +146,8 @@ class RecoverySim(AbstractSim):
             tpost         = tpost, # Final pulse
         )
         self.t            = self.protocol.characteristic_time()
-        self.period_const = tpre+tstep+tpost
-        self.pre          = tpre+tstep-100
+        self.period_const = tpre + tstep
+        self.tpost = tpost
         self.variable     = variable
 
     def run(self, s):
@@ -147,29 +155,21 @@ class RecoverySim(AbstractSim):
         s.set_protocol(self.protocol)
 
         # Run the simulation
+        log_rate = 10.0
         try:
-            d = s.run(self.t, log=['environment.time', self.variable], log_interval=.1)
+            d = s.run(self.t, log=['environment.time', self.variable], log_interval=1/log_rate)
         except:
             return None
 
-        # Trim each new log to contain only the 100ms of peak current
-        ds = []
+        # Work through logs to get peak recovery currents
         d = d.npview()
-        for interval in self.intervals:
-            # Split each experiment
-            d_split,d = d.split(interval+self.period_const)
-            ds.append(d_split)
-
-            # Adjust times of remaining data
-            if len(d['environment.time']):
-                d['environment.time'] -= d['environment.time'][0]
-
         rec = []
-
-        for d in ds:
-            d.trim_left(self.pre, adjust=True)
-            rec.append(max(min(d[self.variable]), max(d[self.variable]), key=abs))
+        max_peak = min(d[self.variable])
+        for interval in self.intervals:
+            d.trim_left(self.period_const, adjust=True)
+            rec.append(min(d[self.variable][0:int(round((interval+self.tpost)*log_rate))]))
+            d.trim_left(interval+self.tpost, adjust=True)
 
         rec = np.array(rec)
-        rec = -1*rec / np.max(np.abs(rec))
+        rec = rec / max_peak 
         return rec
