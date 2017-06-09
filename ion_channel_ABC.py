@@ -45,7 +45,7 @@ class ChannelProto():
             kernel = channel.kernel
             if new == None:
                 new = []
-                perturb = [0.1*g.draw() for g in kernel]
+                perturb = [g.draw() for g in kernel]
                 for i in range(len(orig)):
                     new = new + [orig[i]+perturb[i]]
                 return new

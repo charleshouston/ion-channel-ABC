@@ -67,7 +67,6 @@ class TTypeCalcium(AbstractChannel):
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
-        sigma = 0.1
         self.kernel = []
         for pr in self.prior_intervals:
             param_range = pr[1]-pr[0]
@@ -187,7 +186,6 @@ class FastSodium(AbstractChannel):
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
-        sigma = 0.1
         self.kernel = []
         for pr in self.prior_intervals:
             param_range = pr[1]-pr[0]
