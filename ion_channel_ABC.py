@@ -142,7 +142,7 @@ def prior_func(priors,params):
 if __name__ == '__main__':
 
     # Bring in specific channel settings
-    #t_type_calcium = channel_setup.TTypeCalcium()
-    fast_sodium = channel_setup.FastSodium()
+    channel = channel_setup.TTypeCalcium()
+    #channel = channel_setup.FastSodium()
     x = ChannelProto()
-    x.fit(fast_sodium)
+    x.fit(channel)
