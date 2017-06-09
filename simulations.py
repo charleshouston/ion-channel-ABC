@@ -21,6 +21,8 @@ class AbstractSim(object):
 
 class ActivationSim(AbstractSim):
     '''
+    MEASURE: Simple measure of peak current response to
+             different voltage pulses
     Runs activation simulation protocol (as described in Deng et al, 2009).
     Voltage at ```vhold``` for ```tpre```.
     Voltage to entry in ```vsteps``` for ```tstep```.
@@ -69,6 +71,8 @@ class ActivationSim(AbstractSim):
 
 class InactivationSim(AbstractSim):
     '''
+    MEASURE: Comparing peak current values after being held at a prepulse
+             voltage prior to the pulse.
     Runs the inactivation stimulation protocol from Deng 2009.
     Hold potential at ```vhold``` for ```tpre```.
     Hold potential at entry from ```prepulses``` for ```tstep```.
@@ -87,8 +91,6 @@ class InactivationSim(AbstractSim):
             tpost     = tpost, # Final pulse
         )
         self.t        = self.protocol.characteristic_time()
-        self.period   = tpre+tstep+tbetween+tpost
-        # Variables for cutting output data
         self.pre      = tpre + tstep + tbetween
         self.post     = tpost
         self.variable = variable
@@ -99,7 +101,7 @@ class InactivationSim(AbstractSim):
         s.set_protocol(self.protocol)
 
         # Run the simulation
-        log_rate = 10.0
+        log_rate = 10.0 # Recording per ms
         try:
             d = s.run(self.t, log=['environment.time', self.variable], log_interval=1/log_rate)
         except:
@@ -108,22 +110,13 @@ class InactivationSim(AbstractSim):
         # Get maximum current
         max_peak = min(d[self.variable])
 
-        # Trim each new log
-        #ds = d.split_periodic(self.period, adjust=True)
-
+        # Get normalised inactivation currents
         inact = []
         d.npview()
-        # import pdb;pdb.set_trace()
         for pp in self.prepulses:
             d.trim_left(self.pre, adjust=True)
             inact.append(max(np.abs(d[self.variable][0:int(round(self.post*log_rate))])))
             d.trim_left(self.post, adjust=True)
-
-        # for d in ds:
-        #     d.trim_left(self.pre, adjust=True)
-        #     d.trim_right(self.post)
-        #     d.npview()
-        #     inact.append(max(np.abs(d[self.variable])))
 
         inact = np.array(inact)
         inact = inact / abs(max_peak)
@@ -131,6 +124,8 @@ class InactivationSim(AbstractSim):
 
 class RecoverySim(AbstractSim):
     '''
+    MEASURE: Comparing difference in magnitude of current in two pulses
+             separated by variable time interval.
     Runs the recovery simulation from Deng 2009.
     Hold potential at ```vhold``` for ```tpre```.
     Step potential to ```vstep``` for ```tstep```.
@@ -151,9 +146,8 @@ class RecoverySim(AbstractSim):
             tpost         = tpost, # Final pulse
         )
         self.t            = self.protocol.characteristic_time()
-        self.period_const = tpre+tstep#+tpost
+        self.period_const = tpre + tstep
         self.tpost = tpost
-        # self.pre          = tpre+tstep
         self.variable     = variable
 
     def run(self, s):
@@ -167,7 +161,7 @@ class RecoverySim(AbstractSim):
         except:
             return None
 
-        # Trim each new log to contain only the 100ms of peak current
+        # Work through logs to get peak recovery currents
         d = d.npview()
         rec = []
         max_peak = min(d[self.variable])
@@ -177,5 +171,5 @@ class RecoverySim(AbstractSim):
             d.trim_left(interval+self.tpost, adjust=True)
 
         rec = np.array(rec)
-        rec = rec / max_peak #np.max(np.abs(rec))
+        rec = rec / max_peak 
         return rec

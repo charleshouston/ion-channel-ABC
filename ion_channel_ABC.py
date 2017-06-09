@@ -45,7 +45,7 @@ class ChannelProto():
             kernel = channel.kernel
             if new == None:
                 new = []
-                perturb = [g.draw() for g in kernel]
+                perturb = [0.1*g.draw() for g in kernel]
                 for i in range(len(orig)):
                     new = new + [orig[i]+perturb[i]]
                 return new
@@ -96,8 +96,8 @@ def LossFunction(pred_vals, exp_vals):
         i += len(p)
         tot_err += err
 
-    #Forces overflow to infinity for unreasonable values
-    if tot_err > 10:
+    # Forces overflow to infinity for unreasonable values
+    if tot_err > 5:
         return float("inf")
 
     return tot_err
@@ -142,8 +142,7 @@ def prior_func(priors,params):
 if __name__ == '__main__':
 
     # Bring in specific channel settings
-    t_type_calcium = channel_setup.TTypeCalcium()
-    #fast_sodium = channel_setup.FastSodium()
-
+    #t_type_calcium = channel_setup.TTypeCalcium()
+    fast_sodium = channel_setup.FastSodium()
     x = ChannelProto()
-    x.fit(t_type_calcium)
+    x.fit(fast_sodium)

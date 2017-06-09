@@ -65,23 +65,27 @@ class TTypeCalcium(AbstractChannel):
                                 (0,100),
                                 (1,100)]
 
-        # Parameter specific distributions for perturbing parameters
-        g01 = Dist.Normal(0.0,0.01)
-        g10 = Dist.Normal(0.0,1.0)
-        g100 = Dist.Normal(0.0,10.0)
-        self.kernel = [g100, g10, g10, g100, g100, g10, g100, g100,
-                       g100, g10, g01, g100, g100, g01, g100, g100]
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        sigma = 0.1
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
 
         # Loading T-type channel experimental data
         vsteps, act_peaks_exp = data_icat.fig1B()
         vsteps = np.array(vsteps)
         act_peaks_exp = np.array(act_peaks_exp)
+
         vsteps_act, act_exp = data_icat.fig3Bact()
         vsteps_act = np.array(vsteps_act)
         act_exp = np.array(act_exp)
+
         prepulses, inact_exp = data_icat.fig3Binact()
         prepulses = np.array(prepulses)
         inact_exp = np.array(inact_exp)
+
         intervals, rec_exp = data_icat.fig4B()
         intervals = np.array(intervals)
         rec_exp = np.array(rec_exp)

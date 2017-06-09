@@ -137,7 +137,7 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
         curr_err = float("inf")
         while curr_err == float("inf"):
             post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i],exp_vals,sim)
+            curr_err = dist(post[i], exp_vals, sim)
 
         total_err = total_err + curr_err
         max_err = max(curr_err,max_err)
@@ -186,13 +186,12 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
             logfile.write("Target not met\n")
             K = K*0.5
 
-
     print thresh_val
     logfile.close()
     return distributions.Arbitrary(post,wts)
 
 
-''' 
+'''
     Helper function for approx_bayes_smc_adaptive
         Draws a new estimate of posterior given previous estimate plus target threshold
 
