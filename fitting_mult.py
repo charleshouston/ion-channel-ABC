@@ -133,7 +133,6 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
 
     # Initializes posterior to be a draw of particles from prior
     for i in range(post_size):
-
         # Distance function returns "inf" in the case of overflow error
         curr_err = float("inf")
         while curr_err == float("inf"):

@@ -113,7 +113,7 @@ class TTypeCalcium(AbstractChannel):
         if sim_act_out is None:
             return None
 
-        sim_inact_out = self.simulations[1].run(s, sim_act_out[0])
+        sim_inact_out = self.simulations[1].run(s)
         if sim_inact_out is None:
             return None
 

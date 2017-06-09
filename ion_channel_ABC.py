@@ -105,7 +105,6 @@ def LossFunction(pred_vals, exp_vals):
 def ResetSim(s, params, channel):
     # Reset the model state before evaluating again
     s.reset()
-
     # Set parameters
     for i, p in enumerate(params):
         s.set_constant(channel.parameters[i], p)
