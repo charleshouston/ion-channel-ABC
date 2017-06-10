@@ -30,7 +30,7 @@ s = myokit.Simulation(m)
 res_orig = channel.simulate(s)
 
 # Open results from ABC simulation
-f = open('results_ina.txt')
+f = open('results_' + str(channel.name) + '.txt')
 pool = f.readline()
 pool = ast.literal_eval(pool)
 
