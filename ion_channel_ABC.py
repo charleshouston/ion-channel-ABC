@@ -15,11 +15,7 @@ import myokit
 class ChannelProto():
 
     # Fits the ion channel parameters
-    def fit(self):
-
-        # Bring in specific channel settings
-        channel = channel_setup.TTypeCalcium()
-
+    def fit(self, channel):
         # Output file
         outfile = open('results/results_' + channel.name + '.txt','w')
 
@@ -33,7 +29,7 @@ class ChannelProto():
             init.append(priors[-1].getmean())
 
         # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
-        def distance(params,exp_vals,s,reversal_potential):
+        def distance(params,exp_vals,s):
 
             # Reset simulation with new parameters
             ResetSim(s, params, channel)
@@ -72,6 +68,7 @@ class ChannelProto():
         print result.getmean()
         print result.getvar()
         outfile.write(str(result.pool)+"\n")
+        outfile.write(str(result.weights)+"\n")
         outfile.write(str(result.getmean())+"\n")
         outfile.write(str(result.getvar())+"\n")
 
@@ -100,7 +97,7 @@ def LossFunction(pred_vals, exp_vals):
         tot_err += err
 
     # Forces overflow to infinity for unreasonable values
-    if tot_err > 15:
+    if tot_err > 5:
         return float("inf")
 
     return tot_err
@@ -108,7 +105,6 @@ def LossFunction(pred_vals, exp_vals):
 def ResetSim(s, params, channel):
     # Reset the model state before evaluating again
     s.reset()
-
     # Set parameters
     for i, p in enumerate(params):
         s.set_constant(channel.parameters[i], p)
@@ -144,5 +140,9 @@ def prior_func(priors,params):
     return prob
 
 if __name__ == '__main__':
+
+    # Bring in specific channel settings
+    channel = channel_setup.TTypeCalcium()
+    #channel = channel_setup.FastSodium()
     x = ChannelProto()
-    x.fit()
+    x.fit(channel)

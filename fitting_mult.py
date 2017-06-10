@@ -5,7 +5,6 @@ Date : 01/06/2017
 ABC parameter estimation, adapted from Daly et al, 2015 for use in myokit.
 Parallel processing version.
 '''
-
 import math
 from numpy import *
 import distributions
@@ -13,7 +12,7 @@ import distributions
 import myokit
 import random
 
-from pathos.pools import ProcessPool as Pool
+import pathos.multiprocessing as mp
 
 '''
     ABC-SMC as Described by Toni et al. (2009), modified with adaptive error shrinking
@@ -66,7 +65,6 @@ class Engine(object):
 
         # Create the simulation
         sim = myokit.Simulation(m)
-        reversal_potential = m.get('icat.E_CaT').value()
 
         draw = None
         iters = 0
@@ -90,7 +88,7 @@ class Engine(object):
             if self.prior_func(self.priors,draw) == 0:
                 draw = None
                 continue
-            if self.dist(draw,self.exp_vals,sim,reversal_potential) > self.thresh_val:
+            if self.dist(draw, self.exp_vals, sim) > self.thresh_val:
                 draw = None
 
             # Check if the maximum allowed iterations have been exceeded.
@@ -131,16 +129,14 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
     v.set_binding('pace')
     # Create the simulation
     sim = myokit.Simulation(m)
-    reversal_potential = m.get('icat.E_CaT').value()
 
     # Initializes posterior to be a draw of particles from prior
     for i in range(post_size):
-
         # Distance function returns "inf" in the case of overflow error
         curr_err = float("inf")
         while curr_err == float("inf"):
             post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i],exp_vals,sim,reversal_potential)
+            curr_err = dist(post[i], exp_vals, sim)
 
         total_err = total_err + curr_err
         max_err = max(curr_err,max_err)
@@ -148,12 +144,6 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
     # Initialize K to half the average population error
     K = total_err/(2.0*post_size)
     thresh_val = max_err
-
-    # Start parallel pool
-    try:
-        pool = Pool() # can specify number of nodes here
-    except:
-        print "Could not start parallel pool."
 
     # Log results at intermediary stages
     logfile = open('logs/fitting_mult.log','w')
@@ -163,7 +153,10 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
         #tr.print_diff()
         logfile.write("Target = "+str(thresh_val-K)+" (K = "+str(K)+")\n")
 
-        next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,pool,logfile)
+        # Force empty buffer to file
+        logfile.flush()
+
+        next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,logfile)
 
         if next_post != None and next_wts != None:
             post = next_post
@@ -186,15 +179,12 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
             logfile.write("Target not met\n")
             K = K*0.5
 
-        # Force empty buffer to file
-        logfile.flush()
-
     print thresh_val
     logfile.close()
     return distributions.Arbitrary(post,wts)
 
 
-''' 
+'''
     Helper function for approx_bayes_smc_adaptive
         Draws a new estimate of posterior given previous estimate plus target threshold
 
@@ -205,33 +195,45 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
 
 
 
-def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,pool,logfile):
+def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,logfile):
     next_post, next_wts = [None]*post_size, [0]*post_size
     total_iters = 0
     engine = Engine(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
 
-    outputs = []
+    # Start parallel pool
+    try:
+        pool_size = min(mp.cpu_count(), 16) # don't be greedy now
+        pool = mp.Pool(processes=pool_size, maxtasksperchild=1)
+    except:
+        raise Exception('Could not start parallel pool!')
 
-    # Get number of nodes in process pool
-    node_num = pool.ncpus
+    def failed_sim_callback(r):
+        # If failed, stop all other tasks
+        if r is None:
+            pool.terminate()
 
-    # Map the simulations to multiple processes in batches.
-    # pathos doesn't support the use of callbacks so this method is a compromise
-    # to check whether a result was produced after each set of simulations.
-    i = 0
-    while i < post_size:
-        res = pool.map(engine, range(i, min(i+node_num, post_size)))
-        # Check no results failed
-        for r in res:
-            if r == None: return None, None
-        outputs = outputs + res
-        i += node_num
+    # Async send tasks to pool of parallel workers
+    # Use apply instead of map as we want to stop if
+    # any one simulation fails the criteria.
+    results = []
+    for i in range(0, post_size):
+        r = pool.apply_async(engine, (i,), callback=failed_sim_callback)
+        results.append(r)
 
-    #outputs = pool.map(engine, range(post_size), callback=check_output)
+    # Now wait for workers to finish
+    pool.close()
+    pool.join()
 
-    # Process outputs from parallel simulation
+    # If the pool was terminated, a result will not be ready
+    # Return None to signal failure
+    for r in results:
+        if not r.ready():
+            return None, None
+
+    # Otherwise, process the outputs from the parallel simulation
     total_iters = 0
-    for output in outputs:
+    for r in results:
+        output = r.get()
         next_post[output[0]] = output[1]
         next_wts[output[0]] = output[2]
         total_iters += output[3] # sum total iterations
