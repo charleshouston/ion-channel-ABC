@@ -234,6 +234,8 @@ def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,p
     total_iters = 0
     for r in results:
         output = r.get()
+        if output is None:
+            return None, None
         next_post[output[0]] = output[1]
         next_wts[output[0]] = output[2]
         total_iters += output[3] # sum total iterations
