@@ -10,7 +10,6 @@ from numpy import *
 import distributions
 #from pympler import tracker
 import myokit
-import random
 
 import pathos.multiprocessing as mp
 
