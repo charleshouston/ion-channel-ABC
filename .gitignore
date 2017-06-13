@@ -2,3 +2,4 @@ logs/
 results/
 *.pyc
 *.#
+*.DS_Store
