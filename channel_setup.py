@@ -11,6 +11,7 @@ import distributions as Dist
 # Data imports
 import data.icat.data_icat as data_icat
 import data.ina.data_ina as data_ina
+import data.ikur.data_ikur as data_ikur
 
 # Experimental simulations import
 import simulations as sim
@@ -97,7 +98,7 @@ class TTypeCalcium(AbstractChannel):
 
         # Setup simulations
         sim_act = sim.ActivationSim('icat.i_CaT', vsteps, reversal_potential=45, vhold=-80,
-                                           tpre=5000, tstep=300)
+                                    tpre=5000, tstep=300)
         sim_inact = sim.InactivationSim('icat.i_CaT', prepulses, vhold=-80, vpost=-20,
                                         tpre=5000, tstep=1000, tbetween=5, tpost=300)
         sim_rec = sim.RecoverySim('icat.i_CaT', intervals, vstep=-20, vhold=-80, vpost=-20,
@@ -246,3 +247,88 @@ class FastSodium(AbstractChannel):
             return None
 
         return [sim_act_out[0], sim_act2_out[1], sim_inact_out, sim_rec_out]
+
+class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
+    def __init__(self):
+        self.name = 'ikur'
+        self.model_name = 'Bondarenko2004_iKur.mmt'
+
+        # Parameters involved in ABC process
+        self.parameters = ['ikur.assk1',
+                           'ikur.assk2',
+                           'ikur.atauk1',
+                           'ikur.atauk2',
+                           'ikur.atauk3',
+                           'ikur.atauk4',
+                           'ikur.issk1',
+                           'ikur.issk2',
+                           'ikur.itauk1',
+                           'ikur.itauk2',
+                           'ikur.itauk3',
+                           'ikur.itauk4']
+
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0, 10),
+                                (1, 100),
+                                (0,100),
+                                (0,10),
+                                (1,100),
+                                (0,1.0),
+                                (0,10),
+                                (1,100),
+                                (0,1000),
+                                (0,100),
+                                (1,100),
+                                (0,10000)]
+
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
+
+        # Loading i_Kur channel experimental data
+        vsteps, act_peaks_exp = data_ikur.IV_MuharaniFig2B()
+        vsteps = np.array(vsteps)
+        act_peaks_exp = np.array(act_peaks_exp)
+
+        prepulses, inact_exp = data_ikur.Inact_XuFig9C()
+        prepulses = np.array(prepulses)
+        inact_exp = np.array(inact_exp)
+
+        intervals, rec_exp = data_ikur.Recovery_ZuFig10C()
+        intervals = np.array(intervals)
+        rec_exp = np.array(rec_exp)
+
+        self.data_exp = np.hstack(([vsteps, act_peaks_exp],
+                                   [prepulses, inact_exp],
+                                   [intervals, rec_exp]))
+
+        # Setup simulations
+        sim_act = sim.ActivationSim('ikur.i_Kur', vsteps, reversal_potential=0,
+                                    vhold=-60, tpre=5000, tstep=300)
+        sim_inact = sim.InactivationSim('ikur.i_Kur', prepulses, vhold=-60, vpost=50,
+                                        tpre=0, tstep=5000, tbetween=0, tpost=5000)
+        sim_rec = sim.RecoverySim('ikur.i_Kur', intervals, vstep=50, vhold=-70, vpost=50,
+                                  tpre=3000, tstep=300, tpost=300)
+        self.simulations = [sim_act, sim_inact, sim_rec]
+
+    def simulate(self, s):
+        '''
+        Run the simulations necessary to generate values to compare with
+        experimental results
+        '''
+        sim_act_out = self.simulations[0].run(s)
+        if sim_act_out is None:
+            return None
+
+        sim_inact_out = self.simulations[1].run(s)
+        if sim_inact_out is None:
+            return None
+
+        sim_rec_out = self.simulations[2].run(s)
+        if sim_rec_out is None:
+            return None
+
+        return [sim_act_out[0], sim_inact_out, sim_rec_out]
