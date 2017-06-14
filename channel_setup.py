@@ -259,7 +259,6 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
                            'ikur.atauk1',
                            'ikur.atauk2',
                            'ikur.atauk3',
-                           'ikur.atauk4',
                            'ikur.issk1',
                            'ikur.issk2',
                            'ikur.itauk1',
@@ -273,7 +272,6 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
                                 (0,100),
                                 (0,10),
                                 (1,100),
-                                (0,1.0),
                                 (0,10),
                                 (1,100),
                                 (0,1000),
@@ -297,7 +295,7 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
         prepulses = np.array(prepulses)
         inact_exp = np.array(inact_exp)
 
-        intervals, rec_exp = data_ikur.Recovery_ZuFig10C()
+        intervals, rec_exp = data_ikur.Recovery_XuFig10C()
         intervals = np.array(intervals)
         rec_exp = np.array(rec_exp)
 

@@ -1,6 +1,5 @@
 [[model]]
-name: Bondarenko 2004 Ultra rapidly activating delayed
-      rectifier K Current
+name: Bondarenko 2004 Ultra rapidly activating delayed rectifier K Current
 author: Charles Houston
 
 # Initial values
@@ -20,12 +19,12 @@ dot(V) = ikur.i_Kur / Cm
 
 [ikur]
 use membrane.V as V
-g_kur = 2.25
+g_kur = 0.160
     in [mS/uF]
 T = 310
   in [K]
-F = 96487
-  in [C/mol]
+F = 96.5
+  in [C/mmol]
 R = 8.314
   in [J/mol/K]
 Ko = 5.4
@@ -38,7 +37,7 @@ G_kur = g_kur * a_ur * i_ur
 i_Kur = G_kur * (V - E_K)
       in [uA/cm^2]
 
-dot(a_ur) = (a_ss - a_ur) / tau_a_ur
+dot(a_ur) = (a_ur_ss - a_ur) / tau_a_ur
     in [1]
 a_ur_ss = 1 / (1 + exp(-(V + assk1) / assk2))
     in [1]
