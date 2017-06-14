@@ -32,7 +32,7 @@ class ActivationSim(AbstractSim):
         self.variable           = variable # Variable of interest
         self.vsteps             = np.array(vsteps) # Voltage steps in protocol
         self.protocol           = protocols.steptrain(
-            vsteps              = self.vsteps, 
+            vsteps              = self.vsteps,
             vhold               = vhold, # Holding potential
             tpre                = tpre, # Pre-conditioning simulation
             tstep               = tstep, # Time held at ```vsteps```
@@ -106,13 +106,14 @@ class InactivationSim(AbstractSim):
             d = s.run(self.t, log=['environment.time', self.variable], log_interval=1/log_rate)
         except:
             return None
+        d.npview()
+
 
         # Get maximum current
-        max_peak = min(d[self.variable])
+        max_peak = max(np.abs(d[self.variable]))
 
         # Get normalised inactivation currents
         inact = []
-        d.npview()
         for pp in self.prepulses:
             d.trim_left(self.pre, adjust=True)
             inact.append(max(np.abs(d[self.variable][0:int(round(self.post*log_rate))])))
@@ -164,10 +165,10 @@ class RecoverySim(AbstractSim):
         # Work through logs to get peak recovery currents
         d = d.npview()
         rec = []
-        max_peak = min(d[self.variable])
+        max_peak = max(np.abs(d[self.variable]))
         for interval in self.intervals:
             d.trim_left(self.period_const, adjust=True)
-            rec.append(min(d[self.variable][0:int(round((interval+self.tpost)*log_rate))]))
+            rec.append(max(np.abs((d[self.variable][0:int(round((interval+self.tpost)*log_rate))]))))
             d.trim_left(interval+self.tpost, adjust=True)
 
         rec = np.array(rec)
