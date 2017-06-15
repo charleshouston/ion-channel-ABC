@@ -17,6 +17,8 @@ import pathos.multiprocessing as mp
     ABC-SMC as Described by Toni et al. (2009), modified with adaptive error shrinking
 
     INPUTS:
+        channel: channel object holding information about experimental protocols and
+                 parameters to alter
         params: initial list of parameters (for sizing purposes)
         priors:     list of Distribution objects
         exp_vals:   list of experimental values
@@ -33,8 +35,8 @@ import pathos.multiprocessing as mp
         distributions.Arbitrary object containing final posterior estimating population
 '''
 class Engine(object):
-    def __init__(self,cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
-        self.cell_file=cell_file
+    def __init__(self,channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
+        self.channel=channel
         self.params=params
         self.priors=priors
         self.exp_vals=exp_vals
@@ -48,22 +50,8 @@ class Engine(object):
         self.maxiter=maxiter
 
     def __call__(self, i):
-        # Seed random number generator
+        # Seed random number generator for each worker
         random.seed()
-
-        # Get the cell model
-        m,p,x = myokit.load(self.cell_file)
-
-        # Get membrane potential
-        v = m.get('membrane.V')
-        # Demote v from a state to an ordinary variable
-        v.demote()
-        v.set_rhs(0)
-        # Set voltage to pacing variable
-        v.set_binding('pace')
-
-        # Create the simulation
-        sim = myokit.Simulation(m)
 
         draw = None
         iters = 0
@@ -87,7 +75,7 @@ class Engine(object):
             if self.prior_func(self.priors,draw) == 0:
                 draw = None
                 continue
-            if self.dist(draw, self.exp_vals, sim) > self.thresh_val:
+            if self.dist(draw, self.exp_vals, self.channel) > self.thresh_val:
                 draw = None
 
             # Check if the maximum allowed iterations have been exceeded.
@@ -109,25 +97,12 @@ class Engine(object):
         return [i, next_post, next_wt, iters]
 
 
-def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
+def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
 
     #tr = tracker.SummaryTracker()
 
     post, wts = [None]*post_size, [1.0/post_size]*post_size
     total_err, max_err = 0.0, 0.0
-
-    # Get the cell model
-    m,p,x = myokit.load(cell_file)
-
-    # Get membrane potential
-    v = m.get('membrane.V')
-    # Demote v from a state to an ordinary variable
-    v.demote()
-    v.set_rhs(0)
-    # Set voltage to pacing variable
-    v.set_binding('pace')
-    # Create the simulation
-    sim = myokit.Simulation(m)
 
     # Initializes posterior to be a draw of particles from prior
     for i in range(post_size):
@@ -135,7 +110,7 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
         curr_err = float("inf")
         while curr_err == float("inf"):
             post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i], exp_vals, sim)
+            curr_err = dist(post[i], exp_vals, channel)
 
         total_err = total_err + curr_err
         max_err = max(curr_err,max_err)
@@ -155,7 +130,7 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
         # Force empty buffer to file
         logfile.flush()
 
-        next_post, next_wts = abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,logfile)
+        next_post, next_wts = abc_inner(channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val-K,post,wts,post_size,maxiter,logfile)
 
         if next_post != None and next_wts != None:
             post = next_post
@@ -194,10 +169,10 @@ def approx_bayes_smc_adaptive(cell_file,params,priors,exp_vals,prior_func,kern,d
 
 
 
-def abc_inner(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,logfile):
+def abc_inner(channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter,logfile):
     next_post, next_wts = [None]*post_size, [0]*post_size
     total_iters = 0
-    engine = Engine(cell_file,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
+    engine = Engine(channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter)
 
     # Start parallel pool
     try:

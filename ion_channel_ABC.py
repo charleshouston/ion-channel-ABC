@@ -28,17 +28,16 @@ class ChannelProto():
             priors.append(Dist.Uniform(pr[0],pr[1]))
             init.append(priors[-1].getmean())
 
-        # ABC expects this form - sets alpha/beta, runs protocol, then returns sq_err of result
-        def distance(params,exp_vals,s):
+        # Distance function for ABC process
+        def distance(params, exp_vals, channel_iter):
 
             # Reset simulation with new parameters
-            ResetSim(s, params, channel)
+            channel_iter.reset_params(params)
 
             # Simulate channel with new parameters
-            sim_vals = channel.simulate(s)
+            sim_vals = channel_iter.simulate()
 
             return LossFunction(sim_vals, exp_vals)
-
 
         def kern(orig,new=None):
             # Get channel specific kernel
@@ -56,13 +55,10 @@ class ChannelProto():
                 return prob
 
         # Experimental data
-        exp_vals = channel.data_exp[1]
-
-        # Cell configuration filename
-        cell_file = 'models/' + channel.model_name
+        exp_vals = channel.data_exp
 
         # Calculate result by approximate Bayesian computation
-        result = fitting.approx_bayes_smc_adaptive(cell_file,init,priors,exp_vals,prior_func,kern,distance,20,50,0.003)
+        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,20,50,0.003)
 
         # Write results to the standard output and ABCPredPotassium.txt
         print result.getmean()
@@ -78,22 +74,20 @@ class ChannelProto():
 
 # Loss function for three voltage clamp experiments from Deng 2009.
 # Predicted and experimental values are concatenated before using the function.
-def LossFunction(pred_vals, exp_vals):
+def LossFunction(sim_vals, exp_vals):
     # If the simulation failed, pred_vals should be None
     # We return infinite loss
-    if pred_vals is None:
+    if sim_vals is None:
         return float("inf")
 
     # Calculate normalised (by mean of experimental values) RMSE for each experiment
     tot_err = 0
-    i = 0
-    for p in pred_vals:
-        e = exp_vals[i:i+len(p)]
+    for i,p in enumerate(sim_vals):
+        p = np.array(p)
+        e = np.array(exp_vals[i][1])
         err = np.sum(np.square(p-e))
         err = pow(err/len(p),0.5)
         err = err/abs(np.mean(e))
-
-        i += len(p)
         tot_err += err
 
     # Forces overflow to infinity for unreasonable values
@@ -142,7 +136,8 @@ def prior_func(priors,params):
 if __name__ == '__main__':
 
     # Bring in specific channel settings
-    channel = channel_setup.TTypeCalcium()
+    #channel = channel_setup.TTypeCalcium()
     #channel = channel_setup.FastSodium()
+    channel = channel_setup.UltraRapidlyActivatingDelayedPotassium()
     x = ChannelProto()
     x.fit(channel)

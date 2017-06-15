@@ -20,10 +20,36 @@ class AbstractChannel(object):
     def __init__(self):
         self.parameters = []
         self.simulations = []
-    def simulate(self, s):
-        # Run previously defined simulations
+
+    def reset_params(self, new_params):
+        '''
+        Set parameters of channel to new values in prior draw.
+        '''
+        if len(self.simulations) is 0:
+            print "Need to add simulations to channel first!"
+        else:
+            for sim in self.simulations:
+                sim.set_parameters(self.parameters, new_params)
+
+    def simulate(self):
+        '''
+        Run the simulations necessary to generate values to compare with
+        experimental results.
+        '''
+        if len(self.simulations) is 0:
+            print "Need to add simulations to channel first!"
+            return None
+
+        sim_output = []
+
         for simulation in self.simulations:
-            simulation.run(s)
+            out = simulation.run(self.model_name)
+            if out is None:
+                return None
+            sim_output.append(out)
+
+        return sim_output
+
 
 class TTypeCalcium(AbstractChannel):
     def __init__(self):
@@ -74,55 +100,26 @@ class TTypeCalcium(AbstractChannel):
             self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
 
         # Loading T-type channel experimental data
-        vsteps, act_peaks_exp = data_icat.fig1B()
-        vsteps = np.array(vsteps)
-        act_peaks_exp = np.array(act_peaks_exp)
-
-        vsteps_act, act_exp = data_icat.fig3Bact()
-        vsteps_act = np.array(vsteps_act)
-        act_exp = np.array(act_exp)
-
-        prepulses, inact_exp = data_icat.fig3Binact()
-        prepulses = np.array(prepulses)
-        inact_exp = np.array(inact_exp)
-
-        intervals, rec_exp = data_icat.fig4B()
-        intervals = np.array(intervals)
-        rec_exp = np.array(rec_exp)
+        vsteps, act_exp = data_icat.IV_DengFig1B()
+        prepulses, inact_exp = data_icat.Inact_DengFig3B()
+        intervals, rec_exp = data_icat.Recovery_DengFig4B()
 
         # Concatenate experimental data
-        self.data_exp = np.hstack(([vsteps, act_peaks_exp],
-                                   [vsteps_act, act_exp],
-                                   [prepulses, inact_exp],
-                                   [intervals, rec_exp]))
+        self.data_exp = [[vsteps, act_exp],
+                         [prepulses, inact_exp],
+                         [intervals, rec_exp]]
 
         # Setup simulations
-        sim_act = sim.ActivationSim('icat.i_CaT', vsteps, reversal_potential=45, vhold=-80,
-                                    tpre=5000, tstep=300)
-        sim_inact = sim.InactivationSim('icat.i_CaT', prepulses, vhold=-80, vpost=-20,
-                                        tpre=5000, tstep=1000, tbetween=5, tpost=300)
-        sim_rec = sim.RecoverySim('icat.i_CaT', intervals, vstep=-20, vhold=-80, vpost=-20,
-                                  tpre=5000, tstep=300, tpost=300)
+        sim_act = sim.ActivationSim('icat.i_CaT', vhold=-80, thold=5000,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=300)
+        sim_inact = sim.InactivationSim('icat.G_CaT', vhold=-20, thold=300,
+                                        vmin=min(prepulses), vmax=max(prepulses),
+                                        dv=prepulses[1]-prepulses[0], tstep=1000)
+        sim_rec = sim.RecoverySim('icat.G_CaT', vhold=-80, thold=5000,
+                                  vstep=-20, tstep1=300, tstep2=300,
+                                  twaits=intervals)
         self.simulations = [sim_act, sim_inact, sim_rec]
-
-    def simulate(self, s):
-        '''
-        Run the simulations necessary to generate values to compare with
-        experimental results.
-        '''
-        sim_act_out = self.simulations[0].run(s)
-        if sim_act_out is None:
-            return None
-
-        sim_inact_out = self.simulations[1].run(s)
-        if sim_inact_out is None:
-            return None
-
-        sim_rec_out = self.simulations[2].run(s)
-        if sim_rec_out is None:
-            return None
-
-        return [sim_act_out[0], sim_act_out[1][0:8], sim_inact_out, sim_rec_out]
 
 
 class FastSodium(AbstractChannel):
@@ -193,60 +190,27 @@ class FastSodium(AbstractChannel):
             self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
 
         # Loading fast Na channel experimental data
-        vsteps, act_peaks_exp = data_ina.IV_DiasFig6()
-        vsteps = np.array(vsteps)
-        act_peaks_exp = np.array(act_peaks_exp)
-
-        vsteps_act, act_exp = data_ina.Act_FukudaFig5B()
-        vsteps_act = np.array(vsteps_act)
-        act_exp = np.array(act_exp)
-
+        vsteps, act_exp = data_ina.IV_DiasFig6()
         prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
-        prepulses = np.array(prepulses)
-        inact_exp = np.array(inact_exp)
-
         intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
-        intervals = np.array(intervals)
-        rec_exp = np.array(rec_exp)
 
-        self.data_exp = np.hstack(([vsteps, act_peaks_exp],
-                                   [vsteps_act, act_exp],
-                                   [prepulses, inact_exp],
-                                   [intervals, rec_exp]))
+        # Concatenate experimental data
+        self.data_exp = [[vsteps, act_exp],
+                         [prepulses, inact_exp],
+                         [intervals, rec_exp]]
 
         # Setup simulations
-        sim_act = sim.ActivationSim('ina.i_Na', vsteps, reversal_potential=23.2, vhold=-80,
-                                    tpre=3000, tstep=100)
-        sim_act2 = sim.ActivationSim('ina.i_Na', vsteps_act, reversal_potential=23.2, vhold=-120,
-                                     tpre=3000, tstep=20)
-        sim_inact = sim.InactivationSim('ina.i_Na', prepulses, vhold=-120, vpost=-20,
-                                        tpre=3000, tstep=500, tbetween=0, tpost=20)
-        sim_rec = sim.RecoverySim('ina.i_Na', intervals, vstep=-30, vhold=-120, vpost=-30,
-                                  tpre=3000, tstep=20, tpost=20)
-        self.simulations = [sim_act, sim_act2, sim_inact, sim_rec]
+        sim_act = sim.ActivationSim('ina.i_Na', vhold=-80, thold=3000,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=100)
+        sim_inact = sim.InactivationSim('ina.G_Na', vhold=-20, thold=20,
+                                        vmin=min(prepulses), vmax=max(prepulses),
+                                        dv=prepulses[1]-prepulses[0], tstep=500)
+        sim_rec = sim.RecoverySim('ina.G_Na', vhold=-120, thold=3000,
+                                  vstep=-30, tstep1=20, tstep2=20,
+                                  twaits=intervals)
+        self.simulations = [sim_act, sim_inact, sim_rec]
 
-    def simulate(self, s):
-        '''
-        Run the simulations necessary to generate values to compare with
-        experimental results.
-        '''
-        sim_act_out = self.simulations[0].run(s)
-        if sim_act_out is None:
-            return None
-
-        sim_act2_out = self.simulations[1].run(s)
-        if sim_act2_out is None:
-            return None
-
-        sim_inact_out = self.simulations[2].run(s)
-        if sim_inact_out is None:
-            return None
-
-        sim_rec_out = self.simulations[3].run(s)
-        if sim_rec_out is None:
-            return None
-
-        return [sim_act_out[0], sim_act2_out[1], sim_inact_out, sim_rec_out]
 
 class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
     def __init__(self):
@@ -288,45 +252,21 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
 
         # Loading i_Kur channel experimental data
         vsteps, act_peaks_exp = data_ikur.IV_MuharaniFig2B()
-        vsteps = np.array(vsteps)
-        act_peaks_exp = np.array(act_peaks_exp)
-
         prepulses, inact_exp = data_ikur.Inact_XuFig9C()
-        prepulses = np.array(prepulses)
-        inact_exp = np.array(inact_exp)
-
         intervals, rec_exp = data_ikur.Recovery_XuFig10C()
-        intervals = np.array(intervals)
-        rec_exp = np.array(rec_exp)
 
-        self.data_exp = np.hstack(([vsteps, act_peaks_exp],
-                                   [prepulses, inact_exp],
-                                   [intervals, rec_exp]))
+        self.data_exp = [[vsteps, act_peaks_exp],
+                         [prepulses, inact_exp],
+                         [intervals, rec_exp]]
 
         # Setup simulations
-        sim_act = sim.ActivationSim('ikur.i_Kur', vsteps, reversal_potential=0,
-                                    vhold=-60, tpre=5000, tstep=300)
-        sim_inact = sim.InactivationSim('ikur.i_Kur', prepulses, vhold=-60, vpost=50,
-                                        tpre=0, tstep=5000, tbetween=0, tpost=5000)
-        sim_rec = sim.RecoverySim('ikur.i_Kur', intervals, vstep=50, vhold=-70, vpost=50,
-                                  tpre=3000, tstep=300, tpost=300)
+        sim_act = sim.ActivationSim('ikur.i_Kur', vhold=-60, thold=5000,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=300)
+        sim_inact = sim.InactivationSim('ikur.i_Kur', vhold=-60, thold=5000,
+                                        vmin=min(prepulses), vmax=max(prepulses),
+                                        dv=prepulses[1]-prepulses[0], tstep=5000)
+        sim_rec = sim.RecoverySim('ikur.i_Kur', vhold=-70, thold=3000,
+                                  vstep=50, tstep1=300, tstep2=300,
+                                  twaits=intervals)
         self.simulations = [sim_act, sim_inact, sim_rec]
-
-    def simulate(self, s):
-        '''
-        Run the simulations necessary to generate values to compare with
-        experimental results
-        '''
-        sim_act_out = self.simulations[0].run(s)
-        if sim_act_out is None:
-            return None
-
-        sim_inact_out = self.simulations[1].run(s)
-        if sim_inact_out is None:
-            return None
-
-        sim_rec_out = self.simulations[2].run(s)
-        if sim_rec_out is None:
-            return None
-
-        return [sim_act_out[0], sim_inact_out, sim_rec_out]
