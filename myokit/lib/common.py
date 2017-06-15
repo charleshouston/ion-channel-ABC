@@ -483,8 +483,11 @@ class Recovery(object):
         corresponding to the given variable names.
         """
         # Times to wait
-        twaits = np.exp(
-            np.linspace(np.log(self._tmin), np.log(self._tmax), self._nt))
+        if hasattr(self, '_twaits'):
+            twaits = np.exp(np.log(self._twaits))
+        else:
+            twaits = np.exp(
+                np.linspace(np.log(self._tmin), np.log(self._tmax), self._nt))
         # Variables to log
         log_vars = [x.qname() for x in self._vars]        
         # Run simulations
@@ -521,6 +524,15 @@ class Recovery(object):
             raise ValueError('Time to hold cannot be negative.')
         self._vhold = vhold
         self._thold = thold
+    def set_specific_pause_durations(self, twaits=np.linspace(0.5, 1000, 50)):
+        """
+        Specify exact interval times between steps.
+
+        ``twaits``
+             List of interval times
+
+        """
+        self._twaits = np.array(twaits)
     def set_pause_duration(self, tmin=0.5, tmax=1000, nt=50):
         """
         Sets the duration of the pauses between the steps.
@@ -570,6 +582,15 @@ class Recovery(object):
         self._vstep = vstep
         self._tstep1 = tstep1
         self._tstep2 = tstep2
+    def set_constant(self, var, value):
+        """
+        Changes the value of a constant in the used model.
+        """
+        if isinstance(var, myokit.Variable):
+            var = var.qname()
+        var = self._model.get(var)
+        self._model.set_value(var, value)
+
 class Restitution(object):
     """
     Can run a restitution experiment and return the values needed to make a
