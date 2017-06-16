@@ -85,7 +85,10 @@ def LossFunction(sim_vals, exp_vals):
     for i,p in enumerate(sim_vals):
         p = np.array(p)
         e = np.array(exp_vals[i][1])
-        err = np.sum(np.square(p-e))
+        try:
+            err = np.sum(np.square(p-e))
+        except:
+            return float("inf")
         err = pow(err/len(p),0.5)
         err = err/abs(np.mean(e))
         tot_err += err
@@ -136,8 +139,8 @@ def prior_func(priors,params):
 if __name__ == '__main__':
 
     # Bring in specific channel settings
-    #channel = channel_setup.TTypeCalcium()
+    channel = channel_setup.TTypeCalcium()
     #channel = channel_setup.FastSodium()
-    channel = channel_setup.UltraRapidlyActivatingDelayedPotassium()
+    #channel = channel_setup.UltraRapidlyActivatingDelayedPotassium()
     x = ChannelProto()
     x.fit(channel)
