@@ -488,12 +488,20 @@ class Recovery(object):
         self.set_holding_potential()
         self.set_step_potential()
         self.set_pause_duration()
+        self.set_max_step_size()
     def _generate(self):
         """
         Compile simulation in advance to avoid dynamic creation at runtime.
         """
         self._vvar.set_rhs(self._vhold) # Make V a constant
         self._simulation = myokit.Simulation(self._model)
+    def set_max_step_size(self, dtmax=None):
+        """
+        Can be used to set a maximum step size to use in the logged parts of
+        the simulation. Use ``dtmax==None`` to let the solver chose any size it
+        likes.
+        """
+        self._max_step_size = None if dtmax is None else float(dtmax)
     def ratio(self):
         """
         Returns the ratios of the peak conductances (p1 / p2) for step 1 and
@@ -521,7 +529,9 @@ class Recovery(object):
         log[self._tvar.qname()] = list(twaits)
         for twait in twaits:
             s.set_constant(self._vvar, self._vhold)
+            s.set_max_step_size(None)
             s.run(self._thold, log=myokit.LOG_NONE)
+            s.set_max_step_size(self._max_step_size)
             s.set_constant(self._vvar, self._vstep)
             d1 = s.run(self._tstep1, log=log_vars)
             s.set_constant(self._vvar, self._vhold)
