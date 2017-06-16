@@ -13,6 +13,7 @@ class AbstractSim(object):
     def __init__(self):
         self.p_names = []
         self.p_vals = []
+        self.sim = None
 
     def run(self):
         '''
@@ -50,24 +51,29 @@ class ActivationSim(AbstractSim):
         self.dv=dv
         self.tstep=tstep
 
+    def _generate(self, model_name):
+        '''
+        Generate simulation in advance to avoid multiple compiles during loop.
+        '''
+        m,p,x = myokit.load('models/' + model_name)
+        self.sim = Activation(m, var=self.variable, vvar='membrane.V')
+        self.sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
+        self.sim.set_step_potential(vmin=self.vmin, vmax=self.vmax,
+                                    dv=self.dv, tstep=self.tstep)
+
     def run(self, model_name):
         '''
         Run the activation protocol defined.
         '''
-        m,p,x = myokit.load('models/' + model_name)
-
-        # Create simulation from myokit common library
-        sim = Activation(m, var=self.variable, vvar='membrane.V')
-        sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
-        sim.set_step_potential(vmin=self.vmin, vmax=self.vmax,
-                                    dv=self.dv, tstep=self.tstep)
+        if self.sim is None:
+            self._generate(model_name)
 
         # Reset parameters to new values
         for i,p in enumerate(self.p_names):
-            sim.set_constant(p, self.p_vals[i])
+            self.sim.set_constant(p, self.p_vals[i])
 
         try:
-            pks = sim.peaks()
+            pks = self.sim.peaks()
         except:
             return None
 
@@ -96,23 +102,28 @@ class InactivationSim(AbstractSim):
         self.dv=dv
         self.tstep=tstep
 
+    def _generate(self, model_name):
+        """
+        Compile simulation in advance of loop
+        """
+        m,p,x = myokit.load('models/' + model_name)
+        self.sim = Inactivation(m, var=self.variable, vvar='membrane.V')
+        self.sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
+        self.sim.set_step_potential(vmin=self.vmin, vmax=self.vmax,
+                                    dv=self.dv, tstep=self.tstep)
+
     def run(self, model_name):
         '''
         Run the activation protocol defined.
         '''
-        m,p,x = myokit.load('models/' + model_name)
-
-        # Create simulation from myokit common library
-        sim = Inactivation(m, var=self.variable, vvar='membrane.V')
-        sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
-        sim.set_step_potential(vmin=self.vmin, vmax=self.vmax,
-                               dv=self.dv, tstep=self.tstep)
+        if self.sim is None:
+            self._generate(model_name)
 
         # Reset parameters to new values
         for i,p in enumerate(self.p_names):
-            sim.set_constant(p, self.p_vals[i])
+            self.sim.set_constant(p, self.p_vals[i])
         try:
-            pks = sim.peaks(normalize=True)
+            pks = self.sim.peaks(normalize=True)
         except:
             return None
 
@@ -141,25 +152,30 @@ class RecoverySim(AbstractSim):
         self.tstep2=tstep2
         self.twaits=twaits
 
+    def _generate(self, model_name):
+        """
+        Compile simulation in advance to avoid dynamic creation in loop at runtime
+        """
+        m,p,x = myokit.load('models/' + model_name)
+        self.sim = Recovery(m, var=self.variable, vvar='membrane.V')
+        self.sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
+        self.sim.set_step_potential(vstep=self.vstep, tstep1=self.tstep1,
+                               tstep2=self.tstep2)
+        self.sim.set_specific_pause_durations(twaits=self.twaits)
+
     def run(self, model_name):
         '''
         Run the activation protocol defined.
         '''
-        m,p,x = myokit.load('models/' + model_name)
-
-        # Create simulation from myokit common library
-        sim = Recovery(m, var=self.variable, vvar='membrane.V')
-        sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
-        sim.set_step_potential(vstep=self.vstep, tstep1=self.tstep1,
-                               tstep2=self.tstep2)
-        sim.set_specific_pause_durations(twaits=self.twaits)
+        if self.sim is None:
+            self._generate(model_name)
 
         # Reset parameters to new values
         for i,p in enumerate(self.p_names):
-            sim.set_constant(p, self.p_vals[i])
+            self.sim.set_constant(p, self.p_vals[i])
 
         try:
-            ratio = sim.ratio()
+            ratio = self.sim.ratio()
         except:
             return None
 

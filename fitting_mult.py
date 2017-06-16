@@ -8,7 +8,7 @@ Parallel processing version.
 import math
 from numpy import *
 import distributions
-#from pympler import tracker
+import copy
 import myokit
 
 import pathos.multiprocessing as mp
@@ -99,18 +99,19 @@ class Engine(object):
 
 def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
 
-    #tr = tracker.SummaryTracker()
-
     post, wts = [None]*post_size, [1.0/post_size]*post_size
     total_err, max_err = 0.0, 0.0
 
+    # Create copy of channel to avoid passing generated simulations
+    # to parallel workers in abc_inner
+    channel_copy = copy.deepcopy(channel)
     # Initializes posterior to be a draw of particles from prior
     for i in range(post_size):
         # Distance function returns "inf" in the case of overflow error
         curr_err = float("inf")
         while curr_err == float("inf"):
             post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i], exp_vals, channel)
+            curr_err = dist(post[i], exp_vals, channel_copy)
 
         total_err = total_err + curr_err
         max_err = max(curr_err,max_err)

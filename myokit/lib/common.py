@@ -159,6 +159,11 @@ class StepProtocol(object):
                 if m > 0:
                     d[var] = x / m
         return d
+    def _generate(self):
+        """
+        Compile the simulation rather than dynamically create at runtime.
+        """
+        self._simulation = myokit.Simulation(self._model)
     def _run(self):
         """
         Should run the simulation and save the current traces in self._logs
@@ -168,6 +173,9 @@ class StepProtocol(object):
         """
         Changes the value of a constant in the used model.
         """
+        s = getattr(self, "_simulation", None)
+        if s is not None:
+            self._simulation.set_constant(var, value)
         if isinstance(var, myokit.Variable):
             var = var.qname()
         var = self._model.get(var)
@@ -311,7 +319,10 @@ class Activation(StepProtocol):
         Runs the experiment, logs during the voltage steps.
         """
         log = self._vars + [self._tvar]
-        s = myokit.Simulation(self._model)
+        s = getattr(self, "_simulation", None)
+        if s is None:
+            self._generate()
+            s = self._simulation
         d = []
         for v in self._steps:
             s.reset()
@@ -367,7 +378,10 @@ class Inactivation(StepProtocol):
         """
         log = self._vars + [self._tvar]
         d = []
-        s = myokit.Simulation(self._model)
+        s = getattr(self, "_simulation", None)
+        if s is None:
+            self._generate()
+            s = self._simulation
         for v in self._steps:
             s.reset()
             s.set_constant(self._vvar, v)
@@ -442,7 +456,7 @@ class Recovery(object):
         self._model = model.clone()
         # Get time variable
         self._tvar = self._model.time()
-        # Check conductance variables        
+        # Check conductance variables
         self._vars = []
         if type(var) in [str, unicode] or isinstance(var, myokit.Variable):
             var = [var]
@@ -473,7 +487,13 @@ class Recovery(object):
         # Set voltages
         self.set_holding_potential()
         self.set_step_potential()
-        self.set_pause_duration()        
+        self.set_pause_duration()
+    def _generate(self):
+        """
+        Compile simulation in advance to avoid dynamic creation at runtime.
+        """
+        self._vvar.set_rhs(self._vhold) # Make V a constant
+        self._simulation = myokit.Simulation(self._model)
     def ratio(self):
         """
         Returns the ratios of the peak conductances (p1 / p2) for step 1 and
@@ -483,16 +503,17 @@ class Recovery(object):
         corresponding to the given variable names.
         """
         # Times to wait
-        if hasattr(self, '_twaits'):
-            twaits = np.exp(np.log(self._twaits))
-        else:
+        twaits = getattr(self, "_twaits", None)
+        if twaits is None:
             twaits = np.exp(
                 np.linspace(np.log(self._tmin), np.log(self._tmax), self._nt))
         # Variables to log
         log_vars = [x.qname() for x in self._vars]        
         # Run simulations
-        self._vvar.set_rhs(self._vhold) # Make V a constant
-        s = myokit.Simulation(self._model)
+        s = getattr(self, "_simulation", None)
+        if s is None:
+            self._generate()
+            s = self._simulation
         log = myokit.DataLog()
         gvars = [x.qname() for x in self._vars]
         for g in gvars:
@@ -586,6 +607,9 @@ class Recovery(object):
         """
         Changes the value of a constant in the used model.
         """
+        s = getattr(self, "_simulation", None)
+        if s is not None:
+            self._simulation.set_constant(var, value)
         if isinstance(var, myokit.Variable):
             var = var.qname()
         var = self._model.get(var)
