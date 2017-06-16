@@ -1,15 +1,18 @@
 [[model]]
 name: Takeuchi 2013 T-type calcium channel
 author: Charles Houston
-desc: The Takeuchi 2013 model for the T-type calcium channel in HL-1 myocytes.
+desc: """
+      The Takeuchi 2013 model for the T-type calcium channel in HL-1 myocytes.
+      Reversal potential adjusted for data from Deng et al., 2009.
+      """
 ref: """
-A Takeuchi et al. (2013) The mitochondrial Na+-Ca2+ exchanger, NCLX, regulates
-automaticity of HL-1 cardiomyocytes.
-"""
+     A Takeuchi et al. (2013) The mitochondrial Na+-Ca2+ exchanger, NCLX, regulates
+     automaticity of HL-1 cardiomyocytes.
+     """
 # Initial values
 membrane.V = -80
-icat_d_gate.d = 0.01
-icat_f_gate.f = 0.99
+icat.d = 0.01
+icat.f = 0.99
 
 [environment]
 time = 0 bind time
@@ -23,24 +26,27 @@ dot(V) = icat.i_CaT / Cm
 
 [icat]
 use membrane.V as V
-g_CaT = 0.4122 [nS/pF]
-E_CaT = 45 [mV]
-G_CaT = g_CaT * icat_d_gate.d * icat_f_gate.f
+g_CaT = 0.4122
+      in [nS/pF]
+# E_CaT original value was 45
+E_CaT = 33  
+      in [mV]
+G_CaT = g_CaT * d * f
       in [mS/cm^2]
 i_CaT = G_CaT * (V - E_CaT)
       in [uA/cm^2]
 
-[icat_d_gate]
-use membrane.V as V
+dot(d) = (dss - d)/tau_d
+       in [1]
+tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk5)/dtauk6))^(-1)
+      in [1]
 dss = (1 + exp(-(V+dssk1)/dssk2))^(-1)
     in [1]
+
 dssk1 = 30
       in [mV]
 dssk2 = 6.0
       in [mV]
-
-tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk5)/dtauk6))^(-1)
-      in [1]
 dtauk1 = 1.068
        in [1]
 dtauk2 = 26.3
@@ -54,20 +60,17 @@ dtauk5 = 26.3
 dtauk6 = 30
        in [mV]
 
-dot(d) = (dss - d)/tau_d
+dot(f) = (fss - f)/tau_f
        in [1]
-
-[icat_f_gate]
-use membrane.V as V
 fss = (1 + exp((V+fssk1)/fssk2))^(-1)
     in [1]
+tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk5)/ftauk6))^(-1)
+      in [1]
+
 fssk1 = 48
       in [mV]
 fssk2 = 7.0
       in [mV]
-
-tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk5)/ftauk6))^(-1)
-      in [1]
 ftauk1 = 0.0153
        in [1]
 ftauk2 = 61.7
@@ -80,6 +83,3 @@ ftauk5 = 61.7
        in [mV]
 ftauk6 = 30
        in [mV]
- 
-dot(f) = (fss - f)/tau_f
-       in [1]

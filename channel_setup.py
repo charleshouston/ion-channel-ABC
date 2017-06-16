@@ -50,47 +50,47 @@ class AbstractChannel(object):
 
         return sim_output
 
-
 class TTypeCalcium(AbstractChannel):
     def __init__(self):
         self.name = 'icat'
         self.model_name = 'Takeuchi2013_iCaT.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['icat_d_gate.dssk1',
-                           'icat_d_gate.dssk2',
-                           'icat_d_gate.dtauk1',
-                           'icat_d_gate.dtauk2',
-                           'icat_d_gate.dtauk3',
-                           'icat_d_gate.dtauk4',
-                           'icat_d_gate.dtauk5',
-                           'icat_d_gate.dtauk6',
-                           'icat_f_gate.fssk1',
-                           'icat_f_gate.fssk2',
-                           'icat_f_gate.ftauk1',
-                           'icat_f_gate.ftauk2',
-                           'icat_f_gate.ftauk3',
-                           'icat_f_gate.ftauk4',
-                           'icat_f_gate.ftauk5',
-                           'icat_f_gate.ftauk6']
+        self.parameters = ['icat.dssk1',
+                           'icat.dssk2',
+                           'icat.dtauk1',
+                           'icat.dtauk2',
+                           'icat.dtauk3',
+                           'icat.dtauk4',
+                           'icat.dtauk5',
+                           'icat.dtauk6',
+                           'icat.fssk1',
+                           'icat.fssk2',
+                           'icat.ftauk1',
+                           'icat.ftauk2',
+                           'icat.ftauk3',
+                           'icat.ftauk4',
+                           'icat.ftauk5',
+                           'icat.ftauk6']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0,100),
-                                (1,10),
-                                (0,10),
-                                (0,100),
-                                (1,100),
-                                (0,10),
-                                (0,100),
-                                (1,100),
-                                (0,100),
-                                (1,10),
-                                (0,0.1),
-                                (0,100),
-                                (1,100),
-                                (0,0.1),
-                                (0,100),
-                                (1,100)]
+        # Original values given in comments
+        self.prior_intervals = [(0,100), # 30
+                                (1,10),  # 6.0
+                                (0,10),  # 1.068
+                                (0,100), # 26.3
+                                (1,100), # 30
+                                (0,10),  # 1.068
+                                (0,100), # 26.3
+                                (1,100), # 30
+                                (0,100), # 48
+                                (1,10),  # 7.0
+                                (0,0.1), # 0.0153
+                                (0,100), # 61.7
+                                (1,100), # 83.3
+                                (0,0.1), # 0.015
+                                (0,100), # 61.7
+                                (1,100)] # 30
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
