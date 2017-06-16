@@ -36,7 +36,7 @@ import pathos.multiprocessing as mp
 '''
 class Engine(object):
     def __init__(self,channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
-        self.channel=channel
+        self.channel=copy.deepcopy(channel)
         self.params=params
         self.priors=priors
         self.exp_vals=exp_vals
