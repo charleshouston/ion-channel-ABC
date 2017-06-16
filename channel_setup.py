@@ -263,10 +263,10 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
         sim_act = sim.ActivationSim('ikur.i_Kur', vhold=-60, thold=5000,
                                     vmin=min(vsteps), vmax=max(vsteps),
                                     dv=vsteps[1]-vsteps[0], tstep=300)
-        sim_inact = sim.InactivationSim('ikur.i_Kur', vhold=-60, thold=5000,
+        sim_inact = sim.InactivationSim('ikur.G_kur', vhold=-60, thold=5000,
                                         vmin=min(prepulses), vmax=max(prepulses),
                                         dv=prepulses[1]-prepulses[0], tstep=5000)
-        sim_rec = sim.RecoverySim('ikur.i_Kur', vhold=-70, thold=3000,
+        sim_rec = sim.RecoverySim('ikur.G_kur', vhold=-70, thold=3000,
                                   vstep=50, tstep1=300, tstep2=300,
                                   twaits=intervals)
         self.simulations = [sim_act, sim_inact, sim_rec]
