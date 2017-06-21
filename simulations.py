@@ -10,10 +10,11 @@ from myokit.lib.common import Activation,Inactivation,Recovery
 import numpy as np
 
 class AbstractSim(object):
-    def __init__(self):
+    def __init__(self, max_step_size=None):
         self.p_names = []
         self.p_vals = []
         self.sim = None
+        self.max_step_size = max_step_size
 
     def run(self):
         '''
@@ -60,7 +61,8 @@ class ActivationSim(AbstractSim):
         self.sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
         self.sim.set_step_potential(vmin=self.vmin, vmax=self.vmax,
                                     dv=self.dv, tstep=self.tstep)
-        self.sim.set_max_step_size(0.001)
+        if self.max_step_size is not None:
+            self.sim.set_max_step_size(self.max_step_size)
 
     def run(self, model_name):
         '''
@@ -112,7 +114,8 @@ class InactivationSim(AbstractSim):
         self.sim.set_holding_potential(vhold=self.vhold, thold=self.thold)
         self.sim.set_step_potential(vmin=self.vmin, vmax=self.vmax,
                                     dv=self.dv, tstep=self.tstep)
-        self.sim.set_max_step_size(0.001)
+        if self.max_step_size is not None:
+            self.sim.set_max_step_size(self.max_step_size)
 
     def run(self, model_name):
         '''
@@ -164,7 +167,8 @@ class RecoverySim(AbstractSim):
         self.sim.set_step_potential(vstep=self.vstep, tstep1=self.tstep1,
                                tstep2=self.tstep2)
         self.sim.set_specific_pause_durations(twaits=self.twaits)
-        self.sim.set_max_step_size(0.001)
+        if self.max_step_size is not None:
+            self.sim.set_max_step_size(self.max_step_size)
 
     def run(self, model_name):
         '''
