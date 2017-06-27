@@ -19,7 +19,7 @@ dot(V) = ikur.i_Kur / Cm
 
 [ikur]
 use membrane.V as V
-g_kur = 0.160
+g_Kur = 0.0975
     in [mS/uF]
 T = 310
   in [K]
@@ -33,8 +33,8 @@ Ki = 120
    in [mmol]
 E_K = (R*T/F) * log(Ko/Ki)
     in [mV]
-G_kur = g_kur * a_ur * i_ur
-i_Kur = G_kur * (V - E_K)
+G_Kur = g_Kur * a_ur * i_ur
+i_Kur = G_Kur * (V - E_K)
       in [uA/cm^2]
 
 dot(a_ur) = (a_ur_ss - a_ur) / tau_a_ur
@@ -64,7 +64,7 @@ tau_i_ur = itauk1 - itauk2 / (1 + exp((V + itauk3) / itauk4))
 
 issk1 = 45.2
       in [mV]
-issk2 = 5.7 
+issk2 = 5.7
       in [mV]
 itauk1 = 1200
        in [ms]
