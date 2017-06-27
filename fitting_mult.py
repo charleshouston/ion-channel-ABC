@@ -121,7 +121,7 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
     thresh_val = max_err
 
     # Log results at intermediary stages
-    logfile = open('logs/fitting_mult.log','w')
+    logfile = open('logs/log_' + channel.name + '.log','w')
 
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
     while K > err_cutoff:
