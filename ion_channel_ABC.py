@@ -60,7 +60,7 @@ class ChannelProto():
         # Calculate result by approximate Bayesian computation
         result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,20,50,0.003)
 
-        # Write results to the standard output and ABCPredPotassium.txt
+        # Write results to the standard output and results log
         print result.getmean()
         print result.getvar()
         outfile.write(str(result.pool)+"\n")

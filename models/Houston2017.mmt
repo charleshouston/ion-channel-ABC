@@ -1,13 +1,10 @@
 [[model]]
 author: Charles Houston
 desc: """
-Model of HL-1 myocytes. Originally adapted from mouse septal ventricular
-cell model Bondarenko et al. (2004).
+    Computer model of action potential of HL-1 myocytes.
+    Initially developed from model of mouse ventricular myocytes by
+    Bondarenko et al., 2004.
     """
-ref: """
-V E Bondarenko et al. (2004) Computer model of action potential of mouse
-ventricular myocytes.
-"""
 name: houston_2017
 # Initial values
 membrane.V                                                       = -82.4202
@@ -18,9 +15,9 @@ calcium_concentration.CaNSR                                      = 1299.5
 calcium_fluxes.P_RyR                                             = 0
 calcium_buffering.LTRPN_Ca                                       = 11.2684
 calcium_buffering.HTRPN_Ca                                       = 125.29
-ryanodine_receptors.P_O1                                         =  1.49102000000000000e-5
-ryanodine_receptors.P_O2                                         =  9.51725999999999945e-11
-ryanodine_receptors.P_C2                                         =  1.67739999999999990e-4
+ryr.P_O1                                         =  1.49102000000000000e-5
+ryr.P_O2                                         =  9.51725999999999945e-11
+ryr.P_C2                                         =  1.67739999999999990e-4
 ical.O                                         =  9.30307999999999919e-19
 ical.C2                                        =  1.24215999999999991e-4
 ical.C3                                        =  5.78679000000000003e-9
@@ -53,6 +50,7 @@ ikr.O_K                    =  1.75298000000000001e-4
 ikr.I_K                    =  3.19128999999999973e-5
 icat.d = 0.01
 icat.f = 0.99
+iha.y = 0.01
 
 [ical]
 C1 = 1 - (O + C2 + C3 + C4 + I1 + I2 + I3)
@@ -89,7 +87,9 @@ g_CaL = 0.1729
     in [mS/uF]
 gamma = Kpc_max * calcium_concentration.Cass / (Kpc_half + calcium_concentration.Cass)
     in [mS/uF]
-i_CaL = g_CaL * O * (membrane.V - E_CaL)
+G_CaL = g_CaL * O
+    in [mS/uF]
+i_CaL = G_CaL * (membrane.V - E_CaL)
     in [A/F]
 i_CaL_max = 7
     in [A/F]
@@ -139,7 +139,7 @@ dot(CaJSR) = BJSR * (calcium_fluxes.J_tr - calcium_fluxes.J_rel)
     in [uM]
 dot(CaNSR) = (calcium_fluxes.J_up - calcium_fluxes.J_leak) * membrane.Vmyo / membrane.VNSR - calcium_fluxes.J_tr * membrane.VJSR / membrane.VNSR
     in [uM]
-dot(Cai) = Bi * (calcium_fluxes.J_leak + calcium_fluxes.J_xfer - (calcium_fluxes.J_up + calcium_fluxes.J_trpn + (icab.i_Cab + icap.i_pCa - 2 * incx.i_NaCa) * membrane.Acap * membrane.Cm / (2 * membrane.Vmyo * membrane.F)))
+dot(Cai) = Bi * (calcium_fluxes.J_leak + calcium_fluxes.J_xfer - (calcium_fluxes.J_up + calcium_fluxes.J_trpn + (icab.i_Cab + ipca.i_pCa - 2 * incx.i_NaCa + icat.i_CaT) * membrane.Acap * membrane.Cm / (2 * membrane.Vmyo * membrane.F)))
     in [uM]
 dot(Cass) = Bss * (calcium_fluxes.J_rel * membrane.VJSR / membrane.Vss - (calcium_fluxes.J_xfer * membrane.Vmyo / membrane.Vss + ical.i_CaL * membrane.Acap * membrane.Cm / (2 * membrane.Vss * membrane.F)))
     in [uM]
@@ -151,7 +151,7 @@ Km_CSQN = 800
 [calcium_fluxes]
 J_leak = v2 * (calcium_concentration.CaNSR - calcium_concentration.Cai)
     in [mol/m^3/s]
-J_rel = v1 * (ryanodine_receptors.P_O1 + ryanodine_receptors.P_O2) * (calcium_concentration.CaJSR - calcium_concentration.Cass) * P_RyR
+J_rel = v1 * (ryr.P_O1 + ryr.P_O2) * (calcium_concentration.CaJSR - calcium_concentration.Cass) * P_RyR
     in [mol/m^3/s]
 J_tr = (calcium_concentration.CaNSR - calcium_concentration.CaJSR) / tau_tr
     in [mol/m^3/s]
@@ -184,7 +184,7 @@ v2 = 1.74e-5
 v3 = 0.45
     in [mol/m^3/s]
 
-[icap]
+[ipca]
 Km_pCa = 0.5
     in [uM]
 i_pCa = i_pCa_max * calcium_concentration.Cai ^ 2 / (Km_pCa ^ 2 + calcium_concentration.Cai ^ 2)
@@ -287,8 +287,9 @@ R = 8.314
     in [J/mol/K]
 T = 298
     in [K]
-dot(V) = -(ical.i_CaL + icap.i_pCa + incx.i_NaCa + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + iks.i_Ks + ikur.i_Kur + ikss.i_Kss + ikr.i_Kr + iclca.i_ClCa + i_stim)
+dot(V) = -(ical.i_CaL + ipca.i_pCa + incx.i_NaCa + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + iks.i_Ks + ikur.i_Kur + ikss.i_Kss + ikr.i_Kr + iclca.i_ClCa + icat.i_CaT + iha.i_ha + ikach.i_KAch) + i_stim
     in [mV]
+
 VJSR = 1.2e-7
     in [uL]
 VNSR = 2.098e-6
@@ -323,8 +324,9 @@ tau_Kss = 39.3 [ms] * exp(-0.0862 [1/mV] * membrane.V) + 13.17 [ms]
     in [ms]
 
 [potassium_concentration]
-dot(Ki) = -(itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + iks.i_Ks + ikss.i_Kss + ikur.i_Kur + ikr.i_Kr - 2 * inak.i_NaK) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
+dot(Ki) = -(itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + iks.i_Ks + ikss.i_Kss + ikur.i_Kur + ikr.i_Kr - 2 * inak.i_NaK + iha.i_haK + ikach.i_KAch) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
     in [uM]
+
 
 [ikr]
 C_K0 = 1 - (C_K1 + C_K2 + O_K + I_K)
@@ -358,7 +360,7 @@ kb = 0.036778
 kf = 0.023761
     in [mS/uF]
 
-[ryanodine_receptors]
+[ryr]
 P_C1 = 1 - (P_C2 + P_O1 + P_O2)
     in [1]
 dot(P_C2) = k_plus_c * P_O1 - k_minus_c * P_C2
@@ -435,7 +437,7 @@ k_sat = 0.1
     in [1]
 
 [sodium_concentration]
-dot(Nai) = 0
+dot(Nai) = -(ina.i_Na + inab.i_Nab + 3 * inak.i_NaK + 3 * incx.i_NaCa + iha.i_haNa) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
     in [uM]
 
 [inak]
@@ -470,61 +472,89 @@ tau_aur = 0.493 [ms] * exp(-0.0629 [1/mV] * membrane.V) + 2.058 [ms]
 tau_iur = 1200 [ms] - 170 [ms] / (1 + exp((membrane.V + 45.2 [mV]) / 5.7 [mV]))
     in [ms]
 
-[icat]
-use membrane.V as V
+[icat] # from Takeuchi2013
 g_CaT = 0.4122
-      in [nS/pF]
-E_CaT = 33 
-      in [mV]
+    in [mS/uF]
+E_CaT = 45
+    in [mV]
 G_CaT = g_CaT * d * f
-      in [mS/cm^2]
-i_CaT = G_CaT * (V - E_CaT)
-      in [uA/cm^2]
+    in [mS/uF]
+i_CaT = G_CaT * (membrane.V - E_CaT)
+    in [A/F]
 
 dot(d) = (dss - d)/tau_d
-       in [1]
-tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk5)/dtauk6))^(-1)
-      in [1]
-dss = (1 + exp(-(V+dssk1)/dssk2))^(-1)
+    in [1]
+tau_d = (dtauk1*exp((membrane.V+dtauk2)/dtauk3) + dtauk4*exp(-(membrane.V+dtauk5)/dtauk6))^(-1)
+    in [1]
+dss = (1 + exp(-(membrane.V+dssk1)/dssk2))^(-1)
     in [1]
 
 dssk1 = 30
-      in [mV]
+    in [mV]
 dssk2 = 6.0
-      in [mV]
+    in [mV]
 dtauk1 = 1.068
-       in [1]
+    in [1]
 dtauk2 = 26.3
-       in [mV]
+    in [mV]
 dtauk3 = 30
-       in [mV]
+    in [mV]
 dtauk4 = 1.068
-       in [1]
+    in [1]
 dtauk5 = 26.3
-       in [mV]
+    in [mV]
 dtauk6 = 30
-       in [mV]
+    in [mV]
 
 dot(f) = (fss - f)/tau_f
-       in [1]
-fss = (1 + exp((V+fssk1)/fssk2))^(-1)
     in [1]
-tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk5)/ftauk6))^(-1)
-      in [1]
+fss = (1 + exp((membrane.V+fssk1)/fssk2))^(-1)
+    in [1]
+tau_f = (ftauk1*exp(-(membrane.V+ftauk2)/ftauk3) + ftauk4*exp((membrane.V+ftauk5)/ftauk6))^(-1)
+    in [1]
 
 fssk1 = 48
-      in [mV]
+    in [mV]
 fssk2 = 7.0
-      in [mV]
+    in [mV]
 ftauk1 = 0.0153
-       in [1]
+    in [1]
 ftauk2 = 61.7
-       in [mV]
+    in [mV]
 ftauk3 = 83.3
-       in [mV]
+    in [mV]
 ftauk4 = 0.015
-       in [1]
+    in [1]
 ftauk5 = 61.7
-       in [mV]
+    in [mV]
 ftauk6 = 30
-       in [mV]
+    in [mV]
+
+[iha] # from Takeuchi2013
+g_ha = 0.2 [mS/uF]
+    in [mS/uF]
+
+y_ss = 1 / (1 + exp((membrane.V + 70 [mV]) / 13.5 [mV]))
+    in [1]
+tau_y = 1 [ms] / (exp(-(membrane.V + 198 [mV]) / 15 [mV]) + exp((membrane.V - 130 [mV]) / 17 [mV]))
+    in [ms]
+dot(y) = (y_ss - y) / tau_y
+    in [1]
+
+G_ha = g_ha * y ^ 2
+    in [mS/uF]
+i_haNa = G_ha * 0.3833 * (membrane.V - ina.E_Na)
+    in [A/F]
+i_haK = G_ha * 0.6167 * (membrane.V - itof.E_K)
+    in [A/F]
+i_ha = i_haNa + i_haK
+    in [A/F]
+
+[ikach] # from Majumder2016
+g_Ach = 0.37488 [mS/uF]
+    in [mS/uF]
+
+G_Ach = g_Ach * (0.075 + 0.35 / (1 + exp((membrane.V + 102) / 10)))
+    in [mS/uF]
+i_KAch = G_Ach * (membrane.V - itof.E_K - 10)
+    in [A/F]

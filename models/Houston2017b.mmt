@@ -40,10 +40,11 @@ Na_Concentrations.Na_i         = 15.0
 Cl_Concentrations.Cl_i         = 15.0
 Ca_Concentrations.Ca_JS        = 1.73747500000000010e-4
 Ca_Concentrations.Ca_SL        = 1.03181200000000001e-4
-Ca_Concentrations.Ca_i         = 8.59740100000000012e-5
-Ca_Concentrations.Ca_SR        = 0.01
-#Ca_Concentrations.Ca_totalmit  = 0.8
-membrane.V_m                   = -75 #80.9763
+Ca_Concentrations.Ca_i         = 400e-6
+Ca_Concentrations.Ca_SR        = 0.25
+Ca_Concentrations.Ca_totalmit  = 1.0
+Mitochondrial_Ca_Fluxes.Ca_mit = 0.6
+membrane.V_m                   = -80.9763
 
 
 # Voltage-dependent Na+ current
@@ -676,48 +677,49 @@ dot(Csqn_b) = kon_csqn * Ca_Concentrations.Ca_SR * (Bmax_csqn - Csqn_b) - koff_c
             in [mM]
 
 
-# # Mitochondrial Ca2+ fluxes
-# [Mitochondrial_Ca_Fluxes]
-# alpha_mit = 0.2
-#           in [1]
-# alpha_i = 0.341
-#         in [1]
-# A_CaUni = 23.2 # amplitude of mitochrondrial Ca2+ uniporter current
-#         in [L/ms]
-# KdNa_mit = 38.0 # dissociation constant
-#          in [mM]
-# KdNa_i = 32.0 # dissociation constant
-#        in [mM]
-# KdCa_mit = 0.020932007 # dissociation constant
-#          in [mM]
-# KdCa_i = 0.0125 # dissociation constant
-#        in [mM]
-# A_NCXmit = 5.8e-18 # amplitude of mitochondrial Na+-Ca2+ exchanger current
-#          in [mmol/ms]
-# Bmax_mit = 0.6 [mM] # total CaBuf_mit concentration
-#          in [mM]
-# Kd_CaBufmit = 0.001 [mM] # dissociation constant
-#             in [mM]
+# Mi#tochondrial Ca2+ fluxes
+[Mitochondrial_Ca_Fluxes]
+alpha_mit = 0.2
+          in [1]
+alpha_i = 0.341
+        in [1]
+A_CaUni = 23.2 # amplitude of mitochrondrial Ca2+ uniporter current
+        in [L/ms]
+KdNa_mit = 38.0 # dissociation constant
+         in [mM]
+KdNa_i = 32.0 # dissociation constant
+       in [mM]
+KdCa_mit = 0.020932007 # dissociation constant
+         in [mM]
+KdCa_i = 0.0125 # dissociation constant
+       in [mM]
+A_NCXmit = 5.8e-18 # amplitude of mitochondrial Na+-Ca2+ exchanger current
+         in [mmol/ms]
+Bmax_mit = 0.6 [mM] # total CaBuf_mit concentration
+         in [mM]
+Kd_CaBufmit = 0.001 [mM] # dissociation constant
+            in [mM]
 
-# I_CaUni = -A_CaUni * parameters.Frdy * 2 / parameters.Cm * (-2 * parameters.DeltaPhi * parameters.FoRT) * (alpha_mit * Ca_Concentrations.Ca_totalmit - alpha_i * Ca_Concentrations.Ca_i * exp(-2 * parameters.DeltaPhi * parameters.FoRT)) / (exp(-2 * parameters.DeltaPhi * parameters.FoRT) - 1)
-#         in [L/ms]
+I_CaUni = -A_CaUni * parameters.Frdy * 2 / parameters.Cm * (-2 * parameters.DeltaPhi * parameters.FoRT) * (alpha_mit * Ca_Concentrations.Ca_totalmit - alpha_i * Ca_Concentrations.Ca_i * exp(-2 * parameters.DeltaPhi * parameters.FoRT)) / (exp(-2 * parameters.DeltaPhi * parameters.FoRT) - 1)
+         in [L/ms]
 
-# PNa_mit = parameters.Na_mit ^ 3 / (parameters.Na_mit ^ 3 + KdNa_mit ^ 3 * (1 + Ca_Concentrations.Ca_totalmit / KdCa_mit))
-# PCa_mit = Ca_Concentrations.Ca_totalmit / (Ca_Concentrations.Ca_totalmit + KdCa_mit * (1 + parameters.Na_mit ^ 3 / KdNa_mit ^ 3))
-# PNa_i = parameters.Na_i ^ 3 / (parameters.Na_i ^ 3 + KdNa_i ^ 3 * (1 + Ca_Concentrations.Ca_i / KdCa_i))
-# PCa_i = Ca_Concentrations.Ca_i / (Ca_Concentrations.Ca_i + KdCa_i * (1 + parameters.Na_i ^ 3 / KdNa_i ^ 3))
-# k1 = 1.0 * exp(0.2 * parameters.Frdy * parameters.DeltaPhi * parameters.FoRT) * PNa_mit
-# k2 = 1.0 * exp((0.2 - 1.0) * parameters.Frdy * parameters.DeltaPhi * parameters.FoRT) * PNa_i
-# k3 = 1.0 * PCa_mit
-# k4 = 1.0 * PCa_i
-# alpha = k2 + k4
-# beta = k1 + k3
-# tE1 = alpha / (alpha + beta)
-# tE2 = 1 - tE1
-# I_NCXmit = -A_NCXmit * parameters.Frdy * 2 / parameters.Cm * (tE1 * k2 - tE1 * k1)
+PNa_mit = parameters.Na_mit ^ 3 / (parameters.Na_mit ^ 3 + KdNa_mit ^ 3 * (1 + Ca_mit / KdCa_mit))
+PCa_mit = Ca_mit / (Ca_mit + KdCa_mit * (1 + parameters.Na_mit ^ 3 / KdNa_mit ^ 3))
+PNa_i = parameters.Na_i ^ 3 / (parameters.Na_i ^ 3 + KdNa_i ^ 3 * (1 + Ca_Concentrations.Ca_i / KdCa_i))
+PCa_i = Ca_Concentrations.Ca_i / (Ca_Concentrations.Ca_i + KdCa_i * (1 + parameters.Na_i ^ 3 / KdNa_i ^ 3))
 
-# Ca_mit = Ca_Concentrations.Ca_totalmit - Bmax_mit / (1 + Kd_CaBufmit / Ca_Concentrations.Ca_totalmit)
-#        in [mM]
+k1 = 1.0 * exp(0.2 * parameters.DeltaPhi * parameters.FoRT) * PNa_mit
+k2 = 1.0 * exp((0.2 - 1.0) * parameters.DeltaPhi * parameters.FoRT) * PNa_i
+k3 = 1.0 * PCa_mit
+k4 = 1.0 * PCa_i
+alpha = k2 + k4
+beta = k1 + k3
+tE1 = alpha / (alpha + beta)
+tE2 = 1 - tE1
+I_NCXmit = -A_NCXmit * parameters.Frdy * 2 / parameters.Cm * (tE1 * k2 - tE1 * k1)
+
+dot(Ca_mit) = (-(I_CaUni - 2 * I_NCXmit) * parameters.Cm / (parameters.Vol_mit * 2 * parameters.Frdy)) / (1 + (Bmax_mit * Kd_CaBufmit) / ((Kd_CaBufmit + Ca_mit) ^ 2))
+
 
 # Na+ concentrations
 [Na_Concentrations]
@@ -768,15 +770,13 @@ dot(Ca_JS) = -(I_Ca_tot_JS - SR_Ca_Fluxes.I_RyR - SR_Ca_Fluxes.I_leak) * paramet
            in [mM]
 dot(Ca_SL) = -I_Ca_tot_SL * parameters.Cm / (parameters.Vol_SL * 2 * parameters.Frdy) - Ca_Fluxes.J_JS_SL / parameters.Vol_SL - Ca_Fluxes.J_myoSL / parameters.Vol_SL - SL_Ca_Buffers.J_CaB_SL
            in [mM]
-dot(Ca_i) = -(SR_Ca_Fluxes.I_SERCA) * parameters.Vol_SR / parameters.Vol_myo - Cytosolic_Ca_Buffers.J_CaB_total + Ca_Fluxes.J_myoSL / parameters.Vol_myo
-          in [mM]
 
-# dot(Ca_i) = -(SR_Ca_Fluxes.I_SERCA - Mitochondrial_Ca_Fluxes.I_CaUni + 2 * Mitochondrial_Ca_Fluxes.I_NCXmit) * parameters.Vol_SR / parameters.Vol_myo - Cytosolic_Ca_Buffers.J_CaB_total + Ca_Fluxes.J_myoSL / parameters.Vol_myo
-#           in [mM]
+dot(Ca_i) = -(SR_Ca_Fluxes.I_SERCA - Mitochondrial_Ca_Fluxes.I_CaUni + 2 * Mitochondrial_Ca_Fluxes.I_NCXmit) * parameters.Vol_SR / parameters.Vol_myo - Cytosolic_Ca_Buffers.J_CaB_total + Ca_Fluxes.J_myoSL / parameters.Vol_myo
+          in [mM]
 dot(Ca_SR) = -(-SR_Ca_Fluxes.I_SERCA + SR_Ca_Fluxes.I_RyR + SR_Ca_Fluxes.I_leak) * parameters.Cm / (parameters.Vol_JS * 2 * parameters.Frdy) - SR_Ca_Fluxes.kon_csqn * Ca_SR * (SR_Ca_Fluxes.Bmax_csqn - SR_Ca_Fluxes.Csqn_b) + SR_Ca_Fluxes.koff_csqn * SR_Ca_Fluxes.Csqn_b
            in [mM]
-# dot(Ca_totalmit) = -(Mitochondrial_Ca_Fluxes.I_CaUni - 2 * Mitochondrial_Ca_Fluxes.I_NCXmit) * parameters.Cm / (parameters.Vol_mit * 2 * parameters.Frdy)
-#             in [mM]
+dot(Ca_totalmit) = -(Mitochondrial_Ca_Fluxes.I_CaUni - 2 * Mitochondrial_Ca_Fluxes.I_NCXmit) * parameters.Cm / (parameters.Vol_mit * 2 * parameters.Frdy)
+            in [mM]
 
 
 # Environment

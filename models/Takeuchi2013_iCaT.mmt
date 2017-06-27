@@ -19,9 +19,11 @@ time = 0 bind time
      in [ms]
 
 [membrane]
+i_stim = 0
+    in [A/F]
 Cm = 1
    in [pF/cm^2]
-dot(V) = icat.i_CaT / Cm
+dot(V) = -(icat.i_CaT + i_stim) / Cm
        in [mV]
 
 [icat]

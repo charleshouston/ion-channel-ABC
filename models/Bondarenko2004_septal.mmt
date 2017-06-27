@@ -303,7 +303,9 @@ beta_Na5 = alpha_Na3 / 50
     in [mS/uF]
 g_Na = 13
     in [mS/uF]
-i_Na = g_Na * O_Na * (membrane.V - E_Na)
+G_Na = g_Na * O_Na
+    in [mS/uF]
+i_Na = G_Na * (membrane.V - E_Na)
     in [A/F]
 
 [itof]
