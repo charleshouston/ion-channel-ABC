@@ -57,7 +57,8 @@ class TTypeCalcium(AbstractChannel):
         self.model_name = 'Takeuchi2013_iCaT.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['icat.dssk1',
+        self.parameters = ['icat.g_CaT',
+                           'icat.dssk1',
                            'icat.dssk2',
                            'icat.dtauk1',
                            'icat.dtauk2',
@@ -76,7 +77,8 @@ class TTypeCalcium(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0,100), # 30
+        self.prior_intervals = [(0,1),   # 0.4122
+                                (0,100), # 30
                                 (1,10),  # 6.0
                                 (0,10),  # 1.068
                                 (0,100), # 26.3

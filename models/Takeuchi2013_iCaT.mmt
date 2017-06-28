@@ -16,72 +16,67 @@ icat.f = 0.99
 
 [environment]
 time = 0 bind time
-     in [ms]
+    in [ms]
 
 [membrane]
-i_stim = 0
-    in [A/F]
-Cm = 1
-   in [pF/cm^2]
-dot(V) = -(icat.i_CaT + i_stim) / Cm
-       in [mV]
+dot(V) = -icat.i_CaT
+    in [mV]
 
 [icat]
 use membrane.V as V
 g_CaT = 0.4122
-      in [nS/pF]
-# E_CaT original value was 45
-E_CaT = 33  
-      in [mV]
+    in [mS/uF]
+E_CaT = 33 # using value reported in Deng et al., 2009 (original: 45)
+    in [mV]
 G_CaT = g_CaT * d * f
-      in [mS/cm^2]
+    in [mS/uF]
 i_CaT = G_CaT * (V - E_CaT)
-      in [uA/cm^2]
+    in [pA/pF]
 
 dot(d) = (dss - d)/tau_d
-       in [1]
+    in [1]
 tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk5)/dtauk6))^(-1)
-      in [1]
+    in [1]
 dss = (1 + exp(-(V+dssk1)/dssk2))^(-1)
     in [1]
 
 dssk1 = 30
-      in [mV]
+    in [mV]
 dssk2 = 6.0
-      in [mV]
+    in [mV]
 dtauk1 = 1.068
-       in [1]
+    in [1]
 dtauk2 = 26.3
-       in [mV]
+    in [mV]
 dtauk3 = 30
-       in [mV]
+    in [mV]
 dtauk4 = 1.068
-       in [1]
+    in [1]
 dtauk5 = 26.3
-       in [mV]
+    in [mV]
 dtauk6 = 30
-       in [mV]
+    in [mV]
 
 dot(f) = (fss - f)/tau_f
-       in [1]
+    in [1]
 fss = (1 + exp((V+fssk1)/fssk2))^(-1)
     in [1]
 tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk5)/ftauk6))^(-1)
-      in [1]
+    in [1]
 
 fssk1 = 48
-      in [mV]
+    in [mV]
 fssk2 = 7.0
-      in [mV]
+    in [mV]
 ftauk1 = 0.0153
-       in [1]
+     in [1]
 ftauk2 = 61.7
-       in [mV]
+     in [mV]
 ftauk3 = 83.3
-       in [mV]
+     in [mV]
 ftauk4 = 0.015
-       in [1]
+     in [1]
 ftauk5 = 61.7
-       in [mV]
+     in [mV]
 ftauk6 = 30
-       in [mV]
+     in [mV]
