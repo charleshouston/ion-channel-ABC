@@ -6,35 +6,47 @@ ref: """
 Bondarenko et al. (2004)
 """
 # Initial values
-membrane.V                                                       = -82.4202
-ina.C_Na2                                        = 0.020752
-ina.C_Na1                                        =  2.79132000000000024e-4
-ina.O_Na                                         =  7.13482999999999984e-7
-ina.IF_Na                                        =  1.53176000000000012e-4
-ina.I1_Na                                        =  6.73345000000000052e-7
-ina.I2_Na                                        =  1.55786999999999992e-9
-ina.IC_Na2                                       = 0.0113879
-ina.IC_Na3                                       = 0.34278
+membrane.V = -82.4202
+ina.C_Na2 = 0.020752
+ina.C_Na1 = 2.79132000000000024e-4
+ina.O_Na = 7.13482999999999984e-7
+ina.IF_Na = 1.53176000000000012e-4
+ina.I1_Na = 6.73345000000000052e-7
+ina.I2_Na = 1.55786999999999992e-9
+ina.IC_Na2 = 0.0113879
+ina.IC_Na3 = 0.34278
 
 [environment]
 time = 0 bind time
     in [ms]
 
 [membrane]
-Cm = 1
-   in [pF/cm^2]
-dot(V) = ina.i_Na / Cm
-       in [mV]
+dot(V) = -ina.i_Na
+    in [mV]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 298
+    in [K]
+Ko = 5400
+    in [uM]
+Nao = 140000
+    in [uM]
+Ki = 143720
+    in [uM]
+Nai = 14237.1
+    in [uM]
 
 [ina]
 use membrane.V as V
-g_Na = 23
+g_Na = 13
     in [mS/uF]
-E_Na = 23.2
-     in [mV]
+E_Na = membrane.R * membrane.T / membrane.F * log((0.9 * membrane.Nao + 0.1 * membrane.Ko) / (0.9 * membrane.Nai + 0.1 * membrane.Ki))
+    in [mV]
 G_Na = g_Na * O_Na
 i_Na = G_Na * (V - E_Na)
-    in [uA/cm^2]
+    in [pA/pF]
 
 dot(C_Na1) = alpha_Na12 * C_Na2 + beta_Na13 * O_Na + alpha_Na3 * IF_Na - (beta_Na12 * C_Na1 + alpha_Na13 * C_Na1 + beta_Na3 * C_Na1)
     in [1]
@@ -56,58 +68,58 @@ dot(O_Na) = alpha_Na13 * C_Na1 + beta_Na2 * IF_Na - (beta_Na13 * O_Na + alpha_Na
     in [1]
 
 k_alpha1 = 3.802
-         in [mS/uF]
+    in [mS/uF]
 k_alpha2 = 0.1027
-         in [1]
+    in [1]
 k_alpha3 = 2.5
-         in [mV]
+    in [mV]
 k_alpha4 = 150
-         in [mV]
+    in [mV]
 k_alpha5_11 = 17
-            in [mV]
+    in [mV]
 k_alpha5_12 = 15
-            in [mV]
+    in [mV]
 k_alpha5_13 = 12
-            in [mV]
+    in [mV]
 k_alpha6_11 = 0.2
-            in [1]
+    in [1]
 k_alpha6_12 = 0.23
-            in [1]
+    in [1]
 k_alpha6_13 = 0.25
-            in [1]
+    in [1]
 k_alpha7 = 0.188495
-         in [1]
+    in [1]
 k_alpha8 = 7
-         in [mV]
+    in [mV]
 k_alpha9 = 16.6
-         in [mV]
+    in [mV]
 k_alpha10 = 0.393956
-          in [1]
+    in [1]
 k_alpha11 = 7e-7
-          in [mS/uF]
+    in [mS/uF]
 k_alpha12 = 7.7
-          in [mV]
+    in [mV]
 
 k_beta1 = 0.1917
-        in [mS/uF]
+    in [mS/uF]
 k_beta2_11 = 2.5
-           in [mV]
+    in [mV]
 k_beta2_12 = -2.5
-           in [mV]
+    in [mV]
 k_beta2_13 = -7.5
-           in [mV]
+    in [mV]
 k_beta3 = 20.3
-        in [mV]
+    in [mV]
 k_beta4 = 0.2
-        in [mS/uF]
+    in [mS/uF]
 k_beta5 = 0.22
-        in [mS/uF]
+    in [mS/uF]
 k_beta6 = 0.0084
-        in [mS/uF]
+    in [mS/uF]
 k_beta7 = 2e-5
-        in [1/mV/ms]
+    in [1/mV/ms]
 k_beta8 = 7
-        in [mV]
+    in [mV]
 
 alpha_Na11 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / k_alpha5_11) + k_alpha6_11 * exp(-(V + k_alpha3) / k_alpha4))
     in [mS/uF]

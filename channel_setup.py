@@ -131,7 +131,8 @@ class FastSodium(AbstractChannel):
         self.model_name = 'Bondarenko2004_iNa.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ina.k_alpha1',
+        self.parameters = ['ina.g_Na',
+                           'ina.k_alpha1',
                            'ina.k_alpha2',
                            'ina.k_alpha3',
                            'ina.k_alpha4',
@@ -158,7 +159,8 @@ class FastSodium(AbstractChannel):
                            'ina.k_beta7',
                            'ina.k_beta8']
         # Parameter specific prior intervals
-        self.prior_intervals = [(0,10),  # 0
+        self.prior_intervals = [(0,100), # 13
+                                (0,10),  # 0
                                 (0,1.0), # 1
                                 (0,10),  # 2
                                 (1,1000),# 3
