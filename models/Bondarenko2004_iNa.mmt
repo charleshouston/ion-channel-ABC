@@ -40,9 +40,9 @@ Nai = 14237.1
 
 [ina]
 use membrane.V as V
-g_Na = 13
+g_Na = 23 # value from Takeuchi 2013 (original: 13)
     in [mS/uF]
-E_Na = membrane.R * membrane.T / membrane.F * log((0.9 * membrane.Nao + 0.1 * membrane.Ko) / (0.9 * membrane.Nai + 0.1 * membrane.Ki))
+E_Na = 23.2 # value from Dias 2014 (original used concentration balance)
     in [mV]
 G_Na = g_Na * O_Na
 i_Na = G_Na * (V - E_Na)

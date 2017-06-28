@@ -1,41 +1,40 @@
 [[model]]
-name: Bondarenko 2004 Ultra rapidly activating delayed rectifier K Current
+name: Bondarenko 2004 Rapidly activating delayed rectifier K Current
 author: Charles Houston
 
 # Initial values
-membrane.V                = -7.40319819999999993e1
-ikur.a_ur                 = 0.000367
-ikur.i_ur                 = 0.96729
+membrane.V = -82.4202
+ikur.a_ur                 = 4.17069000000000001e-4
+ikur.i_ur                 = 0.998543
 
 [environment]
 time = 0 bind time
     in [ms]
 
 [membrane]
-Cm = 1 
-    in [pF/cm^2]
-dot(V) = ikur.i_Kur / Cm
-       in [mV]
+dot(V) = -ikur.i_Kur
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 5400
+    in [uM]
+Ki = 143720
+    in [mmol]
 
 [ikur]
 use membrane.V as V
 g_Kur = 0.0975
     in [mS/uF]
-T = 310
-  in [K]
-F = 96.5
-  in [C/mmol]
-R = 8.314
-  in [J/mol/K]
-Ko = 5.4
-   in [mmol]
-Ki = 120
-   in [mmol]
-E_K = (R*T/F) * log(Ko/Ki)
+E_K = (membrane.R * membrane.T / membrane.F) * log(membrane.Ko / membrane.Ki)
     in [mV]
 G_Kur = g_Kur * a_ur * i_ur
+    in [mS/uF]
 i_Kur = G_Kur * (V - E_K)
-      in [uA/cm^2]
+    in [pA/pF]
 
 dot(a_ur) = (a_ur_ss - a_ur) / tau_a_ur
     in [1]
@@ -45,15 +44,15 @@ tau_a_ur = atauk1 * exp(-(atauk2 * V)) + atauk3
     in [ms]
 
 assk1 = 22.5
-      in [mV]
+    in [mV]
 assk2 = 7.5
-      in [mV]
+    in [mV]
 atauk1 = 0.493
-       in [ms]
+    in [ms]
 atauk2 = 0.0629
-       in [mV^-1]
+    in [mV^-1]
 atauk3 = 2.058
-       in [mV]
+    in [mV]
 
 dot(i_ur) = (i_ur_ss - i_ur) / tau_i_ur
     in [1]
@@ -63,14 +62,14 @@ tau_i_ur = itauk1 - itauk2 / (1 + exp((V + itauk3) / itauk4))
     in [ms]
 
 issk1 = 45.2
-      in [mV]
+    in [mV]
 issk2 = 5.7
-      in [mV]
+    in [mV]
 itauk1 = 1200
-       in [ms]
+    in [ms]
 itauk2 = 170
-       in [ms]
+    in [ms]
 itauk3 = 45.2
-       in [mV]
+    in [mV]
 itauk4 = 5.7
-       in [mV]
+    in [mV]
