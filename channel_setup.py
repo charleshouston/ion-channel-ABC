@@ -14,6 +14,7 @@ import data.icat.data_icat as data_icat
 import data.ina.data_ina as data_ina
 import data.ikur.data_ikur as data_ikur
 import data.iha.data_iha as data_iha
+import data.ikr.data_ikr as data_ikr
 
 # Experimental simulations import
 import simulations as sim
@@ -413,25 +414,22 @@ class RapidlyActivatingDelayedPotassium(AbstractChannel):
             self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
 
         # Loading experimental data
-        vsteps, act_peaks_exp = data_ikur.IV_MuharaniFig2B()
-        prepulses, inact_exp = data_ikur.Inact_XuFig9C()
-        intervals, rec_exp = data_ikur.Recovery_XuFig10C()
+        vsteps, act_peaks_exp = data_ikr.IV_Li7B()
+        vsteps2, act_exp = data_ikr.Activation_Li7B()
 
         self.data_exp = [[vsteps, act_peaks_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp]]
+                         [vsteps2, act_exp]]
+        # Normalise act_exp
+        act_exp = [float(i) / max(act_exp) for i in act_exp]
 
         # Setup simulations
-        sim_act = sim.ActivationSim('ikur.i_Kr', vhold=-60, thold=5000,
+        sim_IV = sim.ActivationSim('ikr.i_Kr', vhold=-50, thold=5000,
                                     vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=300)
-        sim_inact = sim.InactivationSim('ikur.G_Kr', vhold=50, thold=5000,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=5000)
-        sim_rec = sim.RecoverySim('ikur.G_Kr', vhold=-70, thold=5000,
-                                  vstep=50, tstep1=9500, tstep2=9500,
-                                  twaits=intervals)
-        self.simulations = [sim_act, sim_inact, sim_rec]
+                                    dv=vsteps[1]-vsteps[0], tstep=1000)
+        sim_act = sim.InactivationSim('ikr.G_Kr', vhold=-50, thold=2000,
+                                      vmin=min(vsteps2), vmax=max(vsteps2),
+                                      dv=vsteps2[1]-vsteps2[0], tstep=1000)
+        self.simulations = [sim_IV, sim_act]
 
 class HyperpolarisationActivatedCation(AbstractChannel):
     def __init__(self):
