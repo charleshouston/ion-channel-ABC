@@ -1,0 +1,16 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Thu Jun 29 17:28:30 BST 2017 -->
+<data>
+<image file='LiFig7B-1.png' />
+<axesnames x='Membrane potential (mV)'  y='Current density (pA/pF)' />
+<calibpoints minXaxisX='297.0' minXaxisY='960.0' maxXaxisX='1173.0' maxXaxisY='960.0' minYaxisX='279.0' minYaxisY='942.0' maxYaxisX='279.0' maxYaxisY='210.0' aX1='-40.0' aX2='40.0' aY1='0.0' aY2='8.0' isXLog='false' isYLog='false' />
+<point n='0' x='298.0' y='932.0' dx='-39.90867579908675' dy='0.10928961748633803' />
+<point n='1' x='408.0' y='868.0' dx='-29.863013698630134' dy='0.8087431693989071' />
+<point n='2' x='517.0' y='714.0' dx='-19.908675799086758' dy='2.4918032786885247' />
+<point n='3' x='626.0' y='558.0' dx='-9.954337899543376' dy='4.19672131147541' />
+<point n='4' x='735.0' y='491.0' dx='0.0' dy='4.9289617486338795' />
+<point n='5' x='846.0' y='523.0' dx='10.13698630136986' dy='4.579234972677596' />
+<point n='6' x='954.0' y='630.0' dx='20.0' dy='3.4098360655737707' />
+<point n='7' x='1064.0' y='745.0' dx='30.045662100456624' dy='2.1530054644808736' />
+<point n='8' x='1174.0' y='855.0' dx='40.091324200913235' dy='0.9508196721311482' />
+</data>
