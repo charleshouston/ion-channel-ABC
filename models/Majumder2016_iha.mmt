@@ -1,0 +1,76 @@
+[[model]]
+name: Majumder 2016 hyperpolarisation activated non-selective cation current
+author: Charles Houston
+
+# Initial values
+membrane.V = -82.4202
+iha.y = 0.01
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -iha.i_ha
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 5400
+    in [uM]
+Ki = 143720
+    in [uM]
+Nai = 14237.1
+    in [uM]
+Nao = 140000
+    in [uM]
+
+[iha]
+g_ha = 0.021 [mS/uF]
+    in [mS/uF]
+
+y_ss = 1 / (1 + exp((membrane.V + y_ssk1) / y_ssk2))
+    in [1]
+y_ssk1 = 78.65 [mV]
+    in [mV]
+y_ssk2 = 6.33 [mV]
+    in [mV]
+
+tau_y = 1000 [ms] / (tau_yk1 * exp((membrane.V + tau_yk2) / tau_yk3) + tau_yk4 * exp((membrane.V + tau_yk5) / -tau_yk6))
+    in [ms]
+tau_yk1 = 0.11885
+    in [1]
+tau_yk2 = 75 [mV]
+    in [mV]
+tau_yk3 = 28.37 [mV]
+    in [mV]
+tau_yk4 = 0.56236
+    in [1]
+tau_yk5 = 75 [mV]
+    in [mV]
+tau_yk6 = 14.19 [mV]
+    in [mV]
+
+dot(y) = (y_ss - y) / tau_y
+    in [1]
+
+E_Na = membrane.R * membrane.T / membrane.F * log((0.9 * membrane.Nao + 0.1 * membrane.Ko) / (0.9 * membrane.Nai + 0.1 * membrane.Ki))
+    in [mV]
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
+    in [mV]
+
+G_ha = g_ha * y
+    in [mS/uF]
+i_haNa = G_ha * i_haNak1 * (membrane.V - E_Na)
+    in [pA/pF]
+i_haK = G_ha * (1-i_haNak1) * (membrane.V - E_K)
+    in [pA/pF]
+
+i_haNak1 = 0.2
+    in [1]
+
+i_ha = i_haNa + i_haK
+    in [pA/pF]

@@ -13,6 +13,7 @@ import data.ical.data_ical as data_ical
 import data.icat.data_icat as data_icat
 import data.ina.data_ina as data_ina
 import data.ikur.data_ikur as data_ikur
+import data.iha.data_iha as data_iha
 
 # Experimental simulations import
 import simulations as sim
@@ -219,32 +220,32 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
         self.model_name = 'Bondarenko2004_iKur.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikur.g_Kur',
-                           'ikur.assk1',
-                           'ikur.assk2',
-                           'ikur.atauk1',
-                           'ikur.atauk2',
-                           'ikur.atauk3',
-                           'ikur.issk1',
-                           'ikur.issk2',
-                           'ikur.itauk1',
-                           'ikur.itauk2',
-                           'ikur.itauk3',
-                           'ikur.itauk4']
+        self.parameters = ['ikur.g_Kur']
+        # self.parameters = ['ikur.assk1',
+        #                    'ikur.assk2',
+        #                    'ikur.atauk1',
+        #                    'ikur.atauk2',
+        #                    'ikur.atauk3',
+        #                    'ikur.issk1',
+        #                    'ikur.issk2',
+        #                    'ikur.itauk1',
+        #                    'ikur.itauk2',
+        #                    'ikur.itauk3',
+        #                    'ikur.itauk4']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1),     # 0.0975
-                                (0, 100),   # 22.5
-                                (1, 10),    # 7.5
-                                (0, 1),     # 0.493
-                                (0, 0.1),   # 0.0629
-                                (0, 10),    # 2.058
-                                (0, 100),   # 45.2
-                                (1, 10),    # 5.7
-                                (0, 10000), # 1200
-                                (0, 1000),  # 170
-                                (0, 100),   # 45.2
-                                (1, 10)]    # 5.7
+        self.prior_intervals = [(0, 1)]
+        # self.prior_intervals = [(0, 100),   # 22.5
+        #                         (1, 10),    # 7.5
+        #                         (0, 1),     # 0.493
+        #                         (0, 0.1),   # 0.0629
+        #                         (0, 10),    # 2.058
+        #                         (0, 100),   # 45.2
+        #                         (1, 10),    # 5.7
+        #                         (0, 10000), # 1200
+        #                         (0, 1000),  # 170
+        #                         (0, 100),   # 45.2
+        #                         (1, 10)]    # 5.7
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
@@ -258,21 +259,21 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
         prepulses, inact_exp = data_ikur.Inact_XuFig9C()
         intervals, rec_exp = data_ikur.Recovery_XuFig10C()
 
-        self.data_exp = [[vsteps, act_peaks_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp]]
+        self.data_exp = [[vsteps, act_peaks_exp]]#,
+                         # [prepulses, inact_exp],
+                         # [intervals, rec_exp]]
 
         # Setup simulations
         sim_act = sim.ActivationSim('ikur.i_Kur', vhold=-60, thold=5000,
                                     vmin=min(vsteps), vmax=max(vsteps),
                                     dv=vsteps[1]-vsteps[0], tstep=300)
-        sim_inact = sim.InactivationSim('ikur.G_Kur', vhold=50, thold=5000,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=5000)
-        sim_rec = sim.RecoverySim('ikur.G_Kur', vhold=-70, thold=5000,
-                                  vstep=50, tstep1=9500, tstep2=9500,
-                                  twaits=intervals)
-        self.simulations = [sim_act, sim_inact, sim_rec]
+        # sim_inact = sim.InactivationSim('ikur.G_Kur', vhold=50, thold=5000,
+        #                                 vmin=min(prepulses), vmax=max(prepulses),
+        #                                 dv=prepulses[1]-prepulses[0], tstep=5000)
+        # sim_rec = sim.RecoverySim('ikur.G_Kur', vhold=-70, thold=5000,
+        #                           vstep=50, tstep1=9500, tstep2=9500,
+        #                           twaits=intervals)
+        self.simulations = [sim_act]#, sim_inact, sim_rec]
 
 
 class LTypeCalcium(AbstractChannel):
@@ -432,3 +433,54 @@ class RapidlyActivatingDelayedPotassium(AbstractChannel):
                                   twaits=intervals)
         self.simulations = [sim_act, sim_inact, sim_rec]
 
+class HyperpolarisationActivatedCation(AbstractChannel):
+    def __init__(self):
+        self.name = 'iha'
+        self.model_name = 'Majumder2016_iha.mmt'
+
+        # Parameters involved in ABC process
+        self.parameters = ['iha.y_ssk1',
+                           'iha.y_ssk2',
+                           'iha.tau_yk1',
+                           'iha.tau_yk2',
+                           'iha.tau_yk3',
+                           'iha.tau_yk4',
+                           'iha.tau_yk5',
+                           'iha.tau_yk6',
+                           'iha.i_haNak1',
+                           'iha.g_ha']
+
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0, 100),   # 78.65
+                                (1, 10),    # 6.33
+                                (0, 1.0),   # 0.11885
+                                (0, 100),   # 75
+                                (1, 100),   # 28.37
+                                (0, 1.0),   # 0.56236
+                                (0, 100),   # 75
+                                (0, 100),   # 14.19
+                                (0, 1.0),   # 0.2
+                                (0, 1.0)]   # 0.021
+
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
+
+        # Loading experimental data
+        vsteps, act_peaks_exp = data_iha.IV_Sartiana5B()
+        prepulses, inact_exp = data_iha.Act_DengFig3B()
+
+        self.data_exp = [[vsteps, act_peaks_exp],
+                         [prepulses, inact_exp]]
+
+        # Setup simulations
+        sim_act = sim.ActivationSim('iha.i_ha', vhold=-120, thold=1500,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=300)
+        sim_inact = sim.InactivationSim('iha.G_ha', vhold=40, thold=2000,
+                                        vmin=min(prepulses), vmax=max(prepulses),
+                                        dv=prepulses[1]-prepulses[0], tstep=500)
+        self.simulations = [sim_act, sim_inact]
