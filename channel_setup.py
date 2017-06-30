@@ -360,51 +360,29 @@ class LTypeCalcium(AbstractChannel):
 class RapidlyActivatingDelayedPotassium(AbstractChannel):
     def __init__(self):
         self.name = 'ikr'
-        self.model_name = 'Clancy2001_iKr.mmt'
+        self.model_name = 'Takeuchi2013_iKr.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikr.g_Kr_max',
-                           'ikr.alphak1',
-                           'ikr.alphak2',
-                           'ikr.alphak3',
-                           'ikr.alpha_alphak1',
-                           'ikr.alpha_alphak2',
-                           'ikr.alpha_alphak3',
-                           'ikr.alpha_ik1',
-                           'ikr.alpha_ik2',
-                           'ikr.alpha_ik3',
-                           'ikr.alpha_ik4',
-                           'ikr.alpha_in',
-                           'ikr.betak1',
-                           'ikr.betak2',
-                           'ikr.beta_betak1',
-                           'ikr.beta_betak2',
-                           'ikr.beta_ik1',
-                           'ikr.beta_ik2',
-                           'ikr.beta_ik3',
-                           'ikr.beta_in']
+        self.parameters = ['ikr.xkr_ssk1',
+                           'ikr.xkr_ssk2',
+                           'ikr.tau_xkrk1',
+                           'ikr.tau_xkrk2',
+                           'ikr.tau_xkrk3',
+                           'ikr.tau_xkrk4',
+                           'ikr.tau_xkrk5',
+                           'ikr.rkrk1',
+                           'ikr.rkrk2']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1),     # 0.0135
-                                (0, 100),   # 55.5
-                                (0, 0.1),   # 5.54715299999999981e-2
-                                (0, 100),   # 12
-                                (0, 100),   # 65.5
-                                (0, 0.1),   # 5.54715299999999981e-2
-                                (0, 100),   # 36
-                                (0, 1000),  # 439
-                                (0, 0.1),   # 0.02352
-                                (0, 100),   # 25
-                                (0, 10),    # 4.5
-                                (0, 10000), # 2172
-                                (0, 10),    # 2.357
-                                (0, 0.1),   # 0.036588
-                                (0, 10),    # 2.9357
-                                (0, 0.1),   # 0.02158
-                                (0, 1000),  # 656
-                                (0, 0.001), # 0.000942
-                                (0, 10),    # 4.5
-                                (0, 10000)] # 1077
+        self.prior_intervals = [(0, 100),   # 15
+                                (1, 10),    # 6
+                                (0, 10),    # 2.5
+                                (0, 100),   # 31.18
+                                (0, 1000),  # 217.18
+                                (0, 100),   # 20.1376
+                                (1, 100),   # 22.1996
+                                (0, 100),   # 55
+                                (1, 100)]   # 24
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
@@ -416,11 +394,11 @@ class RapidlyActivatingDelayedPotassium(AbstractChannel):
         # Loading experimental data
         vsteps, act_peaks_exp = data_ikr.IV_Li7B()
         vsteps2, act_exp = data_ikr.Activation_Li7B()
+        # Normalise act_exp
+        act_exp = [float(i) / max(act_exp) for i in act_exp]
 
         self.data_exp = [[vsteps, act_peaks_exp],
                          [vsteps2, act_exp]]
-        # Normalise act_exp
-        act_exp = [float(i) / max(act_exp) for i in act_exp]
 
         # Setup simulations
         sim_IV = sim.ActivationSim('ikr.i_Kr', vhold=-50, thold=5000,
