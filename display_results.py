@@ -8,7 +8,7 @@ import myokit
 import channel_setup
 
 # Import channel
-channel = channel_setup.RapidlyActivatingDelayedPotassium()
+channel = channel_setup.HyperpolarisationActivatedCation()
 sim_original = channel.simulate()
 
 # Open results from ABC simulation
@@ -37,14 +37,23 @@ for i in range(len(sim_ABC)):
     sim_ABC_sd.append(np.std(sim_ABC[i],axis=1))
 
 # Plot the results
-fig, ax = plt.subplots(nrows=1, ncols=len(sim_ABC))
+plt.style.use('seaborn-colorblind')
+fig, ax = plt.subplots(nrows=1, ncols=len(sim_ABC), figsize=(5*len(sim_ABC), 5))
 fig.suptitle('Voltage clamp simulations for ' + str(channel.name) + ' in HL-1')
 for i in range(len(sim_ABC)):
-    ax[i].errorbar(channel.data_exp[i][0], sim_ABC_mu[i], yerr=sim_ABC_sd[i],
-                 marker='o', color='b', ls='None', label='Simulation')
-    ax[i].plot(channel.data_exp[i][0], channel.data_exp[i][1], 'rx', label='Experiment')
-    ax[i].plot(channel.data_exp[i][0], sim_original[i], 'gs', label='Published model')
-ax[-1].legend(loc='lower right')
+    if len(sim_ABC) > 1:
+        axi = ax[i]
+    else:
+        axi = ax
+    axi.errorbar(channel.data_exp[i][0], sim_ABC_mu[i], yerr=sim_ABC_sd[i],
+                 fmt='o', label='Simulation')
+    axi.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'x', label='Experiment')
+    axi.plot(channel.data_exp[i][0], sim_original[i], 's', label='Published model')
+if len(sim_ABC) > 1:
+    ax[-1].legend(loc='lower right')
+else:
+    ax.legend(loc='lower right')
 
-fig.show()
-input('Please press Enter to continue...')
+# fig.show()
+# raw_input('Please press Enter to continue...')
+fig.savefig('results/fig_'+str(channel.name)+'.eps', bbox_inches="tight")
