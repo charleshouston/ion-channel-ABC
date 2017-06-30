@@ -47,6 +47,6 @@ Activation curve
 Returns x, y data from activation points in Figure 7B in Li et al., 2011.
 '''
 def Activation_Li7B():
-    x = [-40,-30,-20,-10,0,10,20,30,40,50]
+    x = [-40,-30,-20,-10,0,10,20,30,40]
     y = [0.084746,1.045198,2.683616,4.745763,6.285311,7.146893,7.415254,7.429379,7.485876]
     return x, y

@@ -1,0 +1,67 @@
+[[model]]
+name: Takeuchi 2013 Rapidly activating delayed rectifier K Current
+author: Charles Houston
+
+# Initial values
+membrane.V = -82.4202
+ikr.xkr = 8.64138599999999917e-3
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikr.i_Kr
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 5400
+    in [uM]
+Ki = 143720
+    in [uM]
+Nao = 140000
+    in [uM]
+Nai = 14237.1
+    in [uM]
+
+[ikr]
+g_Kr = 0.73 [nS/pF]
+    in [nS/pF]
+xkr_ss = 1 / (1 + exp(-(membrane.V + xkr_ssk1) / xkr_ssk2))
+    in [1]
+tau_xkr = tau_xkrk1 * (tau_xkrk2 + tau_xkrk3 * exp(-((membrane.V + tau_xkrk4)/tau_xkrk5) ^ 2))
+    in [ms]
+rkr = 1 / (1 + exp((membrane.V + rkrk1) / rkrk2))
+    in [1]
+dot(xkr) = (xkr_ss - xkr) / tau_xkr
+    in [1]
+
+xkr_ssk1 = 15 [mV]
+    in [mV]
+xkr_ssk2 = 6 [mV]
+    in [mV]
+tau_xkrk1 = 2.5 [ms]
+    in [ms]
+tau_xkrk2 = 31.18
+    in [1]
+tau_xkrk3 = 217.18
+    in [1]
+tau_xkrk4 = 20.1376 [mV]
+    in [mV]
+tau_xkrk5 = 22.1996 [mV]
+    in [mV]
+rkrk1 = 55 [mV]
+    in [mV]
+rkrk2 = 24 [mV]
+    in [mV]
+
+E_K = membrane.R * membrane.T / membrane.F * log((0.98 * membrane.Ko + 0.02 * membrane.Nao) / (0.98 * membrane.Ki + 0.02 * membrane.Nai))
+    in [mV]
+G_Kr = g_Kr * sqrt(membrane.Ko / 5400 [uM]) * xkr * rkr
+    in [nS/pF]
+i_Kr = G_Kr * (membrane.V - E_K)
+    in [pA/pF]
