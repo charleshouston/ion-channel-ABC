@@ -39,7 +39,6 @@ itof.ato_f                   =  2.65562999999999997e-3
 itof.ito_f                   = 0.999977
 itos.ato_s                   =  4.17069000000000001e-4
 itos.ito_s                   = 0.998543
-iks.nKs                     =  2.62753000000000010e-4
 ikur.aur =  4.17069000000000001e-4
 ikur.iur = 0.998543
 ikss.aKss             =  4.17069000000000001e-4
@@ -335,7 +334,7 @@ R = 8.314
     in [J/mol/K]
 T = 298
     in [K]
-dot(V) = -(ical.i_CaL + ipca.i_pCa + incx.i_NaCa + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + iks.i_Ks + ikur.i_Kur + ikss.i_Kss + ikr.i_Kr + iclca.i_ClCa + icat.i_CaT + iha.i_ha + ikach.i_KAch) + i_stim
+dot(V) = -(ical.i_CaL + ipca.i_pCa + incx.i_NaCa + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + ikur.i_Kur + ikss.i_Kss + ikr.i_Kr + iclca.i_ClCa + icat.i_CaT + iha.i_ha + ikach.i_KAch) + i_stim
     in [mV]
 
 VJSR = 1.2e-7
@@ -372,7 +371,7 @@ tau_Kss = 39.3 [ms] * exp(-0.0862 [1/mV] * membrane.V) + 13.17 [ms]
     in [ms]
 
 [potassium_concentration]
-dot(Ki) = -(itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + iks.i_Ks + ikss.i_Kss + ikur.i_Kur + ikr.i_Kr - 2 * inak.i_NaK + iha.i_haK + ikach.i_KAch) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
+dot(Ki) = -(itof.i_Kto_f + itos.i_Kto_s + ik1.i_K1 + ikss.i_Kss + ikur.i_Kur + ikr.i_Kr - 2 * inak.i_NaK + iha.i_haK + ikach.i_KAch) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
     in [uM]
 
 
@@ -432,18 +431,6 @@ k_plus_c = 0.009
 m = 3
     in [1]
 n = 4
-    in [1]
-
-[iks]
-alpha_n =  4.81332999999999970e-6 [1/mV/ms] * (membrane.V + 26.5 [mV]) / (1 - exp(-0.128 [1/mV] * (membrane.V + 26.5 [mV])))
-    in [mS/uF]
-beta_n =  9.53332999999999974e-5 [mS/uF] * exp(-0.038 [1/mV] * (membrane.V + 26.5 [mV]))
-    in [mS/uF]
-g_Ks = 0.00575
-    in [mS/uF]
-i_Ks = g_Ks * nKs ^ 2 * (membrane.V - itof.E_K)
-    in [pA/pF]
-dot(nKs) = alpha_n * (1 - nKs) - beta_n * nKs
     in [1]
 
 [itos]
