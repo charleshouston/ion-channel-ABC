@@ -8,7 +8,7 @@ import myokit
 import channel_setup
 
 # Import channel
-channel = channel_setup.TTypeCalcium()
+channel = channel_setup.RapidlyActivatingDelayedPotassium()
 sim_original = channel.simulate()
 
 # Open results from ABC simulation
@@ -37,13 +37,14 @@ for i in range(len(sim_ABC)):
     sim_ABC_sd.append(np.std(sim_ABC[i],axis=1))
 
 # Plot the results
-plt.figure
-plt.suptitle('Voltage clamp simulations for ' + str(channel.name) + ' in HL-1')
+fig, ax = plt.subplots(nrows=1, ncols=len(sim_ABC))
+fig.suptitle('Voltage clamp simulations for ' + str(channel.name) + ' in HL-1')
 for i in range(len(sim_ABC)):
-    plt.subplot(1,len(sim_ABC),i+1)
-    plt.errorbar(channel.data_exp[i][0], sim_ABC_mu[i], yerr=sim_ABC_sd[i],
-                 marker='o', color='b', ls='None')
-    plt.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'rx')
-    plt.plot(channel.data_exp[i][0], sim_original[i], 'gs')
+    ax[i].errorbar(channel.data_exp[i][0], sim_ABC_mu[i], yerr=sim_ABC_sd[i],
+                 marker='o', color='b', ls='None', label='Simulation')
+    ax[i].plot(channel.data_exp[i][0], channel.data_exp[i][1], 'rx', label='Experiment')
+    ax[i].plot(channel.data_exp[i][0], sim_original[i], 'gs', label='Published model')
+ax[-1].legend(loc='lower right')
 
-plt.show()
+fig.show()
+input('Please press Enter to continue...')
