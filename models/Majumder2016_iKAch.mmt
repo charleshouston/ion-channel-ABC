@@ -1,0 +1,37 @@
+[[model]]
+name: Majumder 2016 acetylcholine sensitive potassium current
+author: Charles Houston
+
+# Initial values
+membrane.V = -82.4202
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikach.i_KAch
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 5400
+    in [uM]
+Ki = 143720
+    in [uM]
+Nai = 14237.1
+    in [uM]
+Nao = 140000
+    in [uM]
+
+[ikach]
+g_KAch = 0.37488 [mS/uF]
+    in [mS/uF]
+E_K = membrane.R * membrane.T / membrane.F * log((0.98 * membrane.Ko + 0.02 * membrane.Nao) / (0.98 * membrane.Ki + 0.02 * membrane.Nai))
+    in [mV]
+
+i_KAch = g_KAch * (0.075 + 0.35 / (1 + exp((membrane.V + 102) / 10))) * (membrane.V - E_K - 10)
+    in [pA/pF]

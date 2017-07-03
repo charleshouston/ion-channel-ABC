@@ -1,0 +1,142 @@
+[[model]]
+name: Takeuchi 2013 fast sodium channel
+author: Charles Houston
+desc: """
+      The Takeuchi 2013 model for the fast sodium current in HL-1 myocytes.
+      Reversal potential adjusted for data from Dias et al., 2014.
+      """
+ref: """
+     A Takeuchi et al. (2013) The mitochondrial Na+-Ca2+ exchanger, NCLX, regulates
+     automaticity of HL-1 cardiomyocytes.
+     """
+# Initial values
+membrane.V = -67.0
+ina.m                         = 1.40562700000000000e-3
+ina.h                         = 0.9867005
+ina.j                         = 0.991562
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ina.i_Na
+    in [mV]
+
+[ina]
+m_ss = 1 / (1 + exp(-(m_ssk1 + membrane.V) / m_ssk2)) ^ 2
+    in [1]
+tau_m = tau_mk1 * exp(-((membrane.V + tau_mk2) / tau_mk3) ^ 2) + tau_mk4 * exp(-((membrane.V - tau_mk5) / tau_mk6) ^ 2)
+    in [ms]
+m_ssk1 = 56.86 [mV]
+    in [mV]
+m_ssk2 = 9.03 [mV]
+    in [mV]
+tau_mk1 = 0.1292 [ms]
+    in [ms]
+tau_mk2 = 45.79 [mV]
+    in [mV]
+tau_mk3 = 15.54 [mV]
+    in [mV]
+tau_mk4 = 0.06487 [ms]
+    in [ms]
+tau_mk5 = 4.823 [mV]
+    in [mV]
+tau_mk6 = 51.12 [mV]
+    in [mV]
+
+h_ss = 1 / (1 + exp((membrane.V + h_ssk1) / h_ssk2)) ^ 2
+    in [1]
+a_h = piecewise(membrane.V >= v_split, 0, a_hk1 * exp(-(membrane.V + a_hk2) / a_hk3))
+    in [1]
+b_h = piecewise(membrane.V >= v_split, b_hk1 / (b_hk2 * (1 + exp(-(membrane.V + b_hk3) / b_hk4))), b_hk5 * exp(b_hk6 * membrane.V) + b_hk7 * 10000 * exp(b_hk8 * membrane.V))
+    in [1]
+tau_h = 1 [ms] / (a_h + b_h)
+    in [ms]
+h_ssk1 = 71.55 [mV]
+    in [mV]
+h_ssk2 = 7.43 [mV]
+    in [mV]
+a_hk1 = 0.057
+    in [1]
+a_hk2 = 80 [mV]
+    in [mV]
+a_hk3 = 6.8 [mV]
+    in [mV]
+b_hk1 = 0.77
+    in [1]
+b_hk2 = 0.13
+    in [1]
+b_hk3 = 10.66 [mV]
+    in [mV]
+b_hk4 = 11.1 [mV]
+    in [mV]
+b_hk5 = 2.7
+    in [1]
+b_hk6 = 0.079 [1/mV]
+    in [1/mV]
+b_hk7 = 31
+    in [1]
+b_hk8 = 0.3485 [1/mV]
+    in [1/mV]
+v_split = -40 [mV]
+    in [mV]
+
+j_ss = 1 / (1 + exp((membrane.V + j_ssk1) / j_ssk2)) ^ 2
+    in [1]
+a_j = piecewise(membrane.V >= v_split, 0, (-a_jk1 * 1000 * exp(a_jk2 * membrane.V) - a_jk3 * 1e-6 * exp(-a_jk4 * membrane.V)) * (membrane.V + a_jk5) / (1 + exp(a_jk6 * (membrane.V + a_jk7))))
+    in [1]
+b_j = piecewise(membrane.V >= v_split, b_jk1 * exp(b_jk2 * membrane.V) / (1 + exp(-b_jk3 * (membrane.V + b_jk4))), b_jk5 * exp(-b_jk6 * membrane.V) / (1 + exp(-b_jk7 * (membrane.V + b_jk8))))
+    in [1]
+tau_j = 1 [ms] / (a_j + b_j)
+    in [ms]
+j_ssk1 = 71.55 [mV]
+    in [mV]
+j_ssk2 = 7.43 [mV]
+    in [mV]
+a_jk1 = 25.428 [1/mV]
+    in [mV]
+a_jk2 = 0.2444 [1/mV]
+    in [1/mV]
+a_jk3 = 6.948 [1/mV]
+    in [1/mV]
+a_jk4 = 0.04391 [1/mV]
+    in [1/mV]
+a_jk5 = 37.78 [mV]
+    in [mV]
+a_jk6 = 0.311 [1/mV]
+    in [1/mV]
+a_jk7 = 79.23 [mV]
+    in [mV]
+b_jk1 = 0.6
+    in [1]
+b_jk2 = 0.057 [1/mV]
+    in [1/mV]
+b_jk3 = 0.1 [1/mV]
+    in [1/mV]
+b_jk4 = 32 [mV]
+    in [mV]
+b_jk5 = 0.02424
+    in [1]
+b_jk6 = 0.01052 [1/mV]
+    in [1/mV]
+b_jk7 = 0.1378 [1/mV]
+    in [1/mV]
+b_jk8 = 40.14 [mV]
+    in [mV]
+
+dot(m) = (m_ss - m) / tau_m
+    in [1]
+dot(h) = (h_ss - h) / tau_h
+    in [1]
+dot(j) = (j_ss - j) / tau_j
+    in [1]
+
+g_Na = 23 [nS/pF]
+    in [nS/pF]
+E_Na = 23.2 # value from Dias 2014 (original used concentration balance)
+    in [mV]
+G_Na = g_Na * m ^ 3 * h * j
+     in [nS/pF]
+i_Na = G_Na * (membrane.V - E_Na)
+    in [pA/pF]

@@ -1,0 +1,69 @@
+[[model]]
+name: Takeuchi 2013 Inward rectifying K Current (i_K1)
+author: Charles Houston
+
+# Initial values
+membrane.V = -67.0
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ik1.i_K1
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 20000
+    in [uM]
+Ki = 143720
+    in [uM]
+Nao = 140000
+    in [uM]
+Nai = 14237.1
+    in [uM]
+
+
+[ik1]
+g_K1 = 0.15 [nS/pF] # maximum conductance
+    in [nS/pF]
+
+a_K1 = a_K1_k1 / (1 + exp(a_K1_k2 * (membrane.V - E_K - a_K1_k3)))
+    in [1]
+b_K1 = (b_K1_k1 * exp(b_K1_k2 * (membrane.V + b_K1_k3 - E_K)) + exp(b_K1_k4 * (membrane.V - E_K - b_K1_k5))) / (1 + exp(-b_K1_k6 * (membrane.V - E_K + b_K1_k7)))
+    in [1]
+a_K1_k1 = 1.02
+    in [1]
+a_K1_k2 = 0.2385 [1/mV]
+    in [1/mV]
+a_K1_k3 = 59.215 [mV]
+    in [mV]
+b_K1_k1 = 0.49124
+    in [1]
+b_K1_k2 = 0.08032 [1/mV]
+    in [1/mV]
+b_K1_k3 = 5.476 [mV]
+    in [mV]
+b_K1_k4 = 0.06175 [1/mV]
+    in [1/mV]
+b_K1_k5 = 594.31 [mV]
+    in [mV]
+b_K1_k6 = 0.5143 [1/mV]
+    in [1/mV]
+b_K1_k7 = 4.753 [mV]
+    in [mV]
+
+K1_ss = a_K1 / (a_K1 + b_K1)
+    in [1]
+
+G_K1 = g_K1 * sqrt(membrane.Ko / 5400 [uM]) * K1_ss
+    in [nS/pF]
+i_K1 = G_K1 * (membrane.V - E_K)
+    in [pA/pF]
+
+E_K = membrane.R * membrane.T / membrane.F * log((0.98 * membrane.Ko + 0.02 * membrane.Nao) / (0.98 * membrane.Ki + 0.02 * membrane.Nai))
+    in [mV]
