@@ -493,13 +493,27 @@ class ito(AbstractChannel):
 class ikach(AbstractChannel):
     def __init__(self):
         self.name = 'ikach'
-        self.model_name = 'Majumder2016_ikach.mmt'
+        self.model_name = 'Majumder2016_iKAch.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikach.g_KAch']
+        self.parameters = ['ikach.k1',
+                           'ikach.k2',
+                           'ikach.k3',
+                           'ikach.k4',
+                           'ikach.k5',
+                           'ikach.k6',
+                           'ikach.k7',
+                           'ikach.k8']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1)] # 0.37488
+        self.prior_intervals = [(0, 10),   # 0.37488
+                                (0, 10),   # 9.13652
+                                (0, 1),    # 0.477811
+                                (0, 0.1),  # 0.04
+                                (0, 1),    # 0.23
+                                (0, 1000), # 102
+                                (0, 100),  # 10
+                                (0, 100)]  # 10
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
@@ -514,9 +528,7 @@ class ikach(AbstractChannel):
         self.data_exp = [[vsteps, act_peaks_exp]]
 
         # Setup simulations
-        sim_act = sim.ActivationSim('ikach.i_KAch', vhold=-75, thold=5000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=600)
+        sim_act = sim.TimeIndependentActivationSim('ikach.i_KAch', vsteps=vsteps)
         self.simulations = [sim_act]
 
 class ik1(AbstractChannel):
@@ -557,7 +569,7 @@ class ik1(AbstractChannel):
             param_range = pr[1]-pr[0]
             self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
 
-        # Loading i_Kur channel experimental data
+        # Loading experimental data
         vsteps, act_peaks_exp = data_ik1.IV_GoldoniFig3D()
         # Convert to current densities using value reported for current
         #  density at -150mV in original paper (-42.2pA/pF)
@@ -567,9 +579,7 @@ class ik1(AbstractChannel):
         self.data_exp = [[vsteps, act_peaks_exp]]
 
         # Setup simulations
-        sim_act = sim.ActivationSim('ik1.i_K1', vhold=-50, thold=5000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=100)
+        sim_act = sim.TimeIndependentActivationSim('ik1.i_K1', vsteps=vsteps)
         self.simulations = [sim_act]
 
 class ina2(AbstractChannel):

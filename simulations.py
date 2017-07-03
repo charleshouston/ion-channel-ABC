@@ -82,6 +82,49 @@ class ActivationSim(AbstractSim):
 
         return pks[self.variable]
 
+class TimeIndependentActivationSim(AbstractSim):
+    '''
+                 +--- vstep ---+
+                 +-------------+
+                 +-------------+
+                 |             |
+    vhold -------+             +-
+    t=0          t=thold       t=thold+tstep
+    no current   current!
+
+    Time independent version of activation simulation.
+    '''
+    def __init__(self, variable, vsteps):
+
+        super(TimeIndependentActivationSim, self).__init__()
+
+        self.variable=variable
+        self.vsteps=vsteps
+
+    def run(self, model_name):
+        '''
+        Run the activation protocol defined.
+        '''
+        # Load the model
+        m,p,x = myokit.load('models/' + model_name)
+        v_m = m.get('membrane.V')
+        v_m.demote()
+
+        # Reset parameters to new values
+        for i,p in enumerate(self.p_names):
+            m.get(p).set_rhs(self.p_vals[i])
+
+        pks = []
+        try:
+            for v in self.vsteps:
+                v_m.set_rhs(v)
+                i = m.get(self.variable).value()
+                pks.append(i)
+        except:
+            return None
+
+        return pks
+
 
 class InactivationSim(AbstractSim):
     '''
