@@ -15,6 +15,7 @@ import data.ina.data_ina as data_ina
 import data.ikur.data_ikur as data_ikur
 import data.iha.data_iha as data_iha
 import data.ikr.data_ikr as data_ikr
+import data.ito.data_ito as data_ito
 
 # Experimental simulations import
 import simulations as sim
@@ -283,9 +284,7 @@ class LTypeCalcium(AbstractChannel):
         self.model_name = 'Houston2017.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ical.g_CaL',
-                           'ical.E_CaL',
-                           'ical.kalpha1',
+        self.parameters = ['ical.kalpha1',
                            'ical.kalpha2',
                            'ical.kalpha3',
                            'ical.kalpha4',
@@ -299,16 +298,14 @@ class LTypeCalcium(AbstractChannel):
                            'ical.kalpha12',
                            'ical.kbeta1',
                            'ical.kbeta2',
-                           'ical.kbeta3',
-                           'ical.kKpcf1',
-                           'ical.kKpcf2',
-                           'ical.kKpcf3']
+                           'ical.kbeta3']
+                           # 'ical.kKpcf1',
+                           # 'ical.kKpcf2',
+                           # 'ical.kKpcf3']
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0,1),   # 0.1729
-                                (0,100), # 63.0
-                                (0,1),   # 0.4
+        self.prior_intervals = [(0,1),   # 0.4
                                 (0,100), # 12
                                 (1,100), # 10
                                 (0,10),  # 1.068
@@ -323,10 +320,10 @@ class LTypeCalcium(AbstractChannel):
                                 (1,100), # 10
                                 (0,0.1), # 0.05
                                 (0,100), # 12
-                                (1,100), # 13
-                                (0,100), # 13
-                                (0,100), # 14.5
-                                (1,1000)]# 100
+                                (1,100)] # 13
+                                # (0,100), # 13
+                                # (0,100), # 14.5
+                                # (1,1000)]# 100
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
@@ -460,3 +457,34 @@ class HyperpolarisationActivatedCation(AbstractChannel):
                                         vmin=min(prepulses), vmax=max(prepulses),
                                         dv=prepulses[1]-prepulses[0], tstep=500)
         self.simulations = [sim_act, sim_inact]
+
+
+class TransientOutwardPotassium(AbstractChannel):
+    def __init__(self):
+        self.name = 'ito'
+        self.model_name = 'Takeuchi2013_ito.mmt'
+
+        # Parameters involved in ABC process
+        self.parameters = ['ito.g_to']
+
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0, 1)] # 0.12375
+
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
+
+        # Loading i_Kur channel experimental data
+        vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
+
+        self.data_exp = [[vsteps, act_peaks_exp]]
+
+        # Setup simulations
+        sim_act = sim.ActivationSim('ito.i_to', vhold=-80, thold=5000,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=300)
+        self.simulations = [sim_act]
+
