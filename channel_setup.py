@@ -16,6 +16,8 @@ import data.ikur.data_ikur as data_ikur
 import data.iha.data_iha as data_iha
 import data.ikr.data_ikr as data_ikr
 import data.ito.data_ito as data_ito
+import data.ikach.data_ikach as data_ikach
+import data.ik1.data_ik1 as data_ik1
 
 # Experimental simulations import
 import simulations as sim
@@ -54,7 +56,7 @@ class AbstractChannel(object):
 
         return sim_output
 
-class TTypeCalcium(AbstractChannel):
+class icat(AbstractChannel):
     def __init__(self):
         self.name = 'icat'
         self.model_name = 'Takeuchi2013_iCaT.mmt'
@@ -126,7 +128,7 @@ class TTypeCalcium(AbstractChannel):
         self.simulations = [sim_act, sim_inact, sim_rec]
 
 
-class FastSodium(AbstractChannel):
+class ina(AbstractChannel):
     def __init__(self):
         self.name = 'ina'
         self.model_name = 'Bondarenko2004_iNa.mmt'
@@ -216,7 +218,7 @@ class FastSodium(AbstractChannel):
         self.simulations = [sim_act, sim_inact, sim_rec]
 
 
-class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
+class ikur(AbstractChannel):
     def __init__(self):
         self.name = 'ikur'
         self.model_name = 'Bondarenko2004_iKur.mmt'
@@ -278,7 +280,7 @@ class UltraRapidlyActivatingDelayedPotassium(AbstractChannel):
         self.simulations = [sim_act]#, sim_inact, sim_rec]
 
 
-class LTypeCalcium(AbstractChannel):
+class ical(AbstractChannel):
     def __init__(self):
         self.name = 'ical'
         self.model_name = 'Houston2017.mmt'
@@ -346,7 +348,7 @@ class LTypeCalcium(AbstractChannel):
         sim_act = sim.ActivationSim('ical.i_CaL', vhold=-40, thold=200,
                                     vmin=min(vsteps), vmax=max(vsteps),
                                     dv=vsteps[1]-vsteps[0], tstep=250)
-        sim_inact = sim.InactivationSim('ical.G_CaL', vhold=-20, thold=400,
+        sim_inact = sim.InactivationSim('ical.G_CaL', vhold=-80, thold=400,
                                         vmin=min(prepulses), vmax=max(prepulses),
                                         dv=prepulses[1]-prepulses[0], tstep=1000)
         sim_rec = sim.RecoverySim('ical.G_CaL', vhold=-40, thold=5000,
@@ -354,7 +356,7 @@ class LTypeCalcium(AbstractChannel):
                                   twaits=intervals)
         self.simulations = [sim_act, sim_inact, sim_rec]
 
-class RapidlyActivatingDelayedPotassium(AbstractChannel):
+class ikr(AbstractChannel):
     def __init__(self):
         self.name = 'ikr'
         self.model_name = 'Takeuchi2013_iKr.mmt'
@@ -406,7 +408,7 @@ class RapidlyActivatingDelayedPotassium(AbstractChannel):
                                       dv=vsteps2[1]-vsteps2[0], tstep=1000)
         self.simulations = [sim_IV, sim_act]
 
-class HyperpolarisationActivatedCation(AbstractChannel):
+class iha(AbstractChannel):
     def __init__(self):
         self.name = 'iha'
         self.model_name = 'Majumder2016_iha.mmt'
@@ -459,7 +461,7 @@ class HyperpolarisationActivatedCation(AbstractChannel):
         self.simulations = [sim_act, sim_inact]
 
 
-class TransientOutwardPotassium(AbstractChannel):
+class ito(AbstractChannel):
     def __init__(self):
         self.name = 'ito'
         self.model_name = 'Takeuchi2013_ito.mmt'
@@ -487,4 +489,202 @@ class TransientOutwardPotassium(AbstractChannel):
                                     vmin=min(vsteps), vmax=max(vsteps),
                                     dv=vsteps[1]-vsteps[0], tstep=300)
         self.simulations = [sim_act]
+
+class ikach(AbstractChannel):
+    def __init__(self):
+        self.name = 'ikach'
+        self.model_name = 'Majumder2016_ikach.mmt'
+
+        # Parameters involved in ABC process
+        self.parameters = ['ikach.g_KAch']
+
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0, 1)] # 0.37488
+
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
+
+        # Loading i_Kur channel experimental data
+        vsteps, act_peaks_exp = data_ikach.IV_KaoFig6()
+
+        self.data_exp = [[vsteps, act_peaks_exp]]
+
+        # Setup simulations
+        sim_act = sim.ActivationSim('ikach.i_KAch', vhold=-75, thold=5000,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=600)
+        self.simulations = [sim_act]
+
+class ik1(AbstractChannel):
+    def __init__(self):
+        self.name = 'ik1'
+        self.model_name = 'Takeuchi2013_iK1.mmt'
+
+        # Parameters involved in ABC process
+        self.parameters = ['ik1.g_K1',
+                           'ik1.a_K1_k1',
+                           'ik1.a_K1_k2',
+                           'ik1.a_K1_k3',
+                           'ik1.b_K1_k1',
+                           'ik1.b_K1_k2',
+                           'ik1.b_K1_k3',
+                           'ik1.b_K1_k4',
+                           'ik1.b_K1_k5',
+                           'ik1.b_K1_k6',
+                           'ik1.b_K1_k7']
+
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0, 1),    # 0.15
+                                (0, 10),   # 1.02 
+                                (0, 1),    # 0.2385 
+                                (0, 100),  # 59.215
+                                (0, 1),    # 0.49124
+                                (0, 0.1),  # 0.08032
+                                (0, 10),   # 5.476
+                                (0, 0.1),  # 0.06175
+                                (0, 1000), # 594.31
+                                (0, 1),    # 0.5143
+                                (0, 10)]   # 4.753
+
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
+
+        # Loading i_Kur channel experimental data
+        vsteps, act_peaks_exp = data_ik1.IV_GoldoniFig3D()
+        # Convert to current densities using value reported for current
+        #  density at -150mV in original paper (-42.2pA/pF)
+        max_curr_density = -42.2
+        act_peaks_exp = [p * max_curr_density / act_peaks_exp[0] for p in act_peaks_exp]
+
+        self.data_exp = [[vsteps, act_peaks_exp]]
+
+        # Setup simulations
+        sim_act = sim.ActivationSim('ik1.i_K1', vhold=-50, thold=5000,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=100)
+        self.simulations = [sim_act]
+
+class ina2(AbstractChannel):
+    def __init__(self):
+        self.name = 'ina2'
+        self.model_name = 'Takeuchi2013_iNa.mmt'
+
+        # Parameters involved in ABC process
+        self.parameters = ['ina.v_split',
+                           'ina.m_ssk1',
+                           'ina.m_ssk2',
+                           'ina.tau_mk1',
+                           'ina.tau_mk2',
+                           'ina.tau_mk3',
+                           'ina.tau_mk4',
+                           'ina.tau_mk5',
+                           'ina.tau_mk6',
+                           'ina.h_ssk1',
+                           'ina.h_ssk2',
+                           'ina.a_hk1',
+                           'ina.a_hk2',
+                           'ina.a_hk3',
+                           'ina.b_hk1',
+                           'ina.b_hk2',
+                           'ina.b_hk3',
+                           'ina.b_hk4',
+                           'ina.b_hk5',
+                           'ina.b_hk6',
+                           'ina.b_hk7',
+                           'ina.b_hk8',
+                           'ina.j_ssk1',
+                           'ina.j_ssk2',
+                           'ina.a_jk1',
+                           'ina.a_jk2',
+                           'ina.a_jk3',
+                           'ina.a_jk4',
+                           'ina.a_jk5',
+                           'ina.a_jk6',
+                           'ina.a_jk7',
+                           'ina.b_jk1',
+                           'ina.b_jk2',
+                           'ina.b_jk3',
+                           'ina.b_jk4',
+                           'ina.b_jk5',
+                           'ina.b_jk6',
+                           'ina.b_jk7',
+                           'ina.b_jk8']
+
+        # Parameter specific prior intervals
+        self.prior_intervals = [(-100, 0),  # -40
+                                (0, 100),   # 56.86
+                                (1, 10),    # 9.03
+                                (0, 1),     # 0.1292
+                                (0, 100),   # 45.79
+                                (1, 100),   # 15.54
+                                (0, 0.1),   # 0.06487
+                                (0, 10),    # 4.823
+                                (1, 100),   # 51.12
+                                (0, 100),   # 71.55
+                                (1, 10),    # 7.43
+                                (0, 0.1),   # 0.057
+                                (0, 100),   # 80
+                                (1, 10),    # 6.8
+                                (0, 1),     # 0.77
+                                (0, 1),     # 0.13
+                                (0, 100),   # 10.66
+                                (1, 100),   # 11.1
+                                (0, 10),    # 2.7
+                                (0, 0.1),   # 0.079
+                                (0, 100),   # 31
+                                (0, 1),     # 0.3485
+                                (0, 100),   # 71.55
+                                (1, 10),    # 7.43
+                                (0, 100),   # 25.428
+                                (0, 1),     # 0.2444
+                                (0, 10),    # 6.948
+                                (0, 0.1),   # 0.04391
+                                (0, 100),   # 37.78
+                                (0, 1),     # 0.311
+                                (0, 100),   # 79.23
+                                (0, 1),     # 0.6
+                                (0, 0.1),   # 0.057
+                                (0, 1),     # 0.1
+                                (0, 100),   # 32
+                                (0, 0.1),   # 0.02424
+                                (0, 0.1),   # 0.01052
+                                (0, 1),     # 0.1378
+                                (0, 100)]   # 40.14
+
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
+
+        # Loading fast Na channel experimental data
+        vsteps, act_exp = data_ina.IV_DiasFig6()
+        prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
+        intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
+
+        # Concatenate experimental data
+        self.data_exp = [[vsteps, act_exp],
+                         [prepulses, inact_exp],
+                         [intervals, rec_exp]]
+
+        # Setup simulations
+        sim_act = sim.ActivationSim('ina.i_Na', vhold=-80, thold=3000,
+                                    vmin=min(vsteps), vmax=max(vsteps),
+                                    dv=vsteps[1]-vsteps[0], tstep=100)
+        sim_inact = sim.InactivationSim('ina.G_Na', vhold=-20, thold=20,
+                                        vmin=min(prepulses), vmax=max(prepulses),
+                                        dv=prepulses[1]-prepulses[0], tstep=500)
+        sim_rec = sim.RecoverySim('ina.G_Na', vhold=-120, thold=3000,
+                                  vstep=-30, tstep1=20, tstep2=20,
+                                  twaits=intervals)
+        self.simulations = [sim_act, sim_inact, sim_rec]
 
