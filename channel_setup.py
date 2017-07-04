@@ -764,12 +764,16 @@ class incx(AbstractChannel):
         # Parameters involved in ABC process
         self.parameters = ['incx.k_NaCa',
                            'incx.k_sat',
-                           'incx.eta']
+                           'incx.eta',
+                           'incx.K_mCa',
+                           'incx.K_mNa']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1000), # 292.8
-                                (0, 1),    # 0.1
-                                (0, 1)]    # 0.35
+        self.prior_intervals = [(0, 1000),      # 292.8
+                                (0, 1),         # 0.1
+                                (0, 1),         # 0.35
+                                (0, 10000),     # 1380
+                                (0, 100000)]    # 87500
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
