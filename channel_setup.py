@@ -18,6 +18,7 @@ import data.ikr.data_ikr as data_ikr
 import data.ito.data_ito as data_ito
 import data.ikach.data_ikach as data_ikach
 import data.ik1.data_ik1 as data_ik1
+import data.incx.data_incx as data_incx
 
 # Experimental simulations import
 import simulations as sim
@@ -755,3 +756,32 @@ class ina2(AbstractChannel):
                                   twaits=intervals)
         self.simulations = [sim_act, sim_inact, sim_rec]
 
+class incx(AbstractChannel):
+    def __init__(self):
+        self.name = 'incx'
+        self.model_name = 'Houston2017.mmt' # run in full model
+
+        # Parameters involved in ABC process
+        self.parameters = ['incx.k_NaCa',
+                           'incx.k_sat',
+                           'incx.eta']
+
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0, 1000), # 292.8
+                                (0, 1),    # 0.1
+                                (0, 1)]    # 0.35
+
+        # Specifying pertubation kernel
+        # - Uniform random walk with width 10% of prior range
+        self.kernel = []
+        for pr in self.prior_intervals:
+            param_range = pr[1]-pr[0]
+            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
+
+        # Loading experimental data
+        vsteps, act_exp = data_incx.IV_LuFig2()
+        self.data_exp = [[vsteps, act_exp]]
+
+        # Setup simulations
+        sim_act = sim.TimeIndependentActivationSim('incx.i_NaCa', vsteps=vsteps)
+        self.simulations = [sim_act]
