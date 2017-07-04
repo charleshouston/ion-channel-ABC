@@ -178,7 +178,7 @@ def abc_inner(channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val,pos
     # Start parallel pool
     try:
         pool_size = min(mp.cpu_count(), 16) # don't be greedy now
-        pool = mp.Pool(processes=pool_size, maxtasksperchild=1)
+        pool = mp.Pool(processes=pool_size, maxtasksperchild=20)
     except:
         raise Exception('Could not start parallel pool!')
 
