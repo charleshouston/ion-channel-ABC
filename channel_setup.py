@@ -224,32 +224,32 @@ class ikur(AbstractChannel):
         self.model_name = 'Bondarenko2004_iKur.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikur.g_Kur']
-        # self.parameters = ['ikur.assk1',
-        #                    'ikur.assk2',
-        #                    'ikur.atauk1',
-        #                    'ikur.atauk2',
-        #                    'ikur.atauk3',
-        #                    'ikur.issk1',
-        #                    'ikur.issk2',
-        #                    'ikur.itauk1',
-        #                    'ikur.itauk2',
-        #                    'ikur.itauk3',
-        #                    'ikur.itauk4']
+        self.parameters = ['ikur.g_Kur',
+                           'ikur.assk1',
+                           'ikur.assk2',
+                           'ikur.atauk1',
+                           'ikur.atauk2',
+                           'ikur.atauk3',
+                           'ikur.issk1',
+                           'ikur.issk2',
+                           'ikur.itauk1',
+                           'ikur.itauk2',
+                           'ikur.itauk3',
+                           'ikur.itauk4']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1)]
-        # self.prior_intervals = [(0, 100),   # 22.5
-        #                         (1, 10),    # 7.5
-        #                         (0, 1),     # 0.493
-        #                         (0, 0.1),   # 0.0629
-        #                         (0, 10),    # 2.058
-        #                         (0, 100),   # 45.2
-        #                         (1, 10),    # 5.7
-        #                         (0, 10000), # 1200
-        #                         (0, 1000),  # 170
-        #                         (0, 100),   # 45.2
-        #                         (1, 10)]    # 5.7
+        self.prior_intervals = [(0, 1),     # 0.0975
+                                (0, 100),   # 22.5
+                                (1, 10),    # 7.5
+                                (0, 1),     # 0.493
+                                (0, 0.1),   # 0.0629
+                                (0, 10),    # 2.058
+                                (0, 100),   # 45.2
+                                (1, 10),    # 5.7
+                                (0, 10000), # 1200
+                                (0, 1000),  # 170
+                                (0, 100),   # 45.2
+                                (1, 10)]    # 5.7
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
@@ -263,21 +263,21 @@ class ikur(AbstractChannel):
         prepulses, inact_exp = data_ikur.Inact_XuFig9C()
         intervals, rec_exp = data_ikur.Recovery_XuFig10C()
 
-        self.data_exp = [[vsteps, act_peaks_exp]]#,
-                         # [prepulses, inact_exp],
-                         # [intervals, rec_exp]]
+        self.data_exp = [[vsteps, act_peaks_exp],
+                         [prepulses, inact_exp],
+                         [intervals, rec_exp]]
 
         # Setup simulations
         sim_act = sim.ActivationSim('ikur.i_Kur', vhold=-60, thold=5000,
                                     vmin=min(vsteps), vmax=max(vsteps),
                                     dv=vsteps[1]-vsteps[0], tstep=300)
-        # sim_inact = sim.InactivationSim('ikur.G_Kur', vhold=50, thold=5000,
-        #                                 vmin=min(prepulses), vmax=max(prepulses),
-        #                                 dv=prepulses[1]-prepulses[0], tstep=5000)
-        # sim_rec = sim.RecoverySim('ikur.G_Kur', vhold=-70, thold=5000,
-        #                           vstep=50, tstep1=9500, tstep2=9500,
-        #                           twaits=intervals)
-        self.simulations = [sim_act]#, sim_inact, sim_rec]
+        sim_inact = sim.InactivationSim('ikur.G_Kur', vhold=50, thold=5000,
+                                        vmin=min(prepulses), vmax=max(prepulses),
+                                        dv=prepulses[1]-prepulses[0], tstep=5000)
+        sim_rec = sim.RecoverySim('ikur.G_Kur', vhold=-70, thold=5000,
+                                  vstep=50, tstep1=9.5, tstep2=9.5,
+                                  twaits=intervals)
+        self.simulations = [sim_act, sim_inact, sim_rec]
 
 
 class ical(AbstractChannel):
@@ -286,6 +286,23 @@ class ical(AbstractChannel):
         self.model_name = 'Houston2017.mmt'
 
         # Parameters involved in ABC process
+        # self.parameters = ['ical.d_ssk1',
+        #                    'ical.d_ssk2',
+        #                    'ical.tau_dk1',
+        #                    'ical.tau_dk2',
+        #                    'ical.tau_dk3',
+        #                    'ical.tau_dk4',
+        #                    'ical.f_ssk1',
+        #                    'ical.f_ssk2',
+        #                    'ical.f_ssk3',
+        #                    'ical.f_ssk4',
+        #                    'ical.f_ssk5',
+        #                    'ical.tau_fk1',
+        #                    'ical.tau_fk2',
+        #                    'ical.tau_fk3',
+        #                    'ical.tau_fk4',
+        #                    'ical.tau_fk5']
+
         self.parameters = ['ical.kalpha1',
                            'ical.kalpha2',
                            'ical.kalpha3',
@@ -307,6 +324,22 @@ class ical(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
+        # self.prior_intervals = [(0, 10),    # 1
+        #                         (0, 10),    # 6
+        #                         (0, 10),    # 5
+        #                         (0, 10),    # 6
+        #                         (0, 0.1),   # 0.035
+        #                         (0, 10),    # 5
+        #                         (0, 100),   # 30
+        #                         (0, 10),    # 9
+        #                         (0, 1),     # 0.6
+        #                         (0, 100),   # 50
+        #                         (0, 100),   # 20
+        #                         (0, 10),    # 2
+        #                         (0, 0.1),   # 0.0197
+        #                         (0, 0.1),   # 0.0337
+        #                         (0, 100),   # 14.5
+        #                         (0, 0.1)]   # 0.02
         self.prior_intervals = [(0,1),   # 0.4
                                 (0,100), # 12
                                 (1,100), # 10
@@ -467,10 +500,32 @@ class ito(AbstractChannel):
         self.model_name = 'Takeuchi2013_ito.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ito.g_to']
+        self.parameters = ['ito.g_to',
+                           'ito.xto_ssk1',
+                           'ito.xto_ssk2',
+                           'ito.tau_xtok1',
+                           'ito.tau_xtok2',
+                           'ito.tau_xtok3',
+                           'ito.yto_ssk1',
+                           'ito.yto_ssk2',
+                           'ito.tau_ytok1',
+                           'ito.tau_ytok2',
+                           'ito.tau_ytok3',
+                           'ito.tau_ytok4']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1)] # 0.12375
+        self.prior_intervals = [(0, 1),     # 0.12375
+                                (0, 10),    # 1
+                                (0, 100),   # 11
+                                (0, 10),    # 1.5
+                                (0, 10),    # 3.5
+                                (0, 100),   # 30
+                                (0, 100),   # 40.5
+                                (0, 100),   # 11.5
+                                (0, 100),   # 21.21
+                                (0, 100),   # 38.4525
+                                (0, 100),   # 52.45
+                                (0, 100)]   # 15.8827
 
         # Specifying pertubation kernel
         # - Uniform random walk with width 10% of prior range
@@ -479,7 +534,7 @@ class ito(AbstractChannel):
             param_range = pr[1]-pr[0]
             self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
 
-        # Loading i_Kur channel experimental data
+        # Loading experimental data
         vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
 
         self.data_exp = [[vsteps, act_peaks_exp]]
@@ -588,7 +643,8 @@ class ina2(AbstractChannel):
         self.model_name = 'Takeuchi2013_iNa.mmt'
 
         # Parameters involved in ABC process
-        self.parameters = ['ina.v_split',
+        self.parameters = ['ina.g_Na',
+                           'ina.v_split',
                            'ina.m_ssk1',
                            'ina.m_ssk2',
                            'ina.tau_mk1',
@@ -629,7 +685,8 @@ class ina2(AbstractChannel):
                            'ina.b_jk8']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(-100, 0),  # -40
+        self.prior_intervals = [(0, 100),   # 23
+                                (-100, 0),  # -40
                                 (0, 100),   # 56.86
                                 (1, 10),    # 9.03
                                 (0, 1),     # 0.1292
