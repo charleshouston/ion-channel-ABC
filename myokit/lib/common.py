@@ -328,7 +328,7 @@ class Activation(StepProtocol):
             s.reset()
             s.set_constant(self._vvar, self._vhold)
             s.set_max_step_size(None)
-            s.pre(self._thold)
+            s.run(self._thold)
             s.set_constant(self._vvar, v)
             s.set_max_step_size(self._max_step_size)
             d.append(s.run(self._tstep, log=log))
@@ -385,7 +385,7 @@ class Inactivation(StepProtocol):
         for v in self._steps:
             s.reset()
             s.set_constant(self._vvar, v)
-            s.pre(self._tstep)
+            s.run(self._tstep)
             s.set_constant(self._vvar, self._vhold)
             d.append(s.run(self._thold, log=log))
         self._logs = d
