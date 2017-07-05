@@ -3,3 +3,4 @@ results/
 *.pyc
 *.#
 *.DS_Store
+*.bak
