@@ -10,7 +10,7 @@ ref: """
      automaticity of HL-1 cardiomyocytes.
      """
 # Initial values
-membrane.V = -80
+membrane.V = -67
 icat.d = 0.01
 icat.f = 0.99
 
@@ -26,7 +26,7 @@ dot(V) = -icat.i_CaT
 use membrane.V as V
 g_CaT = 0.4122
     in [mS/uF]
-E_CaT = 33 # using value reported in Deng et al., 2009 (original: 45)
+E_CaT = 45 # Dias et al., 2014 report 33mV for HL1-6
     in [mV]
 G_CaT = g_CaT * d * f
     in [mS/uF]
@@ -61,20 +61,20 @@ dot(f) = (fss - f)/tau_f
     in [1]
 fss = (1 + exp((V+fssk1)/fssk2))^(-1)
     in [1]
-tau_f = (ftauk1*exp(-(V+ftauk2)/ftauk3) + ftauk4*exp((V+ftauk5)/ftauk6))^(-1)
+tau_f = (ftauk1 * 1e-2 * exp(-(V+ftauk2)/ftauk3) + ftauk4 * 1e-2 * exp((V+ftauk5)/ftauk6))^(-1)
     in [1]
 
 fssk1 = 48
     in [mV]
 fssk2 = 7.0
     in [mV]
-ftauk1 = 0.0153
+ftauk1 = 1.53
      in [1]
 ftauk2 = 61.7
      in [mV]
 ftauk3 = 83.3
      in [mV]
-ftauk4 = 0.015
+ftauk4 = 1.5
      in [1]
 ftauk5 = 61.7
      in [mV]

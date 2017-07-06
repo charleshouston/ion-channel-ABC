@@ -3,7 +3,7 @@ name: Takeuchi 2013 transient outward K Current
 author: Charles Houston
 
 # Initial values
-membrane.V = -82.4202
+membrane.V = -67.0
 ito.xto = 4.05157399999999963e-3
 ito.yto = 0.9945511
 
@@ -24,22 +24,18 @@ Ko = 5400
     in [uM]
 Ki = 143720
     in [uM]
-Nao = 140000
-    in [uM]
-Nai = 14237.1
-    in [uM]
 
 [ito]
 g_to = 0.12375 [nS/pF]
      in [nS/pF]
 
-xto_ss = 1 / (1 + exp(-(membrane.V - 1 [mV]) / 11 [mV]))
+xto_ss = 1 / (1 + exp(-(membrane.V - xto_ssk1) / xto_ssk2))
     in [1]
-tau_xto = 1.5 [ms] + 3.5 [ms] * exp(-((membrane.V) / 30 [mV]) ^ 2)
+tau_xto = tau_xtok1 + tau_xtok2 * exp(-((membrane.V) / tau_xtok3) ^ 2)
     in [ms]
-yto_ss = 1 / (1 + exp((membrane.V + 40.5 [mV]) / 11.5 [mV]))
+yto_ss = 1 / (1 + exp((membrane.V + yto_ssk1) / yto_ssk2))
     in [1]
-tau_yto = 21.21 [ms] + 38.4525 [ms] * exp(-((membrane.V + 52.45 [mV]) / 15.8827 [mV]) ^ 2)
+tau_yto = tau_ytok1 + tau_ytok2 * exp(-((membrane.V + tau_ytok3) / tau_ytok4) ^ 2)
     in [ms]
 dot(xto) = (xto_ss - xto) / tau_xto
     in [1]
@@ -68,7 +64,7 @@ tau_ytok3 = 52.45 [mV]
 tau_ytok4 = 15.8827 [mV]
     in [mV]
 
-E_K = membrane.R * membrane.T / membrane.F * log((0.98 * membrane.Ko + 0.02 * membrane.Nao) / (0.98 * membrane.Ki + 0.02 * membrane.Nai))
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
     in [mV]
 G_to = g_to * xto * yto
     in [nS/pF]

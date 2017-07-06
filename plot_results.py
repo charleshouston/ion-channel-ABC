@@ -86,5 +86,4 @@ if len(sim_ABC) > 1:
 else:
     ax.legend(loc='best')
 
-x = raw_input('Press any key to continue...')
 fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight")

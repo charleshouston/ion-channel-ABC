@@ -31,7 +31,7 @@ class AbstractChannel(object):
         self.kernel = []
         for pr in self.prior_intervals:
             prior_width = pr[1]-pr[0]
-            self.kernel.append(Dist.Normal(0.0, 0.1*prior_width))
+            self.kernel.append(Dist.Normal(0.0, 0.2*prior_width))
 
         self.setup_simulations()
         # self.kernel.append(Dist.Uniform(-0.5 * math.sqrt(1.2 * prior_width), 
@@ -98,7 +98,7 @@ class AbstractChannel(object):
                     vsteps = range(int(math.ceil(min(vsteps))),
                                    int(math.ceil(max(vsteps))+1))
                 self.simulations.append(
-                    sim.TimeIndependentActivationSim(se['variables'],
+                    sim.TimeIndependentActivationSim(se['variable'],
                                                      vsteps=vsteps))
             else:
                 print "Unknown simulation type!"
@@ -128,7 +128,9 @@ class icat(AbstractChannel):
         self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
-        self.parameters = ['icat.dssk1',
+        self.parameters = ['icat.g_CaT',
+                           'icat.E_CaT',
+                           'icat.dssk1',
                            'icat.dssk2',
                            'icat.dtauk1',
                            'icat.dtauk2',
@@ -147,7 +149,9 @@ class icat(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0,100), # 30
+        self.prior_intervals = [(0, 1),  # 0.4122
+                                (0, 100),# 45
+                                (0,100), # 30
                                 (1,10),  # 6.0
                                 (0,10),  # 1.068
                                 (0,100), # 26.3
@@ -157,10 +161,10 @@ class icat(AbstractChannel):
                                 (1,100), # 30
                                 (0,100), # 48
                                 (1,10),  # 7.0
-                                (0,0.1), # 0.0153
+                                (0,10),  # 1.53
                                 (0,100), # 61.7
                                 (1,100), # 83.3
-                                (0,0.1), # 0.015
+                                (0, 10), # 1.5
                                 (0,100), # 61.7
                                 (1,100)] # 30
 
@@ -429,7 +433,8 @@ class ikr(AbstractChannel):
         self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikr.xkr_ssk1',
+        self.parameters = ['ikr.g_Kr',
+                           'ikr.xkr_ssk1',
                            'ikr.xkr_ssk2',
                            'ikr.tau_xkrk1',
                            'ikr.tau_xkrk2',
@@ -440,7 +445,8 @@ class ikr(AbstractChannel):
                            'ikr.rkrk2']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 100),   # 15
+        self.prior_intervals = [(0, 1),     # 0.73
+                                (0, 100),   # 15
                                 (1, 10),    # 6
                                 (0, 10),    # 2.5
                                 (0, 100),   # 31.18
@@ -489,19 +495,21 @@ class iha(AbstractChannel):
                            'iha.tau_yk4',
                            'iha.tau_yk5',
                            'iha.tau_yk6',
-                           'iha.i_haNak1',
+                           'iha.tau_yk7',
+                           # 'iha.i_haNak1',
                            'iha.g_ha']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 78.65
                                 (1, 10),    # 6.33
+                                (0, 10),    # 1
                                 (0, 1.0),   # 0.11885
                                 (0, 100),   # 75
                                 (1, 100),   # 28.37
                                 (0, 1.0),   # 0.56236
                                 (0, 100),   # 75
                                 (0, 100),   # 14.19
-                                (0, 1.0),   # 0.2
+                                # (0, 1.0),   # 0.2
                                 (0, 1.0)]   # 0.021
 
         # Loading experimental data
@@ -561,12 +569,12 @@ class ito(AbstractChannel):
                                 (0, 100)]   # 15.8827
 
         # Loading experimental data
-        vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
+        vsteps, act_peaks_exp = data_ito.IV_LuFig6()
         self.data_exp = [[vsteps, act_peaks_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ito.i_to', 'vhold': -80, 'thold': 5000,
+                         'variable': 'ito.i_to', 'vhold': -40, 'thold': 2000,
                          'vsteps': vsteps, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
@@ -582,7 +590,8 @@ class ikach(AbstractChannel):
         self.publication = 'Majumder et al., 2016'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikach.k1',
+        self.parameters = ['ikach.g_KAch',
+                           'ikach.k1',
                            'ikach.k2',
                            'ikach.k3',
                            'ikach.k4',
@@ -592,7 +601,8 @@ class ikach(AbstractChannel):
                            'ikach.k8']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 10),   # 0.37488
+        self.prior_intervals = [(0, 1),   # 0.37488
+                                (0, 10),  # 3.5
                                 (0, 10),   # 9.13652
                                 (0, 1),    # 0.477811
                                 (0, 0.1),  # 0.04
@@ -674,7 +684,8 @@ class ina2(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameters = ['ina.g_Na',
-                           'ina.v_split',
+                           # 'ina.v_split',
+                           # 'ina.E_Na',
                            'ina.m_ssk1',
                            'ina.m_ssk2',
                            'ina.tau_mk1',
@@ -716,7 +727,7 @@ class ina2(AbstractChannel):
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 23
-                                (-100, 0),  # -40
+                                # (0, 100),   # 23.2 (reported in Dias et al., 2014)
                                 (0, 100),   # 56.86
                                 (1, 10),    # 9.03
                                 (0, 1),     # 0.1292
