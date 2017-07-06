@@ -11,13 +11,13 @@ import channel_setup
 import distributions as Dist
 
 # Import channel
-channel = channel_setup.ikr()
+channel = channel_setup.icat()
 
 # Check whether to store sim results
 plot_data_name = 'plotting/plotdata_'+channel.name
 overwrite = True
 if os.path.isfile(plot_data_name):
-    overwrite = 'Y' == raw_input('Plot data already exists. Overwrite? (Y/N)')
+    overwrite = 'y' == raw_input('Plot data already exists. Overwrite? (y/n)')
 
 # Open results from ABC simulation
 with open('results/results_' + channel.name + '.txt') as f:
@@ -82,9 +82,9 @@ for i in range(len(sim_ABC)):
     axi.set_ylabel(channel.setup_exp[i]['ylabel'])
 
 if len(sim_ABC) > 1:
-    ax[-1].legend(loc='lower right')
+    ax[-1].legend(loc='best')
 else:
-    ax.legend(loc='lower right')
-fig.show()
+    ax.legend(loc='best')
+
 x = raw_input('Press any key to continue...')
-fig.savefig('results/fig_'+str(channel.name)+'.eps', bbox_inches="tight")
+fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight")
