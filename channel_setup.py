@@ -683,8 +683,6 @@ class ina2(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameters = ['ina.g_Na',
-                           # 'ina.v_split',
-                           # 'ina.E_Na',
                            'ina.m_ssk1',
                            'ina.m_ssk2',
                            'ina.tau_mk1',
@@ -726,7 +724,6 @@ class ina2(AbstractChannel):
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 23
-                                # (0, 100),   # 23.2 (reported in Dias et al., 2014)
                                 (0, 100),   # 56.86
                                 (1, 10),    # 9.03
                                 (0, 1),     # 0.1292

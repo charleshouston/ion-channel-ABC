@@ -22,6 +22,11 @@ time = 0 bind time
 [membrane]
 dot(V) = -ina.i_Na
     in [mV]
+Nao = 140000
+    in [uM]
+Nai = 14237.1
+    in [uM]
+
 
 [ina]
 m_ss = 1 / (1 + exp(-(m_ssk1 + membrane.V) / m_ssk2)) ^ 2
@@ -134,9 +139,11 @@ dot(j) = (j_ss - j) / tau_j
 
 g_Na = 23 [nS/pF]
     in [nS/pF]
-E_Na = 23.2 # value from Dias 2014 (original used Nernst potential)
-    in [mV]
 G_Na = g_Na * m ^ 3 * h * j
      in [nS/pF]
 i_Na = G_Na * (membrane.V - E_Na)
     in [pA/pF]
+
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
+    in [mV]
+

@@ -59,7 +59,7 @@ rkrk1 = 55 [mV]
 rkrk2 = 24 [mV]
     in [mV]
 
-E_K = membrane.R * membrane.T / membrane.F * log((0.98 * membrane.Ko + 0.02 * membrane.Nao) / (0.98 * membrane.Ki + 0.02 * membrane.Nai))
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
     in [mV]
 G_Kr = g_Kr * sqrt(membrane.Ko / 5400 [uM]) * xkr * rkr
     in [nS/pF]
