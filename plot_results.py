@@ -79,11 +79,13 @@ for i in range(len(sim_ABC)):
     axi.fill_between(x_cont2, sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
     axi.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'o', label='Experimental data')
     axi.plot(x_cont1, sim_original[i], '--', label=channel.publication)
+    axi.set_xlabel(channel.setup_exp[i]['xlabel'])
+    axi.set_ylabel(channel.setup_exp[i]['ylabel'])
 
 if len(sim_ABC) > 1:
     ax[-1].legend(loc='lower right')
 else:
     ax.legend(loc='lower right')
 fig.show()
-x = raw_input('...')
+x = raw_input('Press any key to continue...')
 fig.savefig('results/fig_'+str(channel.name)+'.eps', bbox_inches="tight")
