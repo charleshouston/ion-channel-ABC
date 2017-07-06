@@ -27,15 +27,14 @@ import simulations as sim
 class AbstractChannel(object):
     def __init__(self):
         # Specifying pertubation kernel
-        #  Gaussian distribution with variance 10% of prior width
+        #  Uniform distribution with variance 20% of prior width
         self.kernel = []
         for pr in self.prior_intervals:
             prior_width = pr[1]-pr[0]
-            self.kernel.append(Dist.Normal(0.0, 0.2*prior_width))
+            self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width), 
+                                            math.sqrt(1.2 * prior_width)))
 
         self.setup_simulations()
-        # self.kernel.append(Dist.Uniform(-0.5 * math.sqrt(1.2 * prior_width), 
-        #                                 0.5 * math.sqrt(1.2 * prior_width)))
 
     def reset_params(self, new_params):
         '''
@@ -569,12 +568,12 @@ class ito(AbstractChannel):
                                 (0, 100)]   # 15.8827
 
         # Loading experimental data
-        vsteps, act_peaks_exp = data_ito.IV_LuFig6()
+        vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
         self.data_exp = [[vsteps, act_peaks_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ito.i_to', 'vhold': -40, 'thold': 2000,
+                         'variable': 'ito.i_to', 'vhold': -40, 'thold': 1000,
                          'vsteps': vsteps, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
