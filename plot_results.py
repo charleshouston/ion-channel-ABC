@@ -11,7 +11,7 @@ import channel_setup
 import distributions as Dist
 
 # Import channel
-channel = channel_setup.icat()
+channel = channel_setup.ikr()
 
 # Check whether to store sim results
 plot_data_name = 'plotting/plotdata_'+channel.name
@@ -63,7 +63,7 @@ for i in range(len(sim_ABC)):
 
 # Plot the results
 plt.style.use('seaborn-colorblind')
-fig, ax = plt.subplots(nrows=1, ncols=len(sim_ABC), figsize=(5*len(sim_ABC), 5))
+fig, ax = plt.subplots(nrows=1, ncols=len(sim_ABC), figsize=(6*len(sim_ABC), 5))
 for i in range(len(sim_ABC)):
     # x values for continuous simulations i.e. not experimental data
     x_cont1 = np.linspace(min(channel.data_exp[i][0]), max(channel.data_exp[i][0]),
@@ -80,10 +80,18 @@ for i in range(len(sim_ABC)):
     axi.plot(x_cont1, sim_original[i], '--', label=channel.publication)
     axi.set_xlabel(channel.setup_exp[i]['xlabel'])
     axi.set_ylabel(channel.setup_exp[i]['ylabel'])
+    x0,x1 = axi.get_xlim()
+    x0 = float(x0)
+    x1 = float(x1)
+    y0,y1 = axi.get_ylim()
+    y0 = float(y0)
+    y1 = float(y1)
+    ar = abs(x1-x0)/abs(y1-y0)
+    axi.set_aspect(ar)
 
 if len(sim_ABC) > 1:
     ax[-1].legend(loc='best')
 else:
     ax.legend(loc='best')
 
-fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight")
+fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight", dpi=1000)
