@@ -4,6 +4,7 @@ Author: Charles Houston
 Specific channel settings for use with approximate Bayesian computation procedure.
 '''
 import numpy as np
+import math
 
 import myokit
 import distributions as Dist
@@ -25,8 +26,16 @@ import simulations as sim
 
 class AbstractChannel(object):
     def __init__(self):
-        self.parameters = []
-        self.simulations = []
+        # Specifying pertubation kernel
+        #  Gaussian distribution with variance 10% of prior width
+        self.kernel = []
+        for pr in self.prior_intervals:
+            prior_width = pr[1]-pr[0]
+            self.kernel.append(Dist.Normal(0.0, 0.1*prior_width))
+
+        self.setup_simulations()
+        # self.kernel.append(Dist.Uniform(-0.5 * math.sqrt(1.2 * prior_width), 
+        #                                 0.5 * math.sqrt(1.2 * prior_width)))
 
     def reset_params(self, new_params):
         '''
@@ -38,14 +47,69 @@ class AbstractChannel(object):
             for sim in self.simulations:
                 sim.set_parameters(self.parameters, new_params)
 
+    def setup_simulations(self, continuous=False):
+        '''
+        Creates simulations from defined experimental conditions.
+        `continuous`: creates the simulations over a range of voltages rather
+                      than only those in `vsteps`
+        '''
+        self.simulations = []
+        for se in self.setup_exp:
+            if se['sim_type'] == 'ActivationSim':
+                dv = 1
+                if not continuous:
+                    dv = se['vsteps'][1] - se['vsteps'][0]
+                self.simulations.append(
+                    sim.ActivationSim(se['variable'],
+                                      vhold=se['vhold'],
+                                      thold=se['thold'],
+                                      vmin=min(se['vsteps']),
+                                      vmax=max(se['vsteps']),
+                                      dv=dv,
+                                      tstep=se['tstep']))
+            elif se['sim_type'] == 'InactivationSim':
+                dv = 1
+                if not continuous:
+                    dv = se['vsteps'][1] - se['vsteps'][0]
+                self.simulations.append(
+                    sim.InactivationSim(se['variable'],
+                                        vhold=se['vhold'],
+                                        thold=se['thold'],
+                                        vmin=min(se['vsteps']),
+                                        vmax=max(se['vsteps']),
+                                        dv=dv,
+                                        tstep=se['tstep']))
+            elif se['sim_type'] == 'RecoverySim':
+                twaits = se['twaits']
+                if continuous:
+                    twaits = range(int(math.ceil(min(twaits))), 
+                                   int(math.ceil(max(twaits))+1))
+                self.simulations.append(
+                    sim.RecoverySim(se['variable'],
+                                    vhold=se['vhold'],
+                                    thold=se['thold'],
+                                    vstep=se['vstep'],
+                                    tstep1=se['tstep1'],
+                                    tstep2=se['tstep2'],
+                                    twaits=twaits))
+            elif se['sim_type'] == 'TimeIndependentActivationSim':
+                vsteps = se['vsteps']
+                if continuous:
+                    vsteps = range(int(math.ceil(min(vsteps))),
+                                   int(math.ceil(max(vsteps))+1))
+                self.simulations.append(
+                    sim.TimeIndependentActivationSim(se['variables'],
+                                                     vsteps=vsteps))
+            else:
+                print "Unknown simulation type!"
+
     def simulate(self):
         '''
         Run the simulations necessary to generate values to compare with
         experimental results.
         '''
         if len(self.simulations) is 0:
-            print "Need to add simulations to channel first!"
-            return None
+            self.setup_simulations()
 
         sim_output = []
 
@@ -61,6 +125,7 @@ class icat(AbstractChannel):
     def __init__(self):
         self.name = 'icat'
         self.model_name = 'Takeuchi2013_iCaT.mmt'
+        self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
         self.parameters = ['icat.dssk1',
@@ -99,40 +164,41 @@ class icat(AbstractChannel):
                                 (0,100), # 61.7
                                 (1,100)] # 30
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
-        # Loading T-type channel experimental data
+        # Load experimental data
         vsteps, act_exp = data_icat.IV_DengFig1B()
         prepulses, inact_exp = data_icat.Inact_DengFig3B()
         intervals, rec_exp = data_icat.Recovery_DengFig4B()
-
-        # Concatenate experimental data
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
                          [intervals, rec_exp]]
 
-        # Setup simulations
-        sim_act = sim.ActivationSim('icat.i_CaT', vhold=-80, thold=5000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=300)
-        sim_inact = sim.InactivationSim('icat.G_CaT', vhold=-20, thold=300,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=1000)
-        sim_rec = sim.RecoverySim('icat.G_CaT', vhold=-80, thold=5000,
-                                  vstep=-20, tstep1=300, tstep2=300,
-                                  twaits=intervals)
-        self.simulations = [sim_act, sim_inact, sim_rec]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
+                         'vsteps': vsteps, 'tstep': 300,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'icat.G_CaT', 'vhold': -20, 'thold': 300,
+                           'vsteps': prepulses, 'tstep': 1000,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        setup_exp_rec = {'sim_type': 'RecoverySim',
+                         'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
+                         'vstep': -20, 'tstep1': 300, 'tstep2': 300,
+                         'twaits': intervals,
+                         'xlabel': 'Interval (ms)',
+                         'ylabel': 'Relative recovery'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+
+        super(icat, self).__init__()
 
 
 class ina(AbstractChannel):
     def __init__(self):
         self.name = 'ina'
         self.model_name = 'Bondarenko2004_iNa.mmt'
+        self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
         self.parameters = ['ina.k_alpha1',
@@ -189,40 +255,41 @@ class ina(AbstractChannel):
                                 (0,1e-4),# 2e-5
                                 (0,10)]  # 7
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
-        # Loading fast Na channel experimental data
+        # Loading experimental data
         vsteps, act_exp = data_ina.IV_DiasFig6()
         prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
         intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
-
-        # Concatenate experimental data
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
                          [intervals, rec_exp]]
 
-        # Setup simulations
-        sim_act = sim.ActivationSim('ina.i_Na', vhold=-80, thold=3000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=100)
-        sim_inact = sim.InactivationSim('ina.G_Na', vhold=-20, thold=20,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=500)
-        sim_rec = sim.RecoverySim('ina.G_Na', vhold=-120, thold=3000,
-                                  vstep=-30, tstep1=20, tstep2=20,
-                                  twaits=intervals)
-        self.simulations = [sim_act, sim_inact, sim_rec]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 3000,
+                         'vsteps': vsteps, 'tstep': 100,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
+                           'vsteps': prepulses, 'tstep': 500,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        setup_exp_rec = {'sim_type': 'RecoverySim',
+                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 3000,
+                         'vstep': -30, 'tstep1': 20, 'tstep2': 20,
+                         'twaits': intervals,
+                         'xlabel': 'Interval (ms)',
+                         'ylabel': 'Relative recovery'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+
+        super(ina, self).__init__()
 
 
 class ikur(AbstractChannel):
     def __init__(self):
         self.name = 'ikur'
         self.model_name = 'Bondarenko2004_iKur.mmt'
+        self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
         self.parameters = ['ikur.g_Kur',
@@ -252,58 +319,43 @@ class ikur(AbstractChannel):
                                 (0, 100),   # 45.2
                                 (1, 10)]    # 5.7
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
-        # Loading i_Kur channel experimental data
+        # Loading experimental data
         vsteps, act_peaks_exp = data_ikur.IV_MuharaniFig2B()
         prepulses, inact_exp = data_ikur.Inact_XuFig9C()
         intervals, rec_exp = data_ikur.Recovery_XuFig10C()
-
         self.data_exp = [[vsteps, act_peaks_exp],
                          [prepulses, inact_exp],
                          [intervals, rec_exp]]
 
-        # Setup simulations
-        sim_act = sim.ActivationSim('ikur.i_Kur', vhold=-60, thold=5000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=300)
-        sim_inact = sim.InactivationSim('ikur.G_Kur', vhold=50, thold=5000,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=5000)
-        sim_rec = sim.RecoverySim('ikur.G_Kur', vhold=-70, thold=5000,
-                                  vstep=50, tstep1=9.5, tstep2=9.5,
-                                  twaits=intervals)
-        self.simulations = [sim_act, sim_inact, sim_rec]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'ikur.i_Kur', 'vhold': -60, 'thold': 5000,
+                         'vsteps': vsteps, 'tstep': 300,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ikur.G_Kur', 'vhold': 50, 'thold': 5000,
+                           'vsteps': prepulses, 'tstep': 5000,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        setup_exp_rec = {'sim_type': 'RecoverySim',
+                         'variable': 'ikur.G_Kur', 'vhold': -70, 'thold': 5000,
+                         'vstep': 50, 'tstep1': 9500, 'tstep2': 9500,
+                         'twaits': intervals,
+                         'xlabel': 'Interval (ms)',
+                         'ylabel': 'Relative recovery'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+
+        super(ikur, self).__init__()
 
 
 class ical(AbstractChannel):
     def __init__(self):
         self.name = 'ical'
         self.model_name = 'Houston2017.mmt'
+        self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
-        # self.parameters = ['ical.d_ssk1',
-        #                    'ical.d_ssk2',
-        #                    'ical.tau_dk1',
-        #                    'ical.tau_dk2',
-        #                    'ical.tau_dk3',
-        #                    'ical.tau_dk4',
-        #                    'ical.f_ssk1',
-        #                    'ical.f_ssk2',
-        #                    'ical.f_ssk3',
-        #                    'ical.f_ssk4',
-        #                    'ical.f_ssk5',
-        #                    'ical.tau_fk1',
-        #                    'ical.tau_fk2',
-        #                    'ical.tau_fk3',
-        #                    'ical.tau_fk4',
-        #                    'ical.tau_fk5']
-
         self.parameters = ['ical.kalpha1',
                            'ical.kalpha2',
                            'ical.kalpha3',
@@ -319,81 +371,62 @@ class ical(AbstractChannel):
                            'ical.kbeta1',
                            'ical.kbeta2',
                            'ical.kbeta3']
-                           # 'ical.kKpcf1',
-                           # 'ical.kKpcf2',
-                           # 'ical.kKpcf3']
 
         # Parameter specific prior intervals
         # Original values given in comments
-        # self.prior_intervals = [(0, 10),    # 1
-        #                         (0, 10),    # 6
-        #                         (0, 10),    # 5
-        #                         (0, 10),    # 6
-        #                         (0, 0.1),   # 0.035
-        #                         (0, 10),    # 5
-        #                         (0, 100),   # 30
-        #                         (0, 10),    # 9
-        #                         (0, 1),     # 0.6
-        #                         (0, 100),   # 50
-        #                         (0, 100),   # 20
-        #                         (0, 10),    # 2
-        #                         (0, 0.1),   # 0.0197
-        #                         (0, 0.1),   # 0.0337
-        #                         (0, 100),   # 14.5
-        #                         (0, 0.1)]   # 0.02
-        self.prior_intervals = [(0,1),   # 0.4
-                                (0,100), # 12
-                                (1,100), # 10
-                                (0,10),  # 1.068
-                                (0,1),   # 0.7
-                                (0,100), # 40
-                                (1,100), # 10
-                                (0,1),   # 0.75
-                                (0,100), # 20
-                                (1,1000),# 400
-                                (0,1),   # 0.12
-                                (0,100), # 12
-                                (1,100), # 10
-                                (0,0.1), # 0.05
-                                (0,100), # 12
-                                (1,100)] # 13
-                                # (0,100), # 13
-                                # (0,100), # 14.5
-                                # (1,1000)]# 100
+        self.prior_intervals = [(0, 1),   # 0.4
+                                (0, 100), # 12
+                                (1, 100), # 10
+                                (0, 10),  # 1.068
+                                (0, 1),   # 0.7
+                                (0, 100), # 40
+                                (1, 100), # 10
+                                (0, 1),   # 0.75
+                                (0, 100), # 20
+                                (1, 1000),# 400
+                                (0, 1),   # 0.12
+                                (0, 100), # 12
+                                (1, 100), # 10
+                                (0, 0.1), # 0.05
+                                (0, 100), # 12
+                                (1, 100)] # 13
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
-        # Loading T-type channel experimental data
+        # Loading experimental data
         vsteps, act_exp = data_ical.IV_DiasFig7()
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
         intervals, rec_exp = data_ical.Recovery_RaoFig3D()
-
-        # Concatenate experimental data
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
                          [intervals, rec_exp]]
 
-        # Setup simulations
-        sim_act = sim.ActivationSim('ical.i_CaL', vhold=-40, thold=200,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=250)
-        sim_inact = sim.InactivationSim('ical.G_CaL', vhold=-80, thold=400,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=1000)
-        sim_rec = sim.RecoverySim('ical.G_CaL', vhold=-40, thold=5000,
-                                  vstep=20, tstep1=250, tstep2=250,
-                                  twaits=intervals)
-        self.simulations = [sim_act, sim_inact, sim_rec]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'ical.i_CaL', 'vhold': -40, 'thold': 2000,
+                         'vsteps': vsteps, 'tstep': 250,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ical.G_CaL', 'vhold': -80, 'thold': 400,
+                           'vsteps': prepulses, 'tstep': 1000,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        setup_exp_rec = {'sim_type': 'RecoverySim',
+                         'variable': 'ical.G_CaL', 'vhold': -40, 'thold': 5000,
+                         'vstep': 20, 'tstep1': 250, 'tstep2': 250,
+                         'twaits': intervals,
+                         'xlabel': 'Interval (ms)',
+                         'ylabel': 'Relative recovery'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+
+
+        super(ical, self).__init__()
+
 
 class ikr(AbstractChannel):
     def __init__(self):
         self.name = 'ikr'
         self.model_name = 'Takeuchi2013_iKr.mmt'
+        self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
         self.parameters = ['ikr.xkr_ssk1',
@@ -417,35 +450,35 @@ class ikr(AbstractChannel):
                                 (0, 100),   # 55
                                 (1, 100)]   # 24
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
         # Loading experimental data
         vsteps, act_peaks_exp = data_ikr.IV_Li7B()
         vsteps2, act_exp = data_ikr.Activation_Li7B()
         # Normalise act_exp
         act_exp = [float(i) / max(act_exp) for i in act_exp]
-
         self.data_exp = [[vsteps, act_peaks_exp],
                          [vsteps2, act_exp]]
 
-        # Setup simulations
-        sim_IV = sim.ActivationSim('ikr.i_Kr', vhold=-50, thold=5000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=1000)
-        sim_act = sim.InactivationSim('ikr.G_Kr', vhold=-50, thold=2000,
-                                      vmin=min(vsteps2), vmax=max(vsteps2),
-                                      dv=vsteps2[1]-vsteps2[0], tstep=1000)
-        self.simulations = [sim_IV, sim_act]
+        # Experimental setup
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'ikr.i_Kr', 'vhold': -50, 'thold': 5000,
+                         'vsteps': vsteps, 'tstep': 1000,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ikr.G_Kr', 'vhold': -50, 'thold': 2000,
+                           'vsteps': vsteps2, 'tstep': 1000,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact]
+
+        super(ikr, self).__init__()
+
 
 class iha(AbstractChannel):
     def __init__(self):
         self.name = 'iha'
         self.model_name = 'Majumder2016_iha.mmt'
+        self.publication = 'Majumder et al., 2016'
 
         # Parameters involved in ABC process
         self.parameters = ['iha.y_ssk1',
@@ -471,34 +504,33 @@ class iha(AbstractChannel):
                                 (0, 1.0),   # 0.2
                                 (0, 1.0)]   # 0.021
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
         # Loading experimental data
         vsteps, act_peaks_exp = data_iha.IV_Sartiana5B()
         prepulses, inact_exp = data_iha.Act_DengFig3B()
-
         self.data_exp = [[vsteps, act_peaks_exp],
                          [prepulses, inact_exp]]
 
-        # Setup simulations
-        sim_act = sim.ActivationSim('iha.i_ha', vhold=-120, thold=1500,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=300)
-        sim_inact = sim.InactivationSim('iha.G_ha', vhold=40, thold=2000,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=500)
-        self.simulations = [sim_act, sim_inact]
+        # Experimental setup
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'iha.i_ha', 'vhold': -120, 'thold': 1500,
+                         'vsteps': vsteps, 'tstep': 300,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'iha.G_ha', 'vhold': 40, 'thold': 2000,
+                           'vsteps': prepulses, 'tstep': 500,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact]
+
+        super(iha, self).__init__()
 
 
 class ito(AbstractChannel):
     def __init__(self):
         self.name = 'ito'
         self.model_name = 'Takeuchi2013_ito.mmt'
+        self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
         self.parameters = ['ito.g_to',
@@ -528,28 +560,26 @@ class ito(AbstractChannel):
                                 (0, 100),   # 52.45
                                 (0, 100)]   # 15.8827
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
         # Loading experimental data
         vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
-
         self.data_exp = [[vsteps, act_peaks_exp]]
 
-        # Setup simulations
-        sim_act = sim.ActivationSim('ito.i_to', vhold=-80, thold=5000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=300)
-        self.simulations = [sim_act]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'ito.i_to', 'vhold': -80, 'thold': 5000,
+                         'vsteps': vsteps, 'tstep': 300,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        self.setup_exp = [setup_exp_act]
+
+        super(ito, self).__init__()
+
 
 class ikach(AbstractChannel):
     def __init__(self):
         self.name = 'ikach'
         self.model_name = 'Majumder2016_iKAch.mmt'
+        self.publication = 'Majumder et al., 2016'
 
         # Parameters involved in ABC process
         self.parameters = ['ikach.k1',
@@ -571,26 +601,26 @@ class ikach(AbstractChannel):
                                 (0, 100),  # 10
                                 (0, 100)]  # 10
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
-        # Loading i_Kur channel experimental data
+        # Loading experimental data
         vsteps, act_peaks_exp = data_ikach.IV_KaoFig6()
-
         self.data_exp = [[vsteps, act_peaks_exp]]
 
-        # Setup simulations
-        sim_act = sim.TimeIndependentActivationSim('ikach.i_KAch', vsteps=vsteps)
-        self.simulations = [sim_act]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'TimeIndependentActivationSim',
+                         'variable': 'ikach.i_KAch',
+                         'vsteps': vsteps,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        self.setup_exp = [setup_exp_act]
+
+        super(ikach, self).__init__()
+
 
 class ik1(AbstractChannel):
     def __init__(self):
         self.name = 'ik1'
         self.model_name = 'Takeuchi2013_iK1.mmt'
+        self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
         self.parameters = ['ik1.g_K1',
@@ -618,30 +648,29 @@ class ik1(AbstractChannel):
                                 (0, 1),    # 0.5143
                                 (0, 10)]   # 4.753
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
         # Loading experimental data
         vsteps, act_peaks_exp = data_ik1.IV_GoldoniFig3D()
         # Convert to current densities using value reported for current
         #  density at -150mV in original paper (-42.2pA/pF)
         max_curr_density = -42.2
         act_peaks_exp = [p * max_curr_density / act_peaks_exp[0] for p in act_peaks_exp]
-
         self.data_exp = [[vsteps, act_peaks_exp]]
 
-        # Setup simulations
-        sim_act = sim.TimeIndependentActivationSim('ik1.i_K1', vsteps=vsteps)
-        self.simulations = [sim_act]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'TimeIndependentActivationSim',
+                         'variable': 'ik1.i_K1',
+                         'vsteps': vsteps,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        self.setup_exp = [setup_exp_act]
+
+        super(ik1, self).__init__()
 
 class ina2(AbstractChannel):
     def __init__(self):
         self.name = 'ina2'
         self.model_name = 'Takeuchi2013_iNa.mmt'
+        self.publication = 'Takeuchi et al. 2013'
 
         # Parameters involved in ABC process
         self.parameters = ['ina.g_Na',
@@ -727,39 +756,40 @@ class ina2(AbstractChannel):
                                 (0, 1),     # 0.1378
                                 (0, 100)]   # 40.14
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
-        # Loading fast Na channel experimental data
+        # Loading experimental data
         vsteps, act_exp = data_ina.IV_DiasFig6()
         prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
         intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
-
-        # Concatenate experimental data
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
                          [intervals, rec_exp]]
 
-        # Setup simulations
-        sim_act = sim.ActivationSim('ina.i_Na', vhold=-80, thold=3000,
-                                    vmin=min(vsteps), vmax=max(vsteps),
-                                    dv=vsteps[1]-vsteps[0], tstep=100)
-        sim_inact = sim.InactivationSim('ina.G_Na', vhold=-20, thold=20,
-                                        vmin=min(prepulses), vmax=max(prepulses),
-                                        dv=prepulses[1]-prepulses[0], tstep=500)
-        sim_rec = sim.RecoverySim('ina.G_Na', vhold=-120, thold=3000,
-                                  vstep=-30, tstep1=20, tstep2=20,
-                                  twaits=intervals)
-        self.simulations = [sim_act, sim_inact, sim_rec]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 3000,
+                         'vsteps': vsteps, 'tstep': 100,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
+                           'vsteps': prepulses, 'tstep': 500,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        setup_exp_rec = {'sim_type': 'RecoverySim',
+                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 3000,
+                         'vstep': -30, 'tstep1': 20, 'tstep2': 20,
+                         'twaits': intervals,
+                         'xlabel': 'Interval (ms)',
+                         'ylabel': 'Relative recovery'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+
+        super(ina2, self).__init__()
 
 class incx(AbstractChannel):
     def __init__(self):
         self.name = 'incx'
         self.model_name = 'Houston2017.mmt' # run in full model
+        self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
         self.parameters = ['incx.k_NaCa',
@@ -775,17 +805,16 @@ class incx(AbstractChannel):
                                 (0, 10000),     # 1380
                                 (0, 100000)]    # 87500
 
-        # Specifying pertubation kernel
-        # - Uniform random walk with width 10% of prior range
-        self.kernel = []
-        for pr in self.prior_intervals:
-            param_range = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-1*param_range/20, param_range/20))
-
         # Loading experimental data
         vsteps, act_exp = data_incx.IV_LuFig2()
         self.data_exp = [[vsteps, act_exp]]
 
-        # Setup simulations
-        sim_act = sim.TimeIndependentActivationSim('incx.i_NaCa', vsteps=vsteps)
-        self.simulations = [sim_act]
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'TimeIndependentActivationSim',
+                         'variable': 'incx.i_NaCa',
+                         'vsteps': vsteps,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        self.setup_exp = [setup_exp_act]
+
+        super(incx, self).__init__()
