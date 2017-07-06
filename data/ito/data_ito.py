@@ -25,7 +25,7 @@ I-V curve
 
 Returns x, y data from points in Figure 6 from Lu et al., 2011.
 '''
-def IV_KaoFig6():
+def IV_LuFig6():
     x = [-40,-30,-20,-10,0,10,20,30,40,50,60]
     y = [-0.0062509,0.670831,1.326172,1.959688,2.723971,3.618953,4.492178,5.496153,6.260419,7.656664,8.464530]
     return x, y
