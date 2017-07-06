@@ -8,15 +8,23 @@ import pickle
 import myokit
 
 import channel_setup
+import distributions as Dist
 
 # Import channel
-channel = channel_setup.icat()
+channel = channel_setup.ikr()
 
 # Check whether to store sim results
 plot_data_name = 'plotting/plotdata_'+channel.name
 overwrite = True
 if os.path.isfile(plot_data_name):
     overwrite = 'Y' == raw_input('Plot data already exists. Overwrite? (Y/N)')
+
+# Open results from ABC simulation
+with open('results/results_' + channel.name + '.txt') as f:
+    pool = f.readline()
+    pool = ast.literal_eval(pool)
+    weights = f.readline()
+    weights = ast.literal_eval(weights)
 
 if not overwrite:
     with open(plot_data_name, 'rb') as f:
@@ -27,15 +35,10 @@ else:
     channel.setup_simulations(continuous=True)
     sim_original = channel.simulate()
 
-    # Open results from ABC simulation
-    with open('results/results_' + channel.name + '.txt') as f:
-        pool = f.readline()
-        pool = ast.literal_eval(pool)
-
     # Fill with simulations from final distribution pool
     sim_ABC = []
     for i in range(len(channel.simulations)):
-        sim_ABC.append(np.array([]))
+        sim_ABC.append([])
 
     # Generate output for each parameter in pool
     sim_vals_all = []
@@ -43,10 +46,8 @@ else:
         channel.reset_params(params)
         sim_vals = channel.simulate()
         if sim_vals is not None:
-            # sim_vals_all.append(channel.simulate())
             for i in range(len(sim_vals)):
-                sim_reshaped = np.reshape(sim_vals[i], (len(sim_vals[i]), 1))
-                sim_ABC[i] = np.hstack([sim_ABC[i], sim_reshaped]) if sim_ABC[i].size else sim_reshaped
+                sim_ABC[i].append(sim_vals[i])
 
     # Save plotting data to avoid further simulations
     with open(plot_data_name, 'wb') as f:
@@ -56,9 +57,9 @@ else:
 sim_ABC_mu = []
 sim_ABC_sd = []
 for i in range(len(sim_ABC)):
-    sim_ABC_mu.append(np.mean(sim_ABC[i],axis=1))
-    sim_ABC_sd.append(np.std(sim_ABC[i],axis=1))
-
+    d = Dist.Arbitrary(sim_ABC[i], weights)
+    sim_ABC_mu.append(d.getmean())
+    sim_ABC_sd.append(np.sqrt(d.getvar()))
 
 # Plot the results
 plt.style.use('seaborn-colorblind')
@@ -74,8 +75,6 @@ for i in range(len(sim_ABC)):
     else:
         axi = ax
     axi.plot(x_cont2, sim_ABC_mu[i], '-', label='ABC simulations')
-    # for s in sim_vals_all:
-    #     axi.plot(x_cont2, s[i], '-', lw=0.1)
     axi.fill_between(x_cont2, sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
     axi.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'o', label='Experimental data')
     axi.plot(x_cont1, sim_original[i], '--', label=channel.publication)
