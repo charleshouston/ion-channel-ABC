@@ -81,27 +81,32 @@ def LossFunction(sim_vals, exp_vals):
         return float("inf")
 
     # Calculate normalised (by mean of experimental values) RMSE for each experiment
-    tot_err = 0
+    # tot_err = 0
+    max_err = []
     # Catch runtime overflow warnings from numpy
     warnings.filterwarnings('error')
     for i,p in enumerate(sim_vals):
-        p = np.array(p)
-        e = np.array(exp_vals[i][1])
+        p = np.array(p) # predicted
+        e = np.array(exp_vals[i][1]) # experimental
         try:
             err = np.sum(np.square(p-e))
         except Warning:
             return float("inf")
         except:
             return float("inf")
+        # normalise error
         err = pow(err/len(p),0.5)
         err = err/abs(np.mean(e))
-        tot_err += err
+        max_err.append(err)
+        # tot_err += err
 
     # Slight hacky way to avoid ridiculous outcomes
-    if tot_err > 5:
+    # if tot_err > 5:
+    if max(max_err) > 3:
         return float("inf")
 
-    return tot_err
+    return max(max_err)
+    # return tot_err
 
 # Simple multiplicative prior for list of independent Distribution objects
 def prior_func(priors,params):
@@ -112,6 +117,6 @@ def prior_func(priors,params):
 
 if __name__ == '__main__':
     # Load specific channel settings
-    channel = channel_setup.icat()
+    channel = channel_setup.ikr()
     x = ChannelProto()
     x.fit(channel)
