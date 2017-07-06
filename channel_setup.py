@@ -496,7 +496,7 @@ class iha(AbstractChannel):
                            'iha.tau_yk5',
                            'iha.tau_yk6',
                            'iha.tau_yk7',
-                           # 'iha.i_haNak1',
+                           'iha.i_haNak1',
                            'iha.g_ha']
 
         # Parameter specific prior intervals
@@ -509,8 +509,8 @@ class iha(AbstractChannel):
                                 (0, 1.0),   # 0.56236
                                 (0, 100),   # 75
                                 (0, 100),   # 14.19
-                                # (0, 1.0),   # 0.2
-                                (0, 1.0)]   # 0.021
+                                (0, 1.0),   # 0.2
+                                (0, 0.1)]   # 0.021
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_iha.IV_Sartiana5B()
@@ -653,7 +653,7 @@ class ik1(AbstractChannel):
                                 (0, 1),    # 0.49124
                                 (0, 0.1),  # 0.08032
                                 (0, 10),   # 5.476
-                                (0, 0.1),  # 0.06175
+                                (0, 10),   # 6.175
                                 (0, 1000), # 594.31
                                 (0, 1),    # 0.5143
                                 (0, 10)]   # 4.753
