@@ -11,6 +11,7 @@ import distributions as Dist # prob dist functions
 import channel_setup # contains channel-specific settings
 import numpy as np
 import myokit
+import warnings
 
 class ChannelProto():
 
@@ -58,7 +59,7 @@ class ChannelProto():
         exp_vals = channel.data_exp
 
         # Calculate result by approximate Bayesian computation
-        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,20,50,0.003)
+        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,100,100,0.003)
 
         # Write results to the standard output and results log
         print result.getmean()
@@ -72,8 +73,7 @@ class ChannelProto():
     HELPER METHODS
 '''
 
-# Loss function for three voltage clamp experiments from Deng 2009.
-# Predicted and experimental values are concatenated before using the function.
+# Evaluates RMSE between experimental and predicted values
 def LossFunction(sim_vals, exp_vals):
     # If the simulation failed, pred_vals should be None
     # We return infinite loss
@@ -82,52 +82,26 @@ def LossFunction(sim_vals, exp_vals):
 
     # Calculate normalised (by mean of experimental values) RMSE for each experiment
     tot_err = 0
+    # Catch runtime overflow warnings from numpy
+    warnings.filterwarnings('error')
     for i,p in enumerate(sim_vals):
         p = np.array(p)
         e = np.array(exp_vals[i][1])
         try:
             err = np.sum(np.square(p-e))
+        except Warning:
+            return float("inf")
         except:
             return float("inf")
         err = pow(err/len(p),0.5)
         err = err/abs(np.mean(e))
         tot_err += err
 
-    # Forces overflow to infinity for unreasonable values
+    # Slight hacky way to avoid ridiculous outcomes
     if tot_err > 5:
         return float("inf")
 
     return tot_err
-
-def ResetSim(s, params, channel):
-    # Reset the model state before evaluating again
-    s.reset()
-    # Set parameters
-    for i, p in enumerate(params):
-        s.set_constant(channel.parameters[i], p)
-
-# Evaluates RMSE between experimental and predicted values
-# Uses time points in simulation that are closest to experimental
-def CheckAgainst(predTimes, predVals, experTimes, experVals):
-    curr = 0
-    predValsClosest = []
-
-    # Finds experimental output at times closest to experimental
-    for tval in experTimes:
-        while tval > predTimes[curr+1]:
-            if curr >= len(predTimes)-2:
-                break
-            curr = curr+1
-        if abs(tval-predTimes[curr]) < abs(tval-predTimes[curr+1]):
-            predValsClosest = predValsClosest + [predVals[curr]]
-        else:
-            predValsClosest = predValsClosest + [predVals[curr+1]]
-    # Calculate squared error
-    sq_err = 0
-
-    for i,val in enumerate(experVals):
-        sq_err = sq_err + pow(val-predValsClosest[i],2)
-    return pow(sq_err/len(experVals),0.5)
 
 # Simple multiplicative prior for list of independent Distribution objects
 def prior_func(priors,params):
@@ -137,10 +111,7 @@ def prior_func(priors,params):
     return prob
 
 if __name__ == '__main__':
-
-    # Bring in specific channel settings
-    channel = channel_setup.TTypeCalcium()
-    #channel = channel_setup.FastSodium()
-    #channel = channel_setup.UltraRapidlyActivatingDelayedPotassium()
+    # Load specific channel settings
+    channel = channel_setup.icat()
     x = ChannelProto()
     x.fit(channel)
