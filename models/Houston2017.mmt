@@ -397,7 +397,7 @@ tau_ytok3 = 52.45 [mV]
 tau_ytok4 = 15.8827 [mV]
     in [mV]
 
-E_K = membrane.R * membrane.T / membrane.F * log((0.98 * membrane.Ko + 0.02 * membrane.Nao) / (0.98 * potassium_concentration.Ki + 0.02 * sodium_concentration.Nai))
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / potassium_concentration.Ki)
     in [mV]
 G_to = g_to * xto * yto
     in [nS/pF]
@@ -768,16 +768,14 @@ tau_yk6 = 14.19 [mV]
 dot(y) = (y_ss - y) / tau_y
     in [1]
 
-E_Na = membrane.R * membrane.T / membrane.F * log((0.9 * membrane.Nao + 0.1 * membrane.Ko) / (0.9 * sodium_concentration.Nai + 0.1 * potassium_concentration.Ki))
-    in [mV]
-E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / potassium_concentration.Ki)
+E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / sodium_concentration.Nai)
     in [mV]
 
 G_ha = g_ha * y
     in [mS/uF]
 i_haNa = G_ha * i_haNak1 * (membrane.V - E_Na)
     in [pA/pF]
-i_haK = G_ha * (1-i_haNak1) * (membrane.V - E_K)
+i_haK = G_ha * (1-i_haNak1) * (membrane.V - ito.E_K)
     in [pA/pF]
 i_haNak1 = 0.2
     in [1]
