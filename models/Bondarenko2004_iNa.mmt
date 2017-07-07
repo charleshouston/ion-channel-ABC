@@ -6,7 +6,7 @@ ref: """
 Bondarenko et al. (2004)
 """
 # Initial values
-membrane.V = -82.4202
+membrane.V = -67.0
 ina.C_Na2 = 0.020752
 ina.C_Na1 = 2.79132000000000024e-4
 ina.O_Na = 7.13482999999999984e-7
@@ -40,9 +40,11 @@ Nai = 14237.1
 
 [ina]
 use membrane.V as V
-g_Na = 23 # value from Takeuchi 2013 (original: 13)
+g_Na = 13 # value from Takeuchi 2013: 23
     in [mS/uF]
-E_Na = 23.2 # value from Dias 2014 (original used concentration balance)
+# E_Na = 23.2 # value from Dias 2014 (original used concentration balance)
+#     in [mV]
+E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
     in [mV]
 G_Na = g_Na * O_Na
 i_Na = G_Na * (V - E_Na)
@@ -95,7 +97,7 @@ k_alpha9 = 16.6
     in [mV]
 k_alpha10 = 0.393956
     in [1]
-k_alpha11 = 7e-7
+k_alpha11 = 7
     in [mS/uF]
 k_alpha12 = 7.7
     in [mV]
@@ -114,9 +116,9 @@ k_beta4 = 0.2
     in [mS/uF]
 k_beta5 = 0.22
     in [mS/uF]
-k_beta6 = 0.0084
+k_beta6 = 8.4
     in [mS/uF]
-k_beta7 = 2e-5
+k_beta7 = 2
     in [1/mV/ms]
 k_beta8 = 7
     in [mV]
@@ -129,7 +131,7 @@ alpha_Na13 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / k_alpha5_13) + k_alpha
     in [mS/uF]
 alpha_Na2 = 1 [mS/uF] / (k_alpha7 * exp(-(V + k_alpha8) / k_alpha9) + k_alpha10)
     in [mS/uF]
-alpha_Na3 = k_alpha11 * exp(-(V + k_alpha8) / k_alpha12)
+alpha_Na3 = k_alpha11 * 1e-7 * exp(-(V + k_alpha8) / k_alpha12)
     in [mS/uF]
 alpha_Na4 = alpha_Na2 / 1000
     in [mS/uF]
@@ -144,7 +146,7 @@ beta_Na13 = k_beta5 * exp(-(V + k_beta2_13) / k_beta3)
     in [mS/uF]
 beta_Na2 = alpha_Na13 * alpha_Na2 * alpha_Na3 / (beta_Na13 * beta_Na3)
     in [mS/uF]
-beta_Na3 = k_beta6 + k_beta7 * (V + k_beta8)
+beta_Na3 = k_beta6 * 1e-3 + k_beta7 * 1e-5 * (V + k_beta8)
     in [mS/uF]
 beta_Na4 = alpha_Na3
     in [mS/uF]

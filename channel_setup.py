@@ -206,7 +206,8 @@ class ina(AbstractChannel):
         self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
-        self.parameters = ['ina.k_alpha1',
+        self.parameters = ['ina.g_Na',
+                           'ina.k_alpha1',
                            'ina.k_alpha2',
                            'ina.k_alpha3',
                            'ina.k_alpha4',
@@ -233,32 +234,33 @@ class ina(AbstractChannel):
                            'ina.k_beta7',
                            'ina.k_beta8']
         # Parameter specific prior intervals
-        self.prior_intervals = [(0,10),  # 3.802
-                                (0,1.0), # 0.1027
-                                (0,10),  # 2.5
-                                (1,1000),# 150
-                                (1,100), # 17
-                                (1,100), # 15
-                                (1,100), # 12
-                                (0,1.0), # 0.2
-                                (0,1.0), # 0.23
-                                (0,1.0), # 0.25
-                                (0,1.0), # 0.188495
-                                (0,10),  # 7
-                                (1,100), # 16.6
-                                (0,1.0), # 0.393956
-                                (0,1e-6),# 7e-7
-                                (1,10),  # 7.7
-                                (0,1.0), # 0.1917
-                                (-10,10),# 2.5
-                                (-10,10),# -2.5
-                                (-10,10),# -7.5
-                                (1,100), # 20.3
-                                (0,1.0), # 0.2
-                                (0,1.0), # 0.22
-                                (0,1e-2),# 0.0084
-                                (0,1e-4),# 2e-5
-                                (0,10)]  # 7
+        self.prior_intervals = [(0, 100),   # 13
+                                (0, 10),    # 3.802
+                                (0, 1.0),   # 0.1027
+                                (0, 10),    # 2.5
+                                (1, 1000),  # 150
+                                (1, 100),   # 17
+                                (1, 100),   # 15
+                                (1, 100),   # 12
+                                (0, 1.0),   # 0.2
+                                (0, 1.0),   # 0.23
+                                (0, 1.0),   # 0.25
+                                (0, 1.0),   # 0.188495
+                                (0, 10),    # 7
+                                (1, 100),   # 16.6
+                                (0, 1.0),   # 0.393956
+                                (0, 10),    # 7
+                                (1, 10),    # 7.7
+                                (0, 1.0),   # 0.1917
+                                (-100, 100),# 2.5
+                                (-100, 100),# -2.5
+                                (-100, 100),# -7.5
+                                (1, 100),   # 20.3
+                                (0, 1.0),   # 0.2
+                                (0, 1.0),   # 0.22
+                                (0, 10),    # 8.4
+                                (0, 10),    # 2
+                                (0, 10)]    # 7
 
         # Loading experimental data
         vsteps, act_exp = data_ina.IV_DiasFig6()
@@ -781,7 +783,7 @@ class ina2(AbstractChannel):
 class incx(AbstractChannel):
     def __init__(self):
         self.name = 'incx'
-        self.model_name = 'Houston2017.mmt' # run in full model
+        self.model_name = 'Bondarenko2004_iNCX.mmt'
         self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
@@ -799,7 +801,7 @@ class incx(AbstractChannel):
                                 (0, 100000)]    # 87500
 
         # Loading experimental data
-        vsteps, act_exp = data_incx.IV_LuFig2()
+        vsteps, act_exp = data_incx.IV_Lu2016Fig2()
         self.data_exp = [[vsteps, act_exp]]
 
         # Define experimental setup for simulations
