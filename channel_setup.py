@@ -27,12 +27,14 @@ import simulations as sim
 class AbstractChannel(object):
     def __init__(self):
         # Specifying pertubation kernel
-        #  Uniform distribution with variance 20% of prior width
+        #  Normal distribution with variance 20% of prior width
         self.kernel = []
         for pr in self.prior_intervals:
             prior_width = pr[1]-pr[0]
-            self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width), 
-                                            math.sqrt(1.2 * prior_width)))
+            self.kernel.append(Dist.Normal(0.0, 0.2 * prior_width))
+            # Uncomment below for uniform distribution
+            # self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width), 
+            #                                 math.sqrt(1.2 * prior_width)))
 
         self.setup_simulations()
 
