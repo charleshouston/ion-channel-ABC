@@ -1,0 +1,44 @@
+[[model]]
+name: Bondarenko 2004 Inward rectifying K Current (i_K1)
+author: Charles Houston
+
+# Initial values
+membrane.V = -67.0
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ik1.i_K1
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 100000
+    in [uM]
+Ki = 143720
+    in [uM]
+Nao = 140000
+    in [uM]
+Nai = 14237.1
+    in [uM]
+
+
+[ik1]
+i_K1 = g_K1 * membrane.Ko / (membrane.Ko + k1) * (membrane.V - E_K + k3) / (1 + exp(k2 * 1e-2 * (membrane.V - E_K)))
+    in [pA/pF]
+g_K1 = 0.2938 [mS/uF]
+    in [mS/uF]
+k1 = 210 [uM]
+    in [uM]
+k2 = 8.96 [1/mV]
+    in [1/mV]
+k3 = 0 [mV]
+    in [mV]
+
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
+    in [mV]

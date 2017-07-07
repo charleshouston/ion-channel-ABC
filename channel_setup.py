@@ -630,34 +630,18 @@ class ikach(AbstractChannel):
 class ik1(AbstractChannel):
     def __init__(self):
         self.name = 'ik1'
-        self.model_name = 'Takeuchi2013_iK1.mmt'
-        self.publication = 'Takeuchi et al., 2013'
+        self.model_name = 'Bondarenko2004_iK1.mmt'
+        self.publication = 'Bondarenko et al., 2004'
 
-        # Parameters involved in ABC process
         self.parameters = ['ik1.g_K1',
-                           'ik1.a_K1_k1',
-                           'ik1.a_K1_k2',
-                           'ik1.a_K1_k3',
-                           'ik1.b_K1_k1',
-                           'ik1.b_K1_k2',
-                           'ik1.b_K1_k3',
-                           'ik1.b_K1_k4',
-                           'ik1.b_K1_k5',
-                           'ik1.b_K1_k6',
-                           'ik1.b_K1_k7']
+                           'ik1.k1',
+                           'ik1.k2',
+                           'ik1.k3']
 
-        # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1),    # 0.15
-                                (0, 10),   # 1.02 
-                                (0, 1),    # 0.2385 
-                                (0, 100),  # 59.215
-                                (0, 1),    # 0.49124
-                                (0, 0.1),  # 0.08032
-                                (0, 10),   # 5.476
-                                (0, 10),   # 6.175
-                                (0, 1000), # 594.31
-                                (0, 1),    # 0.5143
-                                (0, 10)]   # 4.753
+        self.prior_intervals = [(0, 1),     # 0.2938
+                                (0, 1000),  # 210
+                                (0, 10),    # 8.96
+                                (-50, 50)]  # 0
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_ik1.IV_GoldoniFig3D()
