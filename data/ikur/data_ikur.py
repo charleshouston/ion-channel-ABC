@@ -15,7 +15,7 @@ I-V curve
 
 Returns x, y data from points in Figure 2B from Maharani et al, 2015.
 '''
-def IV_MuharaniFig2B():
+def IV_MaharaniFig2B():
     x = [-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60]
     y = [0.0,0.0,0.0,0.647668,1.910622,2.331606,3.108808,3.821244,3.853627,4.922280,6.023316,6.994819,7.998705]
     return x, y

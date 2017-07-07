@@ -315,17 +315,17 @@ class ikur(AbstractChannel):
                                 (0, 100),   # 22.5
                                 (1, 10),    # 7.5
                                 (0, 1),     # 0.493
-                                (0, 0.1),   # 0.0629
+                                (0, 10),    # 6.29
                                 (0, 10),    # 2.058
                                 (0, 100),   # 45.2
                                 (1, 10),    # 5.7
-                                (0, 10000), # 1200
-                                (0, 1000),  # 170
+                                (0, 10),    # 1.2
+                                (0, 10),    # 1.7
                                 (0, 100),   # 45.2
                                 (1, 10)]    # 5.7
 
         # Loading experimental data
-        vsteps, act_peaks_exp = data_ikur.IV_MuharaniFig2B()
+        vsteps, act_peaks_exp = data_ikur.IV_MaharaniFig2B()
         prepulses, inact_exp = data_ikur.Inact_XuFig9C()
         intervals, rec_exp = data_ikur.Recovery_XuFig10C()
         self.data_exp = [[vsteps, act_peaks_exp],
@@ -334,7 +334,7 @@ class ikur(AbstractChannel):
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ikur.i_Kur', 'vhold': -60, 'thold': 5000,
+                         'variable': 'ikur.i_Kur', 'vhold': -60, 'thold': 6000,
                          'vsteps': vsteps, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
