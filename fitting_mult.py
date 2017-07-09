@@ -11,6 +11,8 @@ import distributions
 import copy
 import myokit
 
+import lhsmdu
+
 import pathos.multiprocessing as mp
 
 '''
@@ -99,22 +101,49 @@ class Engine(object):
 
 def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
 
-    post, wts = [None]*post_size, [1.0/post_size]*post_size
-    total_err, max_err = 0.0, 0.0
+    # post, wts = [None]*post_size, [1.0/post_size]*post_size
+    post = []
+    total_err, max_err = 0.0, 0.0 #float("inf")
 
     # Create copy of channel to avoid passing generated simulations
     # to parallel workers in abc_inner
     channel_copy = copy.deepcopy(channel)
-    # Initializes posterior to be a draw of particles from prior
-    for i in range(post_size):
-        # Distance function returns "inf" in the case of overflow error
-        curr_err = float("inf")
-        while curr_err == float("inf"):
-            post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i], exp_vals, channel_copy)
 
-        total_err = total_err + curr_err
-        max_err = max(curr_err,max_err)
+    # Initialise posterior by drawing from latin hypercube over parameters
+    draw_num = 0
+    # while max_err == float("inf"):
+    #     print "LHS draw number: " + str(draw_num)
+        # draw_num += 1
+
+    post_lhs = lhsmdu.sample(len(priors), post_size)
+    for i in range(post_size):
+        posti = post_lhs[:, i].flatten().tolist()[0]
+        prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
+        posti = array(posti) * array(prior_width)
+        posti = posti + array([pr[0] for pr in channel.prior_intervals])
+        curr_err = dist(posti, exp_vals, channel_copy)
+        if curr_err == float("inf"):
+            continue
+        post.append(posti)
+        max_err = max(curr_err, max_err)
+        total_err += curr_err
+
+    # Update size of post pool
+    print "Original post size: " + str(post_size)
+    post_size = len(post)
+    print "New post size:      " + str(post_size)
+    wts = [1.0/post_size] * post_size
+
+    # Initializes posterior to be a draw of particles from prior
+    # for i in range(post_size):
+    #     # Distance function returns "inf" in the case of overflow error
+    #     curr_err = float("inf")
+    #     while curr_err == float("inf"):
+    #         post[i] = [p.draw() for p in priors]
+    #         curr_err = dist(post[i], exp_vals, channel_copy)
+
+    #     total_err = total_err + curr_err
+    #     max_err = max(curr_err,max_err)
 
     # Initialize K to half the average population error
     K = total_err/(2.0*post_size)

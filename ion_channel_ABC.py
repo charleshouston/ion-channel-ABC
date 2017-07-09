@@ -59,7 +59,7 @@ class ChannelProto():
         exp_vals = channel.data_exp
 
         # Calculate result by approximate Bayesian computation
-        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,100,100,0.003)
+        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,10*len(priors),200,0.003)
 
         # Write results to the standard output and results log
         print result.getmean()
@@ -99,8 +99,8 @@ def LossFunction(sim_vals, exp_vals):
         tot_err += err
 
     # Slight hacky way to avoid ridiculous outcomes
-    if tot_err > 5:
-        return float("inf")
+    # if tot_err > 5:
+    #     return float("inf")
 
     return tot_err
 
@@ -113,6 +113,6 @@ def prior_func(priors,params):
 
 if __name__ == '__main__':
     # Load specific channel settings
-    channel = channel_setup.ikach()
+    channel = channel_setup.icat()
     x = ChannelProto()
     x.fit(channel)
