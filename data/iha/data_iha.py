@@ -26,7 +26,7 @@ Activation curve
 
 Returns x,y data from activation points in figure 4B
 '''
-def Act_DengFig3B():
+def Inact_Sartiana4B():
     x = [-130,-120,-110,-100,-90,-80,-70,-60]
     y = [1.00625,0.9787500000000001,0.925,0.8737500000000001,0.66125,0.4437500000000001,0.1787500000000002,0.04875000000000007]
     return x,y
