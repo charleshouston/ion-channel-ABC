@@ -1,0 +1,17 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Fri Jul 07 15:48:38 BST 2017 -->
+<data>
+<image file='Xu1999_Fig9C.png' />
+<axesnames x='Membrane potential (mV)'  y='Normalised current' />
+<calibpoints minXaxisX='440.0' minXaxisY='1002.0' maxXaxisX='1772.0' maxXaxisY='1001.0' minYaxisX='306.0' minYaxisY='1002.0' maxYaxisX='309.0' maxYaxisY='105.0' aX1='-100.0' aX2='0.0' aY1='0.0' aY2='1.2' isXLog='false' isYLog='false' />
+<point n='0' x='440.0' y='251.0' dx='-99.95767165945696' dy='1.004550213801294' />
+<point n='1' x='573.0' y='282.0' dx='-89.97443954402628' dy='0.9629449590350194' />
+<point n='2' x='706.0' y='275.0' dx='-79.98906564838171' dy='0.9721759523133979' />
+<point n='3' x='838.0' y='269.0' dx='-70.07882314813511' dy='0.9800701539419536' />
+<point n='4' x='972.0' y='237.0' dx='-60.016965153799575' dy='1.0227450428983573' />
+<point n='5' x='1105.0' y='242.0' dx='-50.032267609801465' dy='1.0159224841626346' />
+<point n='6' x='1237.0' y='265.0' dx='-40.12365962603391' dy='0.9850206017571128' />
+<point n='7' x='1371.0' y='397.0' dx='-30.071045104200437' dy='0.8082969465208015' />
+<point n='8' x='1504.0' y='821.0' dx='-20.109963505192425' dy='0.24093786329271594' />
+<point n='9' x='1638.0' y='976.0' dx='-10.058645324014748' dy='0.0334449000293775' />
+</data>
