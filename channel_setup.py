@@ -31,7 +31,7 @@ class AbstractChannel(object):
         self.kernel = []
         for pr in self.prior_intervals:
             prior_width = pr[1]-pr[0]
-            self.kernel.append(Dist.Normal(0.0, 0.2 * prior_width))
+            self.kernel.append(Dist.Normal(0.0, 0.3 * prior_width))
             # Uncomment below for uniform distribution
             # self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width), 
             #                                 math.sqrt(1.2 * prior_width)))
@@ -321,6 +321,8 @@ class ikur(AbstractChannel):
                                 (0, 10),    # 2.058
                                 (0, 100),   # 45.2
                                 (1, 10),    # 5.7
+                                (0, 100),   # 45.2
+                                (1, 10),    # 5.7
                                 (0, 10),    # 1.2
                                 (0, 10),    # 1.7
                                 (0, 100),   # 45.2
@@ -517,7 +519,7 @@ class iha(AbstractChannel):
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_iha.IV_Sartiana5B()
-        prepulses, inact_exp = data_iha.Act_DengFig3B()
+        prepulses, inact_exp = data_iha.Inact_Sartiana4B()
         self.data_exp = [[vsteps, act_peaks_exp],
                          [prepulses, inact_exp]]
 
@@ -783,7 +785,7 @@ class ina2(AbstractChannel):
 class incx(AbstractChannel):
     def __init__(self):
         self.name = 'incx'
-        self.model_name = 'Bondarenko2004_iNCX.mmt'
+        self.model_name = 'Houston2017.mmt'
         self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
