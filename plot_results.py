@@ -56,10 +56,14 @@ else:
 # Calculate summary statistics
 sim_ABC_mu = []
 sim_ABC_sd = []
+sim_ABC_med = []
+sim_ABC_iqr = []
 for i in range(len(sim_ABC)):
     d = Dist.Arbitrary(sim_ABC[i], weights)
     sim_ABC_mu.append(d.getmean())
     sim_ABC_sd.append(np.sqrt(d.getvar()))
+    sim_ABC_med.append(d.getmedian())
+    sim_ABC_iqr.append(np.array(d.getiqr())/2)
 
 # Plot the results
 plt.style.use('seaborn-colorblind')
@@ -74,8 +78,12 @@ for i in range(len(sim_ABC)):
         axi = ax[i]
     else:
         axi = ax
-    axi.plot(x_cont2, sim_ABC_mu[i], '-', label='ABC simulations')
-    axi.fill_between(x_cont2, sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
+    # for j in range(len(sim_ABC[i])):
+    #     axi.plot(x_cont2, sim_ABC[i][j], 'r:', lw=0.1, alpha = (weights[j]-min(weights))/(max(weights) - min(weights)))
+    # axi.plot(x_cont2, sim_ABC_mu[i], '-', label='ABC simulations')
+    axi.plot(x_cont2, sim_ABC_med[i], '-', label='ABC simulations')
+    # axi.fill_between(x_cont2, sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
+    axi.fill_between(x_cont2, sim_ABC_med[i]-sim_ABC_iqr[i], sim_ABC_med[i]+sim_ABC_iqr[i], alpha=0.25, lw=0)
     axi.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'o', label='Experimental data')
     axi.plot(x_cont1, sim_original[i], '--', label=channel.publication)
     axi.set_xlabel(channel.setup_exp[i]['xlabel'])
@@ -94,4 +102,4 @@ if len(sim_ABC) > 1:
 else:
     ax.legend(loc='best')
 
-fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight", dpi=1000)
+fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight")

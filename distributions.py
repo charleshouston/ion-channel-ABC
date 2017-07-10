@@ -8,6 +8,7 @@
 import math
 import random
 from numpy import random
+import numpy as np
 
 ''' 
 	Distributions used in ABC inference for prior and kernel function specification
@@ -24,7 +25,11 @@ class AbstractDistribution(object):
 		return self.mean
 	def getvar(self):
 		return self.var
-	
+        def getmedian(self):
+                raise NotImplementedError
+        def getiqr(self):
+                raise NotImplementedError
+
 class Uniform(AbstractDistribution):
 	def __init__(self,lo=0.0,hi=1.0):
 		self.hi = hi
@@ -84,6 +89,35 @@ class Arbitrary(AbstractDistribution):
 			for j in range(len(p)):
 				var[j] = var[j]+pow(p[j]-mean[j],2.0)*wts[i]
 		self.var = var
+
+                median = [0]*len(self.pool[0])
+                iqr = [0]*len(self.pool[0])
+                for i in range(len(self.pool[0])):
+                        vals = []
+                        for j,p in enumerate(self.pool):
+                                vals.append([p[i], wts[j]])
+                        # Order values and corresponding weights
+                        vals = np.array(vals)
+                        vals = vals[vals[:,0].argsort()]
+                        wt_sum = 0.0
+                        j = 0
+                        # Find first quartile
+                        while wt_sum < 0.25:
+                            wt_sum += vals[j,1]
+                            j += 1
+                        q1 = vals[j-1,0]
+                        while wt_sum < 0.5:
+                            wt_sum += vals[j,1]
+                            j += 1
+                        median[i] = vals[j-1,0]
+                        while wt_sum < 0.75:
+                            wt_sum += vals[j,1]
+                            j += 1
+                        iqr[i] = vals[j-1,0]-q1
+
+                self.median = median
+                self.iqr = iqr
+
 				
 	def draw(self):
 		r = random.rand()
@@ -96,4 +130,7 @@ class Arbitrary(AbstractDistribution):
 		return self.mean
 	def getvar(self):
 		return self.var
-		
+        def getmedian(self):
+                return self.median
+        def getiqr(self):
+                return self.iqr
