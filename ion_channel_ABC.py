@@ -6,9 +6,9 @@ Developed initially from work by Daly et al, 2015.
 Re-written to use with myokit, multi-processing and further channels.
 '''
 
-import fitting_mult as fitting       # import ABC fitting procedure
-import distributions as Dist # prob dist functions
-import channel_setup # contains channel-specific settings
+import fitting                  # import ABC fitting procedure
+import distributions as Dist    # prob dist functions
+import channel_setup            # contains channel-specific settings
 import numpy as np
 import myokit
 import warnings
@@ -26,7 +26,7 @@ class ChannelProto():
         priors = []
         init = []
         for pr in channel.prior_intervals:
-            priors.append(Dist.Uniform(pr[0],pr[1]))
+            priors.append(Dist.Uniform(pr[0], pr[1]))
             init.append(priors[-1].getmean())
 
         # Distance function for ABC process
@@ -59,7 +59,7 @@ class ChannelProto():
         exp_vals = channel.data_exp
 
         # Calculate result by approximate Bayesian computation
-        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,10*len(priors),200,0.003)
+        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,len(priors) * 20,10000,0.003)
 
         # Write results to the standard output and results log
         print result.getmean()
@@ -97,10 +97,6 @@ def LossFunction(sim_vals, exp_vals):
         err = pow(err/len(p),0.5)
         err = err/abs(np.mean(e))
         tot_err += err
-
-    # Slight hacky way to avoid ridiculous outcomes
-    # if tot_err > 5:
-    #     return float("inf")
 
     return tot_err
 

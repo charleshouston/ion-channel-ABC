@@ -6,7 +6,7 @@ ABC parameter estimation, adapted from Daly et al, 2015 for use in myokit.
 Parallel processing version.
 '''
 import math
-from numpy import *
+import numpy as np
 import distributions
 import copy
 import myokit
@@ -53,7 +53,7 @@ class Engine(object):
 
     def __call__(self, i):
         # Seed random number generator for each worker
-        random.seed()
+        np.random.seed()
 
         draw = None
         iters = 0
@@ -64,7 +64,7 @@ class Engine(object):
             # Otherwise, draw the posterior distribution
             else:
                 sum = 0.0
-                r = random.random()
+                r = np.random.random()
                 for idx in range(self.post_size):
                     sum = sum + self.wts[idx]
                     if sum >= r:
@@ -101,49 +101,39 @@ class Engine(object):
 
 def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
 
-    # post, wts = [None]*post_size, [1.0/post_size]*post_size
-    post = []
-    total_err, max_err = 0.0, 0.0 #float("inf")
+    post, wts = [None]*post_size, [1.0/post_size]*post_size
+    total_err, max_err = 0.0, 0.0
 
     # Create copy of channel to avoid passing generated simulations
     # to parallel workers in abc_inner
     channel_copy = copy.deepcopy(channel)
 
     # Initialise posterior by drawing from latin hypercube over parameters
-    draw_num = 0
-    # while max_err == float("inf"):
-    #     print "LHS draw number: " + str(draw_num)
-        # draw_num += 1
-
     post_lhs = lhsmdu.sample(len(priors), post_size)
+    # Generate vector of prior widths
+    prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
+    # Valid post size
+    valid_post_size = post_size
     for i in range(post_size):
-        posti = post_lhs[:, i].flatten().tolist()[0]
-        prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
-        posti = array(posti) * array(prior_width)
-        posti = posti + array([pr[0] for pr in channel.prior_intervals])
-        curr_err = dist(posti, exp_vals, channel_copy)
+        # Get vector of parameters for each LHS sample
+        post[i] = post_lhs[:, i].flatten().tolist()[0]
+        # Convert from draws in U(0,1) to original values
+        post[i] = np.array(post[i]) * np.array(prior_width)
+        post[i] = post[i] + np.array([pr[0] for pr in channel.prior_intervals])
+        # Evaluate error from simulation
+        curr_err = dist(post[i], exp_vals, channel_copy)
         if curr_err == float("inf"):
-            continue
-        post.append(posti)
-        max_err = max(curr_err, max_err)
-        total_err += curr_err
+            # If simulation set this weight to zero and increase reduce
+            # effective post size
+            wts[i] = 0.0
+            valid_post_size -= 1
+        else:
+            # Only accumulate error from valid particles
+            max_err = max(curr_err, max_err)
+            total_err += curr_err
 
-    # Update size of post pool
-    print "Original post size: " + str(post_size)
-    post_size = len(post)
-    print "New post size:      " + str(post_size)
-    wts = [1.0/post_size] * post_size
-
-    # Initializes posterior to be a draw of particles from prior
-    # for i in range(post_size):
-    #     # Distance function returns "inf" in the case of overflow error
-    #     curr_err = float("inf")
-    #     while curr_err == float("inf"):
-    #         post[i] = [p.draw() for p in priors]
-    #         curr_err = dist(post[i], exp_vals, channel_copy)
-
-    #     total_err = total_err + curr_err
-    #     max_err = max(curr_err,max_err)
+    # Update weights to sum to 1 after zeroing invalid simulations
+    wts = [1.0/valid_post_size if w > 0.0 else w for w in wts]
 
     # Initialize K to half the average population error
     K = total_err/(2.0*post_size)
@@ -154,7 +144,6 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
 
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
     while K > err_cutoff:
-        #tr.print_diff()
         logfile.write("Target = "+str(thresh_val-K)+" (K = "+str(K)+")\n")
 
         # Force empty buffer to file
@@ -169,8 +158,8 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
             # Write current output to log
             # in case simulation trips up and we lose results.
             logfile.write("Target met\n")
-            logfile.write("Current mean posterior estimate: "+str(mean(post,0))+"\n")
-            logfile.write("Current posterior variance: "+str(var(post,0))+"\n")
+            logfile.write("Current mean posterior estimate: "+str(np.mean(post,0))+"\n")
+            logfile.write("Current posterior variance: "+str(np.var(post,0))+"\n")
             logfile.write(str(post)+"\n")
             logfile.write(str(wts)+"\n")
 
