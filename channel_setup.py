@@ -31,7 +31,7 @@ class AbstractChannel(object):
         self.kernel = []
         for pr in self.prior_intervals:
             prior_width = pr[1]-pr[0]
-            self.kernel.append(Dist.Normal(0.0, 0.3 * prior_width))
+            self.kernel.append(Dist.Normal(0.0, 0.2 * prior_width))
             # Uncomment below for uniform distribution
             # self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width), 
             #                                 math.sqrt(1.2 * prior_width)))
@@ -207,6 +207,7 @@ class ina(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameters = ['ina.g_Na',
+                           'ina.V_delt',
                            'ina.k_alpha1',
                            'ina.k_alpha2',
                            'ina.k_alpha3',
@@ -223,6 +224,9 @@ class ina(AbstractChannel):
                            'ina.k_alpha10',
                            'ina.k_alpha11',
                            'ina.k_alpha12',
+                           'ina.k_alpha13',
+                           'ina.k_alpha14',
+                           'ina.k_alpha15',
                            'ina.k_beta1',
                            'ina.k_beta2_11',
                            'ina.k_beta2_12',
@@ -232,35 +236,41 @@ class ina(AbstractChannel):
                            'ina.k_beta5',
                            'ina.k_beta6',
                            'ina.k_beta7',
-                           'ina.k_beta8']
+                           'ina.k_beta8',
+                           'ina.k_beta9',]
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 13
+                                (0, 100),   # 0.0
                                 (0, 10),    # 3.802
                                 (0, 1.0),   # 0.1027
                                 (0, 10),    # 2.5
                                 (1, 1000),  # 150
                                 (1, 100),   # 17
-                                (1, 100),   # 15
-                                (1, 100),   # 12
+                                (0, 10),    # 2
+                                (0, 10),    # 3
                                 (0, 1.0),   # 0.2
-                                (0, 1.0),   # 0.23
-                                (0, 1.0),   # 0.25
+                                (0, 0.1),   # 0.03
+                                (0, 0.1),   # 0.05
                                 (0, 1.0),   # 0.188495
                                 (0, 10),    # 7
                                 (1, 100),   # 16.6
                                 (0, 1.0),   # 0.393956
-                                (0, 10),    # 7
+                                (0, 100),   # 7
                                 (1, 10),    # 7.7
+                                (1, 10),    # 1
+                                (1, 100),   # 9.5
+                                (0, 10),    # 7
                                 (0, 1.0),   # 0.1917
-                                (-100, 100),# 2.5
-                                (-100, 100),# -2.5
-                                (-100, 100),# -7.5
+                                (0, 10),    # 2.5
+                                (0, 10),    # 5
+                                (0, 10),    # 5
                                 (1, 100),   # 20.3
                                 (0, 1.0),   # 0.2
                                 (0, 1.0),   # 0.22
-                                (0, 10),    # 8.4
-                                (0, 10),    # 2
-                                (0, 10)]    # 7
+                                (0, 100),   # 8.4
+                                (0, 100),   # 2
+                                (0, 10),    # 7
+                                (1, 100)]   # 50.0
 
         # Loading experimental data
         vsteps, act_exp = data_ina.IV_DiasFig6()
@@ -283,7 +293,7 @@ class ina(AbstractChannel):
                            'ylabel': 'Normalised conductance'}
         setup_exp_rec = {'sim_type': 'RecoverySim',
                          'variable': 'ina.G_Na', 'vhold': -120, 'thold': 3000,
-                         'vstep': -30, 'tstep1': 20, 'tstep2': 20,
+                         'vstep': -40, 'tstep1': 20, 'tstep2': 20,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
@@ -774,7 +784,7 @@ class ina2(AbstractChannel):
                            'ylabel': 'Normalised conductance'}
         setup_exp_rec = {'sim_type': 'RecoverySim',
                          'variable': 'ina.G_Na', 'vhold': -120, 'thold': 3000,
-                         'vstep': -30, 'tstep1': 20, 'tstep2': 20,
+                         'vstep': -40, 'tstep1': 20, 'tstep2': 20,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
