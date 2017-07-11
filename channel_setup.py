@@ -318,14 +318,14 @@ class ikur(AbstractChannel):
                            'ikur.issk1',
                            'ikur.issk2',
                            'ikur.itauk1',
-                           'ikur.itauk2',
-                           'ikur.itauk3',
-                           'ikur.itauk4']
+                           'ikur.itauk2']
+                           # 'ikur.itauk3',
+                           # 'ikur.itauk4']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 1),     # 0.0975
                                 (0, 100),   # 22.5
-                                (1, 10),    # 7.5
+                                (1, 10),    # 7.7
                                 (0, 1),     # 0.493
                                 (0, 10),    # 6.29
                                 (0, 10),    # 2.058
@@ -334,9 +334,9 @@ class ikur(AbstractChannel):
                                 (0, 100),   # 45.2
                                 (1, 10),    # 5.7
                                 (0, 10),    # 1.2
-                                (0, 10),    # 1.7
-                                (0, 100),   # 45.2
-                                (1, 10)]    # 5.7
+                                (0, 10)]    # 1.7
+                                # (0, 100),   # 45.2
+                                # (1, 10)]    # 5.7
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_ikur.IV_MaharaniFig2B()

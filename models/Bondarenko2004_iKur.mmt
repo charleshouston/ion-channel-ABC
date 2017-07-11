@@ -45,7 +45,7 @@ tau_a_ur = atauk1 * exp(-(atauk2 * 1e-2 * V)) + atauk3
 
 assk1 = 22.5
     in [mV]
-assk2 = 7.5
+assk2 = 7.7
     in [mV]
 atauk1 = 0.493
     in [ms]
@@ -58,7 +58,7 @@ dot(i_ur) = (i_ur_ss - i_ur) / tau_i_ur
     in [1]
 i_ur_ss = 1 / (1 + exp((V + issk1) / issk2))
     in [1]
-tau_i_ur = itauk1 * 1000 - itauk2 * 100 / (1 + exp((V + itauk3) / itauk4))
+tau_i_ur = itauk1 * 1000 - itauk2 * 100 / (1 + exp((V + issk1) / issk2))
     in [ms]
 
 issk1 = 45.2
