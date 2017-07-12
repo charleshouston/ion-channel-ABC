@@ -32,7 +32,7 @@ Ach = 10 [uM]
 [ikach]
 g_KAch = 0.37488 [mS/uF]
     in [mS/uF]
-E_K = membrane.R * membrane.T / membrane.F * log((0.98 * membrane.Ko + 0.02 * membrane.Nao) / (0.98 * membrane.Ki + 0.02 * membrane.Nai))
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
     in [mV]
 
 i_KAch = (k1 / (1.0 + k2 / membrane.Ach ^ k3)) * (k4 + k5 / (1.0 + exp((membrane.V + k6) / k7))) * (membrane.V - E_K - k8)
@@ -52,7 +52,3 @@ k7 = 10 [mV]
     in [mV]
 k8 = 10 [mV]
     in [mV]
-
-# Constitutively-active formulation
-# i_KAch = g_KAch * (0.075 + 0.35 / (1 + exp((membrane.V + 102) / 10))) * (membrane.V - E_K - 10)
-#     in [pA/pF]
