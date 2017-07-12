@@ -114,6 +114,7 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
     prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
     # Valid post size
     valid_post_size = post_size
+    errs = []
     for i in range(post_size):
         # Get vector of parameters for each LHS sample
         post[i] = post_lhs[:, i].flatten().tolist()[0]
@@ -122,15 +123,22 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
         post[i] = post[i] + np.array([pr[0] for pr in channel.prior_intervals])
         # Evaluate error from simulation
         curr_err = dist(post[i], exp_vals, channel_copy)
-        if curr_err == float("inf"):
-            # If simulation set this weight to zero and increase reduce
-            # effective post size
+        errs.append(curr_err)
+
+    # Process errors
+    # Upper limit to mean + stddev (exclude inf errors first)
+    errs_no_inf = [e for e in errs if e != float("inf")]
+    err_limit = np.mean(errs_no_inf) + np.std(errs_no_inf)
+    for i in range(post_size):
+        if errs[i] > err_limit:
+            errs[i] = 0.0 # Remove error value for following calculations
             wts[i] = 0.0
             valid_post_size -= 1
-        else:
-            # Only accumulate error from valid particles
-            max_err = max(curr_err, max_err)
-            total_err += curr_err
+
+    print "Original post size: " + str(post_size)
+    print "Valid results: " + str(valid_post_size)
+    max_err = max(errs)
+    total_err = np.sum(errs)
 
     # Update weights to sum to 1 after zeroing invalid simulations
     wts = [1.0/valid_post_size if w > 0.0 else w for w in wts]
