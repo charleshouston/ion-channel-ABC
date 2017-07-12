@@ -60,7 +60,7 @@ h_ss = 1 / (1 + exp((membrane.V + h_ssk1) / h_ssk2)) ^ 2
     in [1]
 a_h = piecewise(membrane.V >= v_split, 0, a_hk1 * exp(-(membrane.V + a_hk2) / a_hk3))
     in [1]
-b_h = piecewise(membrane.V >= v_split, b_hk1 / (b_hk2 * (1 + exp(-(membrane.V + b_hk3) / b_hk4))), b_hk5 * exp(b_hk6 * membrane.V) + b_hk7 * 10000 * exp(b_hk8 * membrane.V))
+b_h = piecewise(membrane.V >= v_split, b_hk1 / (1 + exp(-(membrane.V + b_hk2) / b_hk3)), b_hk4 * exp(b_hk5 * membrane.V) + b_hk6 * 10000 * exp(b_hk7 * membrane.V))
     in [1]
 tau_h = 1 [ms] / (a_h + b_h)
     in [ms]
@@ -68,27 +68,41 @@ h_ssk1 = 71.55 [mV]
     in [mV]
 h_ssk2 = 7.43 [mV]
     in [mV]
-a_hk1 = 0.057
+
+a_h_40p = 0.0001589
     in [1]
+a_h_40n = exp(-(v_split + a_hk2) / a_hk3)
+    in [1]
+a_hk1 = a_h_40p / a_h_40n
+    in [1]
+
+# a_hk1 = 0.057
+#     in [1]
 a_hk2 = 80 [mV]
     in [mV]
 a_hk3 = 6.8 [mV]
     in [mV]
-b_hk1 = 0.77
+
+b_h_40p = b_hk4 * exp(b_hk5 * v_split) + b_hk6 * 10000 * exp(b_hk7 * v_split)
     in [1]
-b_hk2 = 0.13
+b_h_40n = 1 / (1 + exp(-(v_split + b_hk2) / b_hk3))
     in [1]
-b_hk3 = 10.66 [mV]
+b_hk1 = b_h_40p / b_h_40n
+    in [1]
+
+# b_hk1 = 5.923
+#     in [1]
+b_hk2 = 10.66 [mV]
     in [mV]
-b_hk4 = 11.1 [mV]
+b_hk3 = 11.1 [mV]
     in [mV]
-b_hk5 = 2.7
+b_hk4 = 2.7
     in [1]
-b_hk6 = 0.079 [1/mV]
+b_hk5 = 0.079 [1/mV]
     in [1/mV]
-b_hk7 = 31
+b_hk6 = 31
     in [1]
-b_hk8 = 0.3485 [1/mV]
+b_hk7 = 0.3485 [1/mV]
     in [1/mV]
 v_split = -40 [mV]
     in [mV]
@@ -97,6 +111,8 @@ j_ss = 1 / (1 + exp((membrane.V + j_ssk1) / j_ssk2)) ^ 2
     in [1]
 a_j = piecewise(membrane.V >= v_split, 0, (-a_jk1 * 1000 * exp(a_jk2 * membrane.V) - a_jk3 * 1e-6 * exp(-a_jk4 * membrane.V)) * (membrane.V + a_jk5) / (1 + exp(a_jk6 * (membrane.V + a_jk7))))
     in [1]
+# a_j = (-a_jk1 * 1000 * exp(a_jk2 * membrane.V) - a_jk3 * 1e-6 * exp(-a_jk4 * membrane.V)) * (membrane.V + a_jk5) / (1 + exp(a_jk6 * (membrane.V + a_jk7)))
+#     in [1]
 b_j = piecewise(membrane.V >= v_split, b_jk1 * exp(b_jk2 * membrane.V) / (1 + exp(-b_jk3 * (membrane.V + b_jk4))), b_jk5 * exp(-b_jk6 * membrane.V) / (1 + exp(-b_jk7 * (membrane.V + b_jk8))))
     in [1]
 tau_j = 1 [ms] / (a_j + b_j)
@@ -105,6 +121,7 @@ j_ssk1 = 71.55 [mV]
     in [mV]
 j_ssk2 = 7.43 [mV]
     in [mV]
+
 a_jk1 = 25.428 [1/mV]
     in [mV]
 a_jk2 = 0.2444 [1/mV]
@@ -119,8 +136,16 @@ a_jk6 = 0.311 [1/mV]
     in [1/mV]
 a_jk7 = 79.23 [mV]
     in [mV]
-b_jk1 = 0.6
+
+b_j_40n = b_jk5 * exp(-b_jk6 * v_split) / (1 + exp(-b_jk7 * (v_split + b_jk8)))
     in [1]
+b_j_40p = exp(b_jk2 * v_split) / (1 + exp(-b_jk3 * (v_split + b_jk4)))
+    in [1]
+b_jk1 = b_j_40n / b_j_40p
+    in [1]
+
+# b_jk1 = 0.6
+#     in [1]
 b_jk2 = 0.057 [1/mV]
     in [1/mV]
 b_jk3 = 0.1 [1/mV]

@@ -683,6 +683,7 @@ class ina2(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameters = ['ina.g_Na',
+                           # 'ina.v_split',
                            'ina.m_ssk1',
                            'ina.m_ssk2',
                            'ina.tau_mk1',
@@ -693,27 +694,26 @@ class ina2(AbstractChannel):
                            'ina.tau_mk6',
                            'ina.h_ssk1',
                            'ina.h_ssk2',
-                           'ina.a_hk1',
+                           # 'ina.a_hk1',
                            'ina.a_hk2',
                            'ina.a_hk3',
-                           'ina.b_hk1',
+                           # 'ina.b_hk1',
                            'ina.b_hk2',
                            'ina.b_hk3',
                            'ina.b_hk4',
                            'ina.b_hk5',
                            'ina.b_hk6',
                            'ina.b_hk7',
-                           'ina.b_hk8',
                            'ina.j_ssk1',
                            'ina.j_ssk2',
                            'ina.a_jk1',
                            'ina.a_jk2',
                            'ina.a_jk3',
                            'ina.a_jk4',
-                           'ina.a_jk5',
+                           # 'ina.a_jk5',
                            'ina.a_jk6',
                            'ina.a_jk7',
-                           'ina.b_jk1',
+                           # 'ina.b_jk1',
                            'ina.b_jk2',
                            'ina.b_jk3',
                            'ina.b_jk4',
@@ -724,6 +724,7 @@ class ina2(AbstractChannel):
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 23
+                                # (-100, 0),  # -40
                                 (0, 100),   # 56.86
                                 (1, 10),    # 9.03
                                 (0, 1),     # 0.1292
@@ -734,11 +735,10 @@ class ina2(AbstractChannel):
                                 (1, 100),   # 51.12
                                 (0, 100),   # 71.55
                                 (1, 10),    # 7.43
-                                (0, 0.1),   # 0.057
+                                # (0, 0.1),   # 0.057
                                 (0, 100),   # 80
                                 (1, 10),    # 6.8
-                                (0, 1),     # 0.77
-                                (0, 1),     # 0.13
+                                # (0, 10),    # 5.923
                                 (0, 100),   # 10.66
                                 (1, 100),   # 11.1
                                 (0, 10),    # 2.7
@@ -751,10 +751,10 @@ class ina2(AbstractChannel):
                                 (0, 1),     # 0.2444
                                 (0, 10),    # 6.948
                                 (0, 0.1),   # 0.04391
-                                (0, 100),   # 37.78
+                                # (0, 100),   # 37.78
                                 (0, 1),     # 0.311
                                 (0, 100),   # 79.23
-                                (0, 1),     # 0.6
+                                # (0, 1),     # 0.6
                                 (0, 0.1),   # 0.057
                                 (0, 1),     # 0.1
                                 (0, 100),   # 32
@@ -773,7 +773,7 @@ class ina2(AbstractChannel):
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 3000,
+                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 500,
                          'vsteps': vsteps, 'tstep': 100,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
@@ -783,7 +783,7 @@ class ina2(AbstractChannel):
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
         setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 3000,
+                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 500,
                          'vstep': -40, 'tstep1': 20, 'tstep2': 20,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
