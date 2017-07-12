@@ -59,8 +59,7 @@ class ChannelProto():
         exp_vals = channel.data_exp
 
         # Calculate result by approximate Bayesian computation
-        result =
-        fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,200,10000,0.003)
+        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,200,10000,0.003)
 
         # Write results to the standard output and results log
         print result.getmean()
