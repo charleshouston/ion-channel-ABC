@@ -9,9 +9,14 @@ import myokit
 
 import channel_setup
 import distributions as Dist
+from ion_channel_ABC import LossFunction
+
+# Helper function for rounding to 3 sig figs adapted from:
+#  https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
+round_to_n = lambda x, n: round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1)) if x != 0 else 0
 
 # Import channel
-channel = channel_setup.ikr()
+channel = channel_setup.ikur()
 
 # Check whether to store sim results
 plot_data_name = 'plotting/plotdata_'+channel.name
@@ -80,10 +85,10 @@ for i in range(len(sim_ABC)):
         axi = ax
     # for j in range(len(sim_ABC[i])):
     #     axi.plot(x_cont2, sim_ABC[i][j], 'r:', lw=0.1, alpha = (weights[j]-min(weights))/(max(weights) - min(weights)))
-    # axi.plot(x_cont2, sim_ABC_mu[i], '-', label='ABC simulations')
-    axi.plot(x_cont2, sim_ABC_med[i], '-', label='ABC simulations')
-    # axi.fill_between(x_cont2, sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
-    axi.fill_between(x_cont2, sim_ABC_med[i]-sim_ABC_iqr[i], sim_ABC_med[i]+sim_ABC_iqr[i], alpha=0.25, lw=0)
+    axi.plot(x_cont2, sim_ABC_mu[i], '-', label='ABC simulations')
+    # axi.plot(x_cont2, sim_ABC_med[i], '-', label='ABC simulations')
+    axi.fill_between(x_cont2, sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
+    # axi.fill_between(x_cont2, sim_ABC_med[i]-sim_ABC_iqr[i], sim_ABC_med[i]+sim_ABC_iqr[i], alpha=0.25, lw=0)
     axi.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'o', label='Experimental data')
     axi.plot(x_cont1, sim_original[i], '--', label=channel.publication)
     axi.set_xlabel(channel.setup_exp[i]['xlabel'])
@@ -96,10 +101,52 @@ for i in range(len(sim_ABC)):
     y1 = float(y1)
     ar = abs(x1-x0)/abs(y1-y0)
     axi.set_aspect(ar)
-
 if len(sim_ABC) > 1:
     ax[-1].legend(loc='best')
 else:
     ax.legend(loc='best')
-
 fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight")
+
+# Save summary statistics
+#  Get original parameters
+parameters = channel.parameters
+m_temp, _, _ = myokit.load('models/'+channel.model_name)
+reported_vals = []
+for p in parameters:
+    reported_vals.append(m_temp.get(p).value())
+
+# Calculate summary of each parameters
+d = Dist.Arbitrary(pool, weights)
+mean_vals = d.getmean()
+var_vals = d.getvar()
+median_vals = d.getmedian()
+iqr_vals = d.getiqr()
+
+# Run coarse simulations to calculate errors to experimental values
+channel.setup_simulations(continuous=False)
+channel.reset_params(reported_vals)
+# Loss of original values
+err_original = LossFunction(channel.simulate(), channel.data_exp)
+# Loss of ABC values
+err_ABC = []
+for params in pool:
+    channel.reset_params(params)
+    err_ABC.append(LossFunction(channel.simulate(), channel.data_exp))
+
+sig_figs = 3
+with open('results/summary_'+channel.name+'.csv', 'w') as f:
+    f.write('parameter,reported value,mean,variance,median,interquartile range\n')
+    for i,p in enumerate(parameters):
+        f.write(p + ',')
+        f.write(str(round_to_n(reported_vals[i], sig_figs)) + ',')
+        f.write(str(round_to_n(mean_vals[i], sig_figs)) + ',')
+        f.write(str(round_to_n(var_vals[i], sig_figs)) + ',')
+        f.write(str(round_to_n(median_vals[i], sig_figs)) + ',')
+        f.write(str(round_to_n(iqr_vals[i], sig_figs)))
+        f.write('\n')
+
+    f.write('original loss\n')
+    f.write(str(round_to_n(err_original, sig_figs))+'\n')
+    f.write('minimum posterior loss,maximum posterior loss\n')
+    f.write(str(round_to_n(min(err_ABC), sig_figs)) + ',' + \
+                str(round_to_n(max(err_ABC), sig_figs)))
