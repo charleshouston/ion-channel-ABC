@@ -32,28 +32,28 @@ Nao = 140000
 g_ha = 0.021 [mS/uF]
     in [mS/uF]
 
-y_ss = 1 / (1 + exp((membrane.V + y_ssk1) / y_ssk2))
+y_ss = 1 / (1 + exp((membrane.V + k_yss1) / k_yss2))
     in [1]
-y_ssk1 = 78.65 [mV]
+k_yss1 = 78.65 [mV]
     in [mV]
-y_ssk2 = 6.33 [mV]
+k_yss2 = 6.33 [mV]
     in [mV]
 
-tau_y = 1000 * tau_yk1 / (tau_yk2 * exp((membrane.V + tau_yk3) / tau_yk4) + tau_yk5 * exp((membrane.V + tau_yk6) / -tau_yk7))
+tau_y = 1000 * k_ytau1 / (k_ytau2 * exp((membrane.V + k_ytau3) / k_ytau4) + k_ytau5 * exp((membrane.V + k_ytau6) / -k_ytau7))
     in [ms]
-tau_yk1 = 1 [ms]
+k_ytau1 = 1 [ms]
     in [ms]
-tau_yk2 = 0.11885
+k_ytau2 = 0.11885
     in [1]
-tau_yk3 = 75 [mV]
+k_ytau3 = 75 [mV]
     in [mV]
-tau_yk4 = 28.37 [mV]
+k_ytau4 = 28.37 [mV]
     in [mV]
-tau_yk5 = 0.56236
+k_ytau5 = 0.56236
     in [1]
-tau_yk6 = 75 [mV]
+k_ytau6 = 75 [mV]
     in [mV]
-tau_yk7 = 14.19 [mV]
+k_ytau7 = 14.19 [mV]
     in [mV]
 
 dot(y) = (y_ss - y) / tau_y
@@ -66,12 +66,12 @@ E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
 
 G_ha = g_ha * y
     in [mS/uF]
-i_haNa = G_ha * i_haNak1 * (membrane.V - E_Na)
+i_haNa = G_ha * k_i_haNa * (membrane.V - E_Na)
     in [pA/pF]
-i_haK = G_ha * (1-i_haNak1) * (membrane.V - E_K)
+i_haK = G_ha * (1-k_i_haNa) * (membrane.V - E_K)
     in [pA/pF]
 
-i_haNak1 = 0.2
+k_i_haNa = 0.2
     in [1]
 
 i_ha = i_haNa + i_haK

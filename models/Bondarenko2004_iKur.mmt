@@ -38,38 +38,34 @@ i_Kur = G_Kur * (V - E_K)
 
 dot(a_ur) = (a_ur_ss - a_ur) / tau_a_ur
     in [1]
-a_ur_ss = 1 / (1 + exp(-(V + assk1) / assk2))
+a_ur_ss = 1 / (1 + exp(-(V + k_ass1) / k_ass2))
     in [1]
-tau_a_ur = atauk1 * exp(-(atauk2 * 1e-2 * V)) + atauk3
+tau_a_ur = k_atau1 * exp(-(k_atau2 * 1e-2 * V)) + k_atau3
     in [ms]
 
-assk1 = 22.5
+k_ass1 = 22.5
     in [mV]
-assk2 = 7.7
+k_ass2 = 7.7
     in [mV]
-atauk1 = 0.493
+k_atau1 = 0.493
     in [ms]
-atauk2 = 6.29
+k_atau2 = 6.29
     in [1/mV]
-atauk3 = 2.058
+k_atau3 = 2.058
     in [mV]
 
 dot(i_ur) = (i_ur_ss - i_ur) / tau_i_ur
     in [1]
-i_ur_ss = 1 / (1 + exp((V + issk1) / issk2))
+i_ur_ss = 1 / (1 + exp((V + k_iss1) / k_iss2))
     in [1]
-tau_i_ur = itauk1 * 1000 - itauk2 * 100 / (1 + exp((V + issk1) / issk2))
+tau_i_ur = k_itau1 * 1000 - k_itau2 * 100 / (1 + exp((V + k_iss1) / k_iss2))
     in [ms]
 
-issk1 = 45.2
+k_iss1 = 45.2
     in [mV]
-issk2 = 5.7
+k_iss2 = 5.7
     in [mV]
-itauk1 = 1.2
+k_itau1 = 1.2
     in [ms]
-itauk2 = 1.7
+k_itau2 = 1.7
     in [ms]
-itauk3 = 45.2
-    in [mV]
-itauk4 = 5.7
-    in [mV]

@@ -91,7 +91,7 @@ class Arbitrary(AbstractDistribution):
         self.var = var
 
         median = [0]*len(self.pool[0])
-        percentiles = [0]*len(self.pool[0])
+        iqr = [0]*len(self.pool[0])
         for i in range(len(self.pool[0])):
             vals = []
             for j,p in enumerate(self.pool):

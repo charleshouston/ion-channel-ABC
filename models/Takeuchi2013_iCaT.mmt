@@ -35,48 +35,48 @@ i_CaT = G_CaT * (V - E_CaT)
 
 dot(d) = (dss - d)/tau_d
     in [1]
-tau_d = (dtauk1*exp((V+dtauk2)/dtauk3) + dtauk4*exp(-(V+dtauk5)/dtauk6))^(-1)
+tau_d = (k_dtau1*exp((V+k_dtau2)/k_dtau3) + k_dtau4*exp(-(V+k_dtau5)/k_dtau6))^(-1)
     in [1]
-dss = (1 + exp(-(V+dssk1)/dssk2))^(-1)
+dss = (1 + exp(-(V+k_dss1)/k_dss2))^(-1)
     in [1]
 
-dssk1 = 30
+k_dss1 = 30
     in [mV]
-dssk2 = 6.0
+k_dss2 = 6.0
     in [mV]
-dtauk1 = 1.068
+k_dtau1 = 1.068
     in [1]
-dtauk2 = 26.3
+k_dtau2 = 26.3
     in [mV]
-dtauk3 = 30
+k_dtau3 = 30
     in [mV]
-dtauk4 = 1.068
+k_dtau4 = 1.068
     in [1]
-dtauk5 = 26.3
+k_dtau5 = 26.3
     in [mV]
-dtauk6 = 30
+k_dtau6 = 30
     in [mV]
 
 dot(f) = (fss - f)/tau_f
     in [1]
-fss = (1 + exp((V+fssk1)/fssk2))^(-1)
+fss = (1 + exp((V+k_fss1)/k_fss2))^(-1)
     in [1]
-tau_f = (ftauk1 * 1e-2 * exp(-(V+ftauk2)/ftauk3) + ftauk4 * 1e-2 * exp((V+ftauk5)/ftauk6))^(-1)
+tau_f = (k_ftau1 * 1e-2 * exp(-(V+k_ftau2)/k_ftau3) + k_ftau4 * 1e-2 * exp((V+k_ftau5)/k_ftau6))^(-1)
     in [1]
 
-fssk1 = 48
+k_fss1 = 48
     in [mV]
-fssk2 = 7.0
+k_fss2 = 7.0
     in [mV]
-ftauk1 = 1.53
+k_ftau1 = 1.53
      in [1]
-ftauk2 = 61.7
+k_ftau2 = 61.7
      in [mV]
-ftauk3 = 83.3
+k_ftau3 = 83.3
      in [mV]
-ftauk4 = 1.5
+k_ftau4 = 1.5
      in [1]
-ftauk5 = 61.7
+k_ftau5 = 61.7
      in [mV]
-ftauk6 = 30
+k_ftau6 = 30
      in [mV]

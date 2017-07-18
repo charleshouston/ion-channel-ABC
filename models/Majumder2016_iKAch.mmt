@@ -3,7 +3,7 @@ name: Majumder 2016 acetylcholine sensitive potassium current
 author: Charles Houston
 
 # Initial values
-membrane.V = -82.4202
+membrane.V = -67.0
 
 [environment]
 time = 0 bind time
@@ -35,20 +35,20 @@ g_KAch = 0.37488 [mS/uF]
 E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
     in [mV]
 
-i_KAch = (k1 / (1.0 + k2 / membrane.Ach ^ k3)) * (k4 + k5 / (1.0 + exp((membrane.V + k6) / k7))) * (membrane.V - E_K - k8)
-k1 = 3.5
+i_KAch = (k_1 / (1.0 + k_2 / membrane.Ach ^ k_3)) * (k_4 + k_5 / (1.0 + exp((membrane.V + k_6) / k_7))) * (membrane.V - E_K - k_8)
+k_1 = 3.5
     in [1]
-k2 = 9.13652
+k_2 = 9.13652
     in [1]
-k3 = 0.477811
+k_3 = 0.477811
     in [1]
-k4 = 0.04
+k_4 = 0.04
     in [1]
-k5 = 0.23
+k_5 = 0.23
     in [1]
-k6 = 102 [mV]
+k_6 = 102 [mV]
     in [mV]
-k7 = 10 [mV]
+k_7 = 10 [mV]
     in [mV]
-k8 = 10 [mV]
+k_8 = 10 [mV]
     in [mV]

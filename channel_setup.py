@@ -26,6 +26,9 @@ import simulations as sim
 
 class AbstractChannel(object):
     def __init__(self):
+        # Generate full parameter names for use in myokit model
+        self.parameters = [self.name + '.' + p for p in self.parameter_names]
+
         # Specifying pertubation kernel
         #  Normal distribution with variance 20% of prior width
         self.kernel = []
@@ -37,6 +40,7 @@ class AbstractChannel(object):
             #                                 math.sqrt(1.2 * prior_width)))
 
         self.setup_simulations()
+
 
     def reset_params(self, new_params):
         '''
@@ -129,24 +133,24 @@ class icat(AbstractChannel):
         self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
-        self.parameters = ['icat.g_CaT',
-                           'icat.E_CaT',
-                           'icat.dssk1',
-                           'icat.dssk2',
-                           'icat.dtauk1',
-                           'icat.dtauk2',
-                           'icat.dtauk3',
-                           'icat.dtauk4',
-                           'icat.dtauk5',
-                           'icat.dtauk6',
-                           'icat.fssk1',
-                           'icat.fssk2',
-                           'icat.ftauk1',
-                           'icat.ftauk2',
-                           'icat.ftauk3',
-                           'icat.ftauk4',
-                           'icat.ftauk5',
-                           'icat.ftauk6']
+        self.parameter_names = ['g_CaT',
+                                'E_CaT',
+                                'k_dss1',
+                                'k_dss2',
+                                'k_dtau1',
+                                'k_dtau2',
+                                'k_dtau3',
+                                'k_dtau4',
+                                'k_dtau5',
+                                'k_dtau6',
+                                'k_fss1',
+                                'k_fss2',
+                                'k_ftau1',
+                                'k_ftau2',
+                                'k_ftau3',
+                                'k_ftau4',
+                                'k_ftau5',
+                                'k_ftau6']
 
         # Parameter specific prior intervals
         # Original values given in comments
@@ -309,18 +313,16 @@ class ikur(AbstractChannel):
         self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikur.g_Kur',
-                           'ikur.assk1',
-                           'ikur.assk2',
-                           'ikur.atauk1',
-                           'ikur.atauk2',
-                           'ikur.atauk3',
-                           'ikur.issk1',
-                           'ikur.issk2',
-                           'ikur.itauk1',
-                           'ikur.itauk2']
-                           # 'ikur.itauk3',
-                           # 'ikur.itauk4']
+        self.parameter_names = ['g_Kur',
+                                'k_ass1',
+                                'k_ass2',
+                                'k_atau1',
+                                'k_atau2',
+                                'k_atau3',
+                                'k_iss1',
+                                'k_iss2',
+                                'k_itau1',
+                                'k_itau2']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 1),     # 0.0975
@@ -333,8 +335,6 @@ class ikur(AbstractChannel):
                                 (1, 10),    # 5.7
                                 (0, 10),    # 1.2
                                 (0, 10)]    # 1.7
-                                # (0, 100),   # 45.2
-                                # (1, 10)]    # 5.7
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_ikur.IV_MaharaniFig2B()
@@ -446,16 +446,16 @@ class ikr(AbstractChannel):
         self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikr.g_Kr',
-                           'ikr.xkr_ssk1',
-                           'ikr.xkr_ssk2',
-                           'ikr.tau_xkrk1',
-                           'ikr.tau_xkrk2',
-                           'ikr.tau_xkrk3',
-                           'ikr.tau_xkrk4',
-                           'ikr.tau_xkrk5',
-                           'ikr.rkrk1',
-                           'ikr.rkrk2']
+        self.parameter_names = ['g_Kr',
+                                'k_xss1',
+                                'k_xss2',
+                                'k_xtau1',
+                                'k_xtau2',
+                                'k_xtau3',
+                                'k_xtau4',
+                                'k_xtau5',
+                                'k_r1',
+                                'k_r2']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 1),     # 0.73
@@ -500,17 +500,17 @@ class iha(AbstractChannel):
         self.publication = 'Majumder et al., 2016'
 
         # Parameters involved in ABC process
-        self.parameters = ['iha.y_ssk1',
-                           'iha.y_ssk2',
-                           'iha.tau_yk1',
-                           'iha.tau_yk2',
-                           'iha.tau_yk3',
-                           'iha.tau_yk4',
-                           'iha.tau_yk5',
-                           'iha.tau_yk6',
-                           'iha.tau_yk7',
-                           'iha.i_haNak1',
-                           'iha.g_ha']
+        self.parameter_names = ['k_yss1',
+                                'k_yss2',
+                                'k_ytau1',
+                                'k_ytau2',
+                                'k_ytau3',
+                                'k_ytau4',
+                                'k_ytau5',
+                                'k_ytau6',
+                                'k_ytau7',
+                                'k_i_haNa',
+                                'g_ha']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 78.65
@@ -554,18 +554,18 @@ class ito(AbstractChannel):
         self.publication = 'Takeuchi et al., 2013'
 
         # Parameters involved in ABC process
-        self.parameters = ['ito.g_to',
-                           'ito.xto_ssk1',
-                           'ito.xto_ssk2',
-                           'ito.tau_xtok1',
-                           'ito.tau_xtok2',
-                           'ito.tau_xtok3',
-                           'ito.yto_ssk1',
-                           'ito.yto_ssk2',
-                           'ito.tau_ytok1',
-                           'ito.tau_ytok2',
-                           'ito.tau_ytok3',
-                           'ito.tau_ytok4']
+        self.parameter_names = ['g_to',
+                                'k_xss1',
+                                'k_xss2',
+                                'k_xtau1',
+                                'k_xtau2',
+                                'k_xtau3',
+                                'k_yss1',
+                                'k_yss2',
+                                'k_ytau1',
+                                'k_ytau2',
+                                'k_ytau3',
+                                'k_ytau4']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 1),     # 0.12375
@@ -603,15 +603,15 @@ class ikach(AbstractChannel):
         self.publication = 'Majumder et al., 2016'
 
         # Parameters involved in ABC process
-        self.parameters = ['ikach.g_KAch',
-                           'ikach.k1',
-                           'ikach.k2',
-                           'ikach.k3',
-                           'ikach.k4',
-                           'ikach.k5',
-                           'ikach.k6',
-                           'ikach.k7',
-                           'ikach.k8']
+        self.parameter_names = ['g_KAch',
+                                'k_1',
+                                'k_2',
+                                'k_3',
+                                'k_4',
+                                'k_5',
+                                'k_6',
+                                'k_7',
+                                'k_8']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 1),   # 0.37488
@@ -645,10 +645,10 @@ class ik1(AbstractChannel):
         self.model_name = 'Bondarenko2004_iK1.mmt'
         self.publication = 'Bondarenko et al., 2004'
 
-        self.parameters = ['ik1.g_K1',
-                           'ik1.k1',
-                           'ik1.k2',
-                           'ik1.k3']
+        self.parameter_names = ['g_K1',
+                                'k_1',
+                                'k_2',
+                                'k_3']
 
         self.prior_intervals = [(0, 1),     # 0.2938
                                 (0, 1000),  # 210

@@ -31,32 +31,32 @@ Nai = 14237.1
 [ikr]
 g_Kr = 0.73 [nS/pF]
     in [nS/pF]
-xkr_ss = 1 / (1 + exp(-(membrane.V + xkr_ssk1) / xkr_ssk2))
+xkr_ss = 1 / (1 + exp(-(membrane.V + k_xss1) / k_xss2))
     in [1]
-tau_xkr = tau_xkrk1 * (tau_xkrk2 + tau_xkrk3 * exp(-((membrane.V + tau_xkrk4)/tau_xkrk5) ^ 2))
+tau_xkr = k_xtau1 * (k_xtau2 + k_xtau3 * exp(-((membrane.V + k_xtau4)/k_xtau5) ^ 2))
     in [ms]
-rkr = 1 / (1 + exp((membrane.V + rkrk1) / rkrk2))
+rkr = 1 / (1 + exp((membrane.V + k_r1) / k_r2))
     in [1]
 dot(xkr) = (xkr_ss - xkr) / tau_xkr
     in [1]
 
-xkr_ssk1 = 15 [mV]
+k_xss1 = 15 [mV]
     in [mV]
-xkr_ssk2 = 6 [mV]
+k_xss2 = 6 [mV]
     in [mV]
-tau_xkrk1 = 2.5 [ms]
+k_xtau1 = 2.5 [ms]
     in [ms]
-tau_xkrk2 = 31.18
+k_xtau2 = 31.18
     in [1]
-tau_xkrk3 = 217.18
+k_xtau3 = 217.18
     in [1]
-tau_xkrk4 = 20.1376 [mV]
+k_xtau4 = 20.1376 [mV]
     in [mV]
-tau_xkrk5 = 22.1996 [mV]
+k_xtau5 = 22.1996 [mV]
     in [mV]
-rkrk1 = 55 [mV]
+k_r1 = 55 [mV]
     in [mV]
-rkrk2 = 24 [mV]
+k_r2 = 24 [mV]
     in [mV]
 
 E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
