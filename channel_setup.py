@@ -675,54 +675,56 @@ class ik1(AbstractChannel):
 
 class ina2(AbstractChannel):
     def __init__(self):
-        self.name = 'ina2'
+        self.name = 'ina'
         self.model_name = 'Takeuchi2013_iNa.mmt'
         self.publication = 'Takeuchi et al. 2013'
 
         # Parameters involved in ABC process
-        self.parameters = ['ina.g_Na',
-                           # 'ina.v_split',
-                           'ina.m_ssk1',
-                           'ina.m_ssk2',
-                           'ina.tau_mk1',
-                           'ina.tau_mk2',
-                           'ina.tau_mk3',
-                           'ina.tau_mk4',
-                           'ina.tau_mk5',
-                           'ina.tau_mk6',
-                           'ina.h_ssk1',
-                           'ina.h_ssk2',
-                           # 'ina.a_hk1',
-                           'ina.a_hk2',
-                           'ina.a_hk3',
-                           # 'ina.b_hk1',
-                           'ina.b_hk2',
-                           'ina.b_hk3',
-                           'ina.b_hk4',
-                           'ina.b_hk5',
-                           'ina.b_hk6',
-                           'ina.b_hk7',
-                           'ina.j_ssk1',
-                           'ina.j_ssk2',
-                           'ina.a_jk1',
-                           'ina.a_jk2',
-                           'ina.a_jk3',
-                           'ina.a_jk4',
-                           # 'ina.a_jk5',
-                           'ina.a_jk6',
-                           'ina.a_jk7',
-                           # 'ina.b_jk1',
-                           'ina.b_jk2',
-                           'ina.b_jk3',
-                           'ina.b_jk4',
-                           'ina.b_jk5',
-                           'ina.b_jk6',
-                           'ina.b_jk7',
-                           'ina.b_jk8']
+        self.parameter_names = ['g_Na',
+                                'v_split',
+                                'v_offset',
+                                'm_ssk1',
+                                'm_ssk2',
+                                'tau_mk1',
+                                'tau_mk2',
+                                'tau_mk3',
+                                'tau_mk4',
+                                'tau_mk5',
+                                'tau_mk6',
+                                'h_ssk1',
+                                'h_ssk2',
+                                # 'ina.a_hk1',
+                                'a_hk2',
+                                'a_hk3',
+                                # 'ina.b_hk1',
+                                'b_hk2',
+                                'b_hk3',
+                                'b_hk4',
+                                'b_hk5',
+                                'b_hk6',
+                                'b_hk7',
+                                'j_ssk1',
+                                'j_ssk2',
+                                'a_jk1',
+                                'a_jk2',
+                                'a_jk3',
+                                'a_jk4',
+                                # 'ina.a_jk5',
+                                'a_jk6',
+                                'a_jk7',
+                                # 'ina.b_jk1',
+                                'b_jk2',
+                                'b_jk3',
+                                'b_jk4',
+                                'b_jk5',
+                                'b_jk6',
+                                'b_jk7',
+                                'b_jk8']
 
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 23
-                                # (-100, 0),  # -40
+                                (-100, 0),  # -40
+                                (-50, 50),  # 0
                                 (0, 100),   # 56.86
                                 (1, 10),    # 9.03
                                 (0, 1),     # 0.1292
@@ -771,17 +773,17 @@ class ina2(AbstractChannel):
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 500,
+                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 200,
                          'vsteps': vsteps, 'tstep': 100,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
-                           'vsteps': prepulses, 'tstep': 500,
+                           'vsteps': prepulses, 'tstep': 200,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
         setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 500,
+                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 200,
                          'vstep': -40, 'tstep1': 20, 'tstep2': 20,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',

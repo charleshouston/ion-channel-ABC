@@ -83,11 +83,11 @@ a_hk2 = 80 [mV]
 a_hk3 = 6.8 [mV]
     in [mV]
 
-b_h_40p = b_hk4 * exp(b_hk5 * v_split) + b_hk6 * 10000 * exp(b_hk7 * v_split)
+b_h_40n = b_hk4 * exp(b_hk5 * v_split) + b_hk6 * 10000 * exp(b_hk7 * v_split)
     in [1]
-b_h_40n = 1 / (1 + exp(-(v_split + b_hk2) / b_hk3))
+b_h_40p = 1 / (1 + exp(-(v_split + b_hk2) / b_hk3))
     in [1]
-b_hk1 = b_h_40p / b_h_40n
+b_hk1 = b_h_40n / b_h_40p
     in [1]
 
 # b_hk1 = 5.923
@@ -130,8 +130,10 @@ a_jk3 = 6.948 [1/mV]
     in [1/mV]
 a_jk4 = 0.04391 [1/mV]
     in [1/mV]
-a_jk5 = 37.78 [mV]
+a_jk5 = -1 * v_split
     in [mV]
+# a_jk5 = 37.78 [mV]
+#     in [mV]
 a_jk6 = 0.311 [1/mV]
     in [1/mV]
 a_jk7 = 79.23 [mV]
@@ -172,8 +174,10 @@ g_Na = 23 [nS/pF]
     in [nS/pF]
 G_Na = g_Na * m ^ 3 * h * j
      in [nS/pF]
-i_Na = G_Na * (membrane.V - E_Na)
+i_Na = G_Na * (membrane.V - E_Na + v_offset)
     in [pA/pF]
+v_offset = 0 [mV]
+    in [mV]
 
 E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
     in [mV]
