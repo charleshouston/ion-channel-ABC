@@ -16,7 +16,7 @@ from ion_channel_ABC import LossFunction
 round_to_n = lambda x, n: round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1)) if x != 0 else 0
 
 # Import channel
-channel = channel_setup.ikur()
+channel = channel_setup.ina()
 
 # Check whether to store sim results
 plot_data_name = 'plotting/plotdata_'+channel.name
@@ -105,6 +105,12 @@ if len(sim_ABC) > 1:
     ax[int(len(sim_ABC))-1][0].legend(loc='best')
 else:
     ax[0].legend(loc='best')
+
+uppercase_letters = map(chr, range(65,91))
+for i,a in enumerate(ax.flatten()):
+    a.text(-0.01, -0.08,
+           uppercase_letters[i], transform=a.transAxes,
+           fontsize=16, fontweight='bold', va='top', ha='right')
 plt.tight_layout()
 fig.savefig('results/fig_'+str(channel.name)+'.pdf', bbox_inches="tight")
 
