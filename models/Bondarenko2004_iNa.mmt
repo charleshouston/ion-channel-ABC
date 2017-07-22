@@ -42,14 +42,13 @@ Nai = 14237.1
 use membrane.V as V
 g_Na = 13 # value from Takeuchi 2013: 23
     in [mS/uF]
-# E_Na = 23.2 # value from Dias 2014 (original used concentration balance)
+E_Na = 23.2 # value from Dias 2014 (original used concentration balance)
+    in [mV]
+# E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
 #     in [mV]
-E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
-    in [mV]
 G_Na = g_Na * O_Na
-V_delt = 0
-    in [mV]
-i_Na = G_Na * (V - E_Na + V_delt)
+    in [mS/uF]
+i_Na = G_Na * (V - E_Na)
     in [pA/pF]
 
 dot(C_Na1) = alpha_Na12 * C_Na2 + beta_Na13 * O_Na + alpha_Na3 * IF_Na - (beta_Na12 * C_Na1 + alpha_Na13 * C_Na1 + beta_Na3 * C_Na1)
@@ -99,11 +98,11 @@ k_alpha9 = 16.6
     in [mV]
 k_alpha10 = 0.393956
     in [1]
-k_alpha11 = 7
+k_alpha11 = 70
     in [mS/uF]
 k_alpha12 = 7.7
     in [mV]
-k_alpha13 = 1
+k_alpha13 = 10
     in [1]
 k_alpha14 = 9.5
     in [1]
@@ -124,9 +123,9 @@ k_beta4 = 0.2
     in [mS/uF]
 k_beta5 = 0.22
     in [mS/uF]
-k_beta6 = 8.4
+k_beta6 = 84
     in [mS/uF]
-k_beta7 = 2
+k_beta7 = 20
     in [1/mV/ms]
 k_beta8 = 7
     in [mV]
@@ -141,9 +140,9 @@ alpha_Na13 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / (k_alpha5_11 - k_alpha
     in [mS/uF]
 alpha_Na2 = 1 [mS/uF] / (k_alpha7 * exp(-(V + k_alpha8) / k_alpha9) + k_alpha10)
     in [mS/uF]
-alpha_Na3 = k_alpha11 * 1e-7 * exp(-(V + k_alpha15) / k_alpha12)
+alpha_Na3 = k_alpha11 * 1e-8 * exp(-(V + k_alpha15) / k_alpha12)
     in [mS/uF]
-alpha_Na4 = alpha_Na2 / (k_alpha13 * 1000)
+alpha_Na4 = alpha_Na2 / (k_alpha13 * 100)
     in [mS/uF]
 alpha_Na5 = alpha_Na2 / (k_alpha14 * 10000)
     in [mS/uF]
@@ -156,7 +155,7 @@ beta_Na13 = k_beta5 * exp(-(V + (k_beta2_11 - k_beta2_12 - k_beta2_13)) / k_beta
     in [mS/uF]
 beta_Na2 = alpha_Na13 * alpha_Na2 * alpha_Na3 / (beta_Na13 * beta_Na3)
     in [mS/uF]
-beta_Na3 = k_beta6 * 1e-3 + k_beta7 * 1e-5 * (V + k_beta8)
+beta_Na3 = k_beta6 * 1e-4 + k_beta7 * 1e-6 * (V + k_beta8)
     in [mS/uF]
 beta_Na4 = alpha_Na3
     in [mS/uF]

@@ -210,41 +210,41 @@ class ina(AbstractChannel):
         self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
-        self.parameters = ['ina.g_Na',
-                           'ina.V_delt',
-                           'ina.k_alpha1',
-                           'ina.k_alpha2',
-                           'ina.k_alpha3',
-                           'ina.k_alpha4',
-                           'ina.k_alpha5_11',
-                           'ina.k_alpha5_12',
-                           'ina.k_alpha5_13',
-                           'ina.k_alpha6_11',
-                           'ina.k_alpha6_12',
-                           'ina.k_alpha6_13',
-                           'ina.k_alpha7',
-                           'ina.k_alpha8',
-                           'ina.k_alpha9',
-                           'ina.k_alpha10',
-                           'ina.k_alpha11',
-                           'ina.k_alpha12',
-                           'ina.k_alpha13',
-                           'ina.k_alpha14',
-                           'ina.k_alpha15',
-                           'ina.k_beta1',
-                           'ina.k_beta2_11',
-                           'ina.k_beta2_12',
-                           'ina.k_beta2_13',
-                           'ina.k_beta3',
-                           'ina.k_beta4',
-                           'ina.k_beta5',
-                           'ina.k_beta6',
-                           'ina.k_beta7',
-                           'ina.k_beta8',
-                           'ina.k_beta9',]
+        self.parameter_names = ['g_Na',
+                                'E_Na',
+                                'k_alpha1',
+                                'k_alpha2',
+                                'k_alpha3',
+                                'k_alpha4',
+                                'k_alpha5_11',
+                                'k_alpha5_12',
+                                'k_alpha5_13',
+                                'k_alpha6_11',
+                                'k_alpha6_12',
+                                'k_alpha6_13',
+                                'k_alpha7',
+                                'k_alpha8',
+                                'k_alpha9',
+                                'k_alpha10',
+                                'k_alpha11',
+                                'k_alpha12',
+                                'k_alpha13',
+                                'k_alpha14',
+                                'k_alpha15',
+                                'k_beta1',
+                                'k_beta2_11',
+                                'k_beta2_12',
+                                'k_beta2_13',
+                                'k_beta3',
+                                'k_beta4',
+                                'k_beta5',
+                                'k_beta6',
+                                'k_beta7',
+                                'k_beta8',
+                                'k_beta9']
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 13
-                                (0, 100),   # 0.0
+                                (0, 100),   # 23.2
                                 (0, 10),    # 3.802
                                 (0, 1.0),   # 0.1027
                                 (0, 10),    # 2.5
@@ -259,9 +259,9 @@ class ina(AbstractChannel):
                                 (0, 10),    # 7
                                 (1, 100),   # 16.6
                                 (0, 1.0),   # 0.393956
-                                (0, 100),   # 7
+                                (0, 100),   # 70
                                 (1, 10),    # 7.7
-                                (1, 10),    # 1
+                                (1, 100),   # 10
                                 (1, 100),   # 9.5
                                 (0, 10),    # 7
                                 (0, 1.0),   # 0.1917
@@ -271,8 +271,8 @@ class ina(AbstractChannel):
                                 (1, 100),   # 20.3
                                 (0, 1.0),   # 0.2
                                 (0, 1.0),   # 0.22
-                                (0, 100),   # 8.4
-                                (0, 100),   # 2
+                                (0, 100),   # 84
+                                (0, 100),   # 20
                                 (0, 10),    # 7
                                 (1, 100)]   # 50.0
 
@@ -373,21 +373,21 @@ class ical(AbstractChannel):
         self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
-        self.parameters = ['ical.kalpha1',
-                           'ical.kalpha2',
-                           'ical.kalpha3',
-                           'ical.kalpha4',
-                           'ical.kalpha5',
-                           'ical.kalpha6',
-                           'ical.kalpha7',
-                           'ical.kalpha1',
-                           'ical.kalpha9',
-                           'ical.kalpha10',
-                           'ical.kalpha11',
-                           'ical.kalpha12',
-                           'ical.kbeta1',
-                           'ical.kbeta2',
-                           'ical.kbeta3']
+        self.parameter_names = ['kalpha1',
+                                'kalpha2',
+                                'kalpha3',
+                                'kalpha4',
+                                'kalpha5',
+                                'kalpha6',
+                                'kalpha7',
+                                'kalpha1',
+                                'kalpha9',
+                                'kalpha10',
+                                'kalpha11',
+                                'kalpha12',
+                                'kbeta1',
+                                'kbeta2',
+                                'kbeta3']
 
         # Parameter specific prior intervals
         # Original values given in comments
@@ -423,12 +423,12 @@ class ical(AbstractChannel):
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'ical.G_CaL', 'vhold': -80, 'thold': 400,
+                           'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 400,
                            'vsteps': prepulses, 'tstep': 1000,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
         setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ical.G_CaL', 'vhold': -40, 'thold': 5000,
+                         'variable': 'ical.i_CaL', 'vhold': -40, 'thold': 5000,
                          'vstep': 20, 'tstep1': 250, 'tstep2': 250,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
