@@ -216,33 +216,22 @@ class ina(AbstractChannel):
                                 'k_alpha2',
                                 'k_alpha3',
                                 'k_alpha4',
-                                'k_alpha5_11',
-                                # 'k_alpha5_12',
-                                # 'k_alpha5_13',
-                                'k_alpha6_11',
-                                # 'k_alpha6_12',
-                                # 'k_alpha6_13',
+                                'k_alpha5',
+                                'k_alpha6',
                                 'k_alpha7',
-                                # 'k_alpha8',
+                                'k_alpha8',
                                 'k_alpha9',
                                 'k_alpha10',
                                 'k_alpha11',
                                 'k_alpha12',
                                 'k_alpha13',
                                 'k_alpha14',
-                                'k_alpha15',
                                 'k_beta1',
-                                'k_beta2_11',
-                                # 'k_beta2_diff',
-                                # 'k_beta2_12',
-                                # 'k_beta2_13',
+                                'k_beta2',
                                 'k_beta3',
-                                # 'k_beta4',
-                                # 'k_beta5',
-                                'k_beta6',
-                                'k_beta7',
-                                # 'k_beta8',
-                                'k_beta9']
+                                'k_beta4',
+                                'k_beta5',
+                                'k_beta6']
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),   # 13
                                 (0, 100),   # 58.686
@@ -251,13 +240,8 @@ class ina(AbstractChannel):
                                 (-100, 100),# 2.5
                                 (1, 1000),  # 150
                                 (1, 100),   # 17
-                                # (0, 10),    # 2
-                                # (0, 10),    # 3
                                 (0, 1.0),   # 0.2
-                                # (0, 0.1),   # 0.03
-                                # (0, 0.1),   # 0.02
                                 (0, 1.0),   # 0.188495
-                                # (0, 100),   # 7
                                 (1, 100),   # 16.6
                                 (0, 1.0),   # 0.393956
                                 (0, 100),   # 70
@@ -267,15 +251,9 @@ class ina(AbstractChannel):
                                 (-50, 50),  # 7
                                 (0, 1.0),   # 0.1917
                                 (0, 10),    # 2.5
-                                #(0, 10),    # 5
-                                #(0, 10),
-                                #(0, 10),
                                 (1, 100),   # 20.3
-                                # (0, 1.0),   # 0.2
-                                # (0, 1.0),   # 0.22
                                 (0, 100),   # 84
                                 (0, 100),   # 20
-                                # (0, 10),    # 7
                                 (1, 100)]   # 50.0
 
         # Loading experimental data
