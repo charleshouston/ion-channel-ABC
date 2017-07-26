@@ -1,7 +1,7 @@
 '''
 Author: Charles Houston
 
-Specific channel settings for use with approximate Bayesian computation procedure.
+Snp.isnanpecific channel settings for use with approximate Bayesian computation procedure.
 '''
 import numpy as np
 import math
@@ -121,6 +121,8 @@ class AbstractChannel(object):
         for simulation in self.simulations:
             out = simulation.run(self.model_name)
             if out is None:
+                return None
+            if np.isnan(out).any():
                 return None
             sim_output.append(out)
 
