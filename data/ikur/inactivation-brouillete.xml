@@ -1,0 +1,18 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Thu Jul 27 15:25:20 BST 2017 -->
+<data>
+<image file='Brouillete2003_Fig6B.png' />
+<axesnames x='Membrane potential (mV)'  y='Normalised conductance' />
+<calibpoints minXaxisX='306.0' minXaxisY='975.0' maxXaxisX='1171.0' maxXaxisY='980.0' minYaxisX='262.0' minYaxisY='911.0' maxYaxisX='262.0' maxYaxisY='240.0' aX1='-100.0' aX2='0.0' aY1='0.0' aY2='1.0' isXLog='false' isYLog='false' />
+<point n='0' x='305.0' y='259.0' dx='-100.59405278984295' dy='0.9720544782612441' />
+<point n='1' x='389.0' y='252.0' dx='-90.88807216839291' dy='0.9832102891896315' />
+<point n='2' x='477.0' y='260.0' dx='-80.70965586368192' dy='0.9720458637354308' />
+<point n='3' x='565.0' y='284.0' dx='-70.52054794520548' dy='0.9370364308296649' />
+<point n='4' x='650.0' y='350.0' dx='-60.650183762111595' dy='0.8394080097861013' />
+<point n='5' x='737.0' y='530.0' dx='-50.47243568326094' dy='0.5719011397017651' />
+<point n='6' x='825.0' y='762.0' dx='-40.14433678583363' dy='0.2269066099256567' />
+<point n='7' x='911.0' y='858.0' dx='-30.13832275309055' dy='0.08457741443622213' />
+<point n='8' x='999.0' y='888.0' dx='-19.94520547945207' dy='0.04062610373611997' />
+<point n='9' x='1083.0' y='910.0' dx='-10.219846308052126' dy='0.008562838658546124' />
+<point n='10' x='1172.0' y='911.0' dx='0.06949548947545736' dy='0.007839218490218292' />
+</data>

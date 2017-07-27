@@ -32,6 +32,18 @@ def Inact_XuFig9C():
     return x, y
 
 '''
+Inactivation curve
+
+Returns x, y data from inactivation points in Figure 6B in Brouillete et al.,
+2003.
+'''
+def Inact_BrouilleteFig6B():
+    x = [-100,-90,-80,-70,-60,-50,-40,-30,-20,-10]
+    y = [0.972054,0.983210,0.972046,0.937036,0.839408,0.571901,0.226907,0.084577,0.040626,0.008563]
+    return x, y
+
+
+'''
 Recovery curve
 
 Returns x,y data from recovery points in Figure 10C in Xu et al., 1999.
@@ -39,4 +51,14 @@ Returns x,y data from recovery points in Figure 10C in Xu et al., 1999.
 def Recovery_XuFig10C():
     x = [5,41,68,217,309,419,509,616,716,814,1081,2087,3092,4073,5073,6076,7076,8077,9087]
     y = [0.086498,0.161238,0.211569,0.276925,0.328654,0.423096,0.450398,0.477669,0.532435,0.565829,0.714924,0.810642,0.894146,0.960905,0.948233,0.987465,0.982426,0.983493,1.0]
+    return x, y
+
+'''
+Recovery curve
+
+Returns x,y data from recovery points in Figure 6D in Brouillete et al., 2003.
+'''
+def Recovery_XuFig10C():
+    x = [45,95,141,187,241,493,739,992,1990,2993]
+    y = [0.284206,0.357370,0.425656,0.485416,0.525699,0.625989,0.678765,0.733988,0.822092,0.907765]
     return x, y
