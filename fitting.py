@@ -108,51 +108,40 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
     # to parallel workers in abc_inner
     channel_copy = copy.deepcopy(channel)
 
-    # Initializes posterior to be a draw of particles from prior
+    # Initialise posterior by drawing from latin hypercube over parameters
+    post_lhs = lhsmdu.sample(len(priors), post_size)
+    # Generate vector of prior widths
+    prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
+    # Valid post size
+    valid_post_size = post_size
+    errs = []
     for i in range(post_size):
-        # Distance function returns "inf" in the case of overflow error
-        curr_err = float("inf")
-        while curr_err == float("inf"):
-            post[i] = [p.draw() for p in priors]
-            curr_err = dist(post[i], exp_vals, channel_copy)
+        # Get vector of parameters for each LHS sample
+        post[i] = post_lhs[:, i].flatten().tolist()[0]
+        # Convert from draws in U(0,1) to original values
+        post[i] = np.array(post[i]) * np.array(prior_width)
+        post[i] = post[i] + np.array([pr[0] for pr in channel.prior_intervals])
+        # Evaluate error from simulation
+        curr_err = dist(post[i], exp_vals, channel_copy)
+        errs.append(curr_err)
 
-        total_err = total_err + curr_err
-        max_err = max(curr_err,max_err)
+    # Process errors
+    # Upper limit to mean + stddev (exclude inf errors first)
+    errs_no_inf = [e for e in errs if e != float("inf")]
+    err_limit = np.mean(errs_no_inf) + np.std(errs_no_inf)
+    for i in range(post_size):
+        if errs[i] > err_limit:
+            errs[i] = 0.0 # Remove error value for following calculations
+            wts[i] = 0.0
+            valid_post_size -= 1
 
-    # # Initialise posterior by drawing from latin hypercube over parameters
-    # post_lhs = lhsmdu.sample(len(priors), post_size)
-    # # Generate vector of prior widths
-    # prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
-    # # Valid post size
-    # valid_post_size = post_size
-    # errs = []
-    # for i in range(post_size):
-    #     # Get vector of parameters for each LHS sample
-    #     post[i] = post_lhs[:, i].flatten().tolist()[0]
-    #     # Convert from draws in U(0,1) to original values
-    #     post[i] = np.array(post[i]) * np.array(prior_width)
-    #     post[i] = post[i] + np.array([pr[0] for pr in channel.prior_intervals])
-    #     # Evaluate error from simulation
-    #     curr_err = dist(post[i], exp_vals, channel_copy)
-    #     errs.append(curr_err)
+    print "Original post size: " + str(post_size)
+    print "Valid results: " + str(valid_post_size)
+    max_err = max(errs)
+    total_err = np.sum(errs)
 
-    # # Process errors
-    # # Upper limit to mean + stddev (exclude inf errors first)
-    # errs_no_inf = [e for e in errs if e != float("inf")]
-    # err_limit = np.mean(errs_no_inf) + np.std(errs_no_inf)
-    # for i in range(post_size):
-    #     if errs[i] > err_limit:
-    #         errs[i] = 0.0 # Remove error value for following calculations
-    #         wts[i] = 0.0
-    #         valid_post_size -= 1
-
-    # print "Original post size: " + str(post_size)
-    # print "Valid results: " + str(valid_post_size)
-    # max_err = max(errs)
-    # total_err = np.sum(errs)
-
-    # # Update weights to sum to 1 after zeroing invalid simulations
-    # wts = [1.0/valid_post_size if w > 0.0 else w for w in wts]
+    # Update weights to sum to 1 after zeroing invalid simulations
+    wts = [1.0/valid_post_size if w > 0.0 else w for w in wts]
 
     # Initialize K to half the average population error
     K = total_err/(2.0*post_size)
