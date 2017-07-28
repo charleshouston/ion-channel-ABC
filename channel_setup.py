@@ -1,7 +1,7 @@
 '''
 Author: Charles Houston
 
-Snp.isnanpecific channel settings for use with approximate Bayesian computation procedure.
+Specific channel settings for use with approximate Bayesian computation procedure.
 '''
 import numpy as np
 import math
@@ -41,7 +41,6 @@ class AbstractChannel(object):
 
         self.setup_simulations()
 
-
     def reset_params(self, new_params):
         '''
         Set parameters of channel to new values in prior draw.
@@ -52,18 +51,17 @@ class AbstractChannel(object):
             for sim in self.simulations:
                 sim.set_parameters(self.parameters, new_params)
 
-    def setup_simulations(self, continuous=False):
+    def setup_simulations(self):
         '''
         Creates simulations from defined experimental conditions.
-        `continuous`: creates the simulations over a range of voltages rather
-                      than only those in `vsteps`
         '''
         self.simulations = []
-        for se in self.setup_exp:
+        # stores vsteps/intervals for each sim output
+        self.simulations_x = [[] for i in range(len(self.setup_exp))]
+
+        for i,se in enumerate(self.setup_exp):
             if se['sim_type'] == 'ActivationSim':
                 dv = 1
-                if not continuous:
-                    dv = se['vsteps'][1] - se['vsteps'][0]
                 self.simulations.append(
                     sim.ActivationSim(se['variable'],
                                       vhold=se['vhold'],
@@ -72,10 +70,11 @@ class AbstractChannel(object):
                                       vmax=max(se['vsteps']),
                                       dv=dv,
                                       tstep=se['tstep']))
+
+                self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
+
             elif se['sim_type'] == 'InactivationSim':
                 dv = 1
-                if not continuous:
-                    dv = se['vsteps'][1] - se['vsteps'][0]
                 self.simulations.append(
                     sim.InactivationSim(se['variable'],
                                         vhold=se['vhold'],
@@ -84,11 +83,12 @@ class AbstractChannel(object):
                                         vmax=max(se['vsteps']),
                                         dv=dv,
                                         tstep=se['tstep']))
+
+                self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
+
             elif se['sim_type'] == 'RecoverySim':
-                twaits = se['twaits']
-                if continuous:
-                    twaits = range(int(math.ceil(min(twaits))), 
-                                   int(math.ceil(max(twaits))+1))
+                twaits = range(int(math.ceil(min(se['twaits']))), 
+                               int(math.ceil(max(se['twaits']))+1))
                 self.simulations.append(
                     sim.RecoverySim(se['variable'],
                                     vhold=se['vhold'],
@@ -97,16 +97,21 @@ class AbstractChannel(object):
                                     tstep1=se['tstep1'],
                                     tstep2=se['tstep2'],
                                     twaits=twaits))
+
+                self.simulations_x[i] = twaits
+
             elif se['sim_type'] == 'TimeIndependentActivationSim':
-                vsteps = se['vsteps']
-                if continuous:
-                    vsteps = range(int(math.ceil(min(vsteps))),
-                                   int(math.ceil(max(vsteps))+1))
+                vsteps = range(int(math.ceil(min(se['vsteps']))),
+                               int(math.ceil(max(se['vsteps']))+1))
                 self.simulations.append(
                     sim.TimeIndependentActivationSim(se['variable'],
                                                      vsteps=vsteps))
+
+                self.simulations_x[i] = vsteps
+
             else:
                 print "Unknown simulation type!"
+
 
     def simulate(self):
         '''
@@ -116,15 +121,27 @@ class AbstractChannel(object):
         if len(self.simulations) is 0:
             self.setup_simulations()
 
-        sim_output = []
+        sim_output = [[] for i in range(len(self.simulations))]
 
-        for simulation in self.simulations:
-            out = simulation.run(self.model_name)
+        # Run simulations with checks for errors
+        np.seterr(all='raise') # numpy raises exceptions if any numeric problems
+        for i,sim in enumerate(self.simulations):
+            # catch numpy division, overflow errors, etc
+            try:
+                out = sim.run(self.model_name)
+            except:
+                return None
+
+            # If simulation fails, output will be None
             if out is None:
                 return None
+
+            # Myokit can output nans, so catch this here
             if np.isnan(out).any():
                 return None
-            sim_output.append(out)
+
+            # All good => add steps/intervals and dependent var to output!
+            sim_output[i] = [self.simulations_x[i], out]
 
         return sim_output
 

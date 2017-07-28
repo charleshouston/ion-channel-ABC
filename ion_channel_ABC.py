@@ -21,8 +21,6 @@ class ChannelProto():
         outfile = open('results/results_' + channel.name + '.txt','w')
 
         # Initial values and priors
-        # - Prior is uniform distribution ({0,1},order of mag larger than proposed value)
-        # - Init is mean of prior
         priors = []
         init = []
         for pr in channel.prior_intervals:
@@ -73,18 +71,33 @@ class ChannelProto():
     HELPER METHODS
 '''
 
-# Evaluates RMSE between experimental and predicted values
+# Evaluates CV(RMSD) between experimental and predicted values
 def LossFunction(sim_vals, exp_vals):
-    # If the simulation failed, pred_vals should be None
-    # We return infinite loss
+    # if the simulation failed, pred_vals should be None
+    #  return infinite loss
     if sim_vals is None:
         return float("inf")
 
-    # Calculate normalised (by mean of experimental values) RMSE for each experiment
+    # Finds sim output at x value closest to experimental
+    sim_vals_closest = [[] for i in range(len(sim_vals))]
+    for i,e in enumerate(exp_vals):
+        curr = 0
+        for tval in e[0]:
+            sim_times = sim_vals[i][0]
+            while tval > sim_times[curr+1]:
+                if curr >= len(sim_times)-2:
+                    break
+                curr = curr+1
+            if abs(tval-sim_times[curr]) < abs(tval-sim_times[curr+1]):
+                sim_vals_closest[i] = sim_vals_closest[i] + [sim_vals[i][1][curr]]
+            else:
+                sim_vals_closest[i] = sim_vals_closest[i] + [sim_vals[i][1][curr+1]]
+
+    # Calculate CV(RMSD) for each experiment
     tot_err = 0
     # Catch runtime overflow warnings from numpy
     warnings.filterwarnings('error')
-    for i,p in enumerate(sim_vals):
+    for i,p in enumerate(sim_vals_closest):
         p = np.array(p) # predicted
         e = np.array(exp_vals[i][1]) # experimental
         try:
@@ -109,6 +122,6 @@ def prior_func(priors,params):
 
 if __name__ == '__main__':
     # Load specific channel settings
-    channel = channel_setup.ina2()
+    channel = channel_setup.ina()
     x = ChannelProto()
     x.fit(channel)

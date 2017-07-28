@@ -126,14 +126,13 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
         errs.append(curr_err)
 
     # Process errors
-    # Upper limit to mean + stddev (exclude inf errors first)
-    errs_no_inf = [e for e in errs if e != float("inf")]
-    err_limit = np.mean(errs_no_inf) + np.std(errs_no_inf)
-    for i in range(post_size):
-        if errs[i] > err_limit:
-            errs[i] = 0.0 # Remove error value for following calculations
-            wts[i] = 0.0
-            valid_post_size -= 1
+    #  get indices with inf error
+    indices = [i for i,e in enumerate(errs) if e == float("inf")]
+    # set weights of these particles to zero
+    for i in indices:
+        errs[i] = 0.0
+        wts[i] = 0.0
+        valid_post_size -= 1
 
     print "Original post size: " + str(post_size)
     print "Valid results: " + str(valid_post_size)
