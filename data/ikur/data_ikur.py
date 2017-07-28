@@ -58,7 +58,7 @@ Recovery curve
 
 Returns x,y data from recovery points in Figure 6D in Brouillete et al., 2003.
 '''
-def Recovery_BrouilleteFig10C():
+def Recovery_BrouilleteFig6D():
     x = [50,100,150,200,250,500,750,1000,2000,3000]
     y = [0.284206,0.357370,0.425656,0.485416,0.525699,0.625989,0.678765,0.733988,0.822092,0.907765]
     return x, y

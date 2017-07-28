@@ -320,8 +320,8 @@ class ikur(AbstractChannel):
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_ikur.IV_MaharaniFig2B()
-        prepulses, inact_exp = data_ikur.Inact_XuFig9C()
-        intervals, rec_exp = data_ikur.Recovery_XuFig10C()
+        prepulses, inact_exp = data_ikur.Inact_BrouilleteFig6B()
+        intervals, rec_exp = data_ikur.Recovery_BrouilleteFig6D()
         self.data_exp = [[vsteps, act_peaks_exp],
                          [prepulses, inact_exp],
                          [intervals, rec_exp]]
@@ -333,16 +333,17 @@ class ikur(AbstractChannel):
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'ikur.G_Kur', 'vhold': 50, 'thold': 5000,
+                           'variable': 'ikur.G_Kur', 'vhold': 30, 'thold': 2500,
                            'vsteps': prepulses, 'tstep': 5000,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
         setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ikur.G_Kur', 'vhold': -70, 'thold': 5000,
-                         'vstep': 50, 'tstep1': 9500, 'tstep2': 9500,
+                         'variable': 'ikur.G_Kur', 'vhold': -80, 'thold': 2000,
+                         'vstep': 30, 'tstep1': 1500, 'tstep2': 500,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
+
         self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
 
         super(ikur, self).__init__()
