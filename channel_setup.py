@@ -583,7 +583,9 @@ class ito(AbstractChannel):
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
-        self.data_exp = [[vsteps, act_peaks_exp]]
+        prepulses, inact_exp = data_ito.Inact_XuFig9C()
+        self.data_exp = [[vsteps, act_peaks_exp],
+                         [prepulses, inact_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
@@ -591,7 +593,12 @@ class ito(AbstractChannel):
                          'vsteps': vsteps, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
-        self.setup_exp = [setup_exp_act]
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ito.G_to', 'vhold': 50, 'thold': 500,
+                           'vsteps': prepulses, 'tstep': 500,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact]
 
         super(ito, self).__init__()
 
