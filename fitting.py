@@ -165,8 +165,8 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
             # Write current output to log
             # in case simulation trips up and we lose results.
             logfile.write("Target met\n")
-            logfile.write("Current mean posterior estimate: "+str(np.mean(post,0))+"\n")
-            logfile.write("Current posterior variance: "+str(np.var(post,0))+"\n")
+            logfile.write("Current mean posterior estimate: "+str(np.mean(post,0).tolist())+"\n")
+            logfile.write("Current posterior variance: "+str(np.var(post,0).tolist())+"\n")
             logfile.write(str(post)+"\n")
             logfile.write(str(wts)+"\n")
 
