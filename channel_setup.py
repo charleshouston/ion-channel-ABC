@@ -51,7 +51,7 @@ class AbstractChannel(object):
             for sim in self.simulations:
                 sim.set_parameters(self.parameters, new_params)
 
-    def setup_simulations(self):
+    def setup_simulations(self,continuous=False):
         '''
         Creates simulations from defined experimental conditions.
         '''
@@ -61,7 +61,13 @@ class AbstractChannel(object):
 
         for i,se in enumerate(self.setup_exp):
             if se['sim_type'] == 'ActivationSim':
-                dv = 1
+                if continuous:
+                    dv = 1
+                    self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
+                else:
+                    dv = se['vsteps'][1] - se['vsteps'][0]
+                    self.simulations_x[i] = se['vsteps']
+
                 self.simulations.append(
                     sim.ActivationSim(se['variable'],
                                       vhold=se['vhold'],
@@ -71,10 +77,15 @@ class AbstractChannel(object):
                                       dv=dv,
                                       tstep=se['tstep']))
 
-                self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
 
             elif se['sim_type'] == 'InactivationSim':
-                dv = 1
+                if continuous:
+                    dv = 1
+                    self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
+                else:
+                    dv = se['vsteps'][1] - se['vsteps'][0]
+                    self.simulations_x[i] = se['vsteps']
+
                 self.simulations.append(
                     sim.InactivationSim(se['variable'],
                                         vhold=se['vhold'],
@@ -84,11 +95,13 @@ class AbstractChannel(object):
                                         dv=dv,
                                         tstep=se['tstep']))
 
-                self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
-
             elif se['sim_type'] == 'RecoverySim':
-                twaits = range(int(math.ceil(min(se['twaits']))), 
-                               int(math.ceil(max(se['twaits']))+1))
+                twaits = se['twaits']
+                if continuous:
+                    twaits = range(int(math.ceil(min(twaits))),
+                                  int(math.ceil(max(twaits))+1))
+                self.simulations_x[i] = twaits
+
                 self.simulations.append(
                     sim.RecoverySim(se['variable'],
                                     vhold=se['vhold'],
@@ -98,16 +111,20 @@ class AbstractChannel(object):
                                     tstep2=se['tstep2'],
                                     twaits=twaits))
 
-                self.simulations_x[i] = twaits
-
             elif se['sim_type'] == 'TimeIndependentActivationSim':
+                if continuous:
+                    dv = 1
+                    vsteps = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
+                else:
+                    dv = se['vsteps'][1] - se['vsteps'][0]
+                    vsteps = se['vsteps']
+                self.simulations_x[i] = vsteps
+
                 vsteps = range(int(math.ceil(min(se['vsteps']))),
                                int(math.ceil(max(se['vsteps']))+1))
                 self.simulations.append(
                     sim.TimeIndependentActivationSim(se['variable'],
                                                      vsteps=vsteps))
-
-                self.simulations_x[i] = vsteps
 
             else:
                 print "Unknown simulation type!"
