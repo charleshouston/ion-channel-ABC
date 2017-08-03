@@ -171,6 +171,7 @@ class icat(AbstractChannel):
                                 'k_ftau5',
                                 'k_ftau6']
 
+
         # Parameter specific prior intervals
         # Original values given in comments
         self.prior_intervals = [(0, 1),  # 0.4122
@@ -191,6 +192,12 @@ class icat(AbstractChannel):
                                 (0, 10), # 1.5
                                 (0,100), # 61.7
                                 (1,100)] # 30
+
+        # Edit which parameters to vary
+        use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
+        # use = [1 for i in range(len(self.parameter_names))]
+        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
+        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
         # Load experimental data
         vsteps, act_exp = data_icat.IV_DengFig1B()
