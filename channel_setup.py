@@ -36,7 +36,7 @@ class AbstractChannel(object):
             prior_width = pr[1]-pr[0]
             self.kernel.append(Dist.Normal(0.0, 0.2 * prior_width))
             # Uncomment below for uniform distribution
-            # self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width), 
+            # self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width),
             #                                 math.sqrt(1.2 * prior_width)))
 
         self.setup_simulations()
@@ -120,11 +120,62 @@ class AbstractChannel(object):
                     vsteps = se['vsteps']
                 self.simulations_x[i] = vsteps
 
-                vsteps = range(int(math.ceil(min(se['vsteps']))),
-                               int(math.ceil(max(se['vsteps']))+1))
+                self.simulations.append(sim.TimeIndependentActivationSim(se['variable'],
+                                                                         vsteps=vsteps))
+            elif se['sim_type'] == 'MarkovActivationSim':
+                if continuous:
+                    dv = 1
+                    vsteps = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
+                else:
+                    dv = se['vsteps'][1] - se['vsteps'][0]
+                    vsteps = se['vsteps']
+                self.simulations_x[i] = vsteps
+
                 self.simulations.append(
-                    sim.TimeIndependentActivationSim(se['variable'],
-                                                     vsteps=vsteps))
+                    sim.MarkovActivationSim(se['variable'],
+                                            vhold=se['vhold'],
+                                            thold=se['thold'],
+                                            vsteps=se['vsteps'],
+                                            tstep=se['tstep'],
+                                            name=self.name,
+                                            states=se['states'],
+                                            params=se['params']))
+            elif se['sim_type'] == 'MarkovInactivationSim':
+                if continuous:
+                    dv = 1
+                    vsteps = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
+                else:
+                    dv = se['vsteps'][1] - se['vsteps'][0]
+                    vsteps = se['vsteps']
+                self.simulations_x[i] = vsteps
+
+                self.simulations.append(
+                    sim.MarkovInactivationSim(se['variable'],
+                                        vhold=se['vhold'],
+                                        thold=se['thold'],
+                                        vsteps=se['vsteps'],
+                                        tstep=se['tstep'],
+                                        name=self.name,
+                                        states=se['states'],
+                                        params=se['params']))
+            elif se['sim_type'] == 'MarkovRecoverySim':
+                twaits = se['twaits']
+                if continuous:
+                    twaits = range(int(math.ceil(min(twaits))),
+                                  int(math.ceil(max(twaits))+1))
+                self.simulations_x[i] = twaits
+
+                self.simulations.append(
+                    sim.MarkovRecoverySim(se['variable'],
+                                    vhold=se['vhold'],
+                                    thold=se['thold'],
+                                    vstep=se['vstep'],
+                                    tstep1=se['tstep1'],
+                                    tstep2=se['tstep2'],
+                                    twaits=twaits,
+                                    name=self.name,
+                                    states=se['states'],
+                                    params=se['params']))
 
             else:
                 print "Unknown simulation type!"
@@ -255,49 +306,62 @@ class ina(AbstractChannel):
         # Parameters involved in ABC process
         self.parameter_names = ['g_Na',
                                 'E_Na',
-                                'k_alpha1',
-                                'k_alpha2',
-                                'k_alpha3',
-                                'k_alpha4',
-                                'k_alpha5',
-                                'k_alpha6',
-                                'k_alpha7',
-                                'k_alpha8',
-                                'k_alpha9',
-                                'k_alpha10',
-                                'k_alpha11',
-                                'k_alpha12',
-                                'k_alpha13',
-                                'k_alpha14',
-                                'k_beta1',
-                                'k_beta2',
-                                'k_beta3',
-                                'k_beta4',
-                                'k_beta5',
-                                'k_beta6']
+                                'p1',
+                                'p2',
+                                'p3',
+                                'p4',
+                                'p5',
+                                'p6',
+                                'p7',
+                                'p8',
+                                'p9',
+                                'p10',
+                                'p11',
+                                'p12',
+                                'p13',
+                                'p14',
+                                'p15',
+                                'q1',
+                                'q2',
+                                'q3',
+                                'q4',
+                                'q5',
+                                'q6',
+                                'q7',
+                                'q8',
+                                'q9']
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 100),   # 13
-                                (0, 100),   # 58.686
-                                (0, 10),    # 3.802
-                                (0, 1.0),   # 0.1027
-                                (-100, 100),# 2.5
-                                (1, 1000),  # 150
-                                (1, 100),   # 17
-                                (0, 1.0),   # 0.2
-                                (0, 1.0),   # 0.188495
-                                (1, 100),   # 16.6
-                                (0, 1.0),   # 0.393956
-                                (0, 100),   # 70
-                                (1, 10),    # 7.7
-                                (1, 100),   # 10
-                                (1, 100),   # 95
-                                (-50, 50),  # 7
-                                (0, 1.0),   # 0.1917
-                                (0, 10),    # 2.5
-                                (1, 100),   # 20.3
-                                (0, 100),   # 84
-                                (0, 100),   # 20
-                                (1, 100)]   # 50.0
+        self.prior_intervals = [(0, 100),               # 13
+                                (0, 100),               # 58.686
+                                (0, 1.0 / 3.802),       # 0.1027 / 3.802
+                                (0, 1.0 / 3.802),       # 0.2 / 3.802
+                                (0, 1.0 / 3.802),       # 0.23 / 3.802
+                                (0, 1.0 / 3.802),       # 0.25 / 3.802
+                                (-10, 10),              # 2.5
+                                (1, 100),               # 17.0
+                                (1, 100),               # 15.0
+                                (1, 100),               # 12.0
+                                (1, 1000),              # 150
+                                (0, 1),                 # 0.188495
+                                (-10, 10),              # 7.0
+                                (1, 100),               # 16.6
+                                (0, 1),                 # 0.393956
+                                (0, 10),                # 7
+                                (1, 10),                # 7.7
+                                (0, 1.0),               # 0.1917
+                                (0, 1.0),               # 0.20
+                                (0, 1.0),               # 0.22
+                                (-10, 10),              # 2.5
+                                (-10, 10),              # -2.5
+                                (-10, 10),              # -7.5
+                                (1, 100),               # 20.3
+                                (0, 100),               # 84
+                                (0, 100)]               # 20
+
+        # Markov parameters and states
+        markov_params = [self.name + '.' + p for p in self.parameter_names]
+        markov_states = ['C1', 'C2', 'C3', 'I1', 'I2', 'IC2', 'IC3', 'IF', 'O']
+        markov_states = [self.name + '.' + s for s in markov_states]
 
         # Loading experimental data
         vsteps, act_exp = data_ina.IV_DiasFig6()
@@ -308,22 +372,28 @@ class ina(AbstractChannel):
                          [intervals, rec_exp]]
 
         # Define experimental setup for simulations
-        setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 3000,
+        setup_exp_act = {'sim_type': 'MarkovActivationSim',
+                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 500,
                          'vsteps': vsteps, 'tstep': 100,
                          'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
-        setup_exp_inact = {'sim_type': 'InactivationSim',
+                         'ylabel': 'Current density (pA/pF)',
+                         'params': markov_params,
+                         'states': markov_states}
+        setup_exp_inact = {'sim_type': 'MarkovInactivationSim',
                            'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
                            'vsteps': prepulses, 'tstep': 500,
                            'xlabel': 'Membrane potential (mV)',
-                           'ylabel': 'Normalised conductance'}
-        setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 3000,
+                           'ylabel': 'Normalised conductance',
+                           'params': markov_params,
+                           'states': markov_states}
+        setup_exp_rec = {'sim_type': 'MarkovRecoverySim',
+                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 500,
                          'vstep': -40, 'tstep1': 20, 'tstep2': 20,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
-                         'ylabel': 'Relative recovery'}
+                         'ylabel': 'Relative recovery',
+                         'params': markov_params,
+                         'states': markov_states}
         self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
 
         super(ina, self).__init__()
