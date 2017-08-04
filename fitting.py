@@ -189,7 +189,7 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
         Draws a new estimate of posterior given previous estimate plus target threshold
 
     OUTPUTS:
-        If a full posterior is accepted within maxiter, returns [particles, weights] 
+        If a full posterior is accepted within maxiter, returns [particles, weights]
         If a full posterior is not accepted withing maxiter, returns [None, None]
 '''
 
@@ -233,7 +233,10 @@ def abc_inner(channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val,pos
     # Otherwise, process the outputs from the parallel simulation
     total_iters = 0
     for r in results:
-        output = r.get()
+        try:
+            output = r.get()
+        except:
+            return None, None
         if output is None:
             return None, None
         next_post[output[0]] = output[1]
