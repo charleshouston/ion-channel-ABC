@@ -563,6 +563,12 @@ class ikr(AbstractChannel):
                                 (0, 100),   # 55
                                 (1, 100)]   # 24
 
+        # Edit which parameters to vary
+        use = [1,1,1,1,0,0,0,0,1,1]
+        # use = [1 for i in range(len(self.parameter_names))]
+        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
+        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
+
         # Loading experimental data
         vsteps, act_peaks_exp = data_ikr.IV_Li7B()
         vsteps2, act_exp = data_ikr.Activation_Li7B()
