@@ -263,7 +263,7 @@ class icat(AbstractChannel):
 
         # Edit which parameters to vary
         use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
-        # use = [1 for i in range(len(self.parameter_names))]
+        #use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -429,6 +429,12 @@ class ikur(AbstractChannel):
                                 (0, 10),    # 1.2
                                 (0, 10)]    # 1.7
 
+        # Edit which parameters to vary
+        use = [1,1,1,0,0,0,1,1,0,0]
+        #use = [1 for i in range(len(self.parameter_names))]
+        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
+        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
+
         # Loading experimental data
         vsteps, act_peaks_exp = data_ikur.IV_MaharaniFig2B()
         prepulses, inact_exp = data_ikur.Inact_BrouilleteFig6B()
@@ -565,7 +571,7 @@ class ikr(AbstractChannel):
 
         # Edit which parameters to vary
         use = [1,1,1,1,0,0,0,0,1,1]
-        # use = [1 for i in range(len(self.parameter_names))]
+        #use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
