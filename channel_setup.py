@@ -192,7 +192,7 @@ class AbstractChannel(object):
         sim_output = [[] for i in range(len(self.simulations))]
 
         # Run simulations with checks for errors
-        np.seterr(all='raise') # numpy raises exceptions if any numeric problems
+        #np.seterr(all='raise') # numpy raises exceptions if any numeric problems
         for i,sim in enumerate(self.simulations):
             # catch numpy division, overflow errors, etc
             try:
@@ -262,8 +262,8 @@ class icat(AbstractChannel):
                                 (1,100)] # 30
 
         # Edit which parameters to vary
-        use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
-        #use = [1 for i in range(len(self.parameter_names))]
+        #use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
+        use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -686,6 +686,12 @@ class ito(AbstractChannel):
                                 (0, 100),   # 38.4525
                                 (0, 100),   # 52.45
                                 (0, 100)]   # 15.8827
+
+        # Edit which parameters to vary
+        use = [1,1,1,0,0,0,1,1,0,0,0,0]
+        #use = [1 for i in range(len(self.parameter_names))]
+        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
+        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
