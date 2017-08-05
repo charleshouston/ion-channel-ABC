@@ -262,8 +262,8 @@ class icat(AbstractChannel):
                                 (1,100)] # 30
 
         # Edit which parameters to vary
-        #use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
-        use = [1 for i in range(len(self.parameter_names))]
+        use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
+        #use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -630,6 +630,12 @@ class iha(AbstractChannel):
                                 (0, 100),   # 14.19
                                 (0, 1.0),   # 0.2
                                 (0, 0.1)]   # 0.021
+
+        # Edit which parameters to vary
+        use = [1,1,0,0,0,0,0,0,0,1,1]
+        #use = [1 for i in range(len(self.parameter_names))]
+        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
+        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_iha.IV_Sartiana5B()
