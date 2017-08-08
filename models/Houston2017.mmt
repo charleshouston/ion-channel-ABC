@@ -25,22 +25,21 @@ ical.C4                                        =  1.19816000000000002e-13
 ical.I1                                        =  4.97923000000000004e-19
 ical.I2                                        =  3.45847000000000021e-14
 ical.I3                                        =  1.85106000000000007e-14
-ina.C_Na2 = 0.020752
-ina.C_Na1 = 2.79132000000000024e-4
-ina.O_Na = 7.13482999999999984e-7
-ina.IF_Na = 1.53176000000000012e-4
-ina.I1_Na = 6.73345000000000052e-7
-ina.I2_Na = 1.55786999999999992e-9
-ina.IC_Na2 = 0.0113879
-ina.IC_Na3 = 0.34278
+ina.C2 = 0.020752
+ina.C1 = 2.79132000000000024e-4
+ina.O = 7.13482999999999984e-7
+ina.IF = 1.53176000000000012e-4
+ina.I1 = 6.73345000000000052e-7
+ina.I2 = 1.55786999999999992e-9
+ina.IC2 = 0.0113879
+ina.IC3 = 0.34278
+ina.C3 = 1 - 0.020752 - 2.79132000000000024e-4 - 7.13482999999999984e-7 - 1.53176000000000012e-4 - 6.73345000000000052e-7 - 1.55786999999999992e-9 - 0.0113879 - 0.34278
 sodium_concentration.Nai                                         = 14237.1
 potassium_concentration.Ki                                       = 143720
 ito.xto = 4.05157399999999963e-3
 ito.yto = 0.9945511
 ikur.a_ur =  4.17069000000000001e-4
 ikur.i_ur = 0.998543
-ikss.aKss             =  4.17069000000000001e-4
-ikss.iKss             = 1
 ikr.xkr = 8.64138599999999917e-3
 icat.d = 0.01
 icat.f = 0.99
@@ -135,27 +134,6 @@ kKpcf3 = 100 [mV^2]
     in [mV^2]
 
 
-# Ca2+ activated chloride current - Bondarenko et al. (2004)
-[iclca]
-E_Cl = -40
-    in [mV]
-Km_Cl = 10
-    in [uM]
-O_ClCa = 0.2 / (1 + exp(-(membrane.V - 46.7 [mV]) / 7.8 [mV]))
-    in [1]
-g_ClCa = 10
-    in [mS/uF]
-i_ClCa = g_ClCa * O_ClCa * calcium_concentration.Cai / (calcium_concentration.Cai + Km_Cl) * (membrane.V - E_Cl)
-    in [pA/pF]
-
-# Ca2+ background current - Bondarenko et al. (2004)
-[icab]
-E_CaN = membrane.R * membrane.T / (2 * membrane.F) * log(membrane.Cao / calcium_concentration.Cai)
-    in [mV]
-g_Cab = 0.000367
-    in [mS/uF]
-i_Cab = g_Cab * (membrane.V - E_CaN)
-    in [pA/pF]
 
 # Ca2+ handling - Bondarenko et al. (2004)
 [calcium_buffering]
@@ -229,136 +207,76 @@ v3 = 0.45
     in [mol/m^3/s]
 
 
-# Ca2+ pump current - Bondarenko et al. (2004)
-[ipca]
-Km_pCa = 0.5
-    in [uM]
-i_pCa = i_pCa_max * calcium_concentration.Cai ^ 2 / (Km_pCa ^ 2 + calcium_concentration.Cai ^ 2)
-    in [pA/pF]
-i_pCa_max = 1
-    in [pA/pF]
 
 [environment]
 time = 0 bind time
     in [ms]
 
 
-# Fast sodium current - Bondarenko et al. (2013)
+# Fast sodium current - Bondarenko et al. (2004)
 [ina]
 use membrane.V as V
 g_Na = 13
     in [mS/uF]
 E_Na = 58.686 # calculated from Nernst potential, 23.2 is value from Dias 2014
     in [mV]
-G_Na = g_Na * O_Na
+G_Na = g_Na * O
     in [mS/uF]
 i_Na = G_Na * (V - E_Na)
     in [pA/pF]
 
-dot(C_Na1) = alpha_Na12 * C_Na2 + beta_Na13 * O_Na + alpha_Na3 * IF_Na - (beta_Na12 * C_Na1 + alpha_Na13 * C_Na1 + beta_Na3 * C_Na1)
-    in [1]
-dot(C_Na2) = alpha_Na11 * C_Na3 + beta_Na12 * C_Na1 + alpha_Na3 * IC_Na2 - (beta_Na11 * C_Na2 + alpha_Na12 * C_Na2 + beta_Na3 * C_Na2)
-    in [1]
-C_Na3 = 1 - (O_Na + C_Na1 + C_Na2 + IF_Na + I1_Na + I2_Na + IC_Na2 + IC_Na3)
-    in [1]
-dot(I1_Na) = alpha_Na4 * IF_Na + beta_Na5 * I2_Na - (beta_Na4 * I1_Na + alpha_Na5 * I1_Na)
-    in [1]
-dot(I2_Na) = alpha_Na5 * I1_Na - beta_Na5 * I2_Na
-    in [1]
-dot(IC_Na2) = alpha_Na11 * IC_Na3 + beta_Na12 * IF_Na + beta_Na3 * C_Na2 - (beta_Na11 * IC_Na2 + alpha_Na12 * IC_Na2 + alpha_Na3 * IC_Na2)
-    in [1]
-dot(IC_Na3) = beta_Na11 * IC_Na2 + beta_Na3 * C_Na3 - (alpha_Na11 * IC_Na3 + alpha_Na3 * IC_Na3)
-    in [1]
-dot(IF_Na) = alpha_Na2 * O_Na + beta_Na3 * C_Na1 + beta_Na4 * I1_Na + alpha_Na12 * IC_Na2 - (beta_Na2 * IF_Na + alpha_Na3 * IF_Na + alpha_Na4 * IF_Na + beta_Na12 * IF_Na)
-    in [1]
-dot(O_Na) = alpha_Na13 * C_Na1 + beta_Na2 * IF_Na - (beta_Na13 * O_Na + alpha_Na2 * O_Na)
-    in [1]
+# Transition rates
+dot(C1) = -C1 * (b12 + a13 + b3) + a12 * C2 + b13 * O + a3 * IF
+dot(C2) = -C2 * (b11 + a12 + b3) + a11 * C3 + b12 * C1 + a3 * IC2
+dot(C3) = -C3 * (b3 + a11) + a3 * IC3 + b11 * C2
+dot(I1) = -I1 * (b4 + a5) + a4 * IF + b5 * I2
+dot(I2) = -I2 * b5 + a5 * I1
+dot(IC2) = -IC2 * (b11 + a12 + a3) + a11 * IC3 + b12 * IF + b3 * C2
+dot(IC3) = -IC3 * (a11 + a3) + b11 * IC2 + b3 * C3
+dot(IF) = -IF * (b2 + a3 + a4 + b12) + a2 * O + b3 * C1 + b4 * I1 + a12 * IC2
+dot(O) = -O * (b13 + a2) + a13 * C1 + b2 * IF
 
-k_alpha1 = 3.802
-    in [mS/uF]
-k_alpha2 = 0.1027
-    in [1]
-k_alpha3 = 2.5
-    in [mV]
-k_alpha4 = 150
-    in [mV]
-k_alpha5 = 17
-    in [mV]
-k_alpha5_1 = 2
-    in [mV]
-k_alpha5_2 = 3
-    in [mV]
-k_alpha6 = 0.2
-    in [1]
-k_alpha6_1 = 0.03
-    in [1]
-k_alpha6_2 = 0.02
-    in [1]
-k_alpha7 = 0.188495
-    in [1]
-k_alpha8 = 16.6
-    in [mV]
-k_alpha9 = 0.393956
-    in [1]
-k_alpha10 = 70
-    in [mS/uF]
-k_alpha11 = 7.7
-    in [mV]
-k_alpha12 = 10
-    in [1]
-k_alpha13 = 95
-    in [1]
-k_alpha14 = 7.0
-    in [mV]
+p1 = 0.1027 / 3.802
+p2 = 0.2 / 3.802
+p3 = 0.23 / 3.802
+p4 = 0.25 / 3.802
+p5 = 2.5
+p6 = 17.0
+p7 = 15.0
+p8 = 12.0
+p9 = 150
+p10 = 0.188495
+p11 = 7.0
+p12 = 16.6
+p13 = 0.393956
+p14 = 7
+p15 = 7.7
 
-k_beta1 = 0.1917
-    in [mS/uF]
-k_beta1_1 = 0.2 - 0.1917
-    in [mS/uF]
-k_beta1_2 = 0.22 - 0.1917
-    in [mS/uF]
-k_beta2 = 2.5
-    in [mV]
-k_beta2_diff = 5
-    in [mV]
-k_beta3 = 20.3
-    in [mV]
-k_beta4 = 84
-    in [mS/uF]
-k_beta5 = 20
-    in [1/mV/ms]
-k_beta6 = 50.0
-    in [1]
+a11 = 1 / (p1 * exp(-(V + p5) / p6) + p2 * exp(-(V + p5) / p9))
+a12 = 1 / (p1 * exp(-(V + p5) / p7) + p3 * exp(-(V + p5) / p9))
+a13 = 1 / (p1 * exp(-(V + p5) / p8) + p4 * exp(-(V + p5) / p9))
+a2 = 1 / (p10 * exp(-(V + p11) / p12) + p13)
+a3 = p14 * 1e-7 * exp(-(V + p11) / p15)
+a4 = a2 / 1000
+a5 = a2 / 95000
 
-alpha_Na11 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / k_alpha5) + k_alpha6 * exp(-(V + k_alpha3) / k_alpha4))
-    in [mS/uF]
-alpha_Na12 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / (k_alpha5 - k_alpha5_1)) + (k_alpha6 + k_alpha6_1) * exp(-(V + k_alpha3) / k_alpha4))
-    in [mS/uF]
-alpha_Na13 = k_alpha1 / (k_alpha2 * exp(-(V + k_alpha3) / (k_alpha5 - k_alpha5_1 - k_alpha5_2)) + (k_alpha6 + k_alpha6_1 + k_alpha6_2) * exp(-(V + k_alpha3) / k_alpha4))
-    in [mS/uF]
-alpha_Na2 = 1 [mS/uF] / (k_alpha7 * exp(-(V + k_alpha14) / k_alpha8) + k_alpha9)
-    in [mS/uF]
-alpha_Na3 = k_alpha10 * 1e-8 * exp(-(V + k_alpha14) / k_alpha11)
-    in [mS/uF]
-alpha_Na4 = alpha_Na2 / (k_alpha12 * 100)
-    in [mS/uF]
-alpha_Na5 = alpha_Na2 / (k_alpha13 * 1000)
-    in [mS/uF]
+q1 = 0.1917
+q2 = 0.20
+q3 = 0.22
+q4 = 2.5
+q5 = -2.5
+q6 = -7.5
+q7 = 20.3
+q8 = 84
+q9 = 20
 
-beta_Na11 = k_beta1 * exp(-(V + k_beta2) / k_beta3)
-    in [mS/uF]
-beta_Na12 = (k_beta1 + k_beta1_1) * exp(-(V + (k_beta2 - k_beta2_diff)) / k_beta3)
-    in [mS/uF]
-beta_Na13 = (k_beta1 + k_beta1_2) * exp(-(V + (k_beta2 - 2 * k_beta2_diff)) / k_beta3)
-    in [mS/uF]
-beta_Na2 = alpha_Na13 * alpha_Na2 * alpha_Na3 / (beta_Na13 * beta_Na3)
-    in [mS/uF]
-beta_Na3 = k_beta4 * 1e-4 + k_beta5 * 1e-6 * (V + k_alpha14)
-    in [mS/uF]
-beta_Na4 = alpha_Na3
-    in [mS/uF]
-beta_Na5 = alpha_Na3 / k_beta6
-    in [mS/uF]
+b11 = q1 * exp(-(V + q4) / q7)
+b12 = q2 * exp(-(V + q5) / q7)
+b13 = q3 * exp(-(V + q6) / q7)
+b2 = a13 * a2 * a3 / (b13 * b3)
+b3 = q8 * 1e-4 + q9 * 1e-6 * (V + p11)
+b4 = a3
+b5 = a3 / 50
 
 
 [membrane]
@@ -383,7 +301,7 @@ T = 298
     in [K]
 FoRT = F / (R * T)
     in [1/mV]
-dot(V) = -(ical.i_CaL + ipca.i_pCa + incx.i_NaCa + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikss.i_Kss + ikr.i_Kr + iclca.i_ClCa + icat.i_CaT + iha.i_ha + ikach.i_KAch + i_stim) / Cm
+dot(V) = -(ical.i_CaL + ipca.i_pCa + incx.i_NaCa + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr + icat.i_CaT + iha.i_ha + i_stim) / Cm
     in [mV]
 i_stim = 0.0 [pA/pF]
     in [pA/pF]
@@ -397,25 +315,6 @@ Vmyo = 2.584e-5
 Vss = 1.485e-9
     in [uL]
 
-# For Takeuchi et al. (2013) formulation of ical
-# F_ss = 0.11
-#     in [1]
-# F_myo = 1 - F_ss
-#     in  [1]
-
-
-# i_stim = piecewise(environment.time >= stim_start and environment.time <= stim_end and environment.time - stim_start - floor((environment.time - stim_start) / stim_period) * stim_period <= stim_duration, stim_amplitude, 0 [pA/pF])
-#     in [pA/pF]
-# stim_amplitude = -80
-#     in [pA/pF]
-# stim_duration = 0.5
-#     in [ms]
-# stim_end = 100000
-#     in [ms]
-# stim_period = 71.43
-#     in [ms]
-# stim_start = 20
-#     in [ms]
 
 [ito]
 g_to = 0.12375 [nS/pF]
@@ -461,23 +360,8 @@ G_to = g_to * xto * yto
 i_to = G_to * (membrane.V - potassium_concentration.E_K)
     in [pA/pF]
 
-# Steady-state K+ current - Bondarenko et al. (2004)
-[ikss]
-dot(aKss) = (ass - aKss) / tau_Kss
-    in [1]
-g_Kss = 0#0.0324
-    in [mS/uF]
-dot(iKss) = 0 [mS/uF]
-    in [1]
-i_Kss = g_Kss * aKss * iKss * (membrane.V - potassium_concentration.E_K)
-    in [pA/pF]
-ass = 1 / (1 + exp(-(membrane.V + 22.5 [mV]) / 7.7 [mV]))
-    in [1]
-tau_Kss = 39.3 [ms] * exp(-0.0862 [1/mV] * membrane.V) + 13.17 [ms]
-    in [ms]
-
 [potassium_concentration]
-dot(Ki) = -(ito.i_to + ik1.i_K1 + ikss.i_Kss + ikur.i_Kur + ikr.i_Kr - 2 * inak.i_NaK + iha.i_haK + ikach.i_KAch) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
+dot(Ki) = -(ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr - 2 * inak.i_NaK + iha.i_haK) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
     in [uM]
 # Ki = 130000
 #     in [uM]
@@ -551,28 +435,7 @@ n = 4
     in [1]
 
 
-# Background Na+ current - Bondarenko et al. (2004)
-[inab]
-g_Nab = 0.0026
-    in [mS/uF]
-i_Nab = g_Nab * (membrane.V - sodium_concentration.E_Na)
-    in [pA/pF]
 
-
-# Na+/Ca2+ exchange current - Bondarenko et al. (2004)
-[incx]
-K_mCa = 1380
-    in [uM]
-K_mNa = 87500
-    in [uM]
-eta = 0.35
-    in [1]
-i_NaCa = k_NaCa * 1 / (K_mNa ^ 3 + membrane.Nao ^ 3) * 1 / (K_mCa + membrane.Cao) * 1 / (1 + k_sat * exp((eta - 1) * membrane.V * membrane.F / (membrane.R * membrane.T))) * (exp(eta * membrane.V * membrane.F / (membrane.R * membrane.T)) * sodium_concentration.Nai ^ 3 * membrane.Cao - exp((eta - 1) * membrane.V * membrane.F / (membrane.R * membrane.T)) * membrane.Nao ^ 3 * calcium_concentration.Cai)
-    in [pA/pF]
-k_NaCa = 292.8
-    in [pA/pF]
-k_sat = 0.1
-    in [1]
 
 [sodium_concentration]
 dot(Nai) = -(ina.i_Na + inab.i_Nab + 3 * inak.i_NaK + 3 * incx.i_NaCa + iha.i_haNa) * membrane.Acap * membrane.Cm / (membrane.Vmyo * membrane.F)
@@ -581,36 +444,7 @@ E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / Nai)
     in [mV]
 
 
-# Na+/K+ pump current - Bondarenko et al. (2004)
-[inak]
-Km_Ko = 1500
-    in [uM]
-Km_Nai = 21000
-    in [uM]
-f_NaK = 1 / (1 + 0.1245 * exp(-0.1 * membrane.V * membrane.F / (membrane.R * membrane.T)) + 0.0365 * sigma * exp(-membrane.V * membrane.F / (membrane.R * membrane.T)))
-    in [1]
-i_NaK = i_NaK_max * f_NaK * 1 / (1 + (Km_Nai / sodium_concentration.Nai) ^ 1.5) * membrane.Ko / (membrane.Ko + Km_Ko)
-    in [pA/pF]
-i_NaK_max = 0.88
-    in [pA/pF]
-sigma = 1 / 7 * (exp(membrane.Nao / 67300 [uM]) - 1)
-    in [1]
 
-
-# Inward rectifying K+ current - Bondarenko et al. (2004)
-[ik1]
-i_K1 = g_K1 * membrane.Ko / (membrane.Ko + k_1) * (membrane.V - potassium_concentration.E_K + k_3) / (1 + exp(k_2 * 1e-2 * (membrane.V - E_K1)))
-    in [pA/pF]
-E_K1 = potassium_concentration.E_K
-    in [mV]
-g_K1 = 0.2938 [mS/uF]
-    in [mS/uF]
-k_1 = 210 [uM]
-    in [uM]
-k_2 = 8.96 [1/mV]
-    in [1/mV]
-k_3 = 0 [mV]
-    in [mV]
 
 
 
@@ -769,25 +603,75 @@ i_ha = i_haNa + i_haK
     in [pA/pF]
 
 
-# Acetylcholine sensitive K+ current - Majumder et al. (2016)
-[ikach]
-g_KAch = 0.37488 [mS/uF]
+# Inward rectifying K+ current - Bondarenko et al. (2004)
+[ik1]
+i_K1 = g_K1 * membrane.Ko / (membrane.Ko + k_1) * (membrane.V - E_K1 + k_3) / (1 + exp(k_2 * 1e-2 * (membrane.V - E_K1 + k_3)))
+    in [pA/pF]
+E_K1 = potassium_concentration.E_K
+    in [mV]
+g_K1 = 0.2938 [mS/uF]
     in [mS/uF]
+k_1 = 210 [uM]
+    in [uM]
+k_2 = 8.96 [1/mV]
+    in [1/mV]
+k_3 = 0 [mV]
+    in [mV]
 
-i_KAch = (k_1 / (1.0 + k_2 / membrane.Ach ^ k_3)) * (k_4 + k_5 / (1.0 + exp((membrane.V + k_6) / k_7))) * (membrane.V - potassium_concentration.E_K - k_8)
-k_1 = 3.5
+# Ca2+ pump current - Bondarenko et al. (2004)
+[ipca]
+Km_pCa = 0.5
+    in [uM]
+i_pCa = i_pCa_max * calcium_concentration.Cai ^ 2 / (Km_pCa ^ 2 + calcium_concentration.Cai ^ 2)
+    in [pA/pF]
+i_pCa_max = 1
+    in [pA/pF]
+
+# Na+/Ca2+ exchange current - Bondarenko et al. (2004)
+[incx]
+K_mCa = 1380
+    in [uM]
+K_mNa = 87500
+    in [uM]
+eta = 0.35
     in [1]
-k_2 = 9.13652
+i_NaCa = k_NaCa * 1 / (K_mNa ^ 3 + membrane.Nao ^ 3) * 1 / (K_mCa + membrane.Cao) * 1 / (1 + k_sat * exp((eta - 1) * membrane.V * membrane.F / (membrane.R * membrane.T))) * (exp(eta * membrane.V * membrane.F / (membrane.R * membrane.T)) * sodium_concentration.Nai ^ 3 * membrane.Cao - exp((eta - 1) * membrane.V * membrane.F / (membrane.R * membrane.T)) * membrane.Nao ^ 3 * calcium_concentration.Cai)
+    in [pA/pF]
+k_NaCa = 292.8
+    in [pA/pF]
+k_sat = 0.1
     in [1]
-k_3 = 0.477811
+
+
+
+# Na+/K+ pump current - Bondarenko et al. (2004)
+[inak]
+Km_Ko = 1500
+    in [uM]
+Km_Nai = 21000
+    in [uM]
+f_NaK = 1 / (1 + 0.1245 * exp(-0.1 * membrane.V * membrane.F / (membrane.R * membrane.T)) + 0.0365 * sigma * exp(-membrane.V * membrane.F / (membrane.R * membrane.T)))
     in [1]
-k_4 = 0.04
+i_NaK = i_NaK_max * f_NaK * 1 / (1 + (Km_Nai / sodium_concentration.Nai) ^ 1.5) * membrane.Ko / (membrane.Ko + Km_Ko)
+    in [pA/pF]
+i_NaK_max = 0.88
+    in [pA/pF]
+sigma = 1 / 7 * (exp(membrane.Nao / 67300 [uM]) - 1)
     in [1]
-k_5 = 0.23
-    in [1]
-k_6 = 102 [mV]
-    in [mV]
-k_7 = 10 [mV]
-    in [mV]
-k_8 = 10 [mV]
-    in [mV]
+
+
+# Ca2+ background current - Bondarenko et al. (2004)
+[icab]
+E_CaN = membrane.R * membrane.T / (2 * membrane.F) * log(membrane.Cao / calcium_concentration.Cai)
+  in [mV]
+g_Cab = 0.000367
+  in [mS/uF]
+i_Cab = g_Cab * (membrane.V - E_CaN)
+  in [pA/pF]
+
+# Background Na+ current - Bondarenko et al. (2004)
+[inab]
+g_Nab = 0.0026
+    in [mS/uF]
+i_Nab = g_Nab * (membrane.V - sodium_concentration.E_Na)
+    in [pA/pF]
