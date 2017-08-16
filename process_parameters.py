@@ -11,10 +11,10 @@ import distributions as Dist
 plt.style.use('seaborn-colorblind')
 
 # Setup
-channel = cs.icat()
-v = np.arange(-100, 30, 0.01)
-consts_ss = ['dss', 'fss']
-consts_time = ['tau_d', 'tau_f']
+channel = cs.ikur()
+v = np.arange(-100, 60, 0.01)
+consts_ss = ['a_ur_ss','i_ur_ss']
+consts_time = ['tau_a_ur','tau_i_ur']
 
 parameters = channel.parameters
 m, _, _ = myokit.load('models/'+channel.model_name)
@@ -41,47 +41,28 @@ for params in pool:
     for i,time in enumerate(consts_time):
         time_ABC[i].append(m.get(channel.name+'.'+time).pyfunc()(v))
 
-# store mean and sd
-dists_ss = [[] for i in range(2)] 
-dists_time = [[] for i in range(2)]
-for i in range(len(consts_ss)):
-    dist = Dist.Arbitrary(ss_ABC[i], weights)
-    const_mean = dist.getmean()
-    const_sd = np.sqrt(dist.getvar())
-    dists_ss[0].append(const_mean)
-    dists_ss[1].append(const_sd)
-for i in range(len(consts_time)):
-    dist = Dist.Arbitrary(time_ABC[i], weights)
-    const_mean = dist.getmean()
-    const_sd = np.sqrt(dist.getvar())
-    dists_time[0].append(const_mean)
-    dists_time[1].append(const_sd)
+colors = ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442', '#56B4E9']
+colors_lighter = ['#33A5E5','#33D1A6']
 
 fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(9, 2.8))
 
 for i in range(len(consts_ss)):
-    ax[0].plot(v, dists_ss[0][i], label=consts_ss[i])
-    ax[0].fill_between(v, dists_ss[0][i]-dists_ss[1][i], dists_ss[0][i]+dists_ss[1][i], alpha=0.25, lw=0)
-    # ax[0].plot(v, ss_orig[i], ls='--', color='#D55E00')
+    for sim in ss_ABC[i]:
+        ax[0].plot(v, sim, color=colors_lighter[i], ls=':', lw=0.2,alpha=0.4)
+    ax[0].plot(v, ss_orig[i], color=colors[i], label=consts_ss[i])
 ax[0].set_ylim([0,None])
 ax[0].set_xlabel('Voltage (mV)')
 ax[0].legend()
 
-# for i in range(len(consts_time)):
-ax[1].plot(v, dists_time[0][0], label=consts_time[0])
-ax[1].fill_between(v, dists_time[0][0]-dists_time[1][0], dists_time[0][0]+dists_time[1][0], alpha=0.25, lw=0)
-# ax[1].plot(v, time_orig[0], ls='--', color='#D55E00')
-ax[1].set_ylim([0,None])
-ax[1].set_xlabel('Voltage (mV)')
-ax[1].legend()
+for i in range(len(consts_time)):
+    for sim in time_ABC[i]:
+        ax[i+1].plot(v, sim, color=colors_lighter[i], ls=':', lw=0.2,alpha=0.4)
+    ax[i+1].plot(v, time_orig[i], color=colors[i],label=consts_time[i])
+    ax[i+1].set_xlabel('Voltage (mV)')
+    ax[i+1].legend()
 
-ax[2].plot(v, dists_time[0][1], label=consts_time[1], color='#009E73')
-ax[2].fill_between(v, dists_time[0][1]-dists_time[1][1], dists_time[0][1]+dists_time[1][1], alpha=0.25, lw=0, color='#009E73')
-# ax[2].plot(v, time_orig[1], ls='--', color='#D55E00')
-ax[2].set_ylim([0,None])
-ax[2].set_xlabel('Voltage (mV)')
-ax[2].legend()
-
+ax[1].set_ylim([0, 500])
+ax[2].set_ylim([0, None])
 
 uppercase_letters = map(chr, range(65,91))
 for i,a in enumerate(ax.flatten()):
@@ -89,32 +70,21 @@ for i,a in enumerate(ax.flatten()):
             uppercase_letters[i], transform=a.transAxes,
             fontsize=16, fontweight='bold', va='top', ha='right')
 plt.tight_layout()
-fig.savefig('results/consts_'+str(channel.name)+'.pdf', bbox_inches="tight")
+fig.savefig('results_debug/consts_'+str(channel.name)+'.pdf', bbox_inches="tight")
 plt.close(fig)
 
 # Plot covariance between parameters
 import pandas as pd
 from pandas.plotting import scatter_matrix
 
-high_var_params = ['k_ftau1','k_ftau2','k_ftau3','k_ftau4','k_ftau5','k_ftau6']
+high_var_params = ['k_ytau1','k_ytau2','k_ytau3','k_ytau4']
 df = pd.DataFrame(pool, columns = channel.parameter_names)
 param_dists = np.swapaxes(pool, 0, 1)
 
 nparams = len(high_var_params)
 sm = scatter_matrix(df[high_var_params], alpha=0.2, figsize=(nparams*1.1,nparams*1.1), diagonal='hist', hist_kwds={'bins':8, 'weights':weights})
-# Change label rotation
-# [s.xaxis.set_visible(False) for s in sm.reshape(-1)]
-# [s.xaxis.label.set_rotation(45) for s in sm.reshape(-1)]
-# [s.yaxis.label.set_rotation() for s in sm.reshape(-1)]
-# [s.get_yaxis().set_label_coords(-1.2,0.4) for s in sm.reshape(-1)]
-# [plt.setp(item.xaxis.get_label(), 'size', 14) for item in sm.reshape(-1)]
-# [plt.setp(item.yaxis.get_label(), 'size', 14) for item in sm.reshape(-1)]
-
-# Hide all ticks
-# [s.set_xticks(()) for s in sm.reshape(-1)]
-# [s.set_yticks(()) for s in sm.reshape(-1)]
 plt.tight_layout()
-plt.savefig('results/cov_'+str(channel.name)+'.pdf', bbox_inches="tight")
+plt.savefig('results_debug/cov_'+str(channel.name)+'.pdf', bbox_inches="tight")
 plt.close()
 
 # Also plot correlation matrix
@@ -149,6 +119,5 @@ for t in ax.yaxis.get_major_ticks():
     t.tick10n = False
     t.tick20n = False
 plt.tight_layout()
-fig.savefig('results/corr_'+str(channel.name)+'.pdf', bbox_inches='tight')
+fig.savefig('results_debug/corr_'+str(channel.name)+'.pdf', bbox_inches='tight')
 plt.close(fig)
-
