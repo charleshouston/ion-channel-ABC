@@ -3,27 +3,54 @@ import myokit.lib.fit as fit
 import channel_setup as cs
 import numpy as np
 import matplotlib.pyplot as plt
+import ast
+import distributions as Dist
+from functools import partial
 
-# Get channel details
-channel = cs.ik1()
-current_name = 'ik1.i_K1'
-m,p,x = myokit.load('models/' + channel.model_name)
-membrane_potential = m.get('membrane.V')
-membrane_potential.demote()
+# Load full model
+full_model = cs.full_sim()
+m,_,_ = myokit.load('models/' + full_model.model_name)
+i_stim = m.get('membrane.i_stim')
+i_stim.set_rhs(0)
+i_stim.set_binding('pace')
+iha = m.get('iha.i_ha')
+iha.set_rhs(0)
 
-# Get experimental data
-vsteps = channel.data_exp[0][0]
-act_exp = channel.data_exp[0][1]
+s = myokit.Simulation(m)
 
-# Get original values
-original = []
-for k, v in enumerate(vsteps):
-    membrane_potential.set_rhs(v)
-    original.append(m.get(current_name).value())
+# Load individual channels
+channels = [cs.icat(),
+            cs.iha(),
+            cs.ikur(),
+            cs.ikr(),
+            cs.ina(),
+            cs.ito()]
+
+# Load results from ABC simulation for each channel
+results_ABC = []
+for ch in channels:
+    results_file = 'final_results/results_' + ch.name + '.txt'
+    f = open(results_file, 'r')
+    lines = f.readlines()
+    particles = ast.literal_eval(lines[0])
+    weights = ast.literal_eval(lines[1])
+    dists = Dist.Arbitrary(particles, weights)
+    results_ABC.append(dists)
+
+# Target values
+variables = full_model.data_exp[0]
+targets = np.array([full_model.data_exp[1]])
+weights = np.array([1,1,1,1,1,1,1])
+weights = weights * len(weights) / sum(weights)
+
+# Number of simulations to run for average
+N = 50
 
 # Parameters and bounds for PSO search
-parameters = channel.parameters
-bounds = channel.prior_intervals
+parameters = full_model.parameter_names
+bounds = full_model.prior_intervals
+
+prot = myokit.pacing.blocktrain(1000, 2, limit=0, level=-30)
 
 # Loss function
 def score(guess):
@@ -32,46 +59,82 @@ def score(guess):
         error = 0
         for j, p in enumerate(parameters):
             param = m.get(p)
-            param.set_rhs(guess[j])
-        for k, v in enumerate(vsteps):
-            membrane_potential.set_rhs(v)
-            i = m.get(current_name).value()
-            r = act_exp[k]
-            error += np.sqrt((i - r) ** 2)
-        return error / len(vsteps)
+            s.set_constant(param, guess[j])
+        results = []
+        # Run for N draws from ABC posteriors
+        for i in range(N):
+            s.reset()
+            # Set simulation constants to results from ABC
+            for j, c in enumerate(channels):
+                params = results_ABC[j].draw()
+                for k, p in enumerate(c.parameters):
+                    s.set_constant(p, params[k])
+            # s.set_protocol(prot)
+            s.run(20000)
+            s.set_default_state(s.state())
+            output = s.run(10, log=variables).npview()
+            r = [output[key][0] for key in output.keys()]
+            results.append(r)
+
+        # Average over results
+        results = np.mean(results,0)
+        # results = np.array(results).swapaxes(0,1)
+        error = np.sum(np.sqrt(((targets - results)/targets) ** 2))
+        return error / len(targets)
+    except myokit._err.SimulationError:
+        return float('inf')
     except Exception:
         return float('inf')
 
-# Run PSO algorithm
-print 'Running particle swarm optimisation...'
+original = [0.2938, 0,  1, 0.88, 292.8,  0.000367, 0.0026]
+original_err = score(original)
+print "Original error: " + str(original_err)
+
+def report_results(pg, fg):
+    print "Current optimum position: " + str(pg.tolist())
+    print "Current optimum score:    " + str(fg)
+
+# Run optimisation algorithm
+print 'Running optimisation...'
 with np.errstate(all='ignore'):
-    x, f = fit.pso(score, bounds, n=100, max_iter=1000)
+    x, f = fit.pso(score,bounds,n=20,callback=report_results)
 
-# Write results in same format as ABC
-with open('results/results_'+channel.name+'.txt', 'w') as f:
-    f.write(str([x.tolist()])+"\n")
-    f.write(str([1])+"\n")
-    f.write(str(x.tolist())+"\n")
-    f.write(str(np.zeros(len(x)).tolist()))
+# Set simulation constants to results from ABC
+s.reset()
+for j, c in enumerate(channels):
+    params = results_ABC[j].draw()
+    for k, p in enumerate(c.parameters):
+        s.set_constant(c.parameters[k], params[k])
+for j, p in enumerate(parameters):
+    param = m.get(p)
+    s.set_constant(param, x[j])
 
-# Set model to PSO-optimised parameters
-for i, res in enumerate(x):
-    param = m.get(channel.parameters[i])
-    param.set_rhs(res)
-
-# Generate simulation output from PSO parameters
-out = []
-for k, v in enumerate(vsteps):
-    membrane_potential.set_rhs(v)
-    out.append(m.get(current_name).value())
-
-# Plot results
+s.pre(95000)
+out = s.run(5000,
+            log=['environment.time',
+                 'membrane.V',
+                 'calcium_concentration.Cai',
+                 'potassium_concentration.Ki',
+                 'sodium_concentration.Nai',
+                 'ik1.i_K1',
+                 'ipca.i_pCa',
+                 'incx.i_NaCa',
+                 'inak.i_NaK',
+                 'icab.i_Cab',
+                 'inab.i_Nab'])
 plt.style.use('seaborn-colorblind')
-fig, ax = plt.subplots(figsize=(5,5))
-fig.suptitle('Voltage clamp simulations for ' + channel.name + ' in HL-1')
-ax.plot(vsteps, act_exp, 'o', label="Simulation")
-ax.plot(vsteps, out, 'x', label="Experiment")
-ax.plot(vsteps, original, 's', label="Published model")
-ax.legend(loc='lower right')
-
-fig.savefig('results/fig_'+channel.name+'.eps', bbox_inches="tight")
+fig, ax = plt.subplots(nrows=2, ncols=2)
+ax[0][0].plot(out[out.keys()[0]], out[out.keys()[1]])
+ax[0][1].plot(out[out.keys()[0]], out[out.keys()[2]])
+ax[0][0].ticklabel_format(useOffset=False)
+ax[0][1].ticklabel_format(useOffset=False)
+ax[1][0].ticklabel_format(useOffset=False)
+ax[1][1].ticklabel_format(useOffset=False)
+for k in out.keys()[3:5]:
+    ax[1][0].plot(out[out.keys()[0]], out[k], label=k)
+ax[1][0].legend(loc='best')
+for k in out.keys()[5:]:
+    ax[1][1].plot(out[out.keys()[0]], out[k], label=k)
+ax[1][1].legend(loc='best')
+fig.show()
+import pdb;pdb.set_trace()
