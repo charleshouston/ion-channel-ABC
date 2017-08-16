@@ -18,7 +18,7 @@ F = 96.5
     in [C/mmol]
 R = 8.314
     in [J/mol/K]
-Ko = 100000
+Ko = 5400
     in [uM]
 Ki = 143720
     in [uM]
@@ -29,7 +29,7 @@ Nai = 14237.1
 
 
 [ik1]
-i_K1 = g_K1 * membrane.Ko / (membrane.Ko + k_1) * (membrane.V - E_K + k_3) / (1 + exp(k_2 * 1e-2 * (membrane.V - E_K)))
+i_K1 = g_K1 * membrane.Ko / (membrane.Ko + k_1) * (membrane.V - E_K + k_3) / (1 + exp(k_2 * 1e-2 * (membrane.V - E_K + k_3)))
     in [pA/pF]
 g_K1 = 0.2938 [mS/uF]
     in [mS/uF]
