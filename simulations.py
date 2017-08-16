@@ -112,8 +112,9 @@ class TimeIndependentActivationSim(AbstractSim):
         v_m.demote()
 
         # Reset parameters to new values
-        for i,p in enumerate(self.p_names):
-            m.get(p).set_rhs(self.p_vals[i])
+        if len(self.p_names) > 0:
+            for i,p in enumerate(self.p_names):
+                m.get(p).set_rhs(self.p_vals[i])
 
         pks = []
         try:
