@@ -1,7 +1,7 @@
 logs/
-results/
 plotting/
 *.pyc
 *.#
 *.DS_Store
 *.bak
+results/APtraces/AP_traces
