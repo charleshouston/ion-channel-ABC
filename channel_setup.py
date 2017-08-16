@@ -135,7 +135,7 @@ class AbstractChannel(object):
                     sim.MarkovActivationSim(se['variable'],
                                             vhold=se['vhold'],
                                             thold=se['thold'],
-                                            vsteps=se['vsteps'],
+                                            vsteps=vsteps,
                                             tstep=se['tstep'],
                                             name=self.name,
                                             states=se['states'],
@@ -153,7 +153,7 @@ class AbstractChannel(object):
                     sim.MarkovInactivationSim(se['variable'],
                                         vhold=se['vhold'],
                                         thold=se['thold'],
-                                        vsteps=se['vsteps'],
+                                        vsteps=vsteps,
                                         tstep=se['tstep'],
                                         name=self.name,
                                         states=se['states'],
@@ -359,42 +359,41 @@ class ina(AbstractChannel):
                                 (0, 100)]               # 20
 
         # Markov parameters and states
-        markov_params = [self.name + '.' + p for p in self.parameter_names]
+        self.markov_params = [self.name + '.' + p for p in self.parameter_names]
         markov_states = ['C1', 'C2', 'C3', 'I1', 'I2', 'IC2', 'IC3', 'IF', 'O']
-        markov_states = [self.name + '.' + s for s in markov_states]
+        self.markov_states = [self.name + '.' + s for s in markov_states]
 
         # Loading experimental data
         vsteps, act_exp = data_ina.IV_DiasFig6()
         prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
         intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
         self.data_exp = [[vsteps, act_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp]]
+                         [prepulses, inact_exp]]
 
         # Define experimental setup for simulations
-        setup_exp_act = {'sim_type': 'MarkovActivationSim',
+        setup_exp_act = {'sim_type': 'ActivationSim',
                          'variable': 'ina.i_Na', 'vhold': -80, 'thold': 500,
                          'vsteps': vsteps, 'tstep': 100,
                          'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)',
-                         'params': markov_params,
-                         'states': markov_states}
-        setup_exp_inact = {'sim_type': 'MarkovInactivationSim',
+                         'ylabel': 'Current density (pA/pF)'}
+                        #  'params': self.markov_params,
+                        #  'states': self.markov_states}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
                            'vsteps': prepulses, 'tstep': 500,
                            'xlabel': 'Membrane potential (mV)',
-                           'ylabel': 'Normalised conductance',
-                           'params': markov_params,
-                           'states': markov_states}
+                           'ylabel': 'Normalised conductance'}
+                        #    'params': self.markov_params,
+                        #    'states': self.markov_states}
         setup_exp_rec = {'sim_type': 'MarkovRecoverySim',
                          'variable': 'ina.G_Na', 'vhold': -120, 'thold': 500,
                          'vstep': -40, 'tstep1': 20, 'tstep2': 20,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
-                         'ylabel': 'Relative recovery',
-                         'params': markov_params,
-                         'states': markov_states}
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+                         'ylabel': 'Relative recovery'}
+        #                  'params': markov_params,
+        #                  'states': markov_states}
+        self.setup_exp = [setup_exp_act, setup_exp_inact]
 
         super(ina, self).__init__()
 
@@ -570,7 +569,7 @@ class ikr(AbstractChannel):
                                 (1, 100)]   # 24
 
         # Edit which parameters to vary
-        use = [1,1,1,1,0,0,0,0,1,1]
+        use = [1,1,1,0,0,0,0,0,1,1]
         #use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
@@ -798,155 +797,23 @@ class ik1(AbstractChannel):
 
         super(ik1, self).__init__()
 
-class ina2(AbstractChannel):
+class full_sim(AbstractChannel):
     def __init__(self):
-        self.name = 'ina'
-        self.model_name = 'Takeuchi2013_iNa.mmt'
-        self.publication = 'Takeuchi et al. 2013'
-
-        # Parameters involved in ABC process
-        self.parameter_names = ['g_Na',
-                                'v_split',
-                                'v_offset',
-                                'm_ssk1',
-                                'm_ssk2',
-                                'tau_mk1',
-                                'tau_mk2',
-                                'tau_mk3',
-                                'tau_mk4',
-                                'tau_mk5',
-                                'tau_mk6',
-                                'h_ssk1',
-                                'h_ssk2',
-                                # 'ina.a_hk1',
-                                'a_hk2',
-                                'a_hk3',
-                                # 'ina.b_hk1',
-                                'b_hk2',
-                                'b_hk3',
-                                'b_hk4',
-                                'b_hk5',
-                                'b_hk6',
-                                'b_hk7',
-                                'j_ssk1',
-                                'j_ssk2',
-                                'a_jk1',
-                                'a_jk2',
-                                'a_jk3',
-                                'a_jk4',
-                                # 'ina.a_jk5',
-                                'a_jk6',
-                                'a_jk7',
-                                # 'ina.b_jk1',
-                                'b_jk2',
-                                'b_jk3',
-                                'b_jk4',
-                                'b_jk5',
-                                'b_jk6',
-                                'b_jk7',
-                                'b_jk8']
-
-        # Parameter specific prior intervals
-        self.prior_intervals = [(0, 100),   # 23
-                                (-100, 0),  # -40
-                                (-50, 50),  # 0
-                                (0, 100),   # 56.86
-                                (1, 10),    # 9.03
-                                (0, 1),     # 0.1292
-                                (0, 100),   # 45.79
-                                (1, 100),   # 15.54
-                                (0, 0.1),   # 0.06487
-                                (0, 10),    # 4.823
-                                (1, 100),   # 51.12
-                                (0, 100),   # 71.55
-                                (1, 10),    # 7.43
-                                # (0, 0.1),   # 0.057
-                                (0, 100),   # 80
-                                (1, 10),    # 6.8
-                                # (0, 10),    # 5.923
-                                (0, 100),   # 10.66
-                                (1, 100),   # 11.1
-                                (0, 10),    # 2.7
-                                (0, 0.1),   # 0.079
-                                (0, 100),   # 31
-                                (0, 1),     # 0.3485
-                                (0, 100),   # 71.55
-                                (1, 10),    # 7.43
-                                (0, 100),   # 25.428
-                                (0, 1),     # 0.2444
-                                (0, 10),    # 6.948
-                                (0, 0.1),   # 0.04391
-                                # (0, 100),   # 37.78
-                                (0, 1),     # 0.311
-                                (0, 100),   # 79.23
-                                # (0, 1),     # 0.6
-                                (0, 0.1),   # 0.057
-                                (0, 1),     # 0.1
-                                (0, 100),   # 32
-                                (0, 0.1),   # 0.02424
-                                (0, 0.1),   # 0.01052
-                                (0, 1),     # 0.1378
-                                (0, 100)]   # 40.14
-
-        # Loading experimental data
-        vsteps, act_exp = data_ina.IV_DiasFig6()
-        prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
-        intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
-        self.data_exp = [[vsteps, act_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp]]
-
-        # Define experimental setup for simulations
-        setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 200,
-                         'vsteps': vsteps, 'tstep': 100,
-                         'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
-        setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
-                           'vsteps': prepulses, 'tstep': 200,
-                           'xlabel': 'Membrane potential (mV)',
-                           'ylabel': 'Normalised conductance'}
-        setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 200,
-                         'vstep': -40, 'tstep1': 20, 'tstep2': 20,
-                         'twaits': intervals,
-                         'xlabel': 'Interval (ms)',
-                         'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
-
-        super(ina2, self).__init__()
-
-class incx(AbstractChannel):
-    def __init__(self):
-        self.name = 'incx'
+        self.name = 'fullsim'
         self.model_name = 'Houston2017.mmt'
-        self.publication = 'Bondarenko et al., 2004'
+        self.publication = 'na'
 
-        # Parameters involved in ABC process
-        self.parameters = ['incx.k_NaCa',
-                           'incx.k_sat',
-                           'incx.eta',
-                           'incx.K_mCa',
-                           'incx.K_mNa']
+        self.parameter_names =['ik1.g_K1','ipca.i_pCa_max','inak.i_NaK_max','incx.k_NaCa','icab.g_Cab','inab.g_Nab']
 
-        # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1000),      # 292.8
-                                (0, 1),         # 0.1
-                                (0, 1),         # 0.35
-                                (0, 10000),     # 1380
-                                (0, 100000)]    # 87500
+        self.prior_intervals = [(0, 1),    # 0.2938
+                                (0, 10),    # 1
+                                (0, 10),    # 0.88
+                                (0, 500),   # 292.8
+                                (0, 0.001), # 0.000367
+                                (0, 0.01)]  # 0.0026
 
-        # Loading experimental data
-        vsteps, act_exp = data_incx.IV_Lu2016Fig2()
-        self.data_exp = [[vsteps, act_exp]]
+        self.data_exp = [['membrane.V',
+                          'calcium_concentration.Cai'],
+                          [-67.0,0.115]]
 
-        # Define experimental setup for simulations
-        setup_exp_act = {'sim_type': 'TimeIndependentActivationSim',
-                         'variable': 'incx.i_NaCa',
-                         'vsteps': vsteps,
-                         'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
-        self.setup_exp = [setup_exp_act]
-
-        super(incx, self).__init__()
+        self.setup_exp = [{'sim_type': 'FullSimulation'}]
