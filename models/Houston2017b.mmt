@@ -8,16 +8,6 @@ desc: """
 name: houston_2017
 # Initial values
 membrane.V                                                       = -67.0
-calcium_concentration.Cai                                        = 0.115001
-calcium_concentration.Cass                                       = 0.115001
-calcium_concentration.CaJSR                                      = 1299.5
-calcium_concentration.CaNSR                                      = 1299.5
-calcium_fluxes.P_RyR                                             = 0
-calcium_buffering.LTRPN_Ca                                       = 11.2684
-calcium_buffering.HTRPN_Ca                                       = 125.29
-ryr.P_O1                                         =  1.49102000000000000e-5
-ryr.P_O2                                         =  9.51725999999999945e-11
-ryr.P_C2                                         =  1.67739999999999990e-4
 ical.O                                         =  9.30307999999999919e-19
 ical.C2                                        =  1.24215999999999991e-4
 ical.C3                                        =  5.78679000000000003e-9
@@ -50,11 +40,11 @@ time = 0 bind time
 
 [membrane]
 # Extracellular ion concentrations
-Cao = 1800
+Ca_o = 1800
     in [uM]
-Ko = 5400
+K_o = 5400
     in [uM]
-Nao = 154000
+Na_o = 154000
     in [uM]
 Cm = 1
     in [uF/cm^2]
@@ -155,15 +145,24 @@ b3 = q8 * 1e-4 + q9 * 1e-6 * (V + p11)
 b4 = a3
 b5 = a3 / 50
 
-# Rapid delayed rectifying K+ current - Takeuchi et al. (2013)
+# Rapid delayed rectifier K+ current - Takeuchi et al. (2013)
 [ikr]
+use membrane.V as V
+use membrane.K_o as K_o
+use k_conc.E_K as E_K
+
 g_Kr = 0.73 [nS/pF]
     in [nS/pF]
-xkr_ss = 1 / (1 + exp(-(membrane.V + k_xss1) / k_xss2))
+G_Kr = g_Kr * sqrt(K_o / 5400 [uM]) * xkr * rkr
+    in [nS/pF]
+i_Kr = G_Kr * (V - E_K)
+    in [pA/pF]
+
+xkr_ss = 1 / (1 + exp(-(V + k_xss1) / k_xss2))
     in [1]
-tau_xkr = k_xtau1 * (k_xtau2 + k_xtau3 * exp(-((membrane.V + k_xtau4)/k_xtau5) ^ 2))
+tau_xkr = k_xtau1 * (k_xtau2 + k_xtau3 * exp(-((V + k_xtau4)/k_xtau5) ^ 2))
     in [ms]
-rkr = 1 / (1 + exp((membrane.V + k_r1) / k_r2))
+rkr = 1 / (1 + exp((V + k_r1) / k_r2))
     in [1]
 dot(xkr) = (xkr_ss - xkr) / tau_xkr
     in [1]
@@ -187,20 +186,18 @@ k_r1 = 55 [mV]
 k_r2 = 24 [mV]
     in [mV]
 
-G_Kr = g_Kr * sqrt(membrane.Ko / 5400 [uM]) * xkr * rkr
-    in [nS/pF]
-i_Kr = G_Kr * (membrane.V - potassium_concentration.E_K)
-    in [pA/pF]
 
-# Ultrarapidly activating delayed rectifying K+ current - Bondarenko et al.
+# Ultrarapidly activating delayed rectifier K+ current - Bondarenko et al.
 # (2004)
 [ikur]
 use membrane.V as V
+use k_conc.E_K as E_K
+
 g_Kur = 0.0975
     in [mS/uF]
 G_Kur = g_Kur * a_ur * i_ur
     in [mS/uF]
-i_Kur = G_Kur * (V - potassium_concentration.E_K)
+i_Kur = G_Kur * (V - E_K)
     in [pA/pF]
 
 dot(a_ur) = (a_ur_ss - a_ur) / tau_a_ur
@@ -239,16 +236,23 @@ k_itau2 = 1.7
 
 # Transient outward K+ current - Takeuchi et al. (2013)
 [ito]
+use membrane.V as V
+use k_conc.E_K as E_K
+
 g_to = 0.12375 [nS/pF]
      in [nS/pF]
+G_to = g_to * xto * yto
+    in [nS/pF]
+i_to = G_to * (V - E_K)
+    in [pA/pF]
 
-xto_ss = 1 / (1 + exp(-(membrane.V - k_xss1) / k_xss2))
+xto_ss = 1 / (1 + exp(-(V - k_xss1) / k_xss2))
     in [1]
-tau_xto = k_xtau1 + k_xtau2 * exp(-((membrane.V) / k_xtau3) ^ 2)
+tau_xto = k_xtau1 + k_xtau2 * exp(-((V) / k_xtau3) ^ 2)
     in [ms]
-yto_ss = 1 / (1 + exp((membrane.V + k_yss1) / k_yss2))
+yto_ss = 1 / (1 + exp((V + k_yss1) / k_yss2))
     in [1]
-tau_yto = k_ytau1 + k_ytau2 * exp(-((membrane.V + k_ytau3) / k_ytau4) ^ 2)
+tau_yto = k_ytau1 + k_ytau2 * exp(-((V + k_ytau3) / k_ytau4) ^ 2)
     in [ms]
 dot(xto) = (xto_ss - xto) / tau_xto
     in [1]
@@ -277,25 +281,35 @@ k_ytau3 = 52.45 [mV]
 k_ytau4 = 15.8827 [mV]
     in [mV]
 
-G_to = g_to * xto * yto
-    in [nS/pF]
-i_to = G_to * (membrane.V - potassium_concentration.E_K)
-    in [pA/pF]
 
 # Hyperpolarisation activated nonselective cation current - Majumder et al.
 # (2016)
 [iha]
+use membrane.V as V
+use na_conc.E_Na as E_Na
+use k_conc.E_K as E_K
+
 g_ha = 0.021 [mS/uF]
     in [mS/uF]
+G_ha = g_ha * y
+    in [mS/uF]
+i_haNa = G_ha * k_i_haNa * (V - E_Na)
+    in [pA/pF]
+i_haK = G_ha * (1 - k_i_haNa) * (V - E_K)
+    in [pA/pF]
+k_i_haNa = 0.2
+    in [1]
+i_ha = i_haNa + i_haK
+    in [pA/pF]
 
-y_ss = 1 / (1 + exp((membrane.V + k_yss1) / k_yss2))
+y_ss = 1 / (1 + exp((V + k_yss1) / k_yss2))
     in [1]
 k_yss1 = 78.65 [mV]
     in [mV]
 k_yss2 = 6.33 [mV]
     in [mV]
 
-tau_y = 1000 * k_ytau1 / (k_ytau2 * exp((membrane.V + k_ytau3) / k_ytau4) + k_ytau5 * exp((membrane.V + k_ytau6) / -k_ytau7))
+tau_y = 1000 * k_ytau1 / (k_ytau2 * exp((V + k_ytau3) / k_ytau4) + k_ytau5 * exp((V + k_ytau6) / -k_ytau7))
     in [ms]
 k_ytau1 = 1 [ms]
     in [ms]
@@ -315,36 +329,25 @@ k_ytau7 = 14.19 [mV]
 dot(y) = (y_ss - y) / tau_y
     in [1]
 
-G_ha = g_ha * y
-    in [mS/uF]
-i_haNa = G_ha * k_i_haNa * (membrane.V - sodium_concentration.E_Na)
-    in [pA/pF]
-i_haK = G_ha * (1-k_i_haNa) * (membrane.V - potassium_concentration.E_K)
-    in [pA/pF]
-
-k_i_haNa = 0.2
-    in [1]
-
-i_ha = i_haNa + i_haK
-    in [pA/pF]
 
 # T-type Ca2+ current - Takeuchi et al. (2013)
 [icat]
 use membrane.V as V
+
 g_CaT = 0.4122
     in [mS/uF]
-E_CaT = 45 # Dias et al., 2014 report 33mV for HL1-6
+E_CaT = 45
     in [mV]
 G_CaT = g_CaT * d * f
     in [mS/uF]
 i_CaT = G_CaT * (V - E_CaT)
     in [pA/pF]
 
-dot(d) = (dss - d)/tau_d
+dot(d) = (dss - d) / tau_d
     in [1]
-tau_d = (k_dtau1*exp((V+k_dtau2)/k_dtau3) + k_dtau4*exp(-(V+k_dtau5)/k_dtau6))^(-1)
+tau_d = (k_dtau1 * exp((V + k_dtau2) / k_dtau3) + k_dtau4 * exp(-(V + k_dtau5) / k_dtau6)) ^ (-1)
     in [1]
-dss = (1 + exp(-(V+k_dss1)/k_dss2))^(-1)
+dss = (1 + exp(-(V + k_dss1)/k_dss2)) ^ (-1)
     in [1]
 
 k_dss1 = 30
@@ -364,11 +367,11 @@ k_dtau5 = 26.3
 k_dtau6 = 30
     in [mV]
 
-dot(f) = (fss - f)/tau_f
+dot(f) = (fss - f) / tau_f
     in [1]
-fss = (1 + exp((V+k_fss1)/k_fss2))^(-1)
+fss = (1 + exp((V + k_fss1) / k_fss2)) ^ (-1)
     in [1]
-tau_f = (k_ftau1 * 1e-2 * exp(-(V+k_ftau2)/k_ftau3) + k_ftau4 * 1e-2 * exp((V+k_ftau5)/k_ftau6))^(-1)
+tau_f = (k_ftau1 * 1e-2 * exp(-(V + k_ftau2) / k_ftau3) + k_ftau4 * 1e-2 * exp((V + k_ftau5) / k_ftau6)) ^ (-1)
     in [1]
 
 k_fss1 = 48
@@ -390,6 +393,19 @@ k_ftau6 = 30
 
 # L-type Ca2+ current - Bondarenko et al. (2004)
 [ical]
+use membrane.V as V
+
+g_CaL = 0.1729
+    in [mS/uF]
+E_CaL = 33.2 # value reported for HL1-6 in Dias2014 (original: 63)
+    in [mV]
+i_CaL_max = 17.1 # value reported for HL1-6 in Dias2014 (original: 7)
+    in [pA/pF]
+G_CaL = g_CaL * O
+    in [mS/uF]
+i_CaL = G_CaL * (V - E_CaL)
+    in [pA/pF]
+
 C1 = 1 - (O + C2 + C3 + C4 + I1 + I2 + I3)
     in [1]
 dot(C2) = 4 * alpha * C1 + 2 * beta * C3 - (beta * C2 + 3 * alpha * C2)
@@ -406,20 +422,8 @@ dot(I3) = 0.001 * (Kpcf * I1 - alpha * I3) + gamma * I2 + 1 [ms] * gamma * Kpcf 
     in [1]
 dot(O) = alpha * C4 + Kpcb * I1 + 0.001 * (alpha * I2 - Kpcf * O) - (4 * beta * O + gamma * O)
     in [1]
-G_CaL = g_CaL * O
-    in [mS/uF]
-i_CaL = G_CaL * (membrane.V - E_CaL)
-    in [pA/pF]
 
-# Parameters
-g_CaL = 0.1729
-    in [mS/uF]
-E_CaL = 33.2 # value reported for HL1-6 in Dias2014 (original: 63)
-    in [mV]
-i_CaL_max = 17.1 # value reported for HL1-6 in Dias2014 (original: 7)
-    in [pA/pF]
-
-alpha = kalpha1 * exp((membrane.V + kalpha2) / kalpha3) * (1 + kalpha4 * exp(-(membrane.V + kalpha5) ^ 2 / kalpha6) - kalpha7 * exp(-(membrane.V + kalpha8) ^ 2 / kalpha9)) / (1 + kalpha10 * exp((membrane.V + kalpha11) / kalpha12))
+alpha = kalpha1 * exp((V + kalpha2) / kalpha3) * (1 + kalpha4 * exp(-(V + kalpha5) ^ 2 / kalpha6) - kalpha7 * exp(-(V + kalpha8) ^ 2 / kalpha9)) / (1 + kalpha10 * exp((V + kalpha11) / kalpha12))
     in [mS/uF]
 kalpha1 = 0.4 [mS/uF]
     in [mS/uF]
@@ -446,7 +450,7 @@ kalpha11 = 12 [mV]
 kalpha12 = 10 [mV]
     in [mV]
 
-beta = kbeta1 * exp(-(membrane.V + kbeta2) / kbeta3)
+beta = kbeta1 * exp(-(V + kbeta2) / kbeta3)
     in [mS/uF]
 kbeta1 = 0.05 [mS/uF]
     in [mS/uF]
@@ -455,7 +459,7 @@ kbeta2 = 12 [mV]
 kbeta3 = 13 [mV]
     in [mV]
 
-gamma = Kpc_max * calcium_concentration.Cass / (Kpc_half + calcium_concentration.Cass)
+gamma = Kpc_max * ca_conc.Ca_subSL / (Kpc_half + ca_conc.Ca_subSL)
     in [mS/uF]
 
 Kpc_half = 20 [uM]
@@ -465,7 +469,7 @@ Kpc_max = 0.23324 [mS/uF]
 Kpcb = 0.0005 [mS/uF]
     in [mS/uF]
 
-Kpcf = kKpcf1 * (1 - exp(-(membrane.V + kKpcf2) ^ 2 / kKpcf3))
+Kpcf = kKpcf1 * (1 - exp(-(V + kKpcf2) ^ 2 / kKpcf3))
     in [mS/uF]
 kKpcf1 = 13 [mS/uF]
     in [mS/uF]
@@ -476,9 +480,13 @@ kKpcf3 = 100 [mV^2]
 
 # Inward rectifying K+ current - Bondarenko et al. (2004)
 [ik1]
-i_K1 = g_K1 * membrane.Ko / (membrane.Ko + k_1) * (membrane.V - E_K1 + k_3) / (1 + exp(k_2 * 1e-2 * (membrane.V - E_K1 + k_3)))
+use membrane.K_o as K_o
+use membrane.V as V
+use k_conc.E_K as E_K
+
+i_K1 = g_K1 * K_o / (K_o + k_1) * (V - E_K1 + k_3) / (1 + exp(k_2 * 1e-2 * (V - E_K1 + k_3)))
     in [pA/pF]
-E_K1 = potassium_concentration.E_K
+E_K1 = E_K
     in [mV]
 g_K1 = 0.2938 [mS/uF]
     in [mS/uF]
@@ -493,20 +501,26 @@ k_3 = 0 [mV]
 [ipca]
 Km_pCa = 0.5
     in [uM]
-i_pCa = i_pCa_max * calcium_concentration.Cai ^ 2 / (Km_pCa ^ 2 + calcium_concentration.Cai ^ 2)
+i_pCa = i_pCa_max * ca_conc.Ca_subSL ^ 2 / (Km_pCa ^ 2 + ca_conc.Ca_subSL ^ 2)
     in [pA/pF]
 i_pCa_max = 1
     in [pA/pF]
 
 # Na+/Ca2+ exchange current - Bondarenko et al. (2004)
 [incx]
+use membrane.Na_o as Na_o
+use membrane.Ca_o as Ca_o
+use membrane.V as V
+use membrane.FoRT as FoRT
+use na_conc.Na_i as Na_i
+
 K_mCa = 1380
     in [uM]
 K_mNa = 87500
     in [uM]
 eta = 0.35
     in [1]
-i_NCX = k_NaCa * 1 / (K_mNa ^ 3 + membrane.Nao ^ 3) * 1 / (K_mCa + membrane.Cao) * 1 / (1 + k_sat * exp((eta - 1) * membrane.V * membrane.F / (membrane.R * membrane.T))) * (exp(eta * membrane.V * membrane.F / (membrane.R * membrane.T)) * sodium_concentration.Nai ^ 3 * membrane.Cao - exp((eta - 1) * membrane.V * membrane.F / (membrane.R * membrane.T)) * membrane.Nao ^ 3 * calcium_concentration.Cai)
+i_NCX = k_NaCa * 1 / (K_mNa ^ 3 + Na_o ^ 3) * 1 / (K_mCa + Ca_o) * 1 / (1 + k_sat * exp((eta - 1) * V * FoRT)) * (exp(eta * V * FoRT) * Na_i ^ 3 * Ca_o - exp((eta - 1) * V * FoRT) * Na_o ^ 3 * ca_conc.Ca_subSL)
     in [pA/pF]
 k_NaCa = 292.8
     in [pA/pF]
@@ -515,33 +529,45 @@ k_sat = 0.1
 
 # Na+/K+ pump current - Bondarenko et al. (2004)
 [inak]
+use membrane.V as V
+use membrane.FoRT as FoRT
+use na_conc.Na_i as Na_i
+use membrane.K_o as K_o
+use membrane.Na_o as Na_o
+
 Km_Ko = 1500
     in [uM]
 Km_Nai = 21000
     in [uM]
-f_NaK = 1 / (1 + 0.1245 * exp(-0.1 * membrane.V * membrane.F / (membrane.R * membrane.T)) + 0.0365 * sigma * exp(-membrane.V * membrane.F / (membrane.R * membrane.T)))
+f_NaK = 1 / (1 + 0.1245 * exp(-0.1 * V * FoRT) + 0.0365 * sigma * exp(-V * FoRT))
     in [1]
-i_NaK = i_NaK_max * f_NaK * 1 / (1 + (Km_Nai / sodium_concentration.Nai) ^ 1.5) * membrane.Ko / (membrane.Ko + Km_Ko)
+i_NaK = i_NaK_max * f_NaK * 1 / (1 + (Km_Nai / Na_i) ^ 1.5) * K_o / (K_o + Km_Ko)
     in [pA/pF]
 i_NaK_max = 0.88
     in [pA/pF]
-sigma = 1 / 7 * (exp(membrane.Nao / 67300 [uM]) - 1)
+sigma = 1 / 7 * (exp(Na_o / 67300 [uM]) - 1)
     in [1]
 
 # Ca2+ background current - Bondarenko et al. (2004)
 [icab]
-E_CaN = membrane.R * membrane.T / (2 * membrane.F) * log(membrane.Cao / calcium_concentration.Cai)
-  in [mV]
+use membrane.FoRT as FoRT
+use membrane.Ca_o as Ca_o
+use membrane.V as V
+use ca_conc.E_Ca as E_Ca
+
 g_Cab = 0.000367
   in [mS/uF]
-i_Cab = g_Cab * (membrane.V - E_CaN)
+i_Cab = g_Cab * (V - E_Ca)
   in [pA/pF]
 
 # Background Na+ current - Bondarenko et al. (2004)
 [inab]
+use membrane.V as V
+use na_conc.E_Na as E_Na
+
 g_Nab = 0.0026
     in [mS/uF]
-i_Nab = g_Nab * (membrane.V - sodium_concentration.E_Na)
+i_Nab = g_Nab * (V - E_Na)
     in [pA/pF]
 
 # Sarcoplasmic reticulum - Korhonen et al. (2009)
@@ -553,16 +579,16 @@ k_open = 1          # rate constant for RyR opening
 k_close = 0.16      # rate constant for RyR closing
     in  [1/ms]
 
-J_RyR = k_RyR * P_open * (ca_conc_sr.Ca_SRrelease - ca_conc_sr.Ca_subSR)
+J_RyR = k_RyR * P_open * (ca_conc_sr.Ca_SRrelease - ca_conc.Ca_subSR)
     in [uM/ms]
-J_RyR-Caffeine = 5.5e-4 * (ca_conc_sr.Ca_SRrelease - ca_conc_sr.Ca_subSR)
+J_RyR-Caffeine = 5.5e-4 * (ca_conc_sr.Ca_SRrelease - ca_conc.Ca_subSR)
     in [uM/ms]
 K_mRyR = 3.51 * (1 + exp((ca_conc_sr.Ca_SRrelease - 530) / 200)) ^ (-1) + 0.25
     in [uM]
 P_closed = 1 - P_open
     in [1]
 
-dot(P_open) = P_closed * k_open * (1 + (K_mRyR / ca_conc_sr.Ca_subSR) ^ 4) ^ -1 - k_close * P_open
+dot(P_open) = P_closed * k_open * (1 + (K_mRyR / ca_conc.Ca_subSR) ^ 4) ^ -1 - k_close * P_open
     in [1]
 
 [serca]
@@ -575,14 +601,14 @@ K_mr = 7000 * K_mf  # half-saturation for reverse SERCA
 H = 2               # hill coefficient for SERCA
     in [1]
 
-J_SERCA = (V_max * (ca_conc_sr.Ca_subSR / K_mf) ^ H - V_max * (ca_conc_sr.Ca_SRuptake / K_mr) ^ H) / (1 + (ca_conc_sr.Ca_subSR / K_mf) ^ H + (ca_conc_sr.Ca_SRuptake / K _mr) ^ H)
+J_SERCA = (V_max * (ca_conc.Ca_subSR / K_mf) ^ H - V_max * (ca_conc_sr.Ca_SRuptake / K_mr) ^ H) / (1 + (ca_conc.Ca_subSR / K_mf) ^ H + (ca_conc_sr.Ca_SRuptake / K _mr) ^ H)
     in [uM/ms]
 
 [leak_flux]
 k_leak = 5e-6       # SR leak rate constant
     in [1/ms]
 
-J_leak = k_leak * (ca_conc_sr.Ca_SRuptake - ca_conc_sr.Ca_subSR)
+J_leak = k_leak * (ca_conc_sr.Ca_SRuptake - ca_conc.Ca_subSR)
     in [uM/ms]
 
 [ca_diffusion]
@@ -626,7 +652,7 @@ E_K = 1/membrane.FoRT * log(membrane.K_o / K_i)
 # discretised PDE
 r_SR = 6        # radius of SR
     in [um]
-r_SL = 10.5     # radius of r_SL
+r_SL = 10.5     # radius of SL
     in [um]
 r_delt = 0.5    # spatial step
     in [um]
@@ -639,6 +665,13 @@ V_subSR = (4 / 3 * membrane.pi * (r_SR + r_delt) ^ 3 - 4 / 3 * membrane.pi * r_S
     in [pL]
 V_subSL = (4 / 3 * membrane.pi * r_SL ^ 3 - 4 / 3 * membrane.pi * (r_SL - r_delt) ^ 3) * 1e-3
     in [pL]
+
+Ca_subSR = c_1
+    in [uM]
+Ca_subSL = c_9
+    in [uM]
+E_Ca = 1 / (2 * FoRT) * log(membrane.Ca_o / Ca_subSL)
+    in [mV]
 
 j_1 = (r_SR + 0.5*r_delt) / r_delt
     in [1]
