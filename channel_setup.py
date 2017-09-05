@@ -817,3 +817,54 @@ class full_sim(AbstractChannel):
                           [-67.0,0.115]]
 
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
+
+class ina3(AbstractChannel):
+    def __init__(self):
+        self.name = 'ina3'
+        self.model_name = 'Korhonen2009_iNa.mmt'
+        self.publication = 'Korhonen et al., 2009'
+
+        # Parameters involved in ABC process
+        self.parameter_names = ['g_Na',
+                                'v_offset',
+                                'p1',
+                                'p2',
+                                'q1',
+                                'q2']
+        # Parameter specific prior intervals
+        self.prior_intervals = [(0, 100),       # 35
+                                (-50, 50),      # 0
+                                (0, 100),       # 45
+                                (-10, 10),      # -6.5
+                                (0, 100),       # 76.1
+                                (0, 10)         # 6.07
+                                ]
+
+        # Loading experimental data
+        vsteps, act_exp = data_ina.IV_DiasFig6()
+        prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
+        intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
+        self.data_exp = [[vsteps, act_exp],
+                         [prepulses, inact_exp],
+                         [intervals, rec_exp]]
+
+        # Define experimental setup for simulations
+        setup_exp_act = {'sim_type': 'ActivationSim',
+                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 500,
+                         'vsteps': vsteps, 'tstep': 100,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
+                           'vsteps': prepulses, 'tstep': 500,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
+        setup_exp_rec = {'sim_type': 'RecoverySim',
+                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 500,
+                         'vstep': -40, 'tstep1': 20, 'tstep2': 20,
+                         'twaits': intervals,
+                         'xlabel': 'Interval (ms)',
+                         'ylabel': 'Relative recovery'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+
+        super(ina3, self).__init__()
