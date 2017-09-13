@@ -468,52 +468,31 @@ class ikur(AbstractChannel):
 class ical(AbstractChannel):
     def __init__(self):
         self.name = 'ical'
-        self.model_name = 'Houston2017.mmt'
+        self.model_name = 'Korhonen2009_iCaL.mmt'
         self.publication = 'Bondarenko et al., 2004'
 
         # Parameters involved in ABC process
-        self.parameter_names = ['kalpha1',
-                                'kalpha2',
-                                'kalpha3',
-                                'kalpha4',
-                                'kalpha5',
-                                'kalpha6',
-                                'kalpha7',
-                                'kalpha1',
-                                'kalpha9',
-                                'kalpha10',
-                                'kalpha11',
-                                'kalpha12',
-                                'kbeta1',
-                                'kbeta2',
-                                'kbeta3']
+        self.parameter_names = ['G_CaL',
+                                'p1',
+                                'p2',
+                                'q1',
+                                'q2']
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 1),   # 0.4
-                                (0, 100), # 12
-                                (1, 100), # 10
-                                (0, 10),  # 1.068
-                                (0, 1),   # 0.7
-                                (0, 100), # 40
-                                (1, 100), # 10
-                                (0, 1),   # 0.75
-                                (0, 100), # 20
-                                (1, 1000),# 400
-                                (0, 1),   # 0.12
-                                (0, 100), # 12
-                                (1, 100), # 10
-                                (0, 0.1), # 0.05
-                                (0, 100), # 12
-                                (1, 100)] # 13
+        self.prior_intervals = [(0, 0.0001),     # 0.000063
+                                (-100, 0),
+                                (0, 10),
+                                (0, 100),
+                                (0, 10)]
 
         # Loading experimental data
         vsteps, act_exp = data_ical.IV_DiasFig7()
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
         intervals, rec_exp = data_ical.Recovery_RaoFig3D()
         self.data_exp = [[vsteps, act_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp]]
+                         [prepulses, inact_exp]]#,
+                        #  [intervals, rec_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
@@ -522,17 +501,17 @@ class ical(AbstractChannel):
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 400,
+                           'variable': 'ical.g_CaL', 'vhold': -20, 'thold': 400,
                            'vsteps': prepulses, 'tstep': 1000,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
-        setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ical.i_CaL', 'vhold': -40, 'thold': 5000,
-                         'vstep': 20, 'tstep1': 250, 'tstep2': 250,
-                         'twaits': intervals,
-                         'xlabel': 'Interval (ms)',
-                         'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+        # setup_exp_rec = {'sim_type': 'RecoverySim',
+        #                  'variable': 'ical.i_CaL', 'vhold': -40, 'thold': 5000,
+        #                  'vstep': 20, 'tstep1': 250, 'tstep2': 250,
+        #                  'twaits': intervals,
+        #                  'xlabel': 'Interval (ms)',
+        #                  'ylabel': 'Relative recovery'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact]#, setup_exp_rec]
 
 
         super(ical, self).__init__()
@@ -818,9 +797,9 @@ class full_sim(AbstractChannel):
 
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
 
-class ina3(AbstractChannel):
+class ina2(AbstractChannel):
     def __init__(self):
-        self.name = 'ina3'
+        self.name = 'ina'
         self.model_name = 'Korhonen2009_iNa.mmt'
         self.publication = 'Korhonen et al., 2009'
 
@@ -835,7 +814,7 @@ class ina3(AbstractChannel):
         self.prior_intervals = [(0, 100),       # 35
                                 (-50, 50),      # 0
                                 (0, 100),       # 45
-                                (-10, 10),      # -6.5
+                                (-10, 0),      # -6.5
                                 (0, 100),       # 76.1
                                 (0, 10)         # 6.07
                                 ]
@@ -867,4 +846,4 @@ class ina3(AbstractChannel):
                          'ylabel': 'Relative recovery'}
         self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
 
-        super(ina3, self).__init__()
+        super(ina2, self).__init__()
