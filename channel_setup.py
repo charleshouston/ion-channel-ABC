@@ -468,8 +468,8 @@ class ikur(AbstractChannel):
 class ical(AbstractChannel):
     def __init__(self):
         self.name = 'ical'
-        self.model_name = 'Korhonen2009_iCaL.mmt'
-        self.publication = 'Bondarenko et al., 2004'
+        self.model_name = 'Houston2017b.mmt' # use full model
+        self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
         self.parameter_names = ['G_CaL',
@@ -487,16 +487,17 @@ class ical(AbstractChannel):
                                 (0, 10)]
 
         # Loading experimental data
-        vsteps, act_exp = data_ical.IV_DiasFig7()
+        # vsteps, act_exp = data_ical.IV_DiasFig7()
+        vsteps, act_exp = data_ical.IV_RaoFig3B()
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
-        intervals, rec_exp = data_ical.Recovery_RaoFig3D()
+        # intervals, rec_exp = data_ical.Recovery_RaoFig3D()
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp]]#,
                         #  [intervals, rec_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ical.i_CaL', 'vhold': -40, 'thold': 2000,
+                         'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 2000,
                          'vsteps': vsteps, 'tstep': 250,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Current density (pA/pF)'}

@@ -23,6 +23,17 @@ def IV_DiasFig7():
     return x,y
 
 '''
+    I-V curve
+
+    Returns x, y data from points in Fig. 3B from Rao et al., 2009
+'''
+def IV_RaoFig3B():
+    x = [-40,-30,-20,-10,0,10,20,30,40,50,60]
+    x = [v+0.0001 for v in x]
+    y = [0.0346804,-0.017183,-2.586722,-10.755010,-18.532882,-21.579746,-19.808902,-15.433683,-8.541520,-3.775885,-0.312333]
+    return x,y
+
+'''
 Activation curve
 
 Returns x,y data from activation points in Fig 3C from Rao et al., 2009
