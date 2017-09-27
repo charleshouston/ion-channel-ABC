@@ -68,6 +68,10 @@ class AbstractChannel(object):
                     dv = se['vsteps'][1] - se['vsteps'][0]
                     self.simulations_x[i] = se['vsteps']
 
+                normalised = False
+                if 'normalise' in se:
+                    normalised = se['normalise']
+
                 self.simulations.append(
                     sim.ActivationSim(se['variable'],
                                       vhold=se['vhold'],
@@ -75,7 +79,8 @@ class AbstractChannel(object):
                                       vmin=min(se['vsteps']),
                                       vmax=max(se['vsteps']),
                                       dv=dv,
-                                      tstep=se['tstep']))
+                                      tstep=se['tstep'],
+                                      normalise=normalised))
 
 
             elif se['sim_type'] == 'InactivationSim':
@@ -472,16 +477,14 @@ class ical(AbstractChannel):
         self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
-        self.parameter_names = ['G_CaL',
-                                'p1',
+        self.parameter_names = ['p1',
                                 'p2',
                                 'q1',
                                 'q2']
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 0.0001),     # 0.000063
-                                (-100, 0),
+        self.prior_intervals = [(-100, 0),
                                 (0, 10),
                                 (0, 100),
                                 (0, 10)]
@@ -490,15 +493,14 @@ class ical(AbstractChannel):
         # vsteps, act_exp = data_ical.IV_DiasFig7()
         vsteps, act_exp = data_ical.IV_RaoFig3B()
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
-        # intervals, rec_exp = data_ical.Recovery_RaoFig3D()
         self.data_exp = [[vsteps, act_exp],
-                         [prepulses, inact_exp]]#,
-                        #  [intervals, rec_exp]]
+                         [prepulses, inact_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ical.open', 'vhold': -80, 'thold': 2000,
+                         'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 2000,
                          'vsteps': vsteps, 'tstep': 250,
+                         'normalise': True,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Normalised current density'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
@@ -506,13 +508,7 @@ class ical(AbstractChannel):
                            'vsteps': prepulses, 'tstep': 1000,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
-        # setup_exp_rec = {'sim_type': 'RecoverySim',
-        #                  'variable': 'ical.i_CaL', 'vhold': -40, 'thold': 5000,
-        #                  'vstep': 20, 'tstep1': 250, 'tstep2': 250,
-        #                  'twaits': intervals,
-        #                  'xlabel': 'Interval (ms)',
-        #                  'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact]#, setup_exp_rec]
+        self.setup_exp = [setup_exp_act, setup_exp_inact]
 
 
         super(ical, self).__init__()

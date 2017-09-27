@@ -41,7 +41,7 @@ class ActivationSim(AbstractSim):
     no current   current!
     '''
     def __init__(self, variable, vhold, thold,
-                 vmin, vmax, dv, tstep):
+                 vmin, vmax, dv, tstep, normalise=False):
 
         super(ActivationSim, self).__init__()
 
@@ -52,6 +52,7 @@ class ActivationSim(AbstractSim):
         self.vmax=vmax
         self.dv=dv
         self.tstep=tstep
+        self.normalise=normalise
 
     def _generate(self, model_name):
         '''
@@ -80,6 +81,9 @@ class ActivationSim(AbstractSim):
             pks = self.sim.peaks()
         except:
             return None
+
+        if self.normalise:
+            pks[self.variable] = pks[self.variable]/np.min(pks[self.variable])
 
         return pks[self.variable]
 
