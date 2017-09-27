@@ -419,7 +419,9 @@ i_CaL = g_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o)
     in [pA/pF]
 G_CaL = 0.000063
     in [dm^3/F/ms]
-g_CaL = G_CaL * d * f * fCa
+open = d * f * fCa
+    in [1]
+g_CaL = G_CaL * open
     in [dm^3/F/ms]
 
 dot(d) = (d_ss - d) / tau_d

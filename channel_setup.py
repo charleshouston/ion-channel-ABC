@@ -497,10 +497,10 @@ class ical(AbstractChannel):
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 2000,
+                         'variable': 'ical.open', 'vhold': -80, 'thold': 2000,
                          'vsteps': vsteps, 'tstep': 250,
                          'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
+                         'ylabel': 'Normalised current density'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'ical.g_CaL', 'vhold': -20, 'thold': 400,
                            'vsteps': prepulses, 'tstep': 1000,
