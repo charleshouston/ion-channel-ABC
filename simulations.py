@@ -83,7 +83,7 @@ class ActivationSim(AbstractSim):
             return None
 
         if self.normalise:
-            pks[self.variable] = pks[self.variable]/np.min(pks[self.variable])
+            pks[self.variable] = pks[self.variable]/np.abs(np.min(pks[self.variable]))
 
         return pks[self.variable]
 
