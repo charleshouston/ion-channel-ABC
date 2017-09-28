@@ -32,8 +32,9 @@ def IV_RaoFig3B():
     x = [v+0.0001 for v in x]
     y = [0.0346804,-0.017183,-2.586722,-10.755010,-18.532882,-21.579746,-19.808902,-15.433683,-8.541520,-3.775885,-0.312333]
     # Normalise data for fitting
+    ymin = abs(min(y))
     for i in range(len(y)):
-        y[i] = y[i]/abs(min(y))
+        y[i] = y[i]/ymin
     return x,y
 
 '''
