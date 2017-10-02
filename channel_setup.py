@@ -484,7 +484,7 @@ class ical(AbstractChannel):
                                 'p5',
                                 'p6',
                                 'p7',
-                                'p8'
+                                'p8',
                                 'q1',
                                 'q2',
                                 'q3',
