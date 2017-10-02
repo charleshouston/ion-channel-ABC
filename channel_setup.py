@@ -479,15 +479,41 @@ class ical(AbstractChannel):
         # Parameters involved in ABC process
         self.parameter_names = ['p1',
                                 'p2',
+                                'p3',
+                                'p4',
+                                'p5',
+                                'p6',
+                                'p7',
+                                'p8'
                                 'q1',
-                                'q2']
+                                'q2',
+                                'q3',
+                                'q4',
+                                'q5',
+                                'q6',
+                                'q7',
+                                'q8',
+                                'q9']
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(-100, 0),
-                                (0, 10),
-                                (0, 100),
-                                (0, 10)]
+        self.prior_intervals = [(-100, 0),  # p1
+                                (0, 10),    # p2
+                                (-100, 0),  # p3 
+                                (0, 100),   # p4
+                                (0, 10),    # p5
+                                (0, 10),    # p6
+                                (0, 100),   # p7
+                                (0, 100),   # p8
+                                (0, 100),   # q1
+                                (0, 10),    # q2
+                                (0, 10000), # q3 
+                                (0, 100),   # q4
+                                (0, 1000),  # q5
+                                (0, 1000),  # q6   
+                                (0, 100),   # q7
+                                (0, 100),   # q8
+                                (0, 1000)]  # q9 
 
         # Loading experimental data
         # vsteps, act_exp = data_ical.IV_DiasFig7()
