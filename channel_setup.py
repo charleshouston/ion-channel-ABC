@@ -497,9 +497,9 @@ class ical(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(-100, 0),  # p1
+        self.prior_intervals = [(-50, 50),  # p1
                                 (0, 10),    # p2
-                                (-100, 0),  # p3 
+                                (-50, 50),  # p3 
                                 (0, 100),   # p4
                                 (0, 10),    # p5
                                 (0, 10),    # p6
@@ -513,7 +513,7 @@ class ical(AbstractChannel):
                                 (0, 1000),  # q6   
                                 (0, 100),   # q7
                                 (0, 100),   # q8
-                                (0, 1000)]  # q9 
+                                (-500, 500)]  # q9 
 
         # Loading experimental data
         # vsteps, act_exp = data_ical.IV_DiasFig7()
