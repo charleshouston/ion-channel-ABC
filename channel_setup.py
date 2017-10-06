@@ -519,10 +519,10 @@ class ical(AbstractChannel):
         # vsteps, act_exp = data_ical.IV_DiasFig7()
         vsteps, act_exp = data_ical.IV_RaoFig3B()
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
-        intervals, rec_exp = data_ical.Recovery_RaoFig3D()
+        #intervals, rec_exp = data_ical.Recovery_RaoFig3D()
         self.data_exp = [[vsteps, act_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp]]
+                         [prepulses, inact_exp]]#,
+                         #[intervals, rec_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
@@ -542,7 +542,7 @@ class ical(AbstractChannel):
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+        self.setup_exp = [setup_exp_act, setup_exp_inact]#, setup_exp_rec]
 
 
         super(ical, self).__init__()
