@@ -518,10 +518,10 @@ class ical(AbstractChannel):
         # Loading experimental data
         # vsteps, act_exp = data_ical.IV_DiasFig7()
         vsteps, act_exp = data_ical.IV_RaoFig3B()
-        # prepulses, inact_exp = data_ical.Inact_RaoFig3C()
+        prepulses, inact_exp = data_ical.Inact_RaoFig3C()
         #intervals, rec_exp = data_ical.Recovery_RaoFig3D()
-        self.data_exp = [[vsteps, act_exp]],
-                        #  [prepulses, inact_exp],
+        self.data_exp = [[vsteps, act_exp]]
+                        #  [prepulses, inact_exp]]
                          #[intervals, rec_exp]]
 
         # Define experimental setup for simulations
@@ -531,11 +531,11 @@ class ical(AbstractChannel):
                          'normalise': True,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Normalised current density'}
-        # setup_exp_inact = {'sim_type': 'InactivationSim',
-        #                    'variable': 'ical.g_CaL', 'vhold': -20, 'thold': 400,
-        #                    'vsteps': prepulses, 'tstep': 1000,
-        #                    'xlabel': 'Membrane potential (mV)',
-        #                    'ylabel': 'Normalised conductance'}
+        setup_exp_inact = {'sim_type': 'InactivationSim',
+                           'variable': 'ical.g_CaL', 'vhold': -20, 'thold': 400,
+                           'vsteps': prepulses, 'tstep': 1000,
+                           'xlabel': 'Membrane potential (mV)',
+                           'ylabel': 'Normalised conductance'}
         # setup_exp_rec = {'sim_type': 'RecoverySim',
         #                  'variable': 'ical.g_CaL', 'vhold': -80, 'thold': 1000,
         #                  'vstep': -20, 'tstep1': 250, 'tstep2': 250,
