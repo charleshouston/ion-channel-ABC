@@ -60,6 +60,11 @@ class AbstractChannel(object):
         self.simulations_x = [[] for i in range(len(self.setup_exp))]
 
         for i,se in enumerate(self.setup_exp):
+            
+            normalised = False
+            if 'normalise' in se:
+                normalised = se['normalise']
+
             if se['sim_type'] == 'ActivationSim':
                 if continuous:
                     dv = 1
@@ -67,10 +72,6 @@ class AbstractChannel(object):
                 else:
                     dv = se['vsteps'][1] - se['vsteps'][0]
                     self.simulations_x[i] = se['vsteps']
-
-                normalised = False
-                if 'normalise' in se:
-                    normalised = se['normalise']
 
                 self.simulations.append(
                     sim.ActivationSim(se['variable'],
@@ -82,14 +83,13 @@ class AbstractChannel(object):
                                       tstep=se['tstep'],
                                       normalise=normalised))
 
-
             elif se['sim_type'] == 'InactivationSim':
                 if continuous:
                     dv = 1
                     self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
                 else:
                     dv = se['vsteps'][1] - se['vsteps'][0]
-                    self.simulations_x[i] = se['vsteps']
+                    self.simulations_x[i] = se['vsteps']           
 
                 self.simulations.append(
                     sim.InactivationSim(se['variable'],
@@ -98,7 +98,8 @@ class AbstractChannel(object):
                                         vmin=min(se['vsteps']),
                                         vmax=max(se['vsteps']),
                                         dv=dv,
-                                        tstep=se['tstep']))
+                                        tstep=se['tstep'],
+                                        normalise=normalised))
 
             elif se['sim_type'] == 'RecoverySim':
                 twaits = se['twaits']
@@ -484,16 +485,16 @@ class ical(AbstractChannel):
                                 'p5',
                                 'p6',
                                 'p7',
-                                'p8']
-                                # 'q1',
-                                # 'q2',
-                                # 'q3',
-                                # 'q4',
-                                # 'q5',
-                                # 'q6',
-                                # 'q7',
-                                # 'q8',
-                                # 'q9']
+                                'p8',
+                                'q1',
+                                'q2',
+                                'q3',
+                                'q4',
+                                'q5',
+                                'q6',
+                                'q7',
+                                'q8',
+                                'q9']
 
         # Parameter specific prior intervals
         # Original values given in comments
@@ -504,25 +505,25 @@ class ical(AbstractChannel):
                                 (0, 10),    # p5
                                 (0, 10),    # p6
                                 (0, 100),   # p7
-                                (0, 100)]   # p8
-                                # (0, 100),   # q1
-                                # (0, 10),    # q2
-                                # (0, 10000), # q3 
-                                # (0, 100),   # q4
-                                # (0, 1000),  # q5
-                                # (0, 1000),  # q6   
-                                # (0, 100),   # q7
-                                # (0, 100),   # q8
-                                # (-500, 500)]  # q9 
+                                (0, 100),      # p8
+                                (0, 100),   # q1
+                                (0, 10),    # q2
+                                (0, 10000), # q3 
+                                (0, 100),   # q4
+                                (0, 1000),  # q5
+                                (0, 1000),  # q6   
+                                (0, 100),   # q7
+                                (0, 100),   # q8
+                                (-500, 500)]  # q9 
 
         # Loading experimental data
         # vsteps, act_exp = data_ical.IV_DiasFig7()
         vsteps, act_exp = data_ical.IV_RaoFig3B()
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
-        #intervals, rec_exp = data_ical.Recovery_RaoFig3D()
-        self.data_exp = [[vsteps, act_exp]]
-                        #  [prepulses, inact_exp]]
-                         #[intervals, rec_exp]]
+        # intervals, rec_exp = data_ical.Recovery_RaoFig3D()
+        self.data_exp = [[vsteps, act_exp],
+                         [prepulses, inact_exp]]#,
+                        #  [intervals, rec_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
@@ -532,17 +533,18 @@ class ical(AbstractChannel):
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Normalised current density'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'ical.g_CaL', 'vhold': -20, 'thold': 400,
+                           'variable': 'ical.i_CaL', 'vhold': -20, 'thold': 400,
                            'vsteps': prepulses, 'tstep': 1000,
+                           'normalise': True,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
         # setup_exp_rec = {'sim_type': 'RecoverySim',
-        #                  'variable': 'ical.g_CaL', 'vhold': -80, 'thold': 1000,
+        #                  'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 1000,
         #                  'vstep': -20, 'tstep1': 250, 'tstep2': 250,
         #                  'twaits': intervals,
         #                  'xlabel': 'Interval (ms)',
         #                  'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act]#, setup_exp_inact]#, setup_exp_rec]
+        self.setup_exp = [setup_exp_act, setup_exp_inact]#, setup_exp_rec]
 
 
         super(ical, self).__init__()

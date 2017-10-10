@@ -209,7 +209,7 @@ class InactivationSim(AbstractSim):
     t=0          t=tstep       t=tstep+thold
     '''
     def __init__(self, variable, vhold, thold,
-                 vmin, vmax, dv, tstep):
+                 vmin, vmax, dv, tstep, normalise=False):
 
         super(InactivationSim, self).__init__()
 
@@ -220,6 +220,7 @@ class InactivationSim(AbstractSim):
         self.vmax=vmax
         self.dv=dv
         self.tstep=tstep
+        self.normalise=normalise
 
     def _generate(self, model_name):
         """
@@ -247,6 +248,9 @@ class InactivationSim(AbstractSim):
             pks = self.sim.peaks(normalize=True)
         except:
             return None
+
+        if self.normalise:
+            pks[self.variable] = pks[self.variable]/np.min(pks[self.variable])
 
         return pks[self.variable]
 
