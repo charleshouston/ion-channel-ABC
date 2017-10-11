@@ -500,12 +500,12 @@ class ical(AbstractChannel):
         # Original values given in comments
         self.prior_intervals = [(-50, 50),  # p1
                                 (0, 10),    # p2
-                                (-50, 50),  # p3 
-                                (0, 100),   # p4
-                                (0, 10),    # p5
-                                (0, 10),    # p6
-                                (0, 100),   # p7
-                                (0, 100),      # p8
+                                (-100, 50),  # p3 
+                                (-50, 50),   # p4
+                                (-10, 10),    # p5
+                                (0, 20),    # p6
+                                (0, 200),   # p7
+                                (0, 200),   # p8
                                 (0, 100),   # q1
                                 (0, 10),    # q2
                                 (0, 10000), # q3 
@@ -520,10 +520,8 @@ class ical(AbstractChannel):
         # vsteps, act_exp = data_ical.IV_DiasFig7()
         vsteps, act_exp = data_ical.IV_RaoFig3B()
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
-        # intervals, rec_exp = data_ical.Recovery_RaoFig3D()
         self.data_exp = [[vsteps, act_exp],
-                         [prepulses, inact_exp]]#,
-                        #  [intervals, rec_exp]]
+                         [prepulses, inact_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
@@ -538,13 +536,7 @@ class ical(AbstractChannel):
                            'normalise': True,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
-        # setup_exp_rec = {'sim_type': 'RecoverySim',
-        #                  'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 1000,
-        #                  'vstep': -20, 'tstep1': 250, 'tstep2': 250,
-        #                  'twaits': intervals,
-        #                  'xlabel': 'Interval (ms)',
-        #                  'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact]#, setup_exp_rec]
+        self.setup_exp = [setup_exp_act, setup_exp_inact]
 
 
         super(ical, self).__init__()
