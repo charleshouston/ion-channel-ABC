@@ -770,18 +770,21 @@ class ikach(AbstractChannel):
 class ik1(AbstractChannel):
     def __init__(self):
         self.name = 'ik1'
-        self.model_name = 'Bondarenko2004_iK1.mmt'
-        self.publication = 'Bondarenko et al., 2004'
+        self.model_name = 'Korhonen2009_iK1.mmt'
+        self.publication = 'Korhonen et al., 2009'
 
         self.parameter_names = ['g_K1',
                                 'k_1',
                                 'k_2',
-                                'k_3']
+                                'k_3',
+                                'k_4']
 
-        self.prior_intervals = [(0, 1),     # 0.2938
-                                (0, 1000),  # 210
-                                (0, 10),    # 8.96
-                                (-50, 50)]  # 0
+        self.prior_intervals = [(0, 0.2),   # 0.0515
+                                (-500, 500),  # 210
+                                (0, 50),  # -6.1373
+                                (0, 1),     # 0.1653
+                                (0, 0.1)]   # 0.0319
+
 
         # Loading experimental data
         vsteps, act_peaks_exp = data_ik1.IV_GoldoniFig3D()
@@ -807,17 +810,18 @@ class full_sim(AbstractChannel):
         self.model_name = 'Houston2017.mmt'
         self.publication = 'na'
 
-        self.parameter_names =['ik1.g_K1','ipca.i_pCa_max','inak.i_NaK_max','incx.k_NaCa','icab.g_Cab','inab.g_Nab']
+        self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab']
 
-        self.prior_intervals = [(0, 1),    # 0.2938
-                                (0, 10),    # 1
-                                (0, 10),    # 0.88
+        self.prior_intervals = [(0, 10),    # 0.88
                                 (0, 500),   # 292.8
                                 (0, 0.001), # 0.000367
                                 (0, 0.01)]  # 0.0026
 
         self.data_exp = [['membrane.V',
-                          'calcium_concentration.Cai'],
+                          'calcium_concentration.Cai',
+                          'sodium_concentration.Nai',
+                          'potassium_conc.Ki',
+                          ],
                           [-67.0,0.115]]
 
         self.setup_exp = [{'sim_type': 'FullSimulation'}]

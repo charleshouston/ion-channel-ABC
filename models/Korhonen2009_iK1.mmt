@@ -1,0 +1,42 @@
+[[model]]
+name: Korhonen 2009 Inward rectifying K Current (i_K1)
+author: Charles Houston
+
+# Initial values
+membrane.V = -67.0
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ik1.i_K1
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 120
+    in [mM]
+Ki = 120
+    in [mM]
+
+
+[ik1]
+i_K1 = g_K1 * membrane.Ko / (membrane.Ko + k_1) * (membrane.V - E_K + k_2) / (k_3 + exp(k_4 * (membrane.V - E_K + k_2)))
+    in [pA/pF]
+g_K1 = 0.0515 [mS/uF]
+    in [mS/uF]
+k_1 = 210 [uM]
+    in [uM]
+k_2 = -6.1373 [mV]
+    in [mV]
+k_3 = 0.1653 [1/mV]
+    in [1/mV]
+k_4 = 0.0319 
+    in [1]
+
+E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
+    in [mV]
