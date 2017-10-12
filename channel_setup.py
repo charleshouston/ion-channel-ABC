@@ -774,13 +774,13 @@ class ik1(AbstractChannel):
         self.publication = 'Korhonen et al., 2009'
 
         self.parameter_names = ['g_K1',
-                                'k_1',
+                                #'k_1',
                                 'k_2',
                                 'k_3',
                                 'k_4']
 
         self.prior_intervals = [(0, 0.2),   # 0.0515
-                                (-500, 500),  # 210
+                                #(-500, 500),  # 210
                                 (0, 50),  # -6.1373
                                 (0, 1),     # 0.1653
                                 (0, 0.1)]   # 0.0319
