@@ -519,6 +519,7 @@ class ical(AbstractChannel):
         # Loading experimental data
         # vsteps, act_exp = data_ical.IV_DiasFig7()
         vsteps, act_exp = data_ical.IV_RaoFig3B()
+        act_exp = [17.1*a for a in act_exp] # maximum current reported by Dias et al (2014)
         prepulses, inact_exp = data_ical.Inact_RaoFig3C()
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp]]
