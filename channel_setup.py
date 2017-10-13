@@ -474,7 +474,7 @@ class ikur(AbstractChannel):
 class ical(AbstractChannel):
     def __init__(self):
         self.name = 'ical'
-        self.model_name = 'Houston2017b.mmt' # use full model
+        self.model_name = 'Houston2017_iCaL.mmt' # use full model
         self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
