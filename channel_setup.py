@@ -478,7 +478,8 @@ class ical(AbstractChannel):
         self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
-        self.parameter_names = ['p1',
+        self.parameter_names = ['G_CaL',
+                                'p1',
                                 'p2',
                                 'p3',
                                 'p4',
@@ -498,7 +499,8 @@ class ical(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(-50, 50),  # p1
+        self.prior_intervals = [(0, 0.0001), # G_CaL
+                                (-50, 50),  # p1
                                 (0, 10),    # p2
                                 (-100, 50),  # p3 
                                 (-50, 50),   # p4
