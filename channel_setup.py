@@ -528,9 +528,9 @@ class ical(AbstractChannel):
         setup_exp_act = {'sim_type': 'ActivationSim',
                          'variable': 'ical.i_CaL', 'vhold': -80, 'thold': 2000,
                          'vsteps': vsteps, 'tstep': 250,
-                         'normalise': True,
+                         'normalise': False,
                          'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Normalised current density'}
+                         'ylabel': 'Current density (pA/pF)'}
         setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'ical.i_CaL', 'vhold': -20, 'thold': 400,
                            'vsteps': prepulses, 'tstep': 1000,
