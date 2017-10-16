@@ -1,0 +1,78 @@
+[[model]]
+name: Korhonen 2009 T-type calcium channel
+author: Charles Houston
+desc: """
+      The Korhonen 2009 model for the T-type calcium channel in NRVMs.
+      """
+# Initial values
+membrane.V = -67
+icat.b = 0.01
+icat.g = 0.99
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -icat.i_CaT
+    in [mV]
+Ca_o = 5000
+    in [uM]
+Ca_subSL = 0.115001
+    in [uM]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 305
+    in [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[ca_conc]
+use membrane.FoRT as FoRT
+use membrane.Ca_o as Ca_o
+use membrane.Ca_subSL as Ca_subSL
+E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_subSL)
+    in [mV]
+
+[icat]
+use membrane.V as V
+use ca_conc.E_Ca as E_Ca
+
+g_CaT = 0.2
+    in [mS/uF]
+V_adjust = 106.5
+    in [mV]
+G_CaT = g_CaT * b * g
+    in [mS/uF]
+i_CaT = G_CaT * (V - E_Ca + V_adjust)
+    in [pA/pF]
+
+dot(b) = (bss - b) / tau_b
+    in [1]
+bss = (1 + exp(-(V + p1) / p2)) ^ (-1)
+    in [mV]
+tau_b = p3 + p4 * (1 + exp(p5 * (V + p6))) ^ (-1)
+    in [ms]
+
+p1 = 37.49098
+p2 = 5.40634
+p3 = 0.6
+p4 = 5.4
+p5 = 0.03
+p6 = 100
+
+dot(g) = (gss - g) / tau_g
+    in [1]
+gss = (1 + exp((V + q1) / q2)) ^ (-1)
+    in [mV]
+tau_g = q3 + q4 * (1 + exp(q5 * (V + q6))) ^ (-1)
+    in [ms]
+
+q1 = 66
+q2 = 6
+q3 = 1
+q4 = 40
+q5 = 0.08
+q6 = 65

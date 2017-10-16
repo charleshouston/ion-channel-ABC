@@ -222,54 +222,46 @@ class AbstractChannel(object):
 class icat(AbstractChannel):
     def __init__(self):
         self.name = 'icat'
-        self.model_name = 'Takeuchi2013_iCaT.mmt'
-        self.publication = 'Takeuchi et al., 2013'
+        self.model_name = 'Korhonen2009_iCaT.mmt'
+        self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
         self.parameter_names = ['g_CaT',
-                                'E_CaT',
-                                'k_dss1',
-                                'k_dss2',
-                                'k_dtau1',
-                                'k_dtau2',
-                                'k_dtau3',
-                                'k_dtau4',
-                                'k_dtau5',
-                                'k_dtau6',
-                                'k_fss1',
-                                'k_fss2',
-                                'k_ftau1',
-                                'k_ftau2',
-                                'k_ftau3',
-                                'k_ftau4',
-                                'k_ftau5',
-                                'k_ftau6']
+                                'V_adjust',
+                                'p1',
+                                'p2',
+                                'p3',
+                                'p4',
+                                'p5',
+                                'p6',
+                                'q1',
+                                'q2',
+                                'q3',
+                                'q4',
+                                'q5',
+                                'q6']
 
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 1),  # 0.4122
-                                (0, 100),# 45
-                                (0,100), # 30
-                                (1,10),  # 6.0
-                                (0,10),  # 1.068
-                                (0,100), # 26.3
-                                (1,100), # 30
-                                (0,10),  # 1.068
-                                (0,100), # 26.3
-                                (1,100), # 30
-                                (0,100), # 48
-                                (1,10),  # 7.0
-                                (0,10),  # 1.53
-                                (0,100), # 61.7
-                                (1,100), # 83.3
-                                (0, 10), # 1.5
-                                (0,100), # 61.7
-                                (1,100)] # 30
+        self.prior_intervals = [(0, 1),     # 0.2
+                                (0, 200),   # 106.5
+                                (0, 100),   # 37.49098
+                                (1, 10),    # 5.40634
+                                (0, 1),     # 0.6
+                                (0, 10),    # 5.4
+                                (0, 0.1),   # 0.03
+                                (0, 200),   # 100
+                                (0, 100),   # 66
+                                (1, 10),    # 6
+                                (0, 10),    # 1
+                                (0, 100),   # 40
+                                (0, 0.1),   # 0.08
+                                (0, 100)]   # 65
 
         # Edit which parameters to vary
-        use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
-        #use = [1 for i in range(len(self.parameter_names))]
+        # use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
+        use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -810,13 +802,13 @@ class ik1(AbstractChannel):
 class full_sim(AbstractChannel):
     def __init__(self):
         self.name = 'fullsim'
-        self.model_name = 'Houston2017.mmt'
+        self.model_name = 'Houston2017b.mmt'
         self.publication = 'na'
 
         self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab']
 
-        self.prior_intervals = [(0, 10),    # 0.88
-                                (0, 500),   # 292.8
+        self.prior_intervals = [(0, 10),    # 2.7
+                                (0, 1e-15),   # 2.268e-16
                                 (0, 0.001), # 0.000367
                                 (0, 0.01)]  # 0.0026
 
@@ -825,7 +817,7 @@ class full_sim(AbstractChannel):
                           'sodium_concentration.Nai',
                           'potassium_conc.Ki',
                           ],
-                          [-67.0,0.115]]
+                          [-67.0, 0.115]]
 
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
 
