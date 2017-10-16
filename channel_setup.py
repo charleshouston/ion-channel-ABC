@@ -499,7 +499,7 @@ class ical(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 0.0001), # G_CaL
+        self.prior_intervals = [(0, 0.001), # G_CaL
                                 (-50, 50),  # p1
                                 (0, 10),    # p2
                                 (-100, 50),  # p3 
