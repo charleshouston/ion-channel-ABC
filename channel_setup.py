@@ -60,7 +60,7 @@ class AbstractChannel(object):
         self.simulations_x = [[] for i in range(len(self.setup_exp))]
 
         for i,se in enumerate(self.setup_exp):
-            
+
             normalised = False
             if 'normalise' in se:
                 normalised = se['normalise']
@@ -89,7 +89,7 @@ class AbstractChannel(object):
                     self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
                 else:
                     dv = se['vsteps'][1] - se['vsteps'][0]
-                    self.simulations_x[i] = se['vsteps']           
+                    self.simulations_x[i] = se['vsteps']
 
                 self.simulations.append(
                     sim.InactivationSim(se['variable'],
@@ -260,7 +260,7 @@ class icat(AbstractChannel):
                                 (0, 100)]   # 65
 
         # Edit which parameters to vary
-        # use = [1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0]
+        use = [1,1,1,1,0,0,0,0,1,1,0,0,0,0]
         use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
@@ -494,7 +494,7 @@ class ical(AbstractChannel):
         self.prior_intervals = [(0, 0.001), # G_CaL
                                 (-50, 50),  # p1
                                 (0, 10),    # p2
-                                (-100, 50),  # p3 
+                                (-100, 50),  # p3
                                 (-50, 50),   # p4
                                 (-50, 50),    # p5
                                 (-50, 50),    # p6
@@ -502,13 +502,13 @@ class ical(AbstractChannel):
                                 (0, 200),   # p8
                                 (0, 100),   # q1
                                 (0, 10),    # q2
-                                (0, 10000), # q3 
+                                (0, 10000), # q3
                                 (0, 100),   # q4
                                 (0, 1000),  # q5
-                                (0, 1000),  # q6   
+                                (0, 1000),  # q6
                                 (0, 100),   # q7
                                 (0, 100),   # q8
-                                (-500, 500)]  # q9 
+                                (-500, 500)]  # q9
 
         # Loading experimental data
         # vsteps, act_exp = data_ical.IV_DiasFig7()
@@ -808,16 +808,17 @@ class full_sim(AbstractChannel):
         self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab']
 
         self.prior_intervals = [(0, 10),    # 2.7
-                                (0, 1e-15),   # 2.268e-16
-                                (0, 0.001), # 0.000367
+                                (0, 1e-15), # 2.268e-16
+                                (0, 0.001), # 0.0008
                                 (0, 0.01)]  # 0.0026
 
         self.data_exp = [['membrane.V',
-                          'calcium_concentration.Cai',
-                          'sodium_concentration.Nai',
-                          'potassium_conc.Ki',
+                          'ca_conc.Ca_subSL',
+                          'na_conc.Na_i',
+                          'k_conc.K_i',
+                          'APD90'
                           ],
-                          [-67.0, 0.115]]
+                          [-67.0, 0.115001, 14237, 130000, 42]]
 
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
 
