@@ -60,7 +60,6 @@ class AbstractChannel(object):
         self.simulations_x = [[] for i in range(len(self.setup_exp))]
 
         for i,se in enumerate(self.setup_exp):
-
             normalised = False
             if 'normalise' in se:
                 normalised = se['normalise']
@@ -244,7 +243,7 @@ class icat(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 1),     # 0.2
+        self.prior_intervals = [(0, 10),    # 0.2
                                 (0, 200),   # 106.5
                                 (0, 100),   # 37.49098
                                 (1, 10),    # 5.40634
@@ -261,7 +260,7 @@ class icat(AbstractChannel):
 
         # Edit which parameters to vary
         use = [1,1,1,1,0,0,0,0,1,1,0,0,0,0]
-        use = [1 for i in range(len(self.parameter_names))]
+        # use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -819,7 +818,8 @@ class full_sim(AbstractChannel):
                           'APD90'
                           ],
                           [-67.0, 0.115001, 14237, 130000, 42]]
-
+        # targets: Ca_decay_50 = 157
+        #          Ca_decay_90 = 397
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
 
 class ina2(AbstractChannel):
