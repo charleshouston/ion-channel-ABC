@@ -226,7 +226,8 @@ class icat(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameter_names = ['g_CaT',
-                                'V_adjust',
+                                # 'V_adjust',
+                                'E_CaT',
                                 'p1',
                                 'p2',
                                 'p3',
@@ -259,8 +260,8 @@ class icat(AbstractChannel):
                                 (0, 100)]   # 65
 
         # Edit which parameters to vary
-        use = [1,1,1,1,0,0,0,0,1,1,0,0,0,0]
-        # use = [1 for i in range(len(self.parameter_names))]
+        # use = [1,1,1,1,0,0,0,0,1,1,0,0,0,0]
+        use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -426,8 +427,8 @@ class ikur(AbstractChannel):
                                 (0, 10)]    # 1.7
 
         # Edit which parameters to vary
-        use = [1,1,1,0,0,0,1,1,0,0]
-        #use = [1 for i in range(len(self.parameter_names))]
+        #use = [1,1,1,0,0,0,1,1,0,0]
+        use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -814,10 +815,10 @@ class full_sim(AbstractChannel):
         self.data_exp = [['membrane.V',
                           'ca_conc.Ca_subSL',
                           'na_conc.Na_i',
-                          'k_conc.K_i',
-                          'APD90'
+                          'k_conc.K_i'#,
+                          # 'APD90'
                           ],
-                          [-67.0, 0.115001, 14237, 130000, 42]]
+                          [-67.0, 0.115001, 14237, 130000]]#, 42]]
         # targets: Ca_decay_50 = 157
         #          Ca_decay_90 = 397
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
