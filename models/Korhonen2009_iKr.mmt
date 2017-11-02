@@ -1,0 +1,89 @@
+[[model]]
+name: Korhonen 2009 rapid delayed rectifier potassium channel
+author: Charles Houston
+desc: """
+      The Korhonen 2009 model for the iKr in NRVMs.
+      """
+# Initial values
+membrane.V = -67
+ikr.C_K1 = 0.96
+ikr.C_K2 = 0.01
+ikr.O_K = 0.01
+ikr.I_K = 0.01
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikr.i_Kr
+    in [mV]
+K_o = 5400
+    in [uM]
+K_i = 143720
+    in [uM]
+Na_o = 140000
+    in [uM]
+Na_i = 14237.1
+    in [uM]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 305
+    in [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[ikr]
+use membrane.V as V
+use membrane.FoRT as FoRT
+use membrane.K_o as K_o
+use membrane.K_i as K_i
+use membrane.Na_o as Na_o
+use membrane.Na_i as Na_i
+
+g_Kr = 0.06
+    in [mS/uF]
+G_Kr = g_Kr * O_K
+    in [mS/uF]
+E_Kr = 1 / FoRT * log((0.98 * K_o + 0.02 * Na_o) / (0.98 * K_i + 0.02 * Na_i))
+    in [mV]
+i_Kr = G_Kr * (V - E_Kr)
+    in [pA/pF]
+
+alpha_a0 = p1 * exp(p2 * V)
+    in [1]
+alpha_a1 = p3 * exp(p4 * V)
+    in [1]
+alpha_i = p5 * exp(p6 * V)
+    in [1]
+beta_a0 = q1 * exp(q2 * V)
+    in [1]
+beta_a1 = q3 * exp(q4 * V)
+    in [1]
+beta_i = q5 * exp(q6 * V)
+    in [1]
+
+p1 = 0.022348
+p2 = 0.01176
+p3 = 0.013733
+p4 = 0.038198
+p5 = 0.090821
+p6 = 0.023391
+
+q1 = 0.047002
+q2 = -0.0631
+q3 = 0.0000689
+q4 = -0.04178
+q5 = 0.006497
+q6 = -0.03268
+
+k_f = 0.023761
+k_b = 0.036778
+
+dot(C_K1) = alpha_a0 * C_K0 - beta_a1 * C_K1 + k_b * C_K2 - k_f * C_K1
+dot(C_K2) = k_f * C_K1 - k_b * C_K2 + beta_a1 * O_K - alpha_a1 * C_K2
+dot(O_K) = alpha_a1 * C_K2 - beta_a1 * O_K + beta_i * I_K - alpha_i * O_K
+dot(I_K) =  alpha_i * O_K - beta_i * I_K
+C_K0 = 1 - (C_K1 + C_K2 + O_K + I_K)

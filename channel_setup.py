@@ -540,36 +540,45 @@ class ical(AbstractChannel):
 class ikr(AbstractChannel):
     def __init__(self):
         self.name = 'ikr'
-        self.model_name = 'Takeuchi2013_iKr.mmt'
-        self.publication = 'Takeuchi et al., 2013'
+        self.model_name = 'Korhonen2009_iKr.mmt'
+        self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
         self.parameter_names = ['g_Kr',
-                                'k_xss1',
-                                'k_xss2',
-                                'k_xtau1',
-                                'k_xtau2',
-                                'k_xtau3',
-                                'k_xtau4',
-                                'k_xtau5',
-                                'k_r1',
-                                'k_r2']
+                                'p1',
+                                'p2',
+                                'p3',
+                                'p4',
+                                'p5',
+                                'p6',
+                                'q1',
+                                'q2',
+                                'q3',
+                                'q4',
+                                'q5',
+                                'q6',
+                                'k_f',
+                                'k_b']
 
         # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1),     # 0.73
-                                (0, 100),   # 15
-                                (1, 10),    # 6
-                                (0, 10),    # 2.5
-                                (0, 100),   # 31.18
-                                (0, 1000),  # 217.18
-                                (0, 100),   # 20.1376
-                                (1, 100),   # 22.1996
-                                (0, 100),   # 55
-                                (1, 100)]   # 24
+        self.prior_intervals = [(0, 0.1),   # 0.6
+                                (0, 0.1),   # 0.022348
+                                (0, 0.1),   # 0.01176
+                                (0, 0.1),   # 0.013733
+                                (0, 0.1),   # 0.038198
+                                (0, 0.1),   # 0.090821
+                                (0, 0.1),   # 0.023391
+                                (0, 0.1),   # 0.047002
+                                (-0.1, 0),  # -0.0631
+                                (0, 0.01),  # 0.0000689
+                                (-0.1, 0),  # -0.04178
+                                (0, 0.01),  # 0.006497
+                                (-0.1, 0),  # -0.03268
+                                (0, 0.1),   # 0.023761
+                                (0, 0.1)]   # 0.036778
 
         # Edit which parameters to vary
-        use = [1,1,1,0,0,0,0,0,1,1]
-        #use = [1 for i in range(len(self.parameter_names))]
+        use = [1 for i in range(len(self.parameter_names))]
         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
@@ -595,6 +604,65 @@ class ikr(AbstractChannel):
         self.setup_exp = [setup_exp_act, setup_exp_inact]
 
         super(ikr, self).__init__()
+
+# class ikr(AbstractChannel):
+#     def __init__(self):
+#         self.name = 'ikr'
+#         self.model_name = 'Takeuchi2013_iKr.mmt'
+#         self.publication = 'Takeuchi et al., 2013'
+
+#         # Parameters involved in ABC process
+#         self.parameter_names = ['g_Kr',
+#                                 'k_xss1',
+#                                 'k_xss2',
+#                                 'k_xtau1',
+#                                 'k_xtau2',
+#                                 'k_xtau3',
+#                                 'k_xtau4',
+#                                 'k_xtau5',
+#                                 'k_r1',
+#                                 'k_r2']
+
+#         # Parameter specific prior intervals
+#         self.prior_intervals = [(0, 1),     # 0.73
+#                                 (0, 100),   # 15
+#                                 (1, 10),    # 6
+#                                 (0, 10),    # 2.5
+#                                 (0, 100),   # 31.18
+#                                 (0, 1000),  # 217.18
+#                                 (0, 100),   # 20.1376
+#                                 (1, 100),   # 22.1996
+#                                 (0, 100),   # 55
+#                                 (1, 100)]   # 24
+
+#         # Edit which parameters to vary
+#         use = [1,1,1,0,0,0,0,0,1,1]
+#         #use = [1 for i in range(len(self.parameter_names))]
+#         self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
+#         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
+
+#         # Loading experimental data
+#         vsteps, act_peaks_exp = data_ikr.IV_Li7B()
+#         vsteps2, act_exp = data_ikr.Activation_Li7B()
+#         # Normalise act_exp
+#         act_exp = [float(i) / max(act_exp) for i in act_exp]
+#         self.data_exp = [[vsteps, act_peaks_exp],
+#                          [vsteps2, act_exp]]
+
+#         # Experimental setup
+#         setup_exp_act = {'sim_type': 'ActivationSim',
+#                          'variable': 'ikr.i_Kr', 'vhold': -50, 'thold': 5000,
+#                          'vsteps': vsteps, 'tstep': 1000,
+#                          'xlabel': 'Membrane potential (mV)',
+#                          'ylabel': 'Current density (pA/pF)'}
+#         setup_exp_inact = {'sim_type': 'InactivationSim',
+#                            'variable': 'ikr.G_Kr', 'vhold': -50, 'thold': 2000,
+#                            'vsteps': vsteps2, 'tstep': 1000,
+#                            'xlabel': 'Membrane potential (mV)',
+#                            'ylabel': 'Normalised conductance'}
+#         self.setup_exp = [setup_exp_act, setup_exp_inact]
+
+#         super(ikr, self).__init__()
 
 
 class iha(AbstractChannel):
