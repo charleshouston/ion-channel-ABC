@@ -18,10 +18,10 @@ F = 96.5
     in [C/mmol]
 R = 8.314
     in [J/mol/K]
-Ko = 120
-    in [mM]
-Ki = 120
-    in [mM]
+Ko = 120000
+    in [uM]
+Ki = 120000
+    in [uM]
 
 
 [ik1]
@@ -35,7 +35,7 @@ k_2 = -6.1373 [mV]
     in [mV]
 k_3 = 0.1653 [1/mV]
     in [1/mV]
-k_4 = 0.0319 
+k_4 = 0.0319
     in [1]
 
 E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
