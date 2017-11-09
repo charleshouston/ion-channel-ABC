@@ -18,7 +18,7 @@ dot(V) = -icat.i_CaT
     in [mV]
 Ca_o = 5000
     in [uM]
-Ca_subSL = 0.115001
+Ca_subSL = 0.015001
     in [uM]
 F = 96.5
     in [C/mmol]
@@ -42,11 +42,15 @@ use ca_conc.E_Ca as E_Ca
 
 g_CaT = 0.2
     in [mS/uF]
-V_adjust = 106.5
+# V_adjust = 106.5
+#     in [mV]
+E_CaT = E_Ca - 106.5
     in [mV]
 G_CaT = g_CaT * b * g
     in [mS/uF]
-i_CaT = G_CaT * (V - E_Ca + V_adjust)
+# i_CaT = G_CaT * (V - E_Ca + V_adjust)
+#     in [pA/pF]
+i_CaT = G_CaT * (V - E_CaT)
     in [pA/pF]
 
 dot(b) = (bss - b) / tau_b
