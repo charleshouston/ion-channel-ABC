@@ -225,7 +225,7 @@ class icat(AbstractChannel):
         self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
-        self.parameter_names = ['g_CaT',
+        self.parameter_names = [#'g_CaT',
                                 'E_CaT',
                                 'p1',
                                 'p2',
@@ -243,7 +243,7 @@ class icat(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 10),    # 0.2
+        self.prior_intervals = [#(0, 10),    # 0.2
                                 (0, 200),   # 106.5
                                 (0, 100),   # 37.49098
                                 (1, 10),    # 5.40634
@@ -265,7 +265,7 @@ class icat(AbstractChannel):
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
         # Load experimental data
-        vsteps, act_exp = data_icat.IV_DengFig1B()
+        vsteps, act_exp = data_icat.Act_DengFig3B()
         prepulses, inact_exp = data_icat.Inact_DengFig3B()
         intervals, rec_exp = data_icat.Recovery_DengFig4B()
         self.data_exp = [[vsteps, act_exp],
@@ -274,10 +274,11 @@ class icat(AbstractChannel):
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
+                         'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
                          'vsteps': vsteps, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
+                         'ylabel': 'Current density (pA/pF)',
+                         'normalise': True}
         setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'icat.G_CaT', 'vhold': -20, 'thold': 300,
                            'vsteps': prepulses, 'tstep': 1000,
