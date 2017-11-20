@@ -82,6 +82,21 @@ class AbstractChannel(object):
                                       tstep=se['tstep'],
                                       normalise=normalised))
 
+            elif se['sim_type'] == 'ActivationMaxCurr':
+
+                dv = se['vsteps'][1] - se['vsteps'][0]
+                self.simulations_x[i] = se['vsteps']
+
+                self.simulations.append(
+                    sim.ActivationMaxCurr(se['variable'],
+                                      vhold=se['vhold'],
+                                      thold=se['thold'],
+                                      vmin=min(se['vsteps']),
+                                      vmax=max(se['vsteps']),
+                                      dv=dv,
+                                      tstep=se['tstep'],
+                                      normalise=normalised))
+
             elif se['sim_type'] == 'InactivationSim':
                 if continuous:
                     dv = 1
@@ -865,19 +880,28 @@ class ina2(AbstractChannel):
                                 ]
 
         # Loading experimental data
-        vsteps, act_exp = data_ina.IV_DiasFig6()
+
+        vsteps, act_exp = data_ina.Act_FukudaFig5B()
         prepulses, inact_exp = data_ina.Inact_FukudaFig5C()
         intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
+        vsteps2, curr_exp = data_ina.IV_DiasFig6()
+        max_curr = min(curr_exp)
+        # Set currents to zero other than maximum
+        for i,curr in enumerate(curr_exp):
+            if not curr == max_curr:
+                curr_exp[i] = 0.0
+
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
-                         [intervals, rec_exp]]
+                         [intervals, rec_exp],
+                         [vsteps2, curr_exp]]
 
-        # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 500,
-                         'vsteps': vsteps, 'tstep': 100,
+                         'variable': 'ina.G_Na', 'vhold': -120, 'thold': 500,
+                         'vsteps': vsteps, 'tstep': 20,
                          'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
+                         'ylabel': 'Normalised conductance',
+                         'normalise': True}
         setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'ina.G_Na', 'vhold': -20, 'thold': 20,
                            'vsteps': prepulses, 'tstep': 500,
@@ -889,6 +913,12 @@ class ina2(AbstractChannel):
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+        setup_exp_max = {'sim_type': 'ActivationMaxCurr',
+                         'variable': 'ina.i_Na', 'vhold': -80, 'thold': 500,
+                         'vsteps': vsteps2,
+                         'tstep': 100,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec, setup_exp_max]
 
         super(ina2, self).__init__()

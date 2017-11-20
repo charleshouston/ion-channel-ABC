@@ -87,6 +87,21 @@ class ActivationSim(AbstractSim):
 
         return pks[self.variable]
 
+class ActivationMaxCurr(ActivationSim):
+    def run(self, model_name):
+        '''
+        Run the activation protocol and output the peak current.
+        '''
+        pks = super(ActivationMaxCurr, self).run(model_name)
+        max_curr = min(pks)
+        # set all but maximum to 0
+        for i,curr in enumerate(pks):
+            if not curr == max_curr:
+                pks[i] = 0.0
+
+        return pks
+
+
 class TimeIndependentActivationSim(AbstractSim):
     '''
                  +--- vstep ---+
