@@ -97,7 +97,7 @@ class ActivationMaxCurr(ActivationSim):
         # set all but maximum to 0
         for i,curr in enumerate(pks):
             if not curr == max_curr:
-                pks[i] = 0.0
+                pks[i] = max_curr
 
         return pks
 

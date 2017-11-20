@@ -855,7 +855,7 @@ class ina2(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameter_names = ['g_Na',
-                                'v_offset',
+                                # 'v_offset',
                                 'p1',
                                 'p2',
                                 'p3',
@@ -867,7 +867,7 @@ class ina2(AbstractChannel):
                                 'q2']
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),       # 35
-                                (-50, 50),      # 0
+                                # (-50, 50),      # 0
                                 (0, 100),       # 45
                                 (-10, 0),      # -6.5
                                 (0, 1),         # 1.36 * 0.32
@@ -889,7 +889,7 @@ class ina2(AbstractChannel):
         # Set currents to zero other than maximum
         for i,curr in enumerate(curr_exp):
             if not curr == max_curr:
-                curr_exp[i] = 0.0
+                curr_exp[i] = max_curr
 
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
