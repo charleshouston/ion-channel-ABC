@@ -240,7 +240,7 @@ class icat(AbstractChannel):
         self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
-        self.parameter_names = [#'g_CaT',
+        self.parameter_names = ['g_CaT',
                                 'E_CaT',
                                 'p1',
                                 'p2',
@@ -258,7 +258,7 @@ class icat(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [#(0, 10),    # 0.2
+        self.prior_intervals = [(0, 10),    # 0.2
                                 (0, 200),   # 106.5
                                 (0, 100),   # 37.49098
                                 (1, 10),    # 5.40634
@@ -283,16 +283,25 @@ class icat(AbstractChannel):
         vsteps, act_exp = data_icat.Act_DengFig3B()
         prepulses, inact_exp = data_icat.Inact_DengFig3B()
         intervals, rec_exp = data_icat.Recovery_DengFig4B()
+        vsteps2, curr_exp = data_icat.IV_DengFig1B()
+        max_curr = min(curr_exp)
+        # Baby hack to fit maximum current
+        for i,curr in enumerate(curr_exp):
+            if not curr==max_curr:
+                curr_exp[i] = max_curr
+
+
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
-                         [intervals, rec_exp]]
+                         [intervals, rec_exp],
+                         [vsteps2, curr_exp]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
                          'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
                          'vsteps': vsteps, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)',
+                         'ylabel': 'Normalised conductance',
                          'normalise': True}
         setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'icat.G_CaT', 'vhold': -20, 'thold': 300,
@@ -305,7 +314,13 @@ class icat(AbstractChannel):
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+        setup_exp_max = {'sim_type': 'ActivationMaxCurr',
+                         'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 500,
+                         'vsteps': vsteps2,
+                         'tstep': 300,
+                         'xlabel': 'Membrane potential (mV)',
+                         'ylabel': 'Current density (pA/pF)'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec, setup_exp_max]
 
         super(icat, self).__init__()
 
@@ -829,22 +844,35 @@ class full_sim(AbstractChannel):
         self.model_name = 'Houston2017b.mmt'
         self.publication = 'na'
 
-        self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab']
+        self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab','ryanodine_receptors.k_RyR','serca.V_max']
 
         self.prior_intervals = [(0, 10),    # 2.7
                                 (0, 1e-15), # 2.268e-16
                                 (0, 0.001), # 0.0008
-                                (0, 0.01)]  # 0.0026
+                                (0, 0.01),  # 0.0026
+                                (0, 0.1),   # 0.01
+                                (0, 10)]    # 0.9996
 
-        self.data_exp = [['membrane.V',
-                          'ca_conc.Ca_i',
-                          'ca_conc_sr.Ca_SRuptake',
-                          'ca_conc_sr.Ca_SRrelease'
-                          # 'APD90'
-                          ],
-                          [-67.0, 0.137, 790, 794]]#, 42]]
-        # targets: Ca_decay_50 = 157
-        #          Ca_decay_90 = 397
+        self.data_exp = [['v_rp',
+                          'APD90',
+                          'APA',
+                          'ca_i_diastole',
+                          # 'ca_sr_diastole',
+                          'ca_i_systole',
+                          # 'ca_sr_systole',
+                          'CaT50',
+                          'CaT90']
+                          ,
+                          [-67.0,
+                           42,
+                           105,
+                           0.138,
+                           # 1000,
+                           0.7,
+                           # 500,
+                           157,
+                           397]
+                          ]
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
 
 class ina2(AbstractChannel):
@@ -886,7 +914,7 @@ class ina2(AbstractChannel):
         intervals, rec_exp = data_ina.Recovery_ZhangFig4B()
         vsteps2, curr_exp = data_ina.IV_DiasFig6()
         max_curr = min(curr_exp)
-        # Set currents to zero other than maximum
+        # Baby hack to fit maximum current
         for i,curr in enumerate(curr_exp):
             if not curr == max_curr:
                 curr_exp[i] = max_curr
