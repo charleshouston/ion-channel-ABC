@@ -1,0 +1,16 @@
+parameter,reported value,mean,variance,median,interquartile range
+k_yss1,78.7,71.1,85.1,74.5,10.3
+k_yss2,6.33,5.81,7.97,6.1,6.12
+k_ytau1,1.0,6.94,7.18,8.22,3.75
+k_ytau2,0.119,0.505,0.0734,0.714,0.542
+k_ytau3,75.0,60.4,141.0,58.5,14.6
+k_ytau4,28.4,53.3,67.3,49.1,6.27
+k_ytau5,0.562,0.462,0.099,0.274,0.65
+k_ytau6,75.0,19.6,138.0,12.1,14.3
+k_ytau7,14.2,19.5,70.4,16.7,1.9
+k_i_haNa,0.2,0.205,2.69e-05,0.205,0.00163
+g_ha,0.021,0.0877,9.72e-06,0.0864,0.00291
+original loss
+1.58
+minimum posterior loss,maximum posterior loss
+0.252,0.31

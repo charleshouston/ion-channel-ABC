@@ -1,0 +1,11 @@
+parameter,reported value,mean,variance,median,interquartile range
+g_CaT,0.412,0.551,0.000904,0.553,0.0404
+E_CaT,45.0,32.8,1.61,32.8,1.79
+k_dss1,30.0,32.6,1.05,32.5,1.56
+k_dss2,6.0,8.98,0.247,9.0,0.818
+k_fss1,48.0,47.5,0.952,47.5,1.5
+k_fss2,7.0,6.92,0.876,6.86,1.37
+original loss
+0.704
+minimum posterior loss,maximum posterior loss
+0.413,0.451

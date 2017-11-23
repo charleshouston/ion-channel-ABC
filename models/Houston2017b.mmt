@@ -19,24 +19,15 @@ ito.yto = 0.9945511
 ikur.a_ur =  4.17069000000000001e-4
 ikur.i_ur = 0.998543
 ikr.xkr = 8.64138599999999917e-3
-icat.d = 0.01
-icat.f = 0.99
+icat.b = 0.01
+icat.g = 0.99
 iha.y = 0.01
-ryanodine_receptors.P_open = 0.0
-ca_conc_sr.Ca_SRuptake = 0.0
-ca_conc_sr.Ca_SRrelease = 0.0
-na_conc.Na_i = 14327
-k_conc.K_i = 130000
-ca_conc.c_1 = 0.115001
-ca_conc.c_2 = 0.115001
-ca_conc.c_3 = 0.115001
-ca_conc.c_4 = 0.115001
-ca_conc.c_5 = 0.115001
-ca_conc.c_6 = 0.115001
-ca_conc.c_7 = 0.115001
-ca_conc.c_8 = 0.115001
-ca_conc.c_9 = 0.115001
-
+ryanodine_receptors.P_open = 0.0002
+ca_conc_sr.Ca_SRuptake = 790
+ca_conc_sr.Ca_SRrelease = 790
+# na_conc.Na_i = 14327
+# k_conc.K_i = 130000
+ca_conc.Ca_i = 0.138
 
 [environment]
 time = 0 bind time
@@ -61,19 +52,25 @@ T = 305
 FoRT = F / (R * T)
     in [1/mV]
 
+
 dot(V) = -(ical.i_CaL + incx.i_NCX + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr + icat.i_CaT + iha.i_ha + i_stim) / Cm
     in [mV]
 i_stim = 0.0 [pA/pF]
     in [pA/pF]
 
-V_cyto = 3.94       # volume of cytosol
-    in [pL]
-Acap = 1.38544e-5
-    in [cm^2]
-
 # Helper math declaration
 pi = 3.14159265358979323846
     in [1]
+
+Acap = 1.38544e-5
+    in [cm^2]
+r_SR = 6        # radius of SR
+    in [um]
+r_SL = 10.5     # radius of SL
+    in [um]
+V_myo = (4 / 3 * pi * r_SL ^ 3 - 4 / 3 * pi * r_SR ^ 3) / 1000
+    in [pL]
+
 
 # Fast sodium current - Korhonen et al. (2009)
 [ina]
@@ -82,7 +79,7 @@ use membrane.FoRT as FoRT
 use membrane.Na_o as Na_o
 use na_conc.Na_i as Na_i
 
-g_Na = 35
+g_Na = 2.5 #35 - changed to reproduce peak potential from Dias 2014
     in [mS/uF]
 v_offset = 0
     in [mV]
@@ -345,67 +342,47 @@ dot(y) = (y_ss - y) / tau_y
     in [1]
 
 
-# T-type Ca2+ current - Takeuchi et al. (2013)
+# T-type Ca2+ current - Korhonen et al. (2009)
 [icat]
 use membrane.V as V
 use ca_conc.E_Ca as E_Ca
 
-g_CaT = 0.4122
+g_CaT = 0.153 # 0.2 - changed to reproduce peak potential from Deng 2009
     in [mS/uF]
-V_adjust = E_Ca + 45
+E_CaT = 45#E_Ca - 106.5
     in [mV]
-G_CaT = g_CaT * d * f
+G_CaT = g_CaT * b * g
     in [mS/uF]
-i_CaT = G_CaT * (V - E_Ca + V_adjust)
+i_CaT = G_CaT * (V - E_CaT)
     in [pA/pF]
 
-dot(d) = (dss - d) / tau_d
+dot(b) = (bss - b) / tau_b
     in [1]
-tau_d = (k_dtau1 * exp((V + k_dtau2) / k_dtau3) + k_dtau4 * exp(-(V + k_dtau5) / k_dtau6)) ^ (-1)
-    in [1]
-dss = (1 + exp(-(V + k_dss1)/k_dss2)) ^ (-1)
-    in [1]
+bss = (1 + exp(-(V + p1) / p2)) ^ (-1)
+    in [mV]
+tau_b = p3 + p4 * (1 + exp(p5 * (V + p6))) ^ (-1)
+    in [ms]
 
-k_dss1 = 30
-    in [mV]
-k_dss2 = 6.0
-    in [mV]
-k_dtau1 = 1.068
-    in [1]
-k_dtau2 = 26.3
-    in [mV]
-k_dtau3 = 30
-    in [mV]
-k_dtau4 = 1.068
-    in [1]
-k_dtau5 = 26.3
-    in [mV]
-k_dtau6 = 30
-    in [mV]
+p1 = 37.49098
+p2 = 5.40634
+p3 = 0.6
+p4 = 5.4
+p5 = 0.03
+p6 = 100
 
-dot(f) = (fss - f) / tau_f
+dot(g) = (gss - g) / tau_g
     in [1]
-fss = (1 + exp((V + k_fss1) / k_fss2)) ^ (-1)
-    in [1]
-tau_f = (k_ftau1 * 1e-2 * exp(-(V + k_ftau2) / k_ftau3) + k_ftau4 * 1e-2 * exp((V + k_ftau5) / k_ftau6)) ^ (-1)
-    in [1]
+gss = (1 + exp((V + q1) / q2)) ^ (-1)
+    in [mV]
+tau_g = q3 + q4 * (1 + exp(q5 * (V + q6))) ^ (-1)
+    in [ms]
 
-k_fss1 = 48
-    in [mV]
-k_fss2 = 7.0
-    in [mV]
-k_ftau1 = 1.53
-     in [1]
-k_ftau2 = 61.7
-     in [mV]
-k_ftau3 = 83.3
-     in [mV]
-k_ftau4 = 1.5
-     in [1]
-k_ftau5 = 61.7
-     in [mV]
-k_ftau6 = 30
-     in [mV]
+q1 = 66
+q2 = 6
+q3 = 1
+q4 = 40
+q5 = 0.08
+q6 = 65
 
 # L-type Ca2+ current - Korhonen et al. (2009)
 [ical]
@@ -483,18 +460,18 @@ use membrane.K_o as K_o
 use membrane.V as V
 use k_conc.E_K as E_K
 
-i_K1 = g_K1 * K_o / (K_o + k_1) * (V - E_K1 + k_3) / (1 + exp(k_2 * 1e-2 * (V - E_K1 + k_3)))
+i_K1 = g_K1 * K_o / (K_o + k_1) * (membrane.V - E_K + k_2) / (k_3 + exp(k_4 * (membrane.V - E_K + k_2)))
     in [pA/pF]
-E_K1 = E_K
-    in [mV]
-g_K1 = 0.2938 [mS/uF]
+g_K1 = 0.0515 [mS/uF]
     in [mS/uF]
-k_1 = 210 [uM]
-    in [uM]
-k_2 = 8.96 [1/mV]
-    in [1/mV]
-k_3 = 0 [mV]
+k_1 = 210 [mM]
+    in [mM]
+k_2 = -6.1373 [mV]
     in [mV]
+k_3 = 0.1653 [1/mV]
+    in [1/mV]
+k_4 = 0.0319
+    in [1]
 
 # Na+/Ca2+ exchanger current - Korhonen et al. (2009)
 [incx]
@@ -506,12 +483,12 @@ use na_conc.Na_i as Na_i
 
 k_NCX = 2.268e-16           # scaling factor
     in [pA/pF/uM^4]
-d_NCX = 10e-16              # denominator constant
+d_NCX = 1e-16              # denominator constant
     in [uM^-4]
 gamma = 0.5                 # energy barrier
     in [1]
 
-i_NCX = k_NCX * (Na_i ^ 3 * Ca_o * exp(0.03743 * gamma * V) - Na_i ^ 3 * Ca_subSL * exp(0.03743 * (gamma - 1) * V)) / (1 + d_NCX * (Na_o ^ 3 * Ca_subSL + Na_i ^ 3 * Ca_o))
+i_NCX = k_NCX * (Na_i ^ 3 * Ca_o * exp(0.03743 * gamma * V) - Na_o ^ 3 * Ca_subSL * exp(0.03743 * (gamma - 1) * V)) / (1 + d_NCX * (Na_o ^ 3 * Ca_subSL + Na_i ^ 3 * Ca_o))
 
 
 # Na+/K+ ATPase - Bondarenko et al. (2004)
@@ -545,7 +522,7 @@ i_NaK = i_NaK_max * f_NaK * (1 + (Km_Nai / Na_i) ^ n_NaK) ^ (-1) * (1 + (Km_Ko /
 use membrane.V as V
 use ca_conc.E_Ca as E_Ca
 
-g_Cab = 0.000367
+g_Cab = 0.0008
   in [mS/uF]
 i_Cab = g_Cab * (V - E_Ca)
   in [pA/pF]
@@ -568,17 +545,25 @@ k_open = 1          # rate constant for RyR opening
     in [1/ms]
 k_close = 0.16      # rate constant for RyR closing
     in  [1/ms]
+j_1 = 3.51
+    in [1]
+j_2 = 530
+    in [uM]
+j_3 = 200
+    in [uM]
+j_4 = 0.25
+    in [1]
 
 J_RyR = k_RyR * P_open * (ca_conc_sr.Ca_SRrelease - ca_conc.Ca_subSR)
     in [uM/ms]
 J_RyRCaffeine = 5.5e-4 * (ca_conc_sr.Ca_SRrelease - ca_conc.Ca_subSR)
     in [uM/ms]
-K_mRyR = 3.51 * (1 + exp((ca_conc_sr.Ca_SRrelease - 530) / 200)) ^ (-1) + 0.25
+K_mRyR = j_1 * (1 + exp((ca_conc_sr.Ca_SRrelease - j_2) / j_3)) ^ (-1) + j_4
     in [uM]
 P_closed = 1 - P_open
     in [1]
 
-dot(P_open) = P_closed * k_open * (1 + (K_mRyR / ca_conc.Ca_subSR) ^ 4) ^ -1 - k_close * P_open
+dot(P_open) = P_closed * k_open * ca_conc.Ca_subSR ^ 4 / (K_mRyR ^ 4 + ca_conc.Ca_subSR ^ 4) - k_close * P_open
     in [1]
 
 [serca]
@@ -602,7 +587,7 @@ J_leak = k_leak * (ca_conc_sr.Ca_SRuptake - ca_conc.Ca_subSR)
     in [uM/ms]
 
 [ca_diffusion]
-tau_tr = 200        # time constant for J_tr
+tau_tr = 100        # time constant for J_tr
     in [ms]
 
 J_tr = (ca_conc_sr.Ca_SRuptake - ca_conc_sr.Ca_SRrelease) / tau_tr
@@ -625,17 +610,38 @@ dot(Ca_SRuptake) = (serca.J_SERCA - leak_flux.J_leak - ca_diffusion.J_tr) / V_SR
 dot(Ca_SRrelease) = beta_SRrelease * (-ryanodine_receptors.J_RyR + ca_diffusion.J_tr) / V_SRrelease
     in [uM]
 
+Ca_SR = (Ca_SRuptake * V_SRuptake + Ca_SRrelease * V_SRrelease) / (V_SRuptake + V_SRrelease)
+    in [uM]
+
 # Cytosol - Korhonen et al. (2009)
 [na_conc]
-dot(Na_i) = -(ina.i_Na + inab.i_Nab + iha.i_haNa + 3 * incx.i_NCX + 3 * inak.i_NaK) * membrane.Acap * membrane.Cm / (membrane.V_cyto * membrane.F * 1e-6)
+use membrane.V_myo as V_myo
+use membrane.Acap as Acap
+use membrane.Cm as Cm
+use membrane.F as F
+use membrane.FoRT as FoRT
+use membrane.Na_o as Na_o
+
+# dot(Na_i) = -(ina.i_Na + inab.i_Nab + iha.i_haNa + 3 * incx.i_NCX + 3 * inak.i_NaK) * Acap * Cm / (V_myo * F * 1e-6)
+#     in [uM]
+Na_i = 1.38e4
     in [uM]
-E_Na = 1/membrane.FoRT * log(membrane.Na_o / Na_i)
+E_Na = 1 / FoRT * log(Na_o / Na_i)
     in [mV]
 
 [k_conc]
-dot(K_i) = -(iha.i_haK + ito.i_to + ik1.i_K1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * membrane.Acap * membrane.Cm / (membrane.V_cyto * membrane.F * 1e-6)
+use membrane.V_myo as V_myo
+use membrane.Acap as Acap
+use membrane.Cm as Cm
+use membrane.F as F
+use membrane.FoRT as FoRT
+use membrane.K_o as K_o
+
+# dot(K_i) = -(iha.i_haK + ito.i_to + ik1.i_K1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * Acap * Cm / (V_myo * F * 1e-6)
+#     in [uM]
+K_i = 1.3e5
     in [uM]
-E_K = 1/membrane.FoRT * log(membrane.K_o / K_i)
+E_K = 1 / FoRT * log(K_o / K_i)
     in [mV]
 
 [ca_conc]
@@ -645,15 +651,11 @@ use membrane.Ca_o as Ca_o
 use membrane.Acap as Acap
 use membrane.Cm as Cm
 use membrane.F as F
+use membrane.V_myo as V_myo
+use membrane.r_SR as r_SR
+use membrane.r_SL as r_SL
 
-r_SR = 6        # radius of SR
-    in [um]
-r_SL = 10.5     # radius of SL
-    in [um]
-r_delt = 0.5    # spatial step
-    in [um]
-D_Ca = 7        # diffusion coefficient for Ca2+
-    in [um^2/ms]
+
 K_mTRPN = 0.5   # half-saturation for troponin
     in [uM]
 TRPN_tot = 35   # total troponin concentration
@@ -667,78 +669,16 @@ J_CaSR = ryanodine_receptors.J_RyR - serca.J_SERCA + leak_flux.J_leak
     in [uM/ms]
 J_CaSL = (2 * incx.i_NCX - ical.i_CaL - icat.i_CaT - icab.i_Cab) * Acap * Cm / (2 * F * 1e-6)
     in [uM/ms]
-V_subSR = (4 / 3 * pi * (r_SR + r_delt) ^ 3 - 4 / 3 * pi * r_SR) * 1e-3
-    in [pL]
-V_subSL = (4 / 3 * pi * r_SL ^ 3 - 4 / 3 * pi * (r_SL - r_delt) ^ 3) * 1e-3
-    in [pL]
 
-Ca_subSR = c_1
+
+beta = (1 + TRPN_tot * K_mTRPN / ((Ca_i + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((Ca_i + K_mCMDN) ^ 2)) ^ (-1)
+    in [1]
+dot(Ca_i) = beta * (J_CaSR + J_CaSL) / V_myo
     in [uM]
-Ca_subSL = c_9
+
+Ca_subSR = Ca_i
     in [uM]
-E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_subSL)
+Ca_subSL = Ca_i
+    in [uM]
+E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_i)
     in [mV]
-
-# discretised PDE to system of ODEs
-j_1 = (r_SR + 0.5*r_delt) / r_delt
-    in [1]
-beta_i_1 = (1 + TRPN_tot * K_mTRPN / ((c_1 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_1 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_1) = beta_i_1 * (D_Ca / (j_1 * r_delt ^ 2) * ((1 + j_1) * c_2 - 2 * j_1 * c_1 + (j_1 - 1) * c_1) + J_CaSR / V_subSR)
-    in [uM]
-
-j_2 = (r_SR + 0.5 * r_delt + r_delt) / r_delt
-    in [1]
-beta_i_2 = (1 + TRPN_tot * K_mTRPN / ((c_2 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_2 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_2) = beta_i_2 * D_Ca / (j_2 * r_delt ^ 2) * ((1 + j_2) * c_3 - 2 * j_2 * c_2 + (j_2 - 1) * c_1)
-    in [uM]
-
-j_3 = (r_SR + 0.5 * r_delt + 2 * r_delt) / r_delt
-    in [1]
-beta_i_3 = (1 + TRPN_tot * K_mTRPN / ((c_3 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_3 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_3) = beta_i_3 * D_Ca / (j_3 * r_delt ^ 2) * ((1 + j_3) * c_4 - 2 * j_3 * c_3 + (j_3 - 1) * c_2)
-    in [uM]
-
-j_4 = (r_SR + 0.5 * r_delt + 3 * r_delt) / r_delt
-    in [1]
-beta_i_4 = (1 + TRPN_tot * K_mTRPN / ((c_4 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_4 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_4) = beta_i_4 * D_Ca / (j_4 * r_delt ^ 2) * ((1 + j_4) * c_5 - 2 * j_4 * c_4 + (j_4 - 1) * c_3)
-    in [uM]
-
-j_5 = (r_SR + 0.5 * r_delt + 4 * r_delt) / r_delt
-    in [1]
-beta_i_5 = (1 + TRPN_tot * K_mTRPN / ((c_5 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_5 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_5) = beta_i_5 * D_Ca / (j_5 * r_delt ^ 2) * ((1 + j_5) * c_6 - 2 * j_5 * c_5 + (j_5 - 1) * c_4)
-    in [uM]
-
-j_6 = (r_SR + 0.5 * r_delt + 5 * r_delt) / r_delt
-    in [1]
-beta_i_6 = (1 + TRPN_tot * K_mTRPN / ((c_6 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_6 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_6) = beta_i_6 * D_Ca / (j_6 * r_delt ^ 2) * ((1 + j_6) * c_7 - 2 * j_6 * c_6 + (j_6 - 1) * c_5)
-    in [uM]
-
-j_7 = (r_SR + 0.5 * r_delt + 6 * r_delt) / r_delt
-    in [1]
-beta_i_7 = (1 + TRPN_tot * K_mTRPN / ((c_7 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_7 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_7) = beta_i_7 * D_Ca / (j_7 * r_delt ^ 2) * ((1 + j_7) * c_8 - 2 * j_7 * c_7 + (j_7 - 1) * c_6)
-    in [uM]
-
-j_8 = (r_SR + 0.5 * r_delt + 7 * r_delt) / r_delt
-    in [1]
-beta_i_8 = (1 + TRPN_tot * K_mTRPN / ((c_8 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_8 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_8) = beta_i_8 * D_Ca / (j_8 * r_delt ^ 2) * ((1 + j_8) * c_9 - 2 * j_8 * c_8 + (j_8 - 1) * c_7)
-    in [uM]
-
-j_9 = (r_SL - 0.5 * r_delt) / r_delt
-    in [1]
-beta_i_9 = (1 + TRPN_tot * K_mTRPN / ((c_9 + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((c_9 + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(c_9) = beta_i_9 * (D_Ca / (j_9 * r_delt ^ 2) * ((1 + j_9) * c_9 - 2 * j_9 * c_9 + (j_9 - 1) * c_8) + J_CaSL / V_subSL)
-    in [uM]
