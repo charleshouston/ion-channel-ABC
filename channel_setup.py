@@ -315,7 +315,7 @@ class icat(AbstractChannel):
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
         setup_exp_max = {'sim_type': 'ActivationMaxCurr',
-                         'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 500,
+                         'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
                          'vsteps': vsteps2,
                          'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
@@ -844,34 +844,35 @@ class full_sim(AbstractChannel):
         self.model_name = 'Houston2017b.mmt'
         self.publication = 'na'
 
-        self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab','ryanodine_receptors.k_RyR','serca.V_max']
+        self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab','ca_diffusion.tau_tr','ryanodine_receptors.k_RyR','serca.V_max']
 
         self.prior_intervals = [(0, 10),    # 2.7
                                 (0, 1e-15), # 2.268e-16
                                 (0, 0.001), # 0.0008
                                 (0, 0.01),  # 0.0026
+                                (0, 100),   # 100
                                 (0, 0.1),   # 0.01
-                                (0, 10)]    # 0.9996
+                                (0, 5)]    # 0.9996
 
         self.data_exp = [['v_rp',
                           'APD90',
                           'APA',
                           'ca_i_diastole',
                           # 'ca_sr_diastole',
-                          'ca_i_systole',
+                          # 'ca_i_systole',
                           # 'ca_sr_systole',
                           'CaT50',
-                          'CaT90']
-                          ,
+                          # 'CaT90'
+                          ],
                           [-67.0,
                            42,
                            105,
                            0.138,
                            # 1000,
-                           0.7,
-                           # 500,
-                           157,
-                           397]
+                           # 0.7,
+                           # # 500,
+                           157]
+                           # 397]
                           ]
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
 
