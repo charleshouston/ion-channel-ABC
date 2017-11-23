@@ -241,7 +241,7 @@ class icat(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameter_names = ['g_CaT',
-                                'E_CaT',
+                                #'E_CaT',
                                 'p1',
                                 'p2',
                                 'p3',
@@ -258,8 +258,8 @@ class icat(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 10),    # 0.2
-                                (0, 200),   # 106.5
+        self.prior_intervals = [(0, 2),    # 0.2
+                                #(0, 200),   # 106.5
                                 (0, 100),   # 37.49098
                                 (1, 10),    # 5.40634
                                 (0, 1),     # 0.6
@@ -289,7 +289,6 @@ class icat(AbstractChannel):
         for i,curr in enumerate(curr_exp):
             if not curr==max_curr:
                 curr_exp[i] = max_curr
-
 
         self.data_exp = [[vsteps, act_exp],
                          [prepulses, inact_exp],
