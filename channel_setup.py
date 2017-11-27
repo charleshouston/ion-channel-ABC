@@ -843,20 +843,15 @@ class full_sim(AbstractChannel):
         self.model_name = 'Houston2017b.mmt'
         self.publication = 'na'
 
-        self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab']#,'ca_diffusion.tau_tr','ryanodine_receptors.k_RyR','ryanodine_receptors.j_1','ryanodine_receptors.j_2','ryanodine_receptors.j_3','ryanodine_receptors.j_4','serca.V_max']
+        self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab','ryanodine_receptors.k_RyR','serca.V_max']
 
         self.prior_intervals = [(0, 10),    # 2.7
                                 (0, 1e-15), # 2.268e-16
                                 (0, 0.001), # 0.0008
-                                (0, 0.01)]#,  # 0.0026
-                                # (0, 200),   # 100
-                                # (0, 0.1),   # 0.01
-                                # (0, 10),    # 3.51
-                                # (0, 1000),  # 530
-                                # (0, 1000),  # 200
-                                # (0, 1),     # 0.25
-                                # (0, 5)      # 0.9996
-                                # ]
+                                (0, 0.01),  # 0.0026
+                                (0, 0.1),   # 0.01
+                                (0, 5)      # 0.9996
+                                ]
 
         self.data_exp = [['v_rp',
                           'APD90',
