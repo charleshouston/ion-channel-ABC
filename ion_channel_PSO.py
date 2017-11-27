@@ -198,7 +198,7 @@ def score(guess):
     except Exception:
         return float('inf')
 
-original = [2.7, 2.268e-16, 0.0008, 0.0026]#, 100, 0.01, 3.51, 530, 200, 0.25, 0.9996]
+original = [2.7, 2.268e-16, 0.0008, 0.0026, 0.01, 0.9996]
 original_err = score(original)
 print "Original error: " + str(original_err)
 
