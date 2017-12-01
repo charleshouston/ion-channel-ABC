@@ -1,6 +1,12 @@
-# full_simulation.py
-# Runs the full cell model with random draws from ABC posterior results
-# Plots results without stimulating current for all simulations.
+#########################################################################
+# full_simulation.py                                                    #
+# Runs the full cell model with random draws from ABC posterior results #
+# Plots results without stimulating current for all simulations.        #
+# Runs stochastic simulation and makes AP and CaT measurements.         #
+#                                                                       #
+# Author: C Houston                                                     #
+# Last edit date: 1/12/17                                               #
+#########################################################################
 
 import myokit
 import numpy as np
@@ -16,7 +22,7 @@ import pickle
 round_to_n = lambda x, n: round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1)) if x != 0 else 0
 
 # Load full model
-m,_,_ = myokit.load('models/Houston2017b.mmt')
+m,_,_ = myokit.load('models/Houston2017.mmt')
 print myokit.step(m)
 
 i_stim = m.get('membrane.i_stim')
@@ -24,7 +30,6 @@ i_stim.set_rhs(0)
 i_stim.set_binding('pace')
 
 s = myokit.Simulation(m)
-# s.set_max_step_size(0.005)
 
 # Channel list
 channels = [cs.icat(),
@@ -47,17 +52,9 @@ for ch in channels:
     dists = Dist.Arbitrary(particles, weights)
     results.append(dists)
 
-# Parameters from particle swarm optimisation
+# Parameters from particle swarm optimisation results
 vary_params = ['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab','ryanodine_receptors.k_RyR','serca.V_max']
-vary_vals = [6.218201215970397, 5.211334049027319e-16, 0.00029726874812888604, 0.00963563319999778, 0.06930901723850878, 1.9376164667772877] 
-
-# Prepare figure for plotting
-# May need to edit nrows or ncols depending on how many variables are logged
-# fig, ax = plt.subplots(2,3,sharex=True,sharey='row',figsize=(9,4.6))
-colors = ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442', '#56B4E9']
-# num_auto = 0
-# firing_rates = []
-# resting_potentials = []
+vary_vals = [1.1700595226796389, 6.733761168228341e-16, 0.0007967248355722542, 0.0033797233405316847, 0.05926260203970718, 4.146643432305067]
 
 # Population results and traces
 pop_results = []
@@ -87,72 +84,78 @@ for sim_num in range(N):
 
     # Run results from simulation
     output = s.run(101000,
-                log=myokit.LOG_ALL)
+                   log=myokit.LOG_ALL,
+                   log_interval=.5)
     output.trim_left(99800, adjust=True)
 
-    # fig,ax = plt.subplots(nrows=2, ncols=3, sharex=True)
-    # time = output['environment.time']
-    # ax[0][0].plot(time, output['membrane.V'], label='V')
-    # ax[0][0].legend()
+    ####################
+    # Plotting results #
+    ####################
 
-    # ax[1][0].plot(time, output['icab.i_Cab'], label='i_Cab')
-    # ax[1][0].plot(time, output['inab.i_Nab'], label='i_Nab')
-    # ax[1][0].legend()
+    plotting = False
 
-    # ax[0][1].plot(time, output['ina.i_Na'], label='i_Na')
-    # ax[0][1].legend()
+    if plotting:
+        fig,ax = plt.subplots(nrows=2, ncols=3, sharex=True)
+        time = output['environment.time']
+        ax[0][0].plot(time, output['membrane.V'], label='V')
+        ax[0][0].legend()
 
-    # ax[0][2].plot(time, output['ical.i_CaL'], label='i_CaL')
-    # ax[0][2].plot(time, output['icat.i_CaT'], label='i_CaT')
-    # ax[0][2].legend()
+        ax[1][0].plot(time, output['icab.i_Cab'], label='i_Cab')
+        ax[1][0].plot(time, output['inab.i_Nab'], label='i_Nab')
+        ax[1][0].legend()
 
-    # ax[1][1].plot(time, output['incx.i_NCX'], label='i_NCX')
-    # ax[1][1].plot(time, output['inak.i_NaK'], label='i_NaK')
-    # ax[1][1].plot(time, output['iha.i_ha'], label='i_ha')
-    # ax[1][1].legend()
+        ax[0][1].plot(time, output['ina.i_Na'], label='i_Na')
+        ax[0][1].legend()
 
-    # ax[1][2].plot(time, output['ikr.i_Kr'], label='i_Kr')
-    # ax[1][2].plot(time, output['ikur.i_Kur'], label='i_Kur')
-    # ax[1][2].plot(time, output['ik1.i_K1'], label='i_K1')
-    # ax[1][2].plot(time, output['ito.i_to'], label='i_to')
-    # ax[1][2].legend()
+        ax[0][2].plot(time, output['ical.i_CaL'], label='i_CaL')
+        ax[0][2].plot(time, output['icat.i_CaT'], label='i_CaT')
+        ax[0][2].legend()
 
-    # for a in ax.flatten():
-    #     a.get_yaxis().get_major_formatter().set_useOffset(False)
+        ax[1][1].plot(time, output['incx.i_NCX'], label='i_NCX')
+        ax[1][1].plot(time, output['inak.i_NaK'], label='i_NaK')
+        ax[1][1].plot(time, output['iha.i_ha'], label='i_ha')
+        ax[1][1].legend()
 
-    # fig.show()
+        ax[1][2].plot(time, output['ikr.i_Kr'], label='i_Kr')
+        ax[1][2].plot(time, output['ikur.i_Kur'], label='i_Kur')
+        ax[1][2].plot(time, output['ik1.i_K1'], label='i_K1')
+        ax[1][2].plot(time, output['ito.i_to'], label='i_to')
+        ax[1][2].legend()
 
-    # f2, a2 = plt.subplots(nrows=2, ncols=3, sharex=True)
+        for a in ax.flatten():
+            a.get_yaxis().get_major_formatter().set_useOffset(False)
 
-    # a2[0][0].plot(time, output['ca_conc.Ca_i'],label='Ca_i')
-    # a2[0][0].legend()
+        fig.show()
 
-    # a2[1][0].plot(time, output['ca_conc_sr.Ca_SRrelease'],label='SR release')
-    # a2[1][0].plot(time, output['ca_conc_sr.Ca_SRuptake'],label='SR uptake')
-    # a2[1][0].plot(time, output['ca_conc_sr.Ca_SR'],label='SR')
-    # a2[1][0].legend()
+        f2, a2 = plt.subplots(nrows=2, ncols=3, sharex=True)
 
-    # a2[0][1].plot(time, output['ca_conc.J_CaSR'], label='J_CaSR')
-    # a2[0][1].plot(time, output['ca_conc.J_CaSL'], label='J_CaSL')
-    # a2[0][1].legend()
+        a2[0][0].plot(time, output['ca_conc.Ca_i'],label='Ca_i')
+        a2[0][0].legend()
 
-    # a2[1][1].plot(time, output['ryanodine_receptors.J_RyR'],label='J_RyR')
-    # a2[1][1].legend()
+        a2[1][0].plot(time, output['ca_conc_sr.Ca_SRrelease'],label='SR release')
+        a2[1][0].plot(time, output['ca_conc_sr.Ca_SRuptake'],label='SR uptake')
+        a2[1][0].plot(time, output['ca_conc_sr.Ca_SR'],label='SR')
+        a2[1][0].legend()
 
-    # a2[0][2].plot(time, output['serca.J_SERCA'],label='J_SERCA')
-    # a2[0][2].plot(time, output['ca_diffusion.J_tr'],label='J_tr')
-    # a2[0][2].legend()
+        a2[0][1].plot(time, output['ca_conc.J_CaSR'], label='J_CaSR')
+        a2[0][1].plot(time, output['ca_conc.J_CaSL'], label='J_CaSL')
+        a2[0][1].legend()
 
-    # a2[1][2].plot(time,output['leak_flux.J_leak'],label='J_leak')
-    # a2[1][2].legend()
+        a2[1][1].plot(time, output['ryanodine_receptors.J_RyR'],label='J_RyR')
+        a2[1][1].legend()
 
-    # for a in a2.flatten():
-    #     a.get_yaxis().get_major_formatter().set_useOffset(False)
+        a2[0][2].plot(time, output['serca.J_SERCA'],label='J_SERCA')
+        a2[0][2].plot(time, output['ca_diffusion.J_tr'],label='J_tr')
+        a2[0][2].legend()
 
-    # f2.show()
+        a2[1][2].plot(time,output['leak_flux.J_leak'],label='J_leak')
+        a2[1][2].legend()
 
-    # import pdb;pdb.set_trace()
+        for a in a2.flatten():
+            a.get_yaxis().get_major_formatter().set_useOffset(False)
 
+        f2.show()
+  
     ####################################################
     # Take measurements for uncertainty quantification #
     ####################################################
@@ -164,21 +167,24 @@ for sim_num in range(N):
     v_rp = output['membrane.V'][stim_index]
 
     # Ignore cell with high resting potential
-    if v_rp > -60:
+    if v_rp > -50:
         print "High Vrp!"
         continue
 
     try:
         # Find voltage peak
-        peak_index = output['membrane.V'].index(max(output['membrane.V']))
-        peak_time = output['environment.time'][peak_index]
-        if peak_time < stim_time:
-            print "Automaticity!"
-            continue
-
+        peak_index = stim_index
         v_max = output['membrane.V'][peak_index]
+        temp = output['membrane.V'][peak_index+1]
+        while v_max < temp:
+            peak_index += 1
+            v_max = output['membrane.V'][peak_index]
+            temp = output['membrane.V'][peak_index+1]
+            
+        peak_time = output['environment.time'][peak_index]
+
         APA = v_max - v_rp
-        dvdt_max = APA / (peak_time - stim_time)
+        dvdt_avg = APA / (peak_time - stim_time)
 
         # Find APDs
         rep25 = APA * 0.75 + v_rp
@@ -202,10 +208,16 @@ for sim_num in range(N):
         ca_sr_diastole = output['ca_conc_sr.Ca_SR'][stim_index]
 
         # Systole
-        ca_i_systole = max(output['ca_conc.Ca_i'])
-        peak_index_ca = output['ca_conc.Ca_i'].index(ca_i_systole)
+        peak_index_ca = stim_index
+        ca_i_systole = output['ca_conc.Ca_i'][peak_index_ca]
+        ca_sr_diastole = output['ca_conc_sr.Ca_SR'][peak_index_ca]
+        temp = output['ca_conc.Ca_i'][peak_index_ca + 1]
+        while ca_i_systole < temp:
+            peak_index_ca += 1
+            ca_i_systole = output['ca_conc.Ca_i'][peak_index_ca]
+            temp = output['ca_conc.Ca_i'][peak_index_ca + 1]
+
         peak_time_ca = output['environment.time'][peak_index_ca]
-        ca_sr_systole = min(output['ca_conc_sr.Ca_SR'])
         ca_time_to_peak  = peak_time_ca - stim_time
 
         # Decay measurements
@@ -232,8 +244,8 @@ for sim_num in range(N):
     cell_results.append(v_rp)
     print "Action potential amplitude: " + str(APA) + " mV"
     cell_results.append(APA)
-    print "Max upstroke: " + str(dvdt_max) + " mV/ms"
-    cell_results.append(dvdt_max)
+    print "Max upstroke: " + str(dvdt_avg) + " mV/ms"
+    cell_results.append(dvdt_avg)
     print "APD measurements: " + str(apd_vals) + " ms"
     for apd in apd_vals:
         cell_results.append(apd)

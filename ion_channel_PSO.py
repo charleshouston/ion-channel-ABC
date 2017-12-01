@@ -1,3 +1,14 @@
+############################################################################
+# ion_channel_PSO.py                                                       #
+# Runs particle swarm optimisation on cell model parameters that cannot be #
+# adjusted by ABC.                                                         #
+# Fits to selected AP and CaT measurements using multiple draws from ABC   #
+# posterior distributions.                                                 #
+#                                                                          #
+# Author: C Houston                                                        #
+# Last Edit Date: 1/12/17                                                  #
+############################################################################
+
 import myokit
 import myokit.lib.fit as fit
 import channel_setup as cs
@@ -39,13 +50,15 @@ def LossFunction(sim_vals, exp_vals):
 full_model = cs.full_sim()
 m,_,_ = myokit.load('models/' + full_model.model_name)
 
+# Setup stimulating current
 i_stim = m.get('membrane.i_stim')
 i_stim.set_rhs(0)
 i_stim.set_binding('pace')
 
+# Create the simulation
 s = myokit.Simulation(m)
 
-# Load individual channels
+# Load individual channel setups
 channels = [cs.icat(),
             cs.iha(),
             cs.ikur(),
@@ -66,19 +79,20 @@ for ch in channels:
     dists = Dist.Arbitrary(particles, weights)
     results_ABC.append(dists)
 
-# Target values
+# Target values and weighting
 variables = full_model.data_exp[0]
 targets = np.array([full_model.data_exp[1]])
 # weights = np.array([1,1,1,1])
 # weights = weights * len(weights) / sum(weights)
 
-# Number of simulations to run for average
-N = 1
-
 # Parameters and bounds for PSO search
 parameters = full_model.parameter_names
 bounds = full_model.prior_intervals
 
+# Number of simulations to run for average for each particle
+N = 10
+
+# Pacing protocol for simulations
 prot = myokit.pacing.blocktrain(1000, 0.5, limit=0, level=-80)
 
 # Loss function
@@ -86,28 +100,11 @@ def score(guess):
     import numpy as np
     try:
         error = 0
-        # for j, p in enumerate(parameters):
-        #     param = m.get(p)
-        #     s.set_constant(param, guess[j])
         results = []
+
         # Run for N draws from ABC posteriors
         for i in range(N):
-            # Reset simulation to no stimulation
-            # s.reset()
-            # s.set_protocol(None)
-
-            # # Set simulation constants to results from ABC
-            # for j, c in enumerate(channels):
-            #     params = results_ABC[j].draw()
-            #     for k, p in enumerate(c.parameters):
-            #         s.set_constant(p, params[k])
-
-            # # Run no stimulation results
-            # s.pre(20000)
-            # output = s.run(1000, log=variables).npview()
-            # r = [output[key][-1] for key in output.keys()]
-
-            # Paced simulations
+            # Reset simulation and add stimulation current
             s.reset()
             s.set_protocol(prot)
 
@@ -117,6 +114,7 @@ def score(guess):
                 for k, p in enumerate(c.parameters):
                     s.set_constant(p, params[k])
 
+            # Run simulation for 101s and to (hopefully) steady-state
             output = s.run(101000,
                            log=['environment.time',
                                 'membrane.V',
@@ -130,11 +128,19 @@ def score(guess):
             v_rp = output['membrane.V'][stim_index]
 
             # Find voltage peak
-            peak_index = output['membrane.V'].index(max(output['membrane.V']))
-            peak_time = output['environment.time'][peak_index]
+            peak_index = stim_index
             v_max = output['membrane.V'][peak_index]
-            APA = v_max - v_rp
+            temp = output['membrane.V'][peak_index+1]
 
+            while v_max < temp:
+                peak_index += 1
+                v_max = output['membrane.V'][peak_index]
+                temp = output['membrane.V'][peak_index+1]
+         
+            peak_time = output['environment.time'][peak_index]
+            APA = v_max - v_rp
+            dvdt_avg = APA / (peak_time - stim_time)
+            
             # Find APDs
             rep90 = APA * 0.1 + v_rp
             v_curr = v_max
@@ -151,11 +157,18 @@ def score(guess):
             ca_sr_diastole = output['ca_conc_sr.Ca_SR'][stim_index]
 
             # Systole
-            ca_i_systole = max(output['ca_conc.Ca_i'])
-            peak_index_ca = output['ca_conc.Ca_i'].index(ca_i_systole)
+            peak_index_ca = stim_index
+            ca_i_systole = output['ca_conc.Ca_i'][peak_index_ca]
+            ca_sr_diastole = output['ca_conc_sr.Ca_SR'][peak_index_ca]
+            temp = output['ca_conc.Ca_i'][peak_index_ca + 1]
+            while ca_i_systole < temp:
+                peak_index_ca += 1
+                ca_i_systole = output['ca_conc.Ca_i'][peak_index_ca]
+                temp = output['ca_conc.Ca_i'][peak_index_ca + 1]
+
             peak_time_ca = output['environment.time'][peak_index_ca]
-            ca_sr_systole = min(output['ca_conc_sr.Ca_SR'])
             ca_time_to_peak  = peak_time_ca - stim_time
+            ca_amplitude = ca_i_systole - ca_i_diastole
 
             # Decay measurements
             ca_amplitude = ca_i_systole - ca_i_diastole
@@ -177,43 +190,49 @@ def score(guess):
             r = []
             r.append(v_rp)
             r.append(APD90)
-            r.append(APA)
-            r.append(ca_i_diastole)
-            r.append(ca_time_to_peak)
+            # r.append(APA)
+            # r.append(ca_amplitude)
+            # r.append(ca_i_diastole)
+            # r.append(ca_time_to_peak)
             # r.append(ca_sr_diastole)
-            r.append(ca_i_systole)
+            # r.append(ca_i_systole)
             # r.append(ca_sr_systole)
-            r.append(CaT50)
-            r.append(CaT90)
+            # r.append(CaT50)
+            # r.append(CaT90)
             results.append(r)
 
         # Average over results
         results = np.mean(results,0)
-        # results = np.array(results).swapaxes(0,1)
-        # error = np.sum(np.sqrt(((targets - results)/targets) ** 2))
         error = LossFunction(results, targets)
         return error / len(targets)
+
     except myokit._err.SimulationError:
         return float('inf')
+
     except Exception:
         return float('inf')
 
-original = [2.7, 2.268e-16, 0.0008, 0.0026, 0.01, 0.9996]
+original = [2.7, 2.268e-16, 0.0008, 0.0026, 0.01, 0.9996] # original model settings for comparison
 original_err = score(original)
 print "Original error: " + str(original_err)
 
+# Callback function declaration
 def report_results(pg, fg):
     print "Current optimum position: " + str(pg.tolist())
     print "Current optimum score:    " + str(fg)
 
-# Run optimisation algorithm
+# Run particle swarm optimisation
 print 'Running optimisation...'
 with np.errstate(all='ignore'):
     x, f = fit.pso(score, 
                    bounds, 
-                   n=100, 
+                   n=200,
                    parallel=True,
                    callback=report_results)
+
+###############################################
+# Show output of simulation using PSO results #
+###############################################
 
 # Set simulation constants to results from ABC
 s.reset()

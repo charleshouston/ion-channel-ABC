@@ -840,7 +840,7 @@ class ik1(AbstractChannel):
 class full_sim(AbstractChannel):
     def __init__(self):
         self.name = 'fullsim'
-        self.model_name = 'Houston2017b.mmt'
+        self.model_name = 'Houston2017.mmt'
         self.publication = 'na'
 
         self.parameter_names =['inak.i_NaK_max','incx.k_NCX','icab.g_Cab','inab.g_Nab','ryanodine_receptors.k_RyR','serca.V_max']
@@ -854,26 +854,29 @@ class full_sim(AbstractChannel):
                                 ]
 
         self.data_exp = [['v_rp',
-                          'APD90',
-                          'APA',
-                          'ca_i_diastole',
-                          'ca_time_to_peak',
-                          # 'ca_sr_diastole',
-                          'ca_i_systole',
-                          # 'ca_sr_systole',
-                          'CaT50'
-                          'CaT90'
-                          ],
-                          [-67.0,
-                           42,
-                           105,
-                           0.138,
-                           59,
-                           # 1000,
-                           0.7,
-                           # 500,
-                           157,
-                           397]
+                          'APD90'#,
+                          #'APA',
+                          #'ca_i_diastole',
+                          #'ca_amplitude',
+                          #'ca_time_to_peak',
+                          #'ca_sr_diastole',
+                          #'ca_i_systole',
+                          #'ca_sr_systole',
+                          #'CaT50'
+                          #'CaT90'
+                         ],
+                         [-67.0,
+                           42#,
+                           #105,
+                           # 0.6,
+                           # #0.138,
+                           # 59,
+                           # # 1000,
+                           # 0.7,
+                           # # 500,
+                           # 157,
+                           # 397
+                          ]
                           ]
         self.setup_exp = [{'sim_type': 'FullSimulation'}]
 
