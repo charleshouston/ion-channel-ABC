@@ -4,4 +4,7 @@ plotting/
 *.#
 *.DS_Store
 *.bak
-results/APtraces/AP_traces
+
+!results/
+results/*
+!results/updated-model/
