@@ -11,17 +11,19 @@ import distributions as Dist
 plt.style.use('seaborn-colorblind')
 
 # Setup
-channel = cs.ikur()
-v = np.arange(-100, 60, 0.01)
-consts_ss = ['a_ur_ss','i_ur_ss']
-consts_time = ['tau_a_ur','tau_i_ur']
+channel = cs.icat()
+v = np.arange(-100, 40, 0.01)
+consts_ss = ['bss','gss']
+# consts_ss = []
+consts_time = ['tau_b','tau_g']
+# consts_time = []
 
 parameters = channel.parameters
 m, _, _ = myokit.load('models/'+channel.model_name)
 reported_vals = [m.get(p).value() for p in parameters]
 
 # Get results from ABC
-with open('results/results_'+channel.name+'.txt') as f:
+with open('results/updated-model/results_'+channel.name+'.txt') as f:
     pool = f.readline()
     pool = ast.literal_eval(pool)
     weights = f.readline()
@@ -61,7 +63,7 @@ for i in range(len(consts_time)):
     ax[i+1].set_xlabel('Voltage (mV)')
     ax[i+1].legend()
 
-ax[1].set_ylim([0, 500])
+ax[1].set_ylim([0, None])
 ax[2].set_ylim([0, None])
 
 uppercase_letters = map(chr, range(65,91))
@@ -70,21 +72,21 @@ for i,a in enumerate(ax.flatten()):
             uppercase_letters[i], transform=a.transAxes,
             fontsize=16, fontweight='bold', va='top', ha='right')
 plt.tight_layout()
-fig.savefig('results_debug/consts_'+str(channel.name)+'.pdf', bbox_inches="tight")
+fig.savefig('results/consts_'+str(channel.name)+'.pdf', bbox_inches="tight")
 plt.close(fig)
 
 # Plot covariance between parameters
 import pandas as pd
 from pandas.plotting import scatter_matrix
 
-high_var_params = ['k_ytau1','k_ytau2','k_ytau3','k_ytau4']
+high_var_params = channel.parameter_names#['k_ytau1','k_ytau2','k_ytau3','k_ytau4']
 df = pd.DataFrame(pool, columns = channel.parameter_names)
 param_dists = np.swapaxes(pool, 0, 1)
 
 nparams = len(high_var_params)
 sm = scatter_matrix(df[high_var_params], alpha=0.2, figsize=(nparams*1.1,nparams*1.1), diagonal='hist', hist_kwds={'bins':8, 'weights':weights})
 plt.tight_layout()
-plt.savefig('results_debug/cov_'+str(channel.name)+'.pdf', bbox_inches="tight")
+plt.savefig('results/cov_'+str(channel.name)+'.pdf', bbox_inches="tight")
 plt.close()
 
 # Also plot correlation matrix
@@ -119,5 +121,5 @@ for t in ax.yaxis.get_major_ticks():
     t.tick10n = False
     t.tick20n = False
 plt.tight_layout()
-fig.savefig('results_debug/corr_'+str(channel.name)+'.pdf', bbox_inches='tight')
+fig.savefig('results/corr_'+str(channel.name)+'.pdf', bbox_inches='tight')
 plt.close(fig)

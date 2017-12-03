@@ -17,7 +17,7 @@ from ion_channel_ABC import LossFunction
 round_to_n = lambda x, n: round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1)) if x != 0 else 0
 
 # Import channel
-channel = channel_setup.ikur()
+channel = channel_setup.icat()
 m,_,_ = myokit.load('models/'+channel.model_name)
 
 # Check whether to store sim results
@@ -27,7 +27,7 @@ if os.path.isfile(plot_data_name):
     overwrite = 'y' == raw_input('Plot data already exists. Overwrite? (y/n)')
 
 # Open results from ABC simulation
-with open('results/results_' + channel.name + '.txt') as f:
+with open('results/updated-model/results_' + channel.name + '.txt') as f:
     pool = f.readline()
     pool = ast.literal_eval(pool)
     weights = f.readline()
@@ -65,6 +65,7 @@ weights = [w for i,w in enumerate(weights) if len(sim_ABC[i]) != 0]
 sim_ABC = [s for s in sim_ABC if len(s) != 0]
 
 sim_ABC = np.array(sim_ABC)
+
 sim_ABC_reshape = sim_ABC[:,:,1].swapaxes(0,1)
 sim_ABC_mu = []
 sim_ABC_sd = []
@@ -92,7 +93,7 @@ for i in range(ncols):
     axi.fill_between(channel.simulations_x[i], sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
 
     axi.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'o', label='experimental data')
-    axi.plot(sim_original[i][0], sim_original[i][1], '--', label='original formulation')
+    # axi.plot(sim_original[i][0], sim_original[i][1], '--', label='original formulation')
 
     # set correct axis labels
     axi.set_xlabel(channel.setup_exp[i]['xlabel'])
