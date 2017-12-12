@@ -1,15 +1,15 @@
 <?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
-<!-- PlotDigitizer data file: created on Thu May 25 12:43:34 WEST 2017 -->
+<!-- PlotDigitizer data file: created on Tue Dec 12 10:19:19 GMT 2017 -->
 <data>
-<image file='null' />
-<axesnames x='voltage'  y='act_inact' />
-<calibpoints minXaxisX='126.0' minXaxisY='1298.0' maxXaxisX='960.0' maxXaxisY='1297.0' minYaxisX='126.0' minYaxisY='1298.0' maxYaxisX='126.0' maxYaxisY='327.0' aX1='-100.0' aX2='-40.0' aY1='0.0' aY2='0.8' isXLog='false' isYLog='false' />
-<point n='0' x='404.0' y='1296.0' dx='-79.99985623033052' dy='0.001373154823206324' />
-<point n='1' x='543.0' y='1264.0' dx='-69.99711022964331' dy='0.0276004119464468' />
-<point n='2' x='681.0' y='1293.0' dx='-60.07156854147108' dy='0.0035711904215041113' />
-<point n='3' x='821.0' y='1231.0' dx='-49.994292344121334' dy='0.05451424648129066' />
-<point n='4' x='960.0' y='1086.0' dx='-39.981798759842846' dy='0.17384140061791964' />
-<point n='5' x='1099.0' y='693.0' dx='-29.947912248744544' dy='0.49749399244764847' />
-<point n='6' x='1239.0' y='269.0' dx='-19.839409279182007' dy='0.846686276107847' />
-<point n='7' x='1376.0' y='82.0' dx='-9.967177384455908' dy='1.0006189075516105' />
+<image file='DengFig3B.png' />
+<axesnames x='Membrane potential (mV)'  y='Relative activation' />
+<calibpoints minXaxisX='126.0' minXaxisY='1296.0' maxXaxisX='960.0' maxXaxisY='1296.0' minYaxisX='126.0' minYaxisY='1296.0' maxYaxisX='126.0' maxYaxisY='325.0' aX1='-100.0' aX2='-40.0' aY1='0.0' aY2='0.8' isXLog='false' isYLog='false' />
+<point n='0' x='404.0' y='1294.0' dx='-80.0' dy='0.0016477857878474111' />
+<point n='1' x='544.0' y='1264.0' dx='-69.92805755395683' dy='0.026364572605561243' />
+<point n='2' x='681.0' y='1294.0' dx='-60.07194244604317' dy='0.0016477857878474111' />
+<point n='3' x='820.0' y='1229.0' dx='-50.07194244604317' dy='0.055200823892893824' />
+<point n='4' x='960.0' y='938.0' dx='-40.0' dy='0.2949536560247167' />
+<point n='5' x='1100.0' y='691.0' dx='-29.928057553956833' dy='0.49845520082389283' />
+<point n='6' x='1238.0' y='266.0' dx='-20.0' dy='0.8486096807415036' />
+<point n='7' x='1377.0' y='80.0' dx='-10.0' dy='1.0018537590113286' />
 </data>

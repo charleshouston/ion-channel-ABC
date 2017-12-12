@@ -1,0 +1,17 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Tue Dec 12 10:25:43 GMT 2017 -->
+<data>
+<image file='DengFig4B.png' />
+<axesnames x='Time interval (ms)'  y='Relative activation err' />
+<calibpoints minXaxisX='130.0' minXaxisY='1260.0' maxXaxisX='1407.0' maxXaxisY='1260.0' minYaxisX='130.0' minYaxisY='1261.0' maxYaxisX='130.0' maxYaxisY='67.0' aX1='0.0' aX2='350.0' aY1='0.0' aY2='1.0' isXLog='false' isYLog='false' />
+<point n='0' x='246.0' y='974.0' dx='31.793265465935775' dy='0.24036850921273034' />
+<point n='1' x='362.0' y='776.0' dx='63.586530931871565' dy='0.4061976549413736' />
+<point n='2' x='479.0' y='625.0' dx='95.6538762725137' dy='0.5326633165829147' />
+<point n='3' x='596.0' y='536.0' dx='127.72122161315583' dy='0.6072026800670017' />
+<point n='4' x='713.0' y='391.0' dx='159.78856695379795' dy='0.7286432160804021' />
+<point n='5' x='830.0' y='347.0' dx='191.8559122944401' dy='0.7654941373534339' />
+<point n='6' x='947.0' y='230.0' dx='223.92325763508222' dy='0.8634840871021776' />
+<point n='7' x='1064.0' y='180.0' dx='255.99060297572436' dy='0.9053601340033501' />
+<point n='8' x='1181.0' y='138.0' dx='288.05794831636643' dy='0.9405360134003351' />
+<point n='9' x='1297.0' y='125.0' dx='319.85121378230224' dy='0.9514237855946399' />
+</data>

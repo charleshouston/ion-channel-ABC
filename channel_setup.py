@@ -240,8 +240,7 @@ class icat(AbstractChannel):
         self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
-        self.parameter_names = ['g_CaT',
-                                #'E_CaT',
+        self.parameter_names = [#'g_CaT',
                                 'p1',
                                 'p2',
                                 'p3',
@@ -258,8 +257,7 @@ class icat(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [(0, 2),    # 0.2
-                                #(0, 200),   # 106.5
+        self.prior_intervals = [#(0, 2),    # 0.2
                                 (0, 100),   # 37.49098
                                 (1, 10),    # 5.40634
                                 (0, 1),     # 0.6
@@ -280,46 +278,42 @@ class icat(AbstractChannel):
         self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
 
         # Load experimental data
-        vsteps, act_exp = data_icat.Act_DengFig3B()
-        prepulses, inact_exp = data_icat.Inact_DengFig3B()
-        intervals, rec_exp = data_icat.Recovery_DengFig4B()
-        vsteps2, curr_exp = data_icat.IV_DengFig1B()
-        max_curr = min(curr_exp)
-        # Baby hack to fit maximum current
-        for i,curr in enumerate(curr_exp):
-            if not curr==max_curr:
-                curr_exp[i] = max_curr
+        vsteps_act, act_exp, act_exp_sem, act_exp_sd = data_icat.Act()
+        vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd = data_icat.Inact()
+        intervals, rec_exp, rec_exp_sem, rec_exp_sd = data_icat.Rec()
 
-        self.data_exp = [[vsteps, act_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp],
-                         [vsteps2, curr_exp]]
+        self.data_exp = [[vsteps_act, act_exp, act_exp_sem, act_exp_sd],
+                         [vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd],
+                         [intervals, rec_exp, rec_exp_sem, rec_exp_sd]],
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',
                          'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
-                         'vsteps': vsteps, 'tstep': 300,
+                         'vsteps': vsteps_act, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Normalised conductance',
                          'normalise': True}
+        
         setup_exp_inact = {'sim_type': 'InactivationSim',
                            'variable': 'icat.G_CaT', 'vhold': -20, 'thold': 300,
-                           'vsteps': prepulses, 'tstep': 1000,
+                           'vsteps': vsteps_inact, 'tstep': 1000,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
+        
         setup_exp_rec = {'sim_type': 'RecoverySim',
                          'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
                          'vstep': -20, 'tstep1': 300, 'tstep2': 300,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
-        setup_exp_max = {'sim_type': 'ActivationMaxCurr',
-                         'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
-                         'vsteps': vsteps2,
-                         'tstep': 300,
-                         'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec, setup_exp_max]
+        
+        # setup_exp_max = {'sim_type': 'ActivationMaxCurr',
+        #                  'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
+        #                  'vsteps': vsteps2,
+        #                  'tstep': 300,
+        #                  'xlabel': 'Membrane potential (mV)',
+        #                  'ylabel': 'Current density (pA/pF)'}
+        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
 
         super(icat, self).__init__()
 

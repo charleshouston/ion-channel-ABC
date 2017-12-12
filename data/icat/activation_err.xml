@@ -1,0 +1,15 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Tue Dec 12 10:32:25 GMT 2017 -->
+<data>
+<image file='DengFig3B.png' />
+<axesnames x='Membrane potential (mV)'  y='Relative activation err' />
+<calibpoints minXaxisX='126.0' minXaxisY='1296.0' maxXaxisX='960.0' maxXaxisY='1296.0' minYaxisX='126.0' minYaxisY='1296.0' maxYaxisX='126.0' maxYaxisY='325.0' aX1='-100.0' aX2='-40.0' aY1='0.0' aY2='0.8' isXLog='false' isYLog='false' />
+<point n='0' x='404.0' y='1295.0' dx='-80.0' dy='8.238928939237056E-4' />
+<point n='1' x='543.0' y='1275.0' dx='-70.0' dy='0.017301750772399593' />
+<point n='2' x='681.0' y='1264.0' dx='-60.07194244604317' dy='0.026364572605561243' />
+<point n='3' x='820.0' y='1219.0' dx='-50.07194244604317' dy='0.06343975283213177' />
+<point n='4' x='960.0' y='864.0' dx='-40.0' dy='0.3559217301750772' />
+<point n='5' x='1099.0' y='633.0' dx='-30.0' dy='0.5462409886714726' />
+<point n='6' x='1238.0' y='248.0' dx='-20.0' dy='0.8634397528321318' />
+<point n='7' x='1378.0' y='80.0' dx='-9.928057553956833' dy='1.0018537590113286' />
+</data>
