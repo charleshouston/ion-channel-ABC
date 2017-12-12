@@ -57,7 +57,16 @@ class ChannelProto():
         exp_vals = channel.data_exp
 
         # Calculate result by approximate Bayesian computation
-        result = fitting.approx_bayes_smc_adaptive(channel,init,priors,exp_vals,prior_func,kern,distance,200,10000,0.003)
+        result = fitting.approx_bayes_smc_adaptive(channel,
+                                                   init,
+                                                   priors,
+                                                   exp_vals,
+                                                   prior_func,
+                                                   kern,
+                                                   distance,
+                                                   20,
+                                                   1000,
+                                                   0.003)
 
         # Write results to the standard output and results log
         print result.getmean()
@@ -92,7 +101,7 @@ def LossFunction(sim_vals, exp_vals):
                 sim_vals_closest[i] = sim_vals_closest[i] + [sim_vals[i][1][curr]]
             else:
                 sim_vals_closest[i] = sim_vals_closest[i] + [sim_vals[i][1][curr+1]]
-
+                
     return cvchisq(sim_vals_closest, exp_vals)
 
 # Calculate coefficient of variation of weighted residuals
@@ -106,6 +115,11 @@ def cvchisq(model, exper):
         m = np.array(m) # model prediction
         e = np.array(exper[i][1]) # experimental mean
         sd = np.array(exper[i][3]) # experimental standard deviation
+        # can't divide by zero so set to minimum standard deviation in these cases
+        for i,sdi in enumerate(sd):
+            if sdi == 0:
+                sd[i] = min(sd[sd != 0])
+         
         try:
             err = np.sum(np.square((e - m) / sd))
         except Warning:
@@ -156,6 +170,6 @@ def prior_func(priors,params):
 
 if __name__ == '__main__':
     # Load specific channel settings
-    channel = channel_setup.ina()
+    channel = channel_setup.icat()
     x = ChannelProto()
     x.fit(channel)

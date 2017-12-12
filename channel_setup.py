@@ -284,7 +284,7 @@ class icat(AbstractChannel):
 
         self.data_exp = [[vsteps_act, act_exp, act_exp_sem, act_exp_sd],
                          [vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd],
-                         [intervals, rec_exp, rec_exp_sem, rec_exp_sd]],
+                         [intervals, rec_exp, rec_exp_sem, rec_exp_sd]]
 
         # Define experimental setup for simulations
         setup_exp_act = {'sim_type': 'ActivationSim',

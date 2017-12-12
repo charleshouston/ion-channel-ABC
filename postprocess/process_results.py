@@ -27,7 +27,7 @@ if os.path.isfile(plot_data_name):
     overwrite = 'y' == raw_input('Plot data already exists. Overwrite? (y/n)')
 
 # Open results from ABC simulation
-with open('results/updated-model/results_' + channel.name + '.txt') as f:
+with open('results/results_' + channel.name + '.txt') as f:
     pool = f.readline()
     pool = ast.literal_eval(pool)
     weights = f.readline()
@@ -92,8 +92,7 @@ for i in range(ncols):
     axi.plot(channel.simulations_x[i], sim_ABC_mu[i], '-', label='ABC posterior')
     axi.fill_between(channel.simulations_x[i], sim_ABC_mu[i]-sim_ABC_sd[i], sim_ABC_mu[i]+sim_ABC_sd[i], alpha=0.25, lw=0)
 
-    axi.plot(channel.data_exp[i][0], channel.data_exp[i][1], 'o', label='experimental data')
-    # axi.plot(sim_original[i][0], sim_original[i][1], '--', label='original formulation')
+    axi.errorbar(channel.data_exp[i][0], channel.data_exp[i][1], yerr=channel.data_exp[i][2], fmt='o', label='experimental data')
 
     # set correct axis labels
     axi.set_xlabel(channel.setup_exp[i]['xlabel'])
