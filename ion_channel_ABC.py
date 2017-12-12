@@ -80,7 +80,7 @@ def LossFunction(sim_vals, exp_vals):
 
     # Finds sim output at x value closest to experimental
     sim_vals_closest = [[] for i in range(len(sim_vals))]
-    for i,e in enumerate(exp_vals):
+    for i, e in enumerate(exp_vals):
         curr = 0
         for tval in e[0]:
             sim_times = sim_vals[i][0]
@@ -93,24 +93,58 @@ def LossFunction(sim_vals, exp_vals):
             else:
                 sim_vals_closest[i] = sim_vals_closest[i] + [sim_vals[i][1][curr+1]]
 
-    # Calculate CV(RMSD) for each experiment
-    tot_err = 0
-    # Catch runtime overflow warnings from numpy
+    return cvchisq(sim_vals_closest, exp_vals)
+
+# Calculate coefficient of variation of weighted residuals
+def cvchisq(model, exper):
+    
     warnings.filterwarnings('error')
-    for i,p in enumerate(sim_vals_closest):
-        p = np.array(p) # predicted
-        e = np.array(exp_vals[i][1]) # experimental
+    
+    tot_err = 0
+    
+    for i, m in enumerate(model):
+        m = np.array(m) # model prediction
+        e = np.array(exper[i][1]) # experimental mean
+        sd = np.array(exper[i][3]) # experimental standard deviation
         try:
-            err = np.sum(np.square(p-e))
+            err = np.sum(np.square((e - m) / sd))
+        except Warning:
+            return float("inf")
+        except:
+            return float("inf")
+        
+        # normalise error
+        err = pow(err / len(m), 0.5)
+        err = err / abs(np.mean(e))
+        tot_err += err
+  
+    warnings.resetwarnings()
+    
+    return tot_err
+
+# Calculate coefficient of variation of the real mean squared distance
+def cvrmsd(model, exper):
+    
+    warnings.filterwarnings('error')
+    
+    tot_err = 0
+    
+    for i, m in enumerate(model):
+        m = np.array(m)
+        e = np.array(exper[i][1])
+        try:
+            err = np.sum(np.square(m - e))
         except Warning:
             return float("inf")
         except:
             return float("inf")
         # normalise error
-        err = pow(err/len(p),0.5)
-        err = err/abs(np.mean(e))
+        err = pow(err / len(m), 0.5)
+        err = err / abs(np.mean(e))
         tot_err += err
 
+    warnings.resetwarnings()
+    
     return tot_err
 
 # Simple multiplicative prior for list of independent Distribution objects
