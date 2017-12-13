@@ -306,13 +306,7 @@ class icat(AbstractChannel):
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
-        
-        # setup_exp_max = {'sim_type': 'ActivationMaxCurr',
-        #                  'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
-        #                  'vsteps': vsteps2,
-        #                  'tstep': 300,
-        #                  'xlabel': 'Membrane potential (mV)',
-        #                  'ylabel': 'Current density (pA/pF)'}
+
         self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
 
         super(icat, self).__init__()
