@@ -4,7 +4,4 @@ plotting/
 *.#
 *.DS_Store
 *.bak
-
-!results/
 results/*
-!results/updated-model/
