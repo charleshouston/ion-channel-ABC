@@ -240,7 +240,7 @@ class icat(AbstractChannel):
         self.publication = 'Korhonen et al., 2009'
 
         # Parameters involved in ABC process
-        self.parameter_names = [#'g_CaT',
+        self.parameter_names = ['g_CaT',
                                 'p1',
                                 'p2',
                                 'p3',
@@ -257,7 +257,7 @@ class icat(AbstractChannel):
 
         # Parameter specific prior intervals
         # Original values given in comments
-        self.prior_intervals = [#(0, 2),    # 0.2
+        self.prior_intervals = [(0, 2),     # 0.2
                                 (0, 100),   # 37.49098
                                 (1, 10),    # 5.40634
                                 (0, 1),     # 0.6
@@ -271,22 +271,25 @@ class icat(AbstractChannel):
                                 (0, 0.1),   # 0.08
                                 (0, 100)]   # 65
 
-        # Edit which parameters to vary
-        # use = [1,1,1,1,0,0,0,0,1,1,0,0,0,0]
-        use = [1 for i in range(len(self.parameter_names))]
-        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
-        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
-
         # Load experimental data
+        vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd = data_icat.IV()
         vsteps_act, act_exp, act_exp_sem, act_exp_sd = data_icat.Act()
         vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd = data_icat.Inact()
         intervals, rec_exp, rec_exp_sem, rec_exp_sd = data_icat.Rec()
 
-        self.data_exp = [[vsteps_act, act_exp, act_exp_sem, act_exp_sd],
+        self.data_exp = [[vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd],
+                         [vsteps_act, act_exp, act_exp_sem, act_exp_sd],
                          [vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd],
                          [intervals, rec_exp, rec_exp_sem, rec_exp_sd]]
 
         # Define experimental setup for simulations
+
+        setup_exp_IV = {'sim_type': 'ActivationSim',
+                        'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
+                        'vsteps': vsteps_IV, 'tstep': 300,
+                        'xlabel': 'Membrane potential (mV)',
+                        'ylabel': 'Current density (pA/pF)'}
+        
         setup_exp_act = {'sim_type': 'ActivationSim',
                          'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
                          'vsteps': vsteps_act, 'tstep': 300,
@@ -307,7 +310,7 @@ class icat(AbstractChannel):
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
 
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
+        self.setup_exp = [setup_exp_IV, setup_exp_act, setup_exp_inact, setup_exp_rec]
 
         super(icat, self).__init__()
 
