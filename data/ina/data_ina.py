@@ -8,6 +8,8 @@
     [http://plotdigitizer.sourceforge.net]
 '''
 
+import math
+
 # PLOT DATA ACCESSORS
 
 '''
