@@ -241,6 +241,7 @@ class icat(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameter_names = ['g_CaT',
+                                'E_CaT',
                                 'p1',
                                 'p2',
                                 'p3',
@@ -258,6 +259,7 @@ class icat(AbstractChannel):
         # Parameter specific prior intervals
         # Original values given in comments
         self.prior_intervals = [(0, 2),     # 0.2
+                                (0, 50),    # 33
                                 (0, 100),   # 37.49098
                                 (1, 10),    # 5.40634
                                 (0, 1),     # 0.6
@@ -272,10 +274,10 @@ class icat(AbstractChannel):
                                 (0, 100)]   # 65
 
         # Load experimental data
-        vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd = data_icat.IV()
-        vsteps_act, act_exp, act_exp_sem, act_exp_sd = data_icat.Act()
-        vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd = data_icat.Inact()
-        intervals, rec_exp, rec_exp_sem, rec_exp_sd = data_icat.Rec()
+        vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd = data_icat.IV_Nguyen()
+        vsteps_act, act_exp, act_exp_sem, act_exp_sd = data_icat.Act_Nguyen()
+        vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd = data_icat.Inact_Nguyen()
+        intervals, rec_exp, rec_exp_sem, rec_exp_sd = data_icat.Rec_Deng()
 
         self.data_exp = [[vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd],
                          [vsteps_act, act_exp, act_exp_sem, act_exp_sd],
@@ -285,20 +287,20 @@ class icat(AbstractChannel):
         # Define experimental setup for simulations
 
         setup_exp_IV = {'sim_type': 'ActivationSim',
-                        'variable': 'icat.i_CaT', 'vhold': -80, 'thold': 5000,
+                        'variable': 'icat.i_CaT', 'vhold': -75, 'thold': 5000,
                         'vsteps': vsteps_IV, 'tstep': 300,
                         'xlabel': 'Membrane potential (mV)',
                         'ylabel': 'Current density (pA/pF)'}
         
         setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
+                         'variable': 'icat.G_CaT', 'vhold': -75, 'thold': 5000,
                          'vsteps': vsteps_act, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Normalised conductance',
                          'normalise': True}
         
         setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'icat.G_CaT', 'vhold': -20, 'thold': 300,
+                           'variable': 'icat.G_CaT', 'vhold': -10, 'thold': 200,
                            'vsteps': vsteps_inact, 'tstep': 1000,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
