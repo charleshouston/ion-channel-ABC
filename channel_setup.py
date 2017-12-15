@@ -802,8 +802,8 @@ class ina(AbstractChannel):
 
         # Loading experimental data
         vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd = data_ina.IV_Nakajima()
-        vsteps_act, act_exp, act_exp_sem, act_exp_sd = data_icat.Act_Nakajima()
-        vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd = data_icat.Inact_Nakajima()
+        vsteps_act, act_exp, act_exp_sem, act_exp_sd = data_ina.Act_Nakajima()
+        vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd = data_ina.Inact_Nakajima()
 
         self.data_exp = [[vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd],
                          [vsteps_act, act_exp, act_exp_sem, act_exp_sd],
