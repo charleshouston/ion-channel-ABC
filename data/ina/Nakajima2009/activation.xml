@@ -1,0 +1,17 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Fri Dec 15 14:36:04 GMT 2017 -->
+<data>
+<image file='Nakajima_Fig4B.png' />
+<axesnames x='Membrane potential (mV)'  y='Normalised current' />
+<calibpoints minXaxisX='262.0' minXaxisY='1004.0' maxXaxisX='1287.0' maxXaxisY='1004.0' minYaxisX='241.0' minYaxisY='938.0' maxYaxisX='242.0' maxYaxisY='249.0' aX1='-90.0' aX2='20.0' aY1='0.0' aY2='1.0' isXLog='false' isYLog='false' />
+<point n='0' x='355.0' y='935.0' dx='-80.01951219512195' dy='0.004354136429608246' />
+<point n='1' x='449.0' y='933.0' dx='-69.93170731707316' dy='0.007256894049346929' />
+<point n='2' x='539.0' y='924.0' dx='-60.27317073170731' dy='0.020319303338171446' />
+<point n='3' x='635.0' y='881.0' dx='-49.97073170731707' dy='0.08272859216255446' />
+<point n='4' x='727.0' y='706.0' dx='-40.09756097560975' dy='0.3367198838896952' />
+<point n='5' x='819.0' y='500.0' dx='-30.224390243902434' dy='0.6357039187227868' />
+<point n='6' x='912.0' y='383.0' dx='-20.24390243902438' dy='0.8055152394775037' />
+<point n='7' x='1006.0' y='295.0' dx='-10.15609756097561' dy='0.9332365747460087' />
+<point n='8' x='1099.0' y='267.0' dx='-0.17560975609755758' dy='0.9738751814223513' />
+<point n='9' x='1193.0' y='258.0' dx='9.912195121951228' dy='0.9869375907111757' />
+</data>
