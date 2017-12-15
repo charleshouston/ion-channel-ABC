@@ -164,7 +164,8 @@ def Inact_Nakajima():
                 0.38124435293299974,
                 0.11692143626633311,
                 0.04009851959966637,
-                0.028615426049485748]
+                0.028615426049485748,
+                0.02420226300687589]
     
     sem = [abs(err_bars[i] - y[i]) for i in range(len(y))]
     sd = [sem[i] * math.sqrt(N) for i in range(len(y))] 
