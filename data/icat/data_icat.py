@@ -10,7 +10,7 @@
     Data was digitised from graphs in the publication using
     [http://plotdigitizer.sourceforge.net]
 '''
-
+import numpy as np
 import math
 
 # PLOT DATA ACCESSORS
@@ -54,16 +54,16 @@ def IV_Deng():
                 -0.8325404376784014,
                 0.0951474785918176]
     
-    sem = [abs(err_bars[i] - y[i]) for i in range(len(y))]
-    sd = [sem[i] * math.sqrt(N) for i in range(len(y))]
-    return x,y,sem,sd
+    errs = [np.abs(err_bars[i] - y[i]) for i in range(len(y))]
+    
+    return x,y,errs,N
 
 '''
     IV curve
 
     Returns x, y data from points in figure 5B in Nguyen 2013 
 
-    Data reported as mean \pm SD for N=8 cells.
+    Data reported as mean \pm SEM for N=8 cells.
 '''
 def IV_Nguyen():
     x = [-75,-70,-65,-60,-55,-50,-45,-40,-35,-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30,35]
@@ -117,9 +117,9 @@ def IV_Nguyen():
                 -1.109799291617473,
                 -0.6139315230224316]
     
-    sd = [abs(err_bars[i] - y[i]) for i in range(len(y))]
-    sem = [sd[i] / math.sqrt(N) for i in range(len(y))]
-    return x,y,sem,sd
+    errs = [np.abs(err_bars[i] - y[i]) for i in range(len(y))]
+    
+    return x,y,errs,N
 
 
 '''
@@ -150,10 +150,9 @@ def Act_Deng():
                 0.5462409886714726,
                 0.8634397528321318,
                 1.0018537590113286]
+    errs = [np.abs(err_bars[i] - y[i]) for i in range(len(y))]
     
-    sem = [abs(err_bars[i] - y[i]) for i in range(len(y))]
-    sd = [sem[i] * math.sqrt(N) for i in range(len(y))]
-    return x,y,sem,sd
+    return x,y,errs,N
 
 
 '''
@@ -161,7 +160,7 @@ Activation curve
 
 Returns x,y,sem,sd data from activation points in figure 5C in Nguyen 2013 
 
-Data reported as mean \pm SD for N=8 cells.
+Data reported as mean \pm SEM for N=8 cells.
 '''
 def Act_Nguyen():
     x = [-75,-70,-65,-60,-55,-50,-45,-40,-35,-30,-25,-20,-15,-10,-5,0,5]
@@ -203,9 +202,9 @@ def Act_Nguyen():
                 1.0103703703703704,
                 1.0162962962962963]
     
-    sd = [abs(err_bars[i] - y[i]) for i in range(len(y))]
-    sem = [sd[i] / math.sqrt(N) for i in range(len(y))]
-    return x,y,sem,sd
+    errs = [np.abs(err_bars[i] - y[i]) for i in range(len(y))]
+    
+    return x,y,errs,N
 
 '''
 Inactivation curve
@@ -237,17 +236,18 @@ def Inact_Deng():
                 0.23233779608650862,
                 0.01139817291377998,
                 0.013731548232063018]
-
-    sem = [abs(err_bars[i] - y[i]) for i in range(len(y))]
-    sd = [sem[i] * math.sqrt(N) for i in range(len(y))]
-    return x,y,sem,sd
+    
+    errs = [np.abs(err_bars[i] - y[i]) for i in range(len(y))]
+    
+    return x,y,errs,N
+   
 
 '''
 Inactivation curve
 
 Returns x, mean and SD data from inactivation points in figure 5E in Nguyen 2013 
 
-Data is reported mean \pm SD for N=7 cells.
+Data is reported mean \pm SEM for N=7 cells.
 '''
 def Inact_Nguyen():
     x = [-80,-75,-70,-65,-60,-55,-50,-45,-40,-35,-30,-25]
@@ -279,10 +279,9 @@ def Inact_Nguyen():
                 0.029810692109647263,
                 0.012791155535362808]
 
-    sd = [abs(err_bars[i] - y[i]) for i in range(len(y))]
-    sem = [sd[i] / math.sqrt(N) for i in range(len(y))]
-    return x,y,sem,sd
-
+    errs = [np.abs(err_bars[i] - y[i]) for i in range(len(y))]
+    
+    return x,y,errs,N
 
 
 '''
@@ -317,7 +316,7 @@ def Rec_Deng():
                 0.9053601340033501,
                 0.9405360134003351,
                 0.9514237855946399]
-    sem = [abs(err_bars[i] - y[i]) for i in range(len(y))]
-    sd = [sem[i] * math.sqrt(N) for i in range(len(y))]   
-   
-    return x,y,sem,sd
+    
+    errs = [np.abs(err_bars[i] - y[i]) for i in range(len(y))]
+    
+    return x,y,errs,N 
