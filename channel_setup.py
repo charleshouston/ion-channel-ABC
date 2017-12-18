@@ -274,44 +274,44 @@ class icat(AbstractChannel):
                                 (0, 100)]   # 65
 
         # Load experimental data
-        vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd = data_icat.IV_Nguyen()
-        vsteps_act, act_exp, act_exp_sem, act_exp_sd = data_icat.Act_Nguyen()
-        vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd = data_icat.Inact_Nguyen()
-        intervals, rec_exp, rec_exp_sem, rec_exp_sd = data_icat.Rec_Deng()
+        vsteps_IV, IV_exp, IV_errs, IV_N = data_icat.IV_Nguyen()
+        vsteps_act, act_exp, act_errs, act_N = data_icat.Act_Nguyen()
+        vsteps_inact, inact_exp, inact_errs, inact_N = data_icat.Inact_Nguyen()
+        intervals, rec_exp, rec_errs, rec_N = data_icat.Rec_Deng()
 
-        self.data_exp = [[vsteps_IV, IV_exp, IV_exp_sem, IV_exp_sd],
-                         [vsteps_act, act_exp, act_exp_sem, act_exp_sd],
-                         [vsteps_inact, inact_exp, inact_exp_sem, inact_exp_sd],
-                         [intervals, rec_exp, rec_exp_sem, rec_exp_sd]]
+        self.data_exp = [[vsteps_IV, IV_exp, IV_errs, IV_N],
+                         [vsteps_act, act_exp, act_errs, act_N],
+                         [vsteps_inact, inact_exp, inact_errs, inact_N],
+                         [intervals, rec_exp, rec_errs, rec_N]]
 
         # Define experimental setup for simulations
-        setup_exp_IV = {'sim_type': 'ActivationSim',
+        setup_IV = {'sim_type': 'ActivationSim',
                         'variable': 'icat.i_CaT', 'vhold': -75, 'thold': 5000,
                         'vsteps': vsteps_IV, 'tstep': 300,
                         'xlabel': 'Membrane potential (mV)',
                         'ylabel': 'Current density (pA/pF)'}
         
-        setup_exp_act = {'sim_type': 'ActivationSim',
+        setup_act = {'sim_type': 'ActivationSim',
                          'variable': 'icat.G_CaT', 'vhold': -75, 'thold': 5000,
                          'vsteps': vsteps_act, 'tstep': 300,
                          'xlabel': 'Membrane potential (mV)',
                          'ylabel': 'Normalised conductance',
                          'normalise': True}
         
-        setup_exp_inact = {'sim_type': 'InactivationSim',
+        setup_inact = {'sim_type': 'InactivationSim',
                            'variable': 'icat.G_CaT', 'vhold': -10, 'thold': 200,
                            'vsteps': vsteps_inact, 'tstep': 1000,
                            'xlabel': 'Membrane potential (mV)',
                            'ylabel': 'Normalised conductance'}
         
-        setup_exp_rec = {'sim_type': 'RecoverySim',
+        setup_rec = {'sim_type': 'RecoverySim',
                          'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
                          'vstep': -20, 'tstep1': 300, 'tstep2': 300,
                          'twaits': intervals,
                          'xlabel': 'Interval (ms)',
                          'ylabel': 'Relative recovery'}
 
-        self.setup_exp = [setup_exp_IV, setup_exp_act, setup_exp_inact, setup_exp_rec]
+        self.setup_exp = [setup_IV, setup_act, setup_inact, setup_rec]
 
         super(icat, self).__init__()
 

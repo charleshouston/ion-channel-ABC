@@ -114,12 +114,20 @@ def cvchisq(model, exper):
     for i, m in enumerate(model):
         m = np.array(m) # model prediction
         e = np.array(exper[i][1]) # experimental mean
-        sd = np.array(exper[i][3]) # experimental standard deviation
-        # can't divide by zero so set to minimum standard deviation in these cases
+        err_bars = np.array(exper[i][2]) # experimental standard deviation
+        N = np.array(exper[i][3]) # number of experimental measurements taken for this data mean
+        
+        # normalise all data points to between -1 and 1 by experimental value
+        m = normliaseby(m, e)
+        e = normaliseby(e, e)
+        err_bars = normaliseby(err_bars, e)
+        sd = err_bars * np.sqrt(N) # calculate standard deviations from normalised values of SEM
+        
+        # if any sd value is zero, set to minimum of other recorded values
         for i,sdi in enumerate(sd):
             if sdi == 0:
-                sd[i] = min(sd[sd != 0])
-         
+                sd[i] = np.min(sd[sd!=0])
+        
         try:
             err = np.sum(np.square((e - m) / sd))
         except Warning:
@@ -127,9 +135,9 @@ def cvchisq(model, exper):
         except:
             return float("inf")
         
-        # normalise error
+        # root and normalise error by range
         err = pow(err / len(m), 0.5)
-        err = err / abs(np.mean(e))
+        err = err / np.ptp(e)
         tot_err += err
   
     warnings.resetwarnings()
@@ -146,15 +154,21 @@ def cvrmsd(model, exper):
     for i, m in enumerate(model):
         m = np.array(m)
         e = np.array(exper[i][1])
+        
+        # normalise between -1 and 1 by experimental values
+        m = normaliseby(m, e)
+        e = normaliseby(e, e)
+        
         try:
             err = np.sum(np.square(m - e))
         except Warning:
             return float("inf")
         except:
             return float("inf")
-        # normalise error
+
+        # root and normalise error by range
         err = pow(err / len(m), 0.5)
-        err = err / abs(np.mean(e))
+        err = err / np.ptp(e)
         tot_err += err
 
     warnings.resetwarnings()
@@ -167,6 +181,12 @@ def prior_func(priors,params):
     for i,distr in enumerate(priors):
         prob = prob * distr.pdf(params[i])
     return prob
+
+# Normalise `a` between -1 and 1 using `b` as normalisation data
+def normaliseby(a, b):
+    temp = a
+    temp /= np.max(np.abs(b), axis=0)
+    return temp
 
 if __name__ == '__main__':
     # Load specific channel settings
