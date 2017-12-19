@@ -127,17 +127,22 @@ def cvchisq(model, exper):
         for i,sdi in enumerate(sd):
             if sdi == 0:
                 sd[i] = np.min(sd[sd!=0])
+                
+        # normalise weights for weighted sum of squares loss so that in the limit as sd -> 0 
+        # is equivalent to sum of squares loss
+        w = [1 / np.square(sdi) for sdi in sd]
+        w = w / np.max(w)
         
         try:
-            err = np.sum(np.square((e - m) / sd))
+            err = np.sum(w * np.square(e - m))
         except Warning:
             return float("inf")
         except:
             return float("inf")
         
-        # root and normalise error by range
+        # root error
         err = pow(err / len(m), 0.5)
-        err = err / np.ptp(e)
+        # err = err / np.ptp(e) # normalised earlier so shouldn't need to normalise again here
         tot_err += err
   
     warnings.resetwarnings()
@@ -168,7 +173,7 @@ def cvrmsd(model, exper):
 
         # root and normalise error by range
         err = pow(err / len(m), 0.5)
-        err = err / np.ptp(e)
+        # err = err / np.ptp(e)
         tot_err += err
 
     warnings.resetwarnings()
