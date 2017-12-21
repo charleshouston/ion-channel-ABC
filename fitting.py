@@ -150,7 +150,7 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
     logfile = open('logs/log_' + channel.name + '.log','w')
 
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
-    while K > err_cutoff:
+    while K/thresh_val > 0.01:
         logfile.write("Target = "+str(thresh_val-K)+" (K = "+str(K)+")\n")
 
         # Force empty buffer to file
