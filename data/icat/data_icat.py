@@ -2,10 +2,7 @@
     Author: Charles Houston
     Date: 25/5/2017
 
-    Data points extracted from Deng et al, 2009 paper on T-type calcium channel
-    in HL-1 myocytes.
-
-    Data is reported for N=19 cells.
+    Updated: 21/12/2017
 
     Data was digitised from graphs in the publication using
     [http://plotdigitizer.sourceforge.net]
