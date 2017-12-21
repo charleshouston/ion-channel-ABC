@@ -21,33 +21,17 @@ time = 0 bind time
 [membrane]
 dot(V) = -ina.i_Na
     in [mV]
-T = 296
-    in [K]
-F = 96.5
-    in [C/mmol]
-R = 8.314
-    in [J/mol/K]
-FoRT = F / (R * T)
-Na_o = 145000
-    in [uM]
-Na_i = 10000
-    in [uM]
 
 [ina]
 use membrane.V as V
-use membrane.FoRT as FoRT
-use membrane.Na_o as Na_o
-use membrane.Na_i as Na_i
 
 g_Na = 35
     in [mS/uF]
-v_offset = 0
-    in [mV]
-E_Na = 1 / FoRT * log(Na_o / Na_i)
+E_Na = 68.2
     in [mV]
 G_Na = g_Na * m ^ 3 * h * j
     in [mS/uF]
-i_Na = G_Na * (V - E_Na + v_offset)
+i_Na = G_Na * (V - E_Na)
     in [pA/pF]
 
 dot(m) = (m_ss - m) / tau_m

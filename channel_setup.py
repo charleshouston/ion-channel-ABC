@@ -778,6 +778,7 @@ class ina(AbstractChannel):
 
         # Parameters involved in ABC process
         self.parameter_names = ['g_Na',
+                                'E_Na',
                                 'p1',
                                 'p2',
                                 'p3',
@@ -789,8 +790,9 @@ class ina(AbstractChannel):
                                 'q2']
         # Parameter specific prior intervals
         self.prior_intervals = [(0, 100),       # 35
+                                (0, 100),       # 68.2
                                 (0, 100),       # 45
-                                (-10, 0),      # -6.5
+                                (-10, 0),       # -6.5
                                 (0, 1),         # 1.36 * 0.32
                                 (0, 100),       # 47.13
                                 (-1, 0),        # -0.1
