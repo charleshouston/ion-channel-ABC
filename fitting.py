@@ -31,7 +31,7 @@ import pathos.multiprocessing as mp
         dist:   a distance function that takes parameters, an x and y vector, and outputs
         post_size:  number of particles to maintain in posterior population
         maxiter:    number of iterations after which to adjust error cutoff and reattempt sampling
-        err_cutoff: minimum decrease in error between rounds; algorithm terminates otherwise
+        err_cutoff: minimum decrease in relative error between rounds; algorithm terminates otherwise
 
     OUTPUTS:
         distributions.Arbitrary object containing final posterior estimating population
@@ -99,7 +99,7 @@ class Engine(object):
         return [i, next_post, next_wt, iters]
 
 
-def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.0001):
+def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.01):
 
     post, wts = [None]*post_size, [1.0/post_size]*post_size
     total_err, max_err = 0.0, 0.0
@@ -150,7 +150,7 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
     logfile = open('logs/log_' + channel.name + '.log','w')
 
     # Repeatedly halve improvement criteria K until threshold is met or minimum cutoff met
-    while K/thresh_val > 0.01:
+    while K/thresh_val > err_cutoff:
         logfile.write("Target = "+str(thresh_val-K)+" (K = "+str(K)+")\n")
 
         # Force empty buffer to file

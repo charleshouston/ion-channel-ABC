@@ -66,7 +66,7 @@ class ChannelProto():
                                                    distance,
                                                    20,
                                                    1000,
-                                                   0.003)
+                                                   0.01)
 
         # Write results to the standard output and results log
         print result.getmean()
