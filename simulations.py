@@ -90,7 +90,7 @@ class ActivationSim(AbstractSim):
 class ActivationMaxCurr(ActivationSim):
     def run(self, model_name):
         '''
-        Run the activation protocol and output the peak current.
+        Run the activation protocol and output only the peak current at every step.
         '''
         pks = super(ActivationMaxCurr, self).run(model_name)
         max_curr = min(pks)
@@ -101,6 +101,27 @@ class ActivationMaxCurr(ActivationSim):
 
         return pks
 
+class ActivationTailCurr(ActivationSim):
+    '''
+    Records tail current at end of voltage step.
+
+                               | <-- recorded here!
+                 +--- vstep ---+
+                 +-------------+
+                 +-------------+
+                 |             |
+    vhold -------+             +-
+    t=0          t=thold       t=thold+tstep
+    no current   current!
+
+    '''
+    def run(self, model_name):
+        traces = super(ActivationTailCurr, self).run(model_name)
+        pks = [0.0] * len(traces)
+        for i, tr in enumerate(traces):
+            pks[i] = tr[1][self.variable][-1]
+
+        return pks
 
 class TimeIndependentActivationSim(AbstractSim):
     '''
@@ -264,8 +285,8 @@ class InactivationSim(AbstractSim):
         except:
             return None
 
-        if self.normalise:
-            pks[self.variable] = pks[self.variable]/np.min(pks[self.variable])
+        #if self.normalise:
+        #    pks[self.variable] = pks[self.variable] / np.max(np.abs(pks[self.variable]))
 
         return pks[self.variable]
 
