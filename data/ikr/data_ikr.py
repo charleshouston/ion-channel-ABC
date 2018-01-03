@@ -5,6 +5,7 @@ Date: 13/6/2017
 Data was digitised from graphs in the publication using
 [http://plotdigitizer.sourceforge.net]
 '''
+import numpy as np
 
 # PLOT DATA ACCESSORS
 
