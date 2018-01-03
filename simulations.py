@@ -116,7 +116,10 @@ class ActivationTailCurr(ActivationSim):
 
     '''
     def run(self, model_name):
-        traces = super(ActivationTailCurr, self).run(model_name)
+        if self.sim is None:
+            self._generate(model_name)
+
+        traces = self.sim.traces()
         pks = [0.0] * len(traces)
         for i, tr in enumerate(traces):
             pks[i] = tr[1][self.variable][-1]
