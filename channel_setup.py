@@ -520,6 +520,10 @@ class ikr(AbstractChannel):
         vsteps_IV, IV_exp, IV_errs, IV_N = data_ikr.IV_Toyoda()
         vsteps_act, act_exp, act_errs, act_N = data_ikr.Act_Toyoda()
 
+        self.data_exp = [[vsteps_IV, IV_exp, IV_errs, IV_N],
+                         [vsteps_act, act_exp, act_errs, act_N]]
+
+
         # Experimental setup
         setup_IV = {'sim_type': 'ActivationTailCurr',
                          'variable': 'ikr.i_Kr', 'vhold': -50, 'thold': 1000,
