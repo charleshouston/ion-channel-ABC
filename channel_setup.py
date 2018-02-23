@@ -1,7 +1,5 @@
 '''
-Author: Charles Houston
-
-Specific channel settings for use with approximate Bayesian computation procedure.
+Specific channel settings for use with approximate Bayesian computation.
 '''
 import numpy as np
 import math
@@ -301,30 +299,30 @@ class icat(AbstractChannel):
 
         # Define experimental setup for simulations
         setup_IV = {'sim_type': 'ActivationSim',
-                        'variable': 'icat.i_CaT', 'vhold': -75, 'thold': 5000,
-                        'vsteps': vsteps_IV, 'tstep': 300,
-                        'xlabel': 'Membrane potential (mV)',
-                        'ylabel': 'Current density (pA/pF)'}
-        
+                    'variable': 'icat.i_CaT', 'vhold': -75, 'thold': 5000,
+                    'vsteps': vsteps_IV, 'tstep': 300,
+                    'xlabel': 'Membrane potential (mV)',
+                    'ylabel': 'Current density (pA/pF)'}
+
         setup_act = {'sim_type': 'ActivationSim',
-                         'variable': 'icat.G_CaT', 'vhold': -75, 'thold': 5000,
-                         'vsteps': vsteps_act, 'tstep': 300,
-                         'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Normalised conductance',
-                         'normalise': True}
+                     'variable': 'icat.G_CaT', 'vhold': -75, 'thold': 5000,
+                     'vsteps': vsteps_act, 'tstep': 300,
+                     'xlabel': 'Membrane potential (mV)',
+                     'ylabel': 'Normalised conductance',
+                     'normalise': True}
         
         setup_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'icat.G_CaT', 'vhold': -10, 'thold': 200,
-                           'vsteps': vsteps_inact, 'tstep': 1000,
-                           'xlabel': 'Membrane potential (mV)',
-                           'ylabel': 'Normalised conductance'}
+                       'variable': 'icat.G_CaT', 'vhold': -10, 'thold': 200,
+                       'vsteps': vsteps_inact, 'tstep': 1000,
+                       'xlabel': 'Membrane potential (mV)',
+                       'ylabel': 'Normalised conductance'}
         
         setup_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
-                         'vstep': -20, 'tstep1': 300, 'tstep2': 300,
-                         'twaits': intervals,
-                         'xlabel': 'Interval (ms)',
-                         'ylabel': 'Relative recovery'}
+                     'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
+                     'vstep': -20, 'tstep1': 300, 'tstep2': 300,
+                     'twaits': intervals,
+                     'xlabel': 'Interval (ms)',
+                     'ylabel': 'Relative recovery'}
 
         self.setup_exp = [setup_IV, setup_act, setup_inact, setup_rec]
 

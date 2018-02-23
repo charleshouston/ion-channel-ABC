@@ -16,7 +16,7 @@ import lhsmdu
 import pathos.multiprocessing as mp
 
 '''
-    ABC-SMC as Described by Toni et al. (2009), modified with adaptive error shrinking
+    ABC-SMC as described by Toni et al. (2009) with adaptive error shrinking.
 
     INPUTS:
         channel: channel object holding information about experimental protocols and
@@ -37,7 +37,8 @@ import pathos.multiprocessing as mp
         distributions.Arbitrary object containing final posterior estimating population
 '''
 class Engine(object):
-    def __init__(self,channel,params,priors,exp_vals,prior_func,kern,dist,thresh_val,post,wts,post_size,maxiter):
+    def __init__(self, channel, params, priors, exp_vals, prior_func, kern,
+                 dist, thresh_val, post, wts, post_size, maxiter):
         self.channel=copy.deepcopy(channel)
         self.params=params
         self.priors=priors
@@ -99,7 +100,9 @@ class Engine(object):
         return [i, next_post, next_wt, iters]
 
 
-def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dist,post_size=100,maxiter=10000,err_cutoff=0.01):
+def approx_bayes_smc_adaptive(channel, params, priors, exp_vals, prior_func,
+                              kern, dist, post_size=100, maxiter=10000,
+                              err_cutoff=0.01):
 
     post, wts = [None]*post_size, [1.0/post_size]*post_size
     total_err, max_err = 0.0, 0.0
@@ -112,11 +115,9 @@ def approx_bayes_smc_adaptive(channel,params,priors,exp_vals,prior_func,kern,dis
     post_lhs = lhsmdu.sample(len(priors), post_size)
     # Generate vector of prior widths
     prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
-    # Valid post size
     valid_post_size = post_size
     errs = []
     for i in range(post_size):
-        # Get vector of parameters for each LHS sample
         post[i] = post_lhs[:, i].flatten().tolist()[0]
         # Convert from draws in U(0,1) to original values
         post[i] = np.array(post[i]) * np.array(prior_width)
