@@ -7,7 +7,7 @@ import logging
 
 
 def prior_fn(priors, params):
-    '''Simple prior for list of independent Distribution objects.
+    """Simple prior for list of independent Distribution objects.
 
     Args:
         priors (List[Distribution]): Independent prior distributions.
@@ -15,7 +15,7 @@ def prior_fn(priors, params):
 
     Returns:
         Joint distribution of combined prior functions.
-    '''
+    """
     prob = 1.0
     for i, distr in enumerate(priors):
         prob = prob * distr.pdf(params[i])
@@ -23,7 +23,7 @@ def prior_fn(priors, params):
 
 
 def loss_fn(error_fn, res_sim, res_exper):
-    '''Evaluates the loss between simulation and experimental data.
+    """Evaluates the loss between simulation and experimental data.
 
     Args:
         error_fn (Callable): Specific error function to use.
@@ -32,7 +32,7 @@ def loss_fn(error_fn, res_sim, res_exper):
 
     Returns:
         Loss value as float.
-    '''
+    """
     if res_sim is None:
         return float("inf")
 
@@ -55,16 +55,16 @@ def loss_fn(error_fn, res_sim, res_exper):
 
 
 class ChannelProto():
-    '''Wrapper for channel running through ABC parameter fitting.'''
+    """Wrapper for channel running through ABC parameter fitting."""
     def __init__(self, channel, error_fn):
-        '''Initialisation.
+        """Initialisation.
 
         Args:
             channel (AbstractChannel): The channel to run through the
                 ABC parameter fit.
             error_fn (Callable): Loss function to call to calculate error
                 for single simulation runs.
-        '''
+        """
         self.channel = channel
         self.error_fn = error_fn
 
@@ -74,7 +74,7 @@ class ChannelProto():
         logging.basicConfig(filename=logname, level=logging.INFO)
 
     def __call__(self):
-        '''Run the ABC fit.'''
+        """Run the ABC fit."""
 
         # Initial values and priors
         priors = []
@@ -84,13 +84,13 @@ class ChannelProto():
             init.append(priors[-1].getmean())
 
         def distance(params, res_exp, model):
-            '''Error measure for output of single simulation run.'''
+            """Error measure for output of single simulation run."""
             model.reset_params(params)
             res_sim = model.simulate()
             return loss_fn(self.error_fn, res_sim, res_exp)
 
         def kern(orig, new=None):
-            '''Perturbation kernel.'''
+            """Perturbation kernel."""
             kernel = self.channel.kernel
             if new == None:
                 new = []
