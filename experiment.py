@@ -4,10 +4,10 @@ import numpy as np
 
 
 class ExperimentData():
-    '''Organises experimental data extracted from publications.'''
+    """Organises experimental data extracted from publications."""
 
     def __init__(self, x, y, N=None, errs=None, err_type=None):
-        '''Initialisation.
+        """Initialisation.
 
         Args:
             x (List[float]): X-axis data from extracted source.
@@ -18,7 +18,7 @@ class ExperimentData():
 
         Raises:
             ValueError: When err_type is not a valid string.
-        '''
+        """
         self.x = x
         self.y = y
         self.N = N
@@ -34,10 +34,10 @@ class ExperimentData():
 
 
 class ExperimentStimProtocol():
-    '''Stimulation times and measurement points for simulations.'''
+    """Stimulation times and measurement points for simulations."""
 
     def __init__(self, stim_times, stim_levels, measure_index, measure_fn):
-        '''Initialisation.
+        """Initialisation.
 
         `stim_times` and `stim_levels` may contain nested lists for multiple
         experimental runs. These nested lists must be the same size.
@@ -55,33 +55,36 @@ class ExperimentStimProtocol():
         Raises:
             ValueError: When `stim_times` and `stim_levels` are not of equal
                 length.
-        '''
+        """
         if len(stim_times) != len(stim_levels):
             raise ValueError('`stim_times` and `stim_levels` must be same size')
 
         self.n_runs = None
-        for time in stim_times:
-            if isinstance(stim, list):
+        for time, level in zip(stim_times, stim_levels):
+            if isinstance(time, list):
                 if self.n_runs is None:
                     # Take first nested list as number of runs.
-                    self.n_runs = len(stim)
+                    self.n_runs = len(time)
                 else:
-                    assert len(stim) == self.n_runs, (
+                    assert len(time) == self.n_runs, (
+                            'Inconsistent number of experiment runs.')
+            if isinstance(level, list):
+                if self.n_runs is None:
+                    self.n_runs = len(level)
+                else:
+                    assert len(level) == self.n_runs, (
                             'Inconsistent number of experiment runs.')
         self.stim_times = stim_times
-        for level in stim_levels:
-            if isinstance(level, list):
-                assert len(level) == self.n_runs, (
-                        'Inconsistent number of experiment runs.')
         self.stim_levels = stim_levels
+
         if isinstance(measure_index, int):
             self.measure_index = (measure_index,)
-        else
+        else:
             self.measure_index = measure_index
         self.measure_fn = measure_fn
 
     def __call__(self, sim, vvar, logvars):
-        '''Runs the protocol in Myokit using the passed simulation model.
+        """Runs the protocol in Myokit using the passed simulation model.
 
         Args:
             sim (Simulation): Myokit simulation object.
@@ -90,24 +93,53 @@ class ExperimentStimProtocol():
 
         Returns:
             Results from measured experiment values.
-        '''
+        """
         res_sim = []
-        for run in n_runs:
+        for run in range(self.n_runs):
             data = []
             sim.reset()
-            sim.set_constant(self.vvar, self.stim_levels[0])
-            sim.run(self.stim_times[0], log=None)
-            for i, t in enumerate(self.stim_times[1:]):
-                sim.set_constant(self.vvar, self.stim_levels[i+1])
-                if (i+1) in self.measure_index:
+            for i, (time, level) in enumerate(zip(self.stim_times,
+                                                  self.stim_levels)):
+                if isinstance(time, list):
+                    t = time[run]
+                else:
+                    t = time
+                if isinstance(level, list):
+                    l = level[run]
+                else:
+                    l = level
+                sim.set_constant(vvar, l)
+                if i in self.measure_index:
                     data.append(sim.run(t, log=logvars))
+                else:
+                    sim.run(t)
+
             result = self.measure_fn(data)
             res_sim.append(result)
         return res_sim
 
 
 class Experiment():
-    '''Organises protocol and data related to a single experiment instance.'''
+    """Organises protocol and data related to a single experiment instance."""
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, protocol, data):
+        """Initialisation.
+
+        Args:
+            protocol (ExperimentStimProtocol): Time and voltage steps for
+                experiment to replicate experimental results.
+            data (ExperimentData): Experimental data to compare with.
+        """
+        self.protocol = protocol
+        self.data = data
+        self.logs = None
+
+    def run(self, sim, vvar='membrane.V', logvars=None):
+        """Wrapper to run simulation."""
+        if self.logs is None:
+            self.logs = self.protocol(sim, vvar, logvars)
+        return (self.data.x, self.logs)
+
+    def reset(self):
+        """Reset Experiment simulations logs."""
+        self.logs=None
