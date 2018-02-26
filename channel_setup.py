@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 import myokit
-import distributions as Dist
+import distributions as dist
 
 # Data imports
 import data.ical.data_ical as data_ical
@@ -22,6 +22,56 @@ import data.incx.data_incx as data_incx
 # Experimental simulations import
 import simulations as sim
 
+
+class Channel():
+    def __init__(self, model, abc_params):
+        """Initialisation.
+
+        Args:
+            model (myokit.Model): Loaded myokit model from mmt file.
+            abc_params (Dict[str, Tuple[float]]): Dict mapping list of
+                parameter name string to upper and lower limit of prior
+                for ABC algorithm.
+        """
+        self.model = model
+        self.sim = myokit.Simulation(model)
+        self.abc_params = abc_params
+        self.kernel = []
+        for pr in self.abc_params.values():
+            prior_width = pr[1] - pr[0]
+            self.kernel.append(dist.Normal(0.0, 0.2 * prior_width))
+        self.experiments = []
+
+    def __call__(self, vvar='membrane.V', logvars=None):
+        """Run channel with defined experiments."""
+        results = []
+        for exp in self.experiments:
+            results.append(exp.run(self.sim))
+        return results
+
+    def set_abc_params(self, new_params):
+        """Set model ABC parameters to new values.
+
+        Args:
+            new_params (Dict[str, float]): Dict mapping parameter name to
+                new value.
+        """
+        for p, v in new_params:
+            try:
+                self.sim.set_constant(p, v)
+            except:
+                print("Could not set parameter " + p + " to value: " + str(v))
+
+    def add_experiment(self, experiment):
+        """Adds experiment to channel for ABC algorithm.
+
+        Args:
+            experiment (Experiment): Experiment class containing data and
+                definition of stimulus protocol.
+        """
+        self.experiments.append(experiment)
+
+
 class AbstractChannel(object):
     def __init__(self):
         # Generate full parameter names for use in myokit model
@@ -32,9 +82,9 @@ class AbstractChannel(object):
         self.kernel = []
         for pr in self.prior_intervals:
             prior_width = pr[1]-pr[0]
-            self.kernel.append(Dist.Normal(0.0, 0.2 * prior_width))
+            self.kernel.append(dist.Normal(0.0, 0.2 * prior_width))
             # Uncomment below for uniform distribution
-            # self.kernel.append(Dist.Uniform(-math.sqrt(1.2 * prior_width),
+            # self.kernel.append(dist.Uniform(-math.sqrt(1.2 * prior_width),
             #                                 math.sqrt(1.2 * prior_width)))
 
         self.setup_simulations()
