@@ -1,3 +1,5 @@
+import sys
+sys.path.append("..")
 from experiment import Experiment
 from experiment import ExperimentData
 from experiment import ExperimentStimProtocol
@@ -5,9 +7,11 @@ from channel_setup import Channel
 import myokit
 import numpy as np
 
+from error_functions import cvchisq
+
 import data.icat.data_icat as data_icat
 
-m, _, _ = myokit.load('models/Korhonen2009_iCaT.mmt')
+m, _, _ = myokit.load('../models/Korhonen2009_iCaT.mmt')
 v = m.get('membrane.V')
 v.demote()
 v.set_rhs(0)
@@ -49,8 +53,14 @@ stim_times = [5000, 300, 500]
 stim_levels = [-75, act_vsteps, -75]
 def max_gcat(data):
     return max(data[0]['icat.G_CaT'])
+def normalise_positives(sim_results):
+    m = np.max(sim_results)
+    if m > 0:
+        sim_results = sim_results / m
+    return sim_results
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                  measure_index=1, measure_fn=max_gcat)
+                                  measure_index=1, measure_fn=max_gcat,
+                                  post_fn=normalise_positives)
 act_exp = Experiment(act_prot, act_data)
 icat.add_experiment(act_exp)
 
@@ -61,7 +71,8 @@ inact_data = ExperimentData(x=inact_vsteps, y=inact_cond, N=inact_N,
 stim_times = [1000, 200]
 stim_levels = [inact_vsteps, -10]
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                    measure_index=0, measure_fn=max_gcat)
+                                    measure_index=0, measure_fn=max_gcat,
+                                    post_fn=normalise_positives)
 inact_exp = Experiment(inact_prot, inact_data)
 icat.add_experiment(inact_exp)
 
@@ -73,8 +84,9 @@ stim_levels = [-80, -20, -80, -20]
 def ratio_cond(data):
     return max(data[1]['icat.G_CaT'])/max(data[0]['icat.G_CaT'])
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                  measure_index=[1, 3], measure_fn=ratio_cond)
+                                  measure_index=[1, 3], measure_fn=ratio_cond,
+                                  post_fn=normalise_positives)
 rec_exp = Experiment(rec_prot, rec_data)
 icat.add_experiment(rec_exp)
 
-results = icat(vvar='membrane.V', logvars=myokit.LOG_ALL)
+results = icat.run_experiments()

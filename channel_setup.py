@@ -1,6 +1,5 @@
-'''
-Specific channel settings for use with approximate Bayesian computation.
-'''
+### Class to build channel for ABCSolver.
+
 import numpy as np
 import math
 
@@ -20,11 +19,12 @@ import data.ik1.data_ik1 as data_ik1
 import data.incx.data_incx as data_incx
 
 # Experimental simulations import
-import simulations as sim
+#import simulations as sim
 
 
 class Channel():
-    def __init__(self, model, abc_params):
+    def __init__(self, model, abc_params, vvar='membrane.V',
+                 logvars=myokit.LOG_ALL):
         """Initialisation.
 
         Args:
@@ -32,22 +32,57 @@ class Channel():
             abc_params (Dict[str, Tuple[float]]): Dict mapping list of
                 parameter name string to upper and lower limit of prior
                 for ABC algorithm.
+            vvar (str): String name of dependent variable in simulations,
+                usually the voltage.
+            logvars (Union[str, List[str]]): Model variables to log during
+                simulation runs.
         """
         self.model = model
+        self.vvar = vvar
+        self.logvars = logvars
+
+        v = self.model.get(self.vvar)
+        if v.is_state():
+            v.demote()
+        v.set_rhs(0)
+        v.set_binding(None)
+
         self.sim = myokit.Simulation(model)
         self.abc_params = abc_params
         self.kernel = []
         for pr in self.abc_params.values():
             prior_width = pr[1] - pr[0]
             self.kernel.append(dist.Normal(0.0, 0.2 * prior_width))
+
         self.experiments = []
 
-    def __call__(self, vvar='membrane.V', logvars=None):
-        """Run channel with defined experiments."""
-        results = []
+    def run_experiments(self):
+        """Run channel with defined experiments.
+
+        Returns:
+            Simulation output data points.
+        """
+        assert len(self.experiments) > 0, 'Need to add at least one experiment!'
+        sim_results = []
         for exp in self.experiments:
-            results.append(exp.run(self.sim))
-        return results
+            sim_results.append(exp.run(self.sim, self.vvar, self.logvars))
+        return sim_results
+
+    def eval_error(self, error_fn):
+        """Evaluates error with experiment data over all experiments.
+
+        Args:
+            error_fn (Callable): Function to calculate error that accepts
+                first argument as simulation results and second argument
+                as ExperimentData object.
+
+        Returns:
+            Loss value as float.
+        """
+        tot_err = 0
+        for exp in self.experiments:
+            tot_err += exp.eval_err(error_fn)
+        return tot_err
 
     def set_abc_params(self, new_params):
         """Set model ABC parameters to new values.
@@ -56,6 +91,9 @@ class Channel():
             new_params (Dict[str, float]): Dict mapping parameter name to
                 new value.
         """
+        # Need to reset all stored logs in experiments.
+        for exp in self.experiments:
+            exp.reset()
         for p, v in new_params:
             try:
                 self.sim.set_constant(p, v)

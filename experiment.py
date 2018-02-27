@@ -36,7 +36,8 @@ class ExperimentData():
 class ExperimentStimProtocol():
     """Stimulation times and measurement points for simulations."""
 
-    def __init__(self, stim_times, stim_levels, measure_index, measure_fn):
+    def __init__(self, stim_times, stim_levels, measure_index, measure_fn,
+                 post_fn=None):
         """Initialisation.
 
         `stim_times` and `stim_levels` may contain nested lists for multiple
@@ -51,6 +52,8 @@ class ExperimentStimProtocol():
                 interest for measurement function.
             measure_fn (Callable): Function that accepts datalogs at times
                 of measure index and computes summary statistic for experiment.
+            post_fn (Callable): Function that accepts results after all
+                simulations have run and carries out any post processing.
 
         Raises:
             ValueError: When `stim_times` and `stim_levels` are not of equal
@@ -82,6 +85,7 @@ class ExperimentStimProtocol():
         else:
             self.measure_index = measure_index
         self.measure_fn = measure_fn
+        self.post_fn = post_fn
 
     def __call__(self, sim, vvar, logvars):
         """Runs the protocol in Myokit using the passed simulation model.
@@ -116,6 +120,9 @@ class ExperimentStimProtocol():
 
             result = self.measure_fn(data)
             res_sim.append(result)
+
+        if self.post_fn is not None:
+            res_sim = self.post_fn(res_sim)
         return res_sim
 
 
@@ -134,11 +141,23 @@ class Experiment():
         self.data = data
         self.logs = None
 
-    def run(self, sim, vvar='membrane.V', logvars=None):
+    def run(self, sim, vvar, logvars):
         """Wrapper to run simulation."""
         if self.logs is None:
             self.logs = self.protocol(sim, vvar, logvars)
         return (self.data.x, self.logs)
+
+    def eval_err(self, error_fn):
+        """Evaluate difference between experimental and simulation output.
+
+        Args:
+            error_fn (Callable): Error function to use.
+
+        Returns:
+            Loss value as float.
+        """
+        assert self.logs is None, 'Need to run simulations first!'
+        return error_fn(self.logs, self.data)
 
     def reset(self):
         """Reset Experiment simulations logs."""
