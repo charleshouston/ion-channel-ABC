@@ -22,72 +22,48 @@ def prior_fn(priors, params):
     return prob
 
 
-def loss_fn(error_fn, res_sim, res_exper):
-    """Evaluates the loss between simulation and experimental data.
-
-    Args:
-        error_fn (Callable): Specific error function to use.
-        res_sim (List[float]): Simulation results data.
-        res_exper (List[float]): Experiment results data.
-
-    Returns:
-        Loss value as float.
-    """
-    if res_sim is None:
-        return float("inf")
-
-    # Finds sim output at x value closest to experimental
-    sim_vals_closest = [[] for i in range(len(res_sim))]
-    for i, e in enumerate(res_exper):
-        curr = 0
-        for tval in e[0]:
-            sim_times = res_sim[i][0]
-            while tval > sim_times[curr+1]:
-                if curr >= len(sim_times)-2:
-                    break
-                curr = curr+1
-            if abs(tval - sim_times[curr]) < abs(tval - sim_times[curr+1]):
-                res_sim_close[i] = res_sim_close[i] + [res_sim[i][1][curr]]
-            else:
-                res_sim_close[i] = res_sim_close[i] + [res_sim[i][1][curr+1]]
-
-    return error_func(res_sim_close, res_exper)
-
-
-class ChannelProto():
-    """Wrapper for channel running through ABC parameter fitting."""
-    def __init__(self, channel, error_fn):
+class ABCSolver():
+    """Solver for ABC parameter fitting."""
+    def __init__(self, error_fn, post_size=100, maxiter=10000,
+                 err_cutoff=0.001):
         """Initialisation.
 
         Args:
-            channel (AbstractChannel): The channel to run through the
-                ABC parameter fit.
             error_fn (Callable): Loss function to call to calculate error
                 for single simulation runs.
+            post_size (int): Size of posterior discrete distribution.
+            maxiter (int): Maximum number of trial iterations before
+                relaxing fitting conditions.
+            err_cutoff (float): Stopping conditions after improvement to
+                error drops below this value.
         """
-        self.channel = channel
         self.error_fn = error_fn
-
-        self.res_exper = channel.data_exp
+        self.post_size = post_size
+        self.maxiter = maxiter
+        self.err_cutoff = err_cutoff
 
         logname = channel.name + '.log'
         logging.basicConfig(filename=logname, level=logging.INFO)
 
-    def __call__(self):
-        """Run the ABC fit."""
+    def __call__(self, channel):
+        """Run the ABC fit.
+
+        Args:
+            channel (Channel): Channel class with experiments and data
+                to fit model.
+        """
 
         # Initial values and priors
         priors = []
         init = []
-        for pr in channel.prior_intervals:
+        for pr in channel.abc_params.values():
             priors.append(dist.Uniform(pr[0], pr[1]))
             init.append(priors[-1].getmean())
 
-        def distance(params, res_exp, model):
+        def distance(new_params, channel_iter):
             """Error measure for output of single simulation run."""
-            model.reset_params(params)
-            res_sim = model.simulate()
-            return loss_fn(self.error_fn, res_sim, res_exp)
+            channel_iter.set_abc_params(new_params)
+            return channel_iter.eval_error(self.error_fn)
 
         def kern(orig, new=None):
             """Perturbation kernel."""
@@ -104,16 +80,16 @@ class ChannelProto():
                     prob = prob * g.pdf(new[i] - orig[i])
                 return prob
 
-        result = fitting.approx_bayes_smc_adaptive(channel=self.channel,
-                                                   params=init,
-                                                   priors=priors,
-                                                   exp_vals=self.res_exper,
-                                                   prior_func=prior_fn,
-                                                   kern=kern,
-                                                   dist=distance,
-                                                   post_size=20,
-                                                   maxiter=100,
-                                                   err_cutoff=0.01)
+        result = fitting.abc_smc_adaptive_error(channel=channel,
+                                                params=init,
+                                                priors=priors,
+                                                exp_vals=self.res_exper,
+                                                prior_func=prior_fn,
+                                                kern=kern,
+                                                dist=distance,
+                                                post_size=self.post_size,
+                                                maxiter=self.maxiter,
+                                                err_cutoff=self.err_cutoff)
 
         # Write results to the standard output and results log
         logging.info("Result mean:\n" + result.getmean())
