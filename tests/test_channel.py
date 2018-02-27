@@ -1,15 +1,17 @@
 import sys
 sys.path.append("..")
+
 from experiment import Experiment
 from experiment import ExperimentData
 from experiment import ExperimentStimProtocol
-from channel_setup import Channel
+from channel import Channel
+from error_functions import cvrmsd, cvchisq
+import data.icat.data_icat as data_icat
+
+import matplotlib.pyplot as plt
 import myokit
 import numpy as np
 
-from error_functions import cvchisq
-
-import data.icat.data_icat as data_icat
 
 m, _, _ = myokit.load('../models/Korhonen2009_iCaT.mmt')
 v = m.get('membrane.V')
@@ -32,11 +34,13 @@ icat_params = {'icat.g_CaT': (0, 2),
                'icat.q5': (0, 0.1),
                'icat.q6': (0, 100)}
 
-icat = Channel(m, icat_params)
+icat = Channel(m, icat_params, vvar='membrane.V', logvars=['icat.i_CaT',
+                                                           'icat.G_CaT'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data_icat.IV_Nguyen()
-iv_data = ExperimentData(x=iv_vsteps, y=iv_curr, N=iv_N, errs=iv_errs)
+iv_data = ExperimentData(x=iv_vsteps, y=iv_curr, N=iv_N, errs=iv_errs,
+                         err_type='SEM')
 stim_times = [5000, 300, 500]
 stim_levels = [-75, iv_vsteps, -75]
 def min_icat(data):
@@ -48,7 +52,8 @@ icat.add_experiment(iv_exp)
 
 ### Exp 2 - Activation curve
 act_vsteps, act_cond, act_errs, act_N = data_icat.Act_Nguyen()
-act_data = ExperimentData(x=act_vsteps, y=act_cond, N=act_N, errs=act_errs)
+act_data = ExperimentData(x=act_vsteps, y=act_cond, N=act_N, errs=act_errs,
+                          err_type='SEM')
 stim_times = [5000, 300, 500]
 stim_levels = [-75, act_vsteps, -75]
 def max_gcat(data):
@@ -67,18 +72,19 @@ icat.add_experiment(act_exp)
 ### Exp 3 - Inactivation curve
 inact_vsteps, inact_cond, inact_errs, inact_N = data_icat.Inact_Nguyen()
 inact_data = ExperimentData(x=inact_vsteps, y=inact_cond, N=inact_N,
-                            errs=inact_errs)
+                            errs=inact_errs, err_type='SEM')
 stim_times = [1000, 200]
 stim_levels = [inact_vsteps, -10]
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                    measure_index=0, measure_fn=max_gcat,
+                                    measure_index=1, measure_fn=max_gcat,
                                     post_fn=normalise_positives)
 inact_exp = Experiment(inact_prot, inact_data)
 icat.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery curve
 rec_intervals, rec_cond, rec_errs, rec_N = data_icat.Rec_Deng()
-rec_data = ExperimentData(x=rec_intervals, y=rec_cond, N=rec_N, errs=rec_errs)
+rec_data = ExperimentData(x=rec_intervals, y=rec_cond, N=rec_N, errs=rec_errs,
+                          err_type='SEM')
 stim_times = [5000, 300, rec_intervals, 300]
 stim_levels = [-80, -20, -80, -20]
 def ratio_cond(data):
@@ -90,3 +96,12 @@ rec_exp = Experiment(rec_prot, rec_data)
 icat.add_experiment(rec_exp)
 
 results = icat.run_experiments()
+
+fig, ax = plt.subplots(nrows=1, ncols=4)
+for i in range(len(ax)):
+    ax[i].plot(results[i][0], results[i][1])
+
+print("CVRMSD ERROR:")
+err = icat.eval_error(cvrmsd)
+print("CVCHISQ ERROR:")
+err = icat.eval_error(cvchisq)

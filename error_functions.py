@@ -57,7 +57,7 @@ def cvchisq(sim_results, experiment_data):
     w = w / np.max(w)
 
     try:
-        err = np.sum(w * square(e - s))
+        err = np.sum(w * np.square(e - s))
     except Warning:
         return float("inf")
     except:
@@ -75,7 +75,7 @@ def cvrmsd(sim_results, experiment_data):
     e = np.array(experiment_data.y)
 
     s = normaliseby(s, e)
-    e = nomraliseby(e, e)
+    e = normaliseby(e, e)
 
     try:
         err = np.sum(np.square(s - e))

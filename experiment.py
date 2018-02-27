@@ -117,7 +117,6 @@ class ExperimentStimProtocol():
                     data.append(sim.run(t, log=logvars))
                 else:
                     sim.run(t)
-
             result = self.measure_fn(data)
             res_sim.append(result)
 
@@ -156,7 +155,7 @@ class Experiment():
         Returns:
             Loss value as float.
         """
-        assert self.logs is None, 'Need to run simulations first!'
+        assert self.logs is not None, 'Need to run simulations first!'
         return error_fn(self.logs, self.data)
 
     def reset(self):
