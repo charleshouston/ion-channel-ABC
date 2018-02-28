@@ -5,21 +5,20 @@ import numpy as np
 import distributions as dist
 import copy
 import myokit
-
+import logging
 import lhsmdu
-
 import pathos.multiprocessing as mp
 
 class ParallelEngine(object):
     """Parallelise the inner ABC algorithm."""
 
     def __init__(self, channel,  priors, prior_fn, kern,
-                 dist, thresh_val, post, wts, post_size, maxiter):
+                 loss, thresh_val, post, wts, post_size, maxiter):
         self.channel = copy.deepcopy(channel)
         self.priors = priors
         self.prior_fn = prior_fn
         self.kern = kern
-        self.dist = dist
+        self.loss = loss
         self.thresh_val = thresh_val
         self.post = post
         self.wts = wts
@@ -47,7 +46,7 @@ class ParallelEngine(object):
             # Apply pertubation kernel, then check if new distribution is valid.
             draw = self.kern(draw)
             if (self.prior_fn(self.priors, draw) == 0 or
-                self.dist(draw, self.channel) > self.thresh_val):
+                self.loss(draw, self.channel) > self.thresh_val):
                 draw = None
 
             # Check if `maxiters` has been reached.
@@ -61,14 +60,14 @@ class ParallelEngine(object):
             next_wt = self.prior_fn(self.priors, draw)
         else:
             denom = 0
-            for i, particle in enumerate(self.post):
-                denom = denom + self.wts[i] * self.kern(particle, draw)
+            for index, particle in enumerate(self.post):
+                denom = denom + self.wts[index] * self.kern(particle, draw)
             next_wt = self.prior_fn(self.priors, draw) / denom
 
         return [i, next_post, next_wt, iters]
 
 
-def abc_inner(channel, priors, prior_fn, kern, dist, thresh_val, post, wts,
+def abc_inner(channel, priors, prior_fn, kern, loss, thresh_val, post, wts,
               post_size, maxiter):
     """Helper function for `approx_bayes_smc_adaptive`.
 
@@ -82,7 +81,7 @@ def abc_inner(channel, priors, prior_fn, kern, dist, thresh_val, post, wts,
             the prior (for determining iteration weights).
         kern (Callable): Function for pertubation kernel applied to
             parameter draws.
-        dist (Callable): Distance function to calculate error for a given
+        loss (Callable): Distance function to calculate error for a given
             parameter draw.
         thresh_val (float): Acceptable error rate for this iteration.
         post (List[Distribution]): List of current posterior particles.
@@ -99,13 +98,14 @@ def abc_inner(channel, priors, prior_fn, kern, dist, thresh_val, post, wts,
     """
     next_post, next_wts = [None]*post_size, [0]*post_size
     total_iters = 0
-    engine = ParallelEngine(channel, priors, prior_fn, kern, dist, thresh_val,
+    engine = ParallelEngine(channel, priors, prior_fn, kern, loss, thresh_val,
                             post, wts, post_size, maxiter)
 
     # Start parallel pool.
     try:
         pool_size = mp.cpu_count()
         pool = mp.Pool(processes=pool_size, maxtasksperchild=1)
+        logging.info("Starting parallel pool size " + str(pool_size))
     except:
         raise Exception('Could not start parallel pool!')
 
@@ -146,14 +146,13 @@ def abc_inner(channel, priors, prior_fn, kern, dist, thresh_val, post, wts,
         total_iters += output[3] # sum total iterations
 
     logging.info("ACCEPTANCE RATE: "
-                 + str(float(post_size) / total_iters) + "\n")
-
+                 + str(float(post_size) / total_iters))
     total_wt = math.fsum(next_wts)
     next_wts = [next_wts[idx] / total_wt for idx in range(post_size)]
     return next_post, next_wts
 
 
-def abc_smc_adaptive_error(channel, priors, prior_fn, kern, dist,
+def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
                            post_size, maxiter, err_cutoff):
     """ABC-SMC with adaptive error shrinking algorithm.
 
@@ -167,7 +166,7 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, dist,
             the prior (for determining iteration weights).
         kern (Callable): Function for pertubation kernel applied to
             parameter draws.
-        dist (Callable): Distance function to calculate error for a given
+        loss (Callable): Distance function to calculate error for a given
             parameter draw.
         post_size (int): Number of particles to maintain in posterior
             distribution.
@@ -183,21 +182,17 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, dist,
     post, wts = [None] * post_size, [1.0/post_size] * post_size
     total_err, max_err = 0.0, 0.0
 
-    # Create copy of channel to avoid passing generated simulations
-    # to parallel workers in `abc_inner`.
-    #channel_copy = copy.deepcopy(channel)
-
     # Initialise posterior by drawing from latin hypercube over parameters.
     post_lhs = lhsmdu.sample(len(priors), post_size)
-    prior_width = [pr[1] - pr[0] for pr in channel.prior_intervals]
+    prior_width = [pr[1] - pr[0] for pr in channel.abc_params.values()]
     valid_post_size = post_size
     errs = []
     for i in range(post_size):
         post[i] = post_lhs[:, i].flatten().tolist()[0]
         post[i] = np.array(post[i]) * np.array(prior_width)
-        post[i] = post[i] + np.array([pr[0] for pr in channel.prior_intervals])
+        post[i] += np.array([pr[0] for pr in channel.abc_params.values()])
         # Evaluate error from simulation
-        curr_err = dist(post[i], channel_copy)
+        curr_err = loss(post[i], channel)
         errs.append(curr_err)
 
     # Process errors and get indices with inf error
@@ -223,9 +218,12 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, dist,
     # Repeatedly halve K until threshold or minimum cutoff is satisfied.
     while K / thresh_val > err_cutoff:
         logging.info("Target = " + str(thresh_val-K) + " (K = "
-                      + str(K) + ")\n")
+                      + str(K) + ")")
 
-        next_post, next_wts = abc_inner(channel, priors, prior_fn, kern, dist,
+        # Remove previously generated simulation objects.
+        channel.reset()
+
+        next_post, next_wts = abc_inner(channel, priors, prior_fn, kern, loss,
                                         thresh_val-K, post, wts, post_size,
                                         maxiter)
 
@@ -235,18 +233,18 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, dist,
 
             # Write current output to log
             # in case simulation trips up and we lose results.
-            logging.info("Target met.\n")
+            logging.info("Target met.")
             logging.info("Current mean posterior estimate: "
-                         + str(np.mean(post, 0).tolist()) + "\n")
+                         + str(np.mean(post, 0).tolist()))
             logging.info("Current posterior variance: "
-                         + str(np.var(post, 0).tolist()) + "\n")
-            logging.info(str(post) + "\n")
-            logging.info(str(wts) + "\n")
+                         + str(np.var(post, 0).tolist()))
+            logging.info(str(post))
+            logging.info(str(wts))
 
             thresh_val = thresh_val - K
 
         else:
-            logging.info("Target not met.\n")
+            logging.info("Target not met.")
             K *= 0.5
 
     logging.info("Final threshold value: " + str(thresh_val))

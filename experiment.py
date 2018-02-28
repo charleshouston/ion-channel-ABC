@@ -155,7 +155,7 @@ class Experiment():
         Returns:
             Loss value as float.
         """
-        assert self.logs is not None, 'Need to run simulations first!'
+        assert self.logs is not None, 'Need to run experiments first!'
         return error_fn(self.logs, self.data)
 
     def reset(self):

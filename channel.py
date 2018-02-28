@@ -23,12 +23,12 @@ import data.incx.data_incx as data_incx
 
 
 class Channel():
-    def __init__(self, model, abc_params, vvar='membrane.V',
+    def __init__(self, modelfile, abc_params, vvar='membrane.V',
                  logvars=myokit.LOG_ALL):
         """Initialisation.
 
         Args:
-            model (myokit.Model): Loaded myokit model from mmt file.
+            modelfile (str): Path to model for myokit to load.
             abc_params (Dict[str, Tuple[float]]): Dict mapping list of
                 parameter name string to upper and lower limit of prior
                 for ABC algorithm.
@@ -37,17 +37,10 @@ class Channel():
             logvars (Union[str, List[str]]): Model variables to log during
                 simulation runs.
         """
-        self.model = model
+        self.modelfile = modelfile
         self.vvar = vvar
         self.logvars = logvars
 
-        v = self.model.get(self.vvar)
-        if v.is_state():
-            v.demote()
-        v.set_rhs(0)
-        v.set_binding(None)
-
-        self.sim = myokit.Simulation(model)
         self.abc_params = abc_params
         self.kernel = []
         for pr in self.abc_params.values():
@@ -55,6 +48,7 @@ class Channel():
             self.kernel.append(dist.Normal(0.0, 0.2 * prior_width))
 
         self.experiments = []
+        self._sim = None
 
     def run_experiments(self):
         """Run channel with defined experiments.
@@ -63,9 +57,11 @@ class Channel():
             Simulation output data points.
         """
         assert len(self.experiments) > 0, 'Need to add at least one experiment!'
+        if self._sim is None:
+            self.generate_sim()
         sim_results = []
         for exp in self.experiments:
-            sim_results.append(exp.run(self.sim, self.vvar, self.logvars))
+            sim_results.append(exp.run(self._sim, self.vvar, self.logvars))
         return sim_results
 
     def eval_error(self, error_fn):
@@ -79,8 +75,11 @@ class Channel():
         Returns:
             Loss value as float.
         """
+        if self._sim is None:
+            self.generate_sim()
         tot_err = 0
         for exp in self.experiments:
+            exp.run(self._sim, self.vvar, self.logvars)
             tot_err += exp.eval_err(error_fn)
         return tot_err
 
@@ -94,11 +93,15 @@ class Channel():
         # Need to reset all stored logs in experiments.
         for exp in self.experiments:
             exp.reset()
-        for p, v in new_params:
+        if self._sim is None:
+            self.generate_sim()
+        for i, new_val in enumerate(new_params):
+            param_name = self.abc_params.keys()[i]
             try:
-                self.sim.set_constant(p, v)
+                self._sim.set_constant(param_name, new_val)
             except:
-                print("Could not set parameter " + p + " to value: " + str(v))
+                print("Could not set parameter " + param_name
+                      + " to value: " + str(new_val))
 
     def add_experiment(self, experiment):
         """Adds experiment to channel for ABC algorithm.
@@ -108,6 +111,30 @@ class Channel():
                 definition of stimulus protocol.
         """
         self.experiments.append(experiment)
+
+    def generate_sim(self):
+        """Creates class instance of Model and Simulation."""
+        m, _, _ = myokit.load(self.modelfile)
+        try:
+            v = m.get(self.vvar)
+        except:
+            print('Model does not have vvar: ' + self.vvar)
+
+        if v.is_state():
+            v.demote()
+        v.set_rhs(0)
+        v.set_binding(None)
+
+        # Check model has all parameters listed.
+        for param_name in self.abc_params.keys():
+            assert m.has_variable(param_name), (
+                    'The parameter ' + param_name + ' does not exist.')
+
+        self._sim = myokit.Simulation(m)
+
+    def reset(self):
+        """Erases previously created simulations."""
+        self._sim = None
 
 
 class AbstractChannel(object):

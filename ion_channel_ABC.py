@@ -42,16 +42,16 @@ class ABCSolver():
         self.maxiter = maxiter
         self.err_cutoff = err_cutoff
 
-        logname = channel.name + '.log'
-        logging.basicConfig(filename=logname, level=logging.INFO)
-
-    def __call__(self, channel):
+    def __call__(self, channel, logfile='abc_solve.log'):
         """Run the ABC fit.
 
         Args:
             channel (Channel): Channel class with experiments and data
                 to fit model.
         """
+        logging.basicConfig(filename=logfile, level=logging.INFO,
+                            format='%(asctime)s:%(message)s')
+        logging.info("Starting ABC solver...")
 
         # Initial values and priors
         priors = []
@@ -67,7 +67,7 @@ class ABCSolver():
 
         def kern(orig, new=None):
             """Perturbation kernel."""
-            kernel = self.channel.kernel
+            kernel = channel.kernel
             if new == None:
                 new = []
                 perturb = [g.draw() for g in kernel]
@@ -81,18 +81,16 @@ class ABCSolver():
                 return prob
 
         result = fitting.abc_smc_adaptive_error(channel=channel,
-                                                params=init,
                                                 priors=priors,
-                                                exp_vals=self.res_exper,
-                                                prior_func=prior_fn,
+                                                prior_fn=prior_fn,
                                                 kern=kern,
-                                                dist=distance,
+                                                loss=distance,
                                                 post_size=self.post_size,
                                                 maxiter=self.maxiter,
                                                 err_cutoff=self.err_cutoff)
 
         # Write results to the standard output and results log
-        logging.info("Result mean:\n" + result.getmean())
-        logging.info("Result var:\n" + result.getvar())
-        logging.info("Result pool:\n" + result.pool)
-        logging.info("Result weights:\n" + result.weights)
+        logging.info("Result mean:\n" + str(result.getmean()))
+        logging.info("Result var:\n" + str(result.getvar()))
+        logging.info("Result pool:\n" + str(result.pool))
+        logging.info("Result weights:\n" + str(result.weights))
