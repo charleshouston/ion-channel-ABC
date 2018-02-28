@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 from experiment import ExperimentStimProtocol
 import myokit
 import matplotlib.pyplot as plt
@@ -14,7 +17,7 @@ measure_index = 1
 prot_iv = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index, measure_fn)
 
-m, _, _ = myokit.load('models/Korhonen2009_iCaT.mmt')
+m, _, _ = myokit.load('../models/Korhonen2009_iCaT.mmt')
 v = m.get('membrane.V')
 v.demote()
 v.set_rhs(0)
@@ -46,3 +49,4 @@ results_rec = prot_rec(s, vvar, logvars)
 fig_rec = plt.figure()
 ax = fig_rec.subplots()
 ax.plot(intervals, results_rec)
+plt.show()

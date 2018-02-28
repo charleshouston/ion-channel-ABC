@@ -13,12 +13,7 @@ import myokit
 import numpy as np
 
 
-m, _, _ = myokit.load('../models/Korhonen2009_iCaT.mmt')
-v = m.get('membrane.V')
-v.demote()
-v.set_rhs(0)
-v.set_binding(None)
-
+modelfile = '../models/Korhonen2009_iCaT.mmt'
 icat_params = {'icat.g_CaT': (0, 2),
                'icat.E_CaT': (0, 50),
                'icat.p1': (0, 100),
@@ -34,8 +29,8 @@ icat_params = {'icat.g_CaT': (0, 2),
                'icat.q5': (0, 0.1),
                'icat.q6': (0, 100)}
 
-icat = Channel(m, icat_params, vvar='membrane.V', logvars=['icat.i_CaT',
-                                                           'icat.G_CaT'])
+icat = Channel(modelfile, icat_params, vvar='membrane.V',
+               logvars=['icat.i_CaT', 'icat.G_CaT'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data_icat.IV_Nguyen()
@@ -103,5 +98,7 @@ for i in range(len(ax)):
 
 print("CVRMSD ERROR:")
 err = icat.eval_error(cvrmsd)
+print err
 print("CVCHISQ ERROR:")
 err = icat.eval_error(cvchisq)
+print err
