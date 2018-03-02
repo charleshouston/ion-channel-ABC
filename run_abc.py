@@ -11,6 +11,14 @@ import myokit
 import numpy as np
 
 
+def pretty_results_print(channel, distr):
+    lmeans = distr.getmean()
+    lvars = distr.getvar()
+    print "Results\n======="
+    for i, param in enumerate(channel.param_names):
+        print param + ": Mean " + str(lmeans[i]) + " Var " + str(lvars[i])
+
+
 modelfile = 'models/Korhonen2009_iCaT.mmt'
 
 icat_params = {'icat.g_CaT': (0, 2),
@@ -89,5 +97,7 @@ rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
 rec_exp = Experiment(rec_prot, rec_data)
 icat.add_experiment(rec_exp)
 
-abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=100, maxiter=1000)
-abc_solver(icat, logfile='logs/icat_cvchisq.log')
+abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=20, maxiter=500)
+final_distr = abc_solver(icat, logfile='logs/icat_cvchisq.log')
+
+pretty_results_print(icat, final_distr)

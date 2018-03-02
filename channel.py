@@ -18,9 +18,6 @@ import data.ikach.data_ikach as data_ikach
 import data.ik1.data_ik1 as data_ik1
 import data.incx.data_incx as data_incx
 
-# Experimental simulations import
-#import simulations as sim
-
 
 class Channel():
     def __init__(self, modelfile, abc_params, vvar='membrane.V',
@@ -41,11 +38,18 @@ class Channel():
         self.vvar = vvar
         self.logvars = logvars
 
-        self.abc_params = abc_params
+        self.param_names = []
+        self.param_priors = []
         self.kernel = []
-        for pr in self.abc_params.values():
-            prior_width = pr[1] - pr[0]
-            self.kernel.append(dist.Normal(0.0, 0.2 * prior_width))
+        for param, val in abc_params.iteritems():
+            self.param_names.append(param)
+            self.param_priors.append((val[0], val[1]))
+            self.kernel.append(dist.Normal(0.0, 0.2 * (val[1]-val[0])))
+
+        #self.abc_params = abc_params
+        #self.kernel = {}
+        #for param, val in self.abc_params.iteritems():
+        #    self.kernel[param] = dist.Normal(0.0, 0.2 * (val[1]-val[0]))
 
         self.experiments = []
         self._sim = None
@@ -95,8 +99,7 @@ class Channel():
             exp.reset()
         if self._sim is None:
             self.generate_sim()
-        for i, new_val in enumerate(new_params):
-            param_name = self.abc_params.keys()[i]
+        for param_name, new_val in zip(self.param_names, new_params):
             try:
                 self._sim.set_constant(param_name, new_val)
             except:
@@ -126,7 +129,7 @@ class Channel():
         v.set_binding(None)
 
         # Check model has all parameters listed.
-        for param_name in self.abc_params.keys():
+        for param_name in self.param_names:
             assert m.has_variable(param_name), (
                     'The parameter ' + param_name + ' does not exist.')
 

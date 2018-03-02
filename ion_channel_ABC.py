@@ -48,6 +48,9 @@ class ABCSolver():
         Args:
             channel (Channel): Channel class with experiments and data
                 to fit model.
+
+        Returns:
+            Final estimate of posterior distribution.
         """
         logging.basicConfig(filename=logfile, level=logging.INFO,
                             format='%(asctime)s:%(message)s')
@@ -56,7 +59,7 @@ class ABCSolver():
         # Initial values and priors
         priors = []
         init = []
-        for pr in channel.abc_params.values():
+        for pr in channel.param_priors:
             priors.append(dist.Uniform(pr[0], pr[1]))
             init.append(priors[-1].getmean())
 
@@ -70,14 +73,14 @@ class ABCSolver():
             kernel = channel.kernel
             if new == None:
                 new = []
-                perturb = [g.draw() for g in kernel]
+                perturb = [distr.draw() for distr in kernel]
                 for i in range(len(orig)):
                     new = new + [orig[i] + perturb[i]]
                 return new
             else:
                 prob = 1.0
-                for i, g in enumerate(kernel):
-                    prob = prob * g.pdf(new[i] - orig[i])
+                for i, distr in enumerate(kernel):
+                    prob = prob * distr.pdf(new[i] - orig[i])
                 return prob
 
         result = fitting.abc_smc_adaptive_error(channel=channel,
@@ -94,3 +97,5 @@ class ABCSolver():
         logging.info("Result var:\n" + str(result.getvar()))
         logging.info("Result pool:\n" + str(result.pool))
         logging.info("Result weights:\n" + str(result.weights))
+
+        return result

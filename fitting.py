@@ -9,12 +9,13 @@ import logging
 import lhsmdu
 import pathos.multiprocessing as mp
 
+
 class ParallelEngine(object):
     """Parallelise the inner ABC algorithm."""
 
-    def __init__(self, channel,  priors, prior_fn, kern,
+    def __init__(self, channel, priors, prior_fn, kern,
                  loss, thresh_val, post, wts, post_size, maxiter):
-        self.channel = copy.deepcopy(channel)
+        self.channel = channel
         self.priors = priors
         self.prior_fn = prior_fn
         self.kern = kern
@@ -32,7 +33,7 @@ class ParallelEngine(object):
         while draw == None:
             # At time 0, draw from prior distribution.
             if self.post == None:
-                draw = [p.draw() for p in self.priors]
+                draw = [distr.draw() for distr in self.priors]
             # Otherwise, draw the posterior distribution.
             else:
                 sum = 0.0
@@ -60,35 +61,20 @@ class ParallelEngine(object):
             next_wt = self.prior_fn(self.priors, draw)
         else:
             denom = 0
-            for index, particle in enumerate(self.post):
-                denom = denom + self.wts[index] * self.kern(particle, draw)
+            for idx, particle in enumerate(self.post):
+                denom = denom + self.wts[idx] * self.kern(particle, draw)
             next_wt = self.prior_fn(self.priors, draw) / denom
 
         return [i, next_post, next_wt, iters]
 
 
-def abc_inner(channel, priors, prior_fn, kern, loss, thresh_val, post, wts,
-              post_size, maxiter):
+def abc_inner(engine, thresh_val, post_size):
     """Helper function for `approx_bayes_smc_adaptive`.
 
     Args:
-        channel (Channel): Channel class containing experimental protocols
-            and data to calculate errors.
-        priors (List[Distribution]): Initial prior distributions for each
-            ABC parameter in channel.
-        prior_fn (Callable): Function to accept list of prior Distributions
-            and parameter vector and return probabiliy of parameters under
-            the prior (for determining iteration weights).
-        kern (Callable): Function for pertubation kernel applied to
-            parameter draws.
-        loss (Callable): Distance function to calculate error for a given
-            parameter draw.
+        engine (ParallelEngine): Object to pass to process workers.
         thresh_val (float): Acceptable error rate for this iteration.
-        post (List[Distribution]): List of current posterior particles.
-        wts (List[float]): Weight values for each post particle.
         post_size (int): Number of particles to maintain in posterior estimate.
-        maxiter (int): Number of iterations after which to adjust error
-            reduction and reattempt sampling.
 
     Returns:
         List of new particles and weights if successful otherwise None, None.
@@ -98,13 +84,11 @@ def abc_inner(channel, priors, prior_fn, kern, loss, thresh_val, post, wts,
     """
     next_post, next_wts = [None]*post_size, [0]*post_size
     total_iters = 0
-    engine = ParallelEngine(channel, priors, prior_fn, kern, loss, thresh_val,
-                            post, wts, post_size, maxiter)
 
     # Start parallel pool.
     try:
         pool_size = mp.cpu_count()
-        pool = mp.Pool(processes=pool_size, maxtasksperchild=1)
+        pool = mp.Pool(processes=pool_size, maxtasksperchild=None)
         logging.info("Starting parallel pool size " + str(pool_size))
     except:
         raise Exception('Could not start parallel pool!')
@@ -119,7 +103,8 @@ def abc_inner(channel, priors, prior_fn, kern, loss, thresh_val, post, wts,
     # any worker fails the current iteration criteria.
     results = []
     for i in range(0, post_size):
-        r = pool.apply_async(engine, (i,), callback=failed_sim_callback)
+        r = pool.apply_async(engine, args=(i,),
+                             callback=failed_sim_callback)
         results.append(r)
 
     # Now wait for workers to finish.
@@ -184,13 +169,14 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
 
     # Initialise posterior by drawing from latin hypercube over parameters.
     post_lhs = lhsmdu.sample(len(priors), post_size)
-    prior_width = [pr[1] - pr[0] for pr in channel.abc_params.values()]
+    prior_width = [pr[1] - pr[0] for pr in channel.param_priors]
+    prior_lows = [pr[0] for pr in channel.param_priors]
     valid_post_size = post_size
     errs = []
     for i in range(post_size):
         post[i] = post_lhs[:, i].flatten().tolist()[0]
         post[i] = np.array(post[i]) * np.array(prior_width)
-        post[i] += np.array([pr[0] for pr in channel.abc_params.values()])
+        post[i] += prior_lows
         # Evaluate error from simulation
         curr_err = loss(post[i], channel)
         errs.append(curr_err)
@@ -220,12 +206,11 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
         logging.info("Target = " + str(thresh_val-K) + " (K = "
                       + str(K) + ")")
 
-        # Remove previously generated simulation objects.
+        # Parallel computation engine.
         channel.reset()
-
-        next_post, next_wts = abc_inner(channel, priors, prior_fn, kern, loss,
-                                        thresh_val-K, post, wts, post_size,
-                                        maxiter)
+        engine = ParallelEngine(channel, priors, prior_fn, kern, loss,
+                                thresh_val, post, wts, post_size, maxiter)
+        next_post, next_wts = abc_inner(engine, thresh_val, post_size)
 
         if next_post != None and next_wts != None:
             post = next_post
@@ -241,7 +226,9 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
             logging.info(str(post))
             logging.info(str(wts))
 
-            thresh_val = thresh_val - K
+            thresh_val -= K
+            if K >= 0.5 * thresh_val:
+                K = 0.5 * thresh_val
 
         else:
             logging.info("Target not met.")
