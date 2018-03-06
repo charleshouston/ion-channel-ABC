@@ -1,22 +1,19 @@
 ### Class to build channel for ABCSolver.
 
-import numpy as np
-import math
-
 import myokit
 import distributions as dist
+import matplotlib.pyplot as plt
+import numpy as np
 
-# Data imports
-import data.ical.data_ical as data_ical
-import data.icat.data_icat as data_icat
-import data.ina.data_ina as data_ina
-import data.ikur.data_ikur as data_ikur
-import data.iha.data_iha as data_iha
-import data.ikr.data_ikr as data_ikr
-import data.ito.data_ito as data_ito
-import data.ikach.data_ikach as data_ikach
-import data.ik1.data_ik1 as data_ik1
-import data.incx.data_incx as data_incx
+
+def add_subfig_letters(axes):
+    """Add uppercase letters to sub figures in plot."""
+    uppercase_letters = map(chr, range(65, 91))
+    for i, ax in enumerate(axes.flatten()):
+        ax.text(-0.07, 0.06,
+                uppercase_letters[i], transform=ax.transAxes,
+                fontsize=16, fontweight='bold', va='top', ha='right')
+    return axes
 
 
 class Channel():
@@ -46,26 +43,27 @@ class Channel():
             self.param_priors.append((val[0], val[1]))
             self.kernel.append(dist.Normal(0.0, 0.2 * (val[1]-val[0])))
 
-        #self.abc_params = abc_params
-        #self.kernel = {}
-        #for param, val in self.abc_params.iteritems():
-        #    self.kernel[param] = dist.Normal(0.0, 0.2 * (val[1]-val[0]))
-
         self.experiments = []
         self._sim = None
 
-    def run_experiments(self):
+    def run_experiments(self, continuous=False):
         """Run channel with defined experiments.
+
+        Args:
+            continuous (boolean): Whether to run at full range between min and 
+                max steps defined in experiment protocol.
 
         Returns:
             Simulation output data points.
         """
         assert len(self.experiments) > 0, 'Need to add at least one experiment!'
+        step_override = 1 if continuous else -1
         if self._sim is None:
-            self.generate_sim()
+            self._generate_sim()
         sim_results = []
         for exp in self.experiments:
-            sim_results.append(exp.run(self._sim, self.vvar, self.logvars))
+            sim_results.append(exp.run(self._sim, self.vvar, self.logvars,
+                                       step_override))
         return sim_results
 
     def eval_error(self, error_fn):
@@ -80,7 +78,7 @@ class Channel():
             Loss value as float.
         """
         if self._sim is None:
-            self.generate_sim()
+            self._generate_sim()
         tot_err = 0
         for exp in self.experiments:
             exp.run(self._sim, self.vvar, self.logvars)
@@ -91,14 +89,16 @@ class Channel():
         """Set model ABC parameters to new values.
 
         Args:
-            new_params (Dict[str, float]): Dict mapping parameter name to
-                new value.
+            new_params (List[float]): List of new parameters corresponding
+                to `param_names` attribute order.
         """
         # Need to reset all stored logs in experiments.
         for exp in self.experiments:
             exp.reset()
         if self._sim is None:
-            self.generate_sim()
+            self._generate_sim()
+        else:
+            self._sim.reset()
         for param_name, new_val in zip(self.param_names, new_params):
             try:
                 self._sim.set_constant(param_name, new_val)
@@ -115,7 +115,7 @@ class Channel():
         """
         self.experiments.append(experiment)
 
-    def generate_sim(self):
+    def _generate_sim(self):
         """Creates class instance of Model and Simulation."""
         m, _, _ = myokit.load(self.modelfile)
         try:
@@ -136,8 +136,76 @@ class Channel():
         self._sim = myokit.Simulation(m)
 
     def reset(self):
-        """Erases previously created simulations."""
+        """Erases previously created simulations and experiment logs."""
         self._sim = None
+        for exp in self.experiments:
+            exp.reset()
+
+    def plot_results(self, abc_distr):
+        """Plot results from ABC solver.
+
+        Args:
+            abc_distr (dist.Arbitrary): Posterior distribution estimate from
+                ABC algorithm.
+
+        Returns:
+            Handle to figure with summary plots for each experiment.
+        """
+        pool = abc_distr.pool
+        weights = abc_distr.weights
+
+        # Original parameter values.
+        self.reset()
+        results_original = self.run_experiments(continuous=True)
+
+        # Updated values for each ABC posterior particle.
+        results_abc = []
+        for i, params in enumerate(pool):
+            self.set_abc_params(params)
+            results_abc.append(self.run_experiments(continuous=True))
+        results_abc = np.array(results_abc).swapaxes(0, 1)
+
+        results_abc_mean = []
+        results_abc_sd = []
+        for exper in results_abc:
+            d = dist.Arbitrary(exper[:, 1], weights)
+            results_abc_mean.append(d.getmean())
+            results_abc_sd.append(np.sqrt(d.getvar()))
+
+        # Generate plots.
+        plt.style.use('seaborn-colorblind')
+        ncols = len(results_abc)
+        x = [results_abc[i][0][0] for i in range(ncols)]
+        fig, ax = plt.subplots(nrows=1, ncols=ncols, figsize=(3*ncols, 2.8))
+        for i in range(ncols):
+            if ncols > 1:
+                axi = ax[i]
+            else:
+                axi = ax
+            axi.plot(x[i], results_abc_mean[i], '-', label='ABC posterior')
+            axi.fill_between(x[i], results_abc_mean[i]-results_abc_sd[i],
+                             results_abc_mean[i]+results_abc_sd[i], alpha=0.25,
+                             lw=0)
+            if self.experiments[i].data.errs is not None:
+                axi.errorbar(self.experiments[i].data.x,
+                             self.experiments[i].data.y,
+                             self.experiments[i].data.errs)
+            else:
+                axi.plot(self.experiments[i].data.x, self.experiments[i].data.y)
+
+            if i == ncols - 1:
+                handles, labels = axi.get_legend_handles_labels()
+                lgd = fig.legend(handles, labels, loc='lower center', ncol=3)
+                bb = lgd.get_bbox_to_anchor().inverse_transformed(
+                        fig.transFigure)
+                bb.y0 -= 0.1
+                lgd.set_bbox_to_anchor(bb, transform=fig.transFigure)
+
+        # Mark letters on subfigures.
+        if ncols > 1:
+            ax = add_subfig_letters(ax)
+        plt.tight_layout()
+        return fig
 
 
 class AbstractChannel(object):

@@ -4,7 +4,7 @@ import numpy as np
 
 
 class ExperimentData():
-    """Organises experimental data extracted from publications."""
+    """Organises raw digitised data extracted from publications."""
 
     def __init__(self, x, y, N=None, errs=None, err_type=None):
         """Initialisation.
@@ -25,7 +25,7 @@ class ExperimentData():
         if errs is not None:
             self.errs = np.abs(np.asarray(errs) - np.asarray(y))
         else:
-            self.errs = errs
+            self.errs = None
         self.err_type = err_type
 
         if self.err_type not in (None, 'SEM', 'STD'):
@@ -68,12 +68,14 @@ class ExperimentStimProtocol():
                 if self.n_runs is None:
                     # Take first nested list as number of runs.
                     self.n_runs = len(time)
+                    self.ind_var = time
                 else:
                     assert len(time) == self.n_runs, (
                             'Inconsistent number of experiment runs.')
             if isinstance(level, list):
                 if self.n_runs is None:
                     self.n_runs = len(level)
+                    self.ind_var = level
                 else:
                     assert len(level) == self.n_runs, (
                             'Inconsistent number of experiment runs.')
@@ -87,23 +89,51 @@ class ExperimentStimProtocol():
         self.measure_fn = measure_fn
         self.post_fn = post_fn
 
-    def __call__(self, sim, vvar, logvars):
+    def __call__(self, sim, vvar, logvars, step_override=-1):
         """Runs the protocol in Myokit using the passed simulation model.
 
         Args:
             sim (Simulation): Myokit simulation object.
             vvar (str): Name of voltage variable in Simulation.
             logvars (str): Name of variables to log when running.
+            step_override (int): Override defined stimulation step, default
+                to -1 for no override.
 
         Returns:
-            Results from measured experiment values.
+            Independent (changing) variable and results
+            from measured experiment values.
         """
+        if step_override != -1:
+            times = []
+            levels = []
+            for time, level in zip(self.stim_times,
+                                   self.stim_levels):
+                if isinstance(time, list):
+                    times.append(range(min(time), max(time) + step_override,
+                                       step_override))
+                    n_runs = len(times[-1])
+                    ind_var = times[-1]
+                else:
+                    times.append(time)
+
+                if isinstance(level, list):
+                    levels.append(range(min(level), max(level) + step_override,
+                                        step_override))
+                    n_runs = len(levels[-1])
+                    ind_var = levels[-1]
+                else:
+                    levels.append(level)
+        else:
+            n_runs = self.n_runs
+            times = self.stim_times
+            levels = self.stim_levels
+            ind_var = self.ind_var
+
         res_sim = []
-        for run in range(self.n_runs):
+        for run in range(n_runs):
             data = []
             sim.reset()
-            for i, (time, level) in enumerate(zip(self.stim_times,
-                                                  self.stim_levels)):
+            for i, (time, level) in enumerate(zip(times, levels)):
                 if isinstance(time, list):
                     t = time[run]
                 else:
@@ -122,7 +152,7 @@ class ExperimentStimProtocol():
 
         if self.post_fn is not None:
             res_sim = self.post_fn(res_sim)
-        return res_sim
+        return ind_var, res_sim
 
 
 class Experiment():
@@ -140,11 +170,11 @@ class Experiment():
         self.data = data
         self.logs = None
 
-    def run(self, sim, vvar, logvars):
+    def run(self, sim, vvar, logvars, step_override=-1):
         """Wrapper to run simulation."""
         if self.logs is None:
-            self.logs = self.protocol(sim, vvar, logvars)
-        return (self.data.x, self.logs)
+            self.logs = self.protocol(sim, vvar, logvars, step_override)
+        return self.logs
 
     def eval_err(self, error_fn):
         """Evaluate difference between experimental and simulation output.
@@ -156,7 +186,7 @@ class Experiment():
             Loss value as float.
         """
         assert self.logs is not None, 'Need to run experiments first!'
-        return error_fn(self.logs, self.data)
+        return error_fn(self.logs[1], self.data)
 
     def reset(self):
         """Reset Experiment simulations logs."""

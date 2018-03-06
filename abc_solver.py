@@ -97,5 +97,4 @@ class ABCSolver():
         logging.info("Result var:\n" + str(result.getvar()))
         logging.info("Result pool:\n" + str(result.pool))
         logging.info("Result weights:\n" + str(result.weights))
-
         return result
