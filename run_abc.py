@@ -1,4 +1,4 @@
-import ion_channel_ABC as abc
+import abc_solver as abc
 from experiment import Experiment
 from experiment import ExperimentData
 from experiment import ExperimentStimProtocol
@@ -100,4 +100,12 @@ icat.add_experiment(rec_exp)
 abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=20, maxiter=500)
 final_distr = abc_solver(icat, logfile='logs/icat_cvchisq.log')
 
+# Print and display results.
 pretty_results_print(icat, final_distr)
+fig = icat.plot_results(final_distr)
+plt.savefig('icat_plot.pdf')
+plt.close(fig)
+
+# Save results.
+icat.save('channel_icat.pkl')
+final_distr.save('abc_distr_icat.pkl')
