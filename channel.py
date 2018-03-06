@@ -4,6 +4,7 @@ import myokit
 import distributions as dist
 import matplotlib.pyplot as plt
 import numpy as np
+import dill as pickle
 
 
 def add_subfig_letters(axes):
@@ -45,6 +46,26 @@ class Channel():
 
         self.experiments = []
         self._sim = None
+
+    def _generate_sim(self):
+        """Creates class instance of Model and Simulation."""
+        m, _, _ = myokit.load(self.modelfile)
+        try:
+            v = m.get(self.vvar)
+        except:
+            print('Model does not have vvar: ' + self.vvar)
+
+        if v.is_state():
+            v.demote()
+        v.set_rhs(0)
+        v.set_binding(None)
+
+        # Check model has all parameters listed.
+        for param_name in self.param_names:
+            assert m.has_variable(param_name), (
+                    'The parameter ' + param_name + ' does not exist.')
+
+        self._sim = myokit.Simulation(m)
 
     def run_experiments(self, continuous=False):
         """Run channel with defined experiments.
@@ -114,26 +135,6 @@ class Channel():
                 definition of stimulus protocol.
         """
         self.experiments.append(experiment)
-
-    def _generate_sim(self):
-        """Creates class instance of Model and Simulation."""
-        m, _, _ = myokit.load(self.modelfile)
-        try:
-            v = m.get(self.vvar)
-        except:
-            print('Model does not have vvar: ' + self.vvar)
-
-        if v.is_state():
-            v.demote()
-        v.set_rhs(0)
-        v.set_binding(None)
-
-        # Check model has all parameters listed.
-        for param_name in self.param_names:
-            assert m.has_variable(param_name), (
-                    'The parameter ' + param_name + ' does not exist.')
-
-        self._sim = myokit.Simulation(m)
 
     def reset(self):
         """Erases previously created simulations and experiment logs."""
@@ -206,6 +207,11 @@ class Channel():
             ax = add_subfig_letters(ax)
         plt.tight_layout()
         return fig
+
+    def save(self, filename):
+        """Save channel and underlying experiments to disk."""
+        self._sim = None
+        pickle.dump(self, open(filename, 'wb'))
 
 
 class AbstractChannel(object):
