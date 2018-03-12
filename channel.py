@@ -67,18 +67,17 @@ class Channel():
 
         self._sim = myokit.Simulation(m)
 
-    def run_experiments(self, continuous=False):
+    def run_experiments(self, step_override=-1):
         """Run channel with defined experiments.
 
         Args:
-            continuous (boolean): Whether to run at full range between min and 
-                max steps defined in experiment protocol.
+            step_override (int): Steps between min and max of experiment,
+                defaults to -1 which uses default steps from ExperimentData.
 
         Returns:
             Simulation output data points.
         """
         assert len(self.experiments) > 0, 'Need to add at least one experiment!'
-        step_override = 1 if continuous else -1
         if self._sim is None:
             self._generate_sim()
         sim_results = []
@@ -142,7 +141,7 @@ class Channel():
         for exp in self.experiments:
             exp.reset()
 
-    def plot_results(self, abc_distr):
+    def plot_results(self, abc_distr, step=-1):
         """Plot results from ABC solver.
 
         Args:
@@ -157,13 +156,13 @@ class Channel():
 
         # Original parameter values.
         self.reset()
-        results_original = self.run_experiments(continuous=True)
+        results_original = self.run_experiments(step)
 
         # Updated values for each ABC posterior particle.
         results_abc = []
         for i, params in enumerate(pool):
             self.set_abc_params(params)
-            results_abc.append(self.run_experiments(continuous=True))
+            results_abc.append(self.run_experiments(step))
         results_abc = np.array(results_abc).swapaxes(0, 1)
 
         results_abc_mean = []
@@ -188,13 +187,16 @@ class Channel():
                              results_abc_mean[i]+results_abc_sd[i], alpha=0.25,
                              lw=0)
             if self.experiments[i].data.errs is not None:
-                axi.errorbar(self.experiments[i].data.x,
-                             self.experiments[i].data.y,
-                             self.experiments[i].data.errs)
+                axi.errorbar(x=self.experiments[i].data.x,
+                             y=self.experiments[i].data.y,
+                             yerr=self.experiments[i].data.errs,
+                             fmt='o')
             else:
-                axi.plot(self.experiments[i].data.x, self.experiments[i].data.y)
+                axi.plot(x=self.experiments[i].data.x,
+                         y=self.experiments[i].data.y,
+                         marker='o')
 
-            if i == ncols - 1:
+            if i == ncols-1:
                 handles, labels = axi.get_legend_handles_labels()
                 lgd = fig.legend(handles, labels, loc='lower center', ncol=3)
                 bb = lgd.get_bbox_to_anchor().inverse_transformed(
@@ -213,313 +215,7 @@ class Channel():
         self._sim = None
         pickle.dump(self, open(filename, 'wb'))
 
-
-class AbstractChannel(object):
-    def __init__(self):
-        # Generate full parameter names for use in myokit model
-        self.parameters = [self.name + '.' + p for p in self.parameter_names]
-
-        # Specifying pertubation kernel
-        #  Normal distribution with variance 20% of prior width
-        self.kernel = []
-        for pr in self.prior_intervals:
-            prior_width = pr[1]-pr[0]
-            self.kernel.append(dist.Normal(0.0, 0.2 * prior_width))
-            # Uncomment below for uniform distribution
-            # self.kernel.append(dist.Uniform(-math.sqrt(1.2 * prior_width),
-            #                                 math.sqrt(1.2 * prior_width)))
-
-        self.setup_simulations()
-
-    def reset_params(self, new_params):
-        '''
-        Set parameters of channel to new values in prior draw.
-        '''
-        if len(self.simulations) is 0:
-            print "Need to add simulations to channel first!"
-        else:
-            for sim in self.simulations:
-                sim.set_parameters(self.parameters, new_params)
-
-    def setup_simulations(self,continuous=False):
-        '''
-        Creates simulations from defined experimental conditions.
-        '''
-        self.simulations = []
-        # stores vsteps/intervals for each sim output
-        self.simulations_x = [[] for i in range(len(self.setup_exp))]
-
-        for i,se in enumerate(self.setup_exp):
-            normalised = False
-            if 'normalise' in se:
-                normalised = se['normalise']
-
-            if se['sim_type'] == 'ActivationSim':
-                if continuous:
-                    dv = 1
-                    self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
-                else:
-                    dv = se['vsteps'][1] - se['vsteps'][0]
-                    self.simulations_x[i] = se['vsteps']
-
-                self.simulations.append(
-                    sim.ActivationSim(se['variable'],
-                                      vhold=se['vhold'],
-                                      thold=se['thold'],
-                                      vmin=min(se['vsteps']),
-                                      vmax=max(se['vsteps']),
-                                      dv=dv,
-                                      tstep=se['tstep'],
-                                      normalise=normalised))
-
-            elif se['sim_type'] == 'ActivationMaxCurr':
-
-                dv = se['vsteps'][1] - se['vsteps'][0]
-                self.simulations_x[i] = se['vsteps']
-
-                self.simulations.append(
-                    sim.ActivationMaxCurr(se['variable'],
-                                      vhold=se['vhold'],
-                                      thold=se['thold'],
-                                      vmin=min(se['vsteps']),
-                                      vmax=max(se['vsteps']),
-                                      dv=dv,
-                                      tstep=se['tstep'],
-                                      normalise=normalised))
-
-            elif se['sim_type'] == 'ActivationTailCurr':
-
-                dv = se['vsteps'][1] - se['vsteps'][0]
-                self.simulations_x[i] = se['vsteps']
-
-                self.simulations.append(
-                    sim.ActivationTailCurr(se['variable'],
-                        vhold=se['vhold'],
-                        thold=se['thold'],
-                        vmin=min(se['vsteps']),
-                        vmax=max(se['vsteps']),
-                        dv=dv,
-                        tstep=se['tstep'],
-                        normalise=normalised))
-
-            elif se['sim_type'] == 'InactivationSim':
-                if continuous:
-                    dv = 1
-                    self.simulations_x[i] = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
-                else:
-                    dv = se['vsteps'][1] - se['vsteps'][0]
-                    self.simulations_x[i] = se['vsteps']
-
-                self.simulations.append(
-                    sim.InactivationSim(se['variable'],
-                                        vhold=se['vhold'],
-                                        thold=se['thold'],
-                                        vmin=min(se['vsteps']),
-                                        vmax=max(se['vsteps']),
-                                        dv=dv,
-                                        tstep=se['tstep'],
-                                        normalise=normalised))
-
-            elif se['sim_type'] == 'RecoverySim':
-                twaits = se['twaits']
-                if continuous:
-                    twaits = range(int(math.ceil(min(twaits))),
-                                  int(math.ceil(max(twaits))+1))
-                self.simulations_x[i] = twaits
-
-                self.simulations.append(
-                    sim.RecoverySim(se['variable'],
-                                    vhold=se['vhold'],
-                                    thold=se['thold'],
-                                    vstep=se['vstep'],
-                                    tstep1=se['tstep1'],
-                                    tstep2=se['tstep2'],
-                                    twaits=twaits))
-
-            elif se['sim_type'] == 'TimeIndependentActivationSim':
-                if continuous:
-                    dv = 1
-                    vsteps = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
-                else:
-                    dv = se['vsteps'][1] - se['vsteps'][0]
-                    vsteps = se['vsteps']
-                self.simulations_x[i] = vsteps
-
-                self.simulations.append(sim.TimeIndependentActivationSim(se['variable'],
-                                                                         vsteps=vsteps))
-            elif se['sim_type'] == 'MarkovActivationSim':
-                if continuous:
-                    dv = 1
-                    vsteps = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
-                else:
-                    dv = se['vsteps'][1] - se['vsteps'][0]
-                    vsteps = se['vsteps']
-                self.simulations_x[i] = vsteps
-
-                self.simulations.append(
-                    sim.MarkovActivationSim(se['variable'],
-                                            vhold=se['vhold'],
-                                            thold=se['thold'],
-                                            vsteps=vsteps,
-                                            tstep=se['tstep'],
-                                            name=self.name,
-                                            states=se['states'],
-                                            params=se['params']))
-            elif se['sim_type'] == 'MarkovInactivationSim':
-                if continuous:
-                    dv = 1
-                    vsteps = range(int(math.ceil(min(se['vsteps']))), int(math.ceil(max(se['vsteps']))+1))
-                else:
-                    dv = se['vsteps'][1] - se['vsteps'][0]
-                    vsteps = se['vsteps']
-                self.simulations_x[i] = vsteps
-
-                self.simulations.append(
-                    sim.MarkovInactivationSim(se['variable'],
-                                        vhold=se['vhold'],
-                                        thold=se['thold'],
-                                        vsteps=vsteps,
-                                        tstep=se['tstep'],
-                                        name=self.name,
-                                        states=se['states'],
-                                        params=se['params']))
-            elif se['sim_type'] == 'MarkovRecoverySim':
-                twaits = se['twaits']
-                if continuous:
-                    twaits = range(int(math.ceil(min(twaits))),
-                                  int(math.ceil(max(twaits))+1))
-                self.simulations_x[i] = twaits
-
-                self.simulations.append(
-                    sim.MarkovRecoverySim(se['variable'],
-                                    vhold=se['vhold'],
-                                    thold=se['thold'],
-                                    vstep=se['vstep'],
-                                    tstep1=se['tstep1'],
-                                    tstep2=se['tstep2'],
-                                    twaits=twaits,
-                                    name=self.name,
-                                    states=se['states'],
-                                    params=se['params']))
-
-            else:
-                print "Unknown simulation type!"
-
-
-    def simulate(self):
-        '''
-        Run the simulations necessary to generate values to compare with
-        experimental results.
-        '''
-        if len(self.simulations) is 0:
-            self.setup_simulations()
-
-        sim_output = [[] for i in range(len(self.simulations))]
-
-        # Run simulations with checks for errors
-        #np.seterr(all='raise') # numpy raises exceptions if any numeric problems
-        for i,sim in enumerate(self.simulations):
-            # catch numpy division, overflow errors, etc
-            try:
-                out = sim.run(self.model_name)
-            except:
-                return None
-
-            # If simulation fails, output will be None
-            if out is None:
-                return None
-
-            # Myokit can output nans, so catch this here
-            if np.isnan(out).any():
-                return None
-
-            # All good => add steps/intervals and dependent var to output!
-            sim_output[i] = [self.simulations_x[i], out]
-
-        return sim_output
-
-class icat(AbstractChannel):
-    def __init__(self):
-        self.name = 'icat'
-        self.model_name = 'Korhonen2009_iCaT.mmt'
-        self.publication = 'Korhonen et al., 2009'
-
-        # Parameters involved in ABC process
-        self.parameter_names = ['g_CaT',
-                                'E_CaT',
-                                'p1',
-                                'p2',
-                                'p3',
-                                'p4',
-                                'p5',
-                                'p6',
-                                'q1',
-                                'q2',
-                                'q3',
-                                'q4',
-                                'q5',
-                                'q6']
-
-
-        # Parameter specific prior intervals
-        # Original values given in comments
-        self.prior_intervals = [(0, 2),     # 0.2
-                                (0, 50),    # 33
-                                (0, 100),   # 37.49098
-                                (1, 10),    # 5.40634
-                                (0, 1),     # 0.6
-                                (0, 10),    # 5.4
-                                (0, 0.1),   # 0.03
-                                (0, 200),   # 100
-                                (0, 100),   # 66
-                                (1, 10),    # 6
-                                (0, 10),    # 1
-                                (0, 100),   # 40
-                                (0, 0.1),     # 0.08
-                                (0, 100)]   # 65
-
-        # Load experimental data
-        vsteps_IV, IV_exp, IV_errs, IV_N = data_icat.IV_Nguyen()
-        vsteps_act, act_exp, act_errs, act_N = data_icat.Act_Nguyen()
-        vsteps_inact, inact_exp, inact_errs, inact_N = data_icat.Inact_Nguyen()
-        intervals, rec_exp, rec_errs, rec_N = data_icat.Rec_Deng()
-
-        self.data_exp = [[vsteps_IV, IV_exp, IV_errs, IV_N],
-                         [vsteps_act, act_exp, act_errs, act_N],
-                         [vsteps_inact, inact_exp, inact_errs, inact_N],
-                         [intervals, rec_exp, rec_errs, rec_N]]
-
-        # Define experimental setup for simulations
-        setup_IV = {'sim_type': 'ActivationSim',
-                    'variable': 'icat.i_CaT', 'vhold': -75, 'thold': 5000,
-                    'vsteps': vsteps_IV, 'tstep': 300,
-                    'xlabel': 'Membrane potential (mV)',
-                    'ylabel': 'Current density (pA/pF)'}
-
-        setup_act = {'sim_type': 'ActivationSim',
-                     'variable': 'icat.G_CaT', 'vhold': -75, 'thold': 5000,
-                     'vsteps': vsteps_act, 'tstep': 300,
-                     'xlabel': 'Membrane potential (mV)',
-                     'ylabel': 'Normalised conductance',
-                     'normalise': True}
-        
-        setup_inact = {'sim_type': 'InactivationSim',
-                       'variable': 'icat.G_CaT', 'vhold': -10, 'thold': 200,
-                       'vsteps': vsteps_inact, 'tstep': 1000,
-                       'xlabel': 'Membrane potential (mV)',
-                       'ylabel': 'Normalised conductance'}
-        
-        setup_rec = {'sim_type': 'RecoverySim',
-                     'variable': 'icat.G_CaT', 'vhold': -80, 'thold': 5000,
-                     'vstep': -20, 'tstep1': 300, 'tstep2': 300,
-                     'twaits': intervals,
-                     'xlabel': 'Interval (ms)',
-                     'ylabel': 'Relative recovery'}
-
-        self.setup_exp = [setup_IV, setup_act, setup_inact, setup_rec]
-
-        super(icat, self).__init__()
-
+"""
 class ikur(AbstractChannel):
     def __init__(self):
         self.name = 'ikur'
@@ -1049,3 +745,5 @@ class ina(AbstractChannel):
         self.setup_exp = [setup_exp_IV, setup_exp_act, setup_exp_inact]
 
         super(ina, self).__init__()
+
+"""
