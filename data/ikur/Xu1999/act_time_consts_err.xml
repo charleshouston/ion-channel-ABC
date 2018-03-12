@@ -1,0 +1,14 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Thu Mar 08 10:31:42 GMT 2018 -->
+<data>
+<image file='XuFig8B.png' />
+<axesnames x='Membrane potential'  y='tau' />
+<calibpoints minXaxisX='358.0' minXaxisY='960.0' maxXaxisX='1311.0' maxXaxisY='957.0' minYaxisX='215.0' minYaxisY='845.0' maxYaxisX='216.0' maxYaxisY='73.0' aX1='0.0' aX2='60.0' aY1='0.0' aY2='60.0' isXLog='false' isYLog='false' />
+<point n='0' x='357.0' y='696.0' dx='-0.010636212891618868' dy='11.545616293310026' />
+<point n='1' x='516.0' y='748.0' dx='9.989451871687194' dy='7.465247997520784' />
+<point n='2' x='674.0' y='778.0' dx='19.930941690210936' dy='5.094975894132645' />
+<point n='3' x='831.0' y='818.0' dx='29.807491153005117' dy='1.947743209648337' />
+<point n='4' x='992.0' y='828.0' dx='39.94182013569429' dy='1.1311476078307692' />
+<point n='5' x='1152.0' y='831.0' dx='50.014577997793474' dy='0.8588403358374848' />
+<point n='6' x='1310.0' y='835.0' dx='59.96122076417776' dy='0.5093018609158833' />
+</data>
