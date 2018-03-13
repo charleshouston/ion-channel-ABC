@@ -1,8 +1,11 @@
 ### Class to build channel for ABCSolver.
 
+import os
 import myokit
 import distributions as dist
 import matplotlib.pyplot as plt
+if os.environ.get('DISPLAY') is None:
+    plt.switch_backend('agg')
 import numpy as np
 import dill as pickle
 
