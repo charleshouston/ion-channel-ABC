@@ -130,28 +130,31 @@ class ExperimentStimProtocol():
             ind_var = self.ind_var
 
         res_sim = []
-        for run in range(n_runs):
-            data = []
-            sim.reset()
-            for i, (time, level) in enumerate(zip(times, levels)):
-                if isinstance(time, list):
-                    t = time[run]
-                else:
-                    t = time
-                if isinstance(level, list):
-                    l = level[run]
-                else:
-                    l = level
-                sim.set_constant(vvar, l)
-                if i in self.measure_index:
-                    data.append(sim.run(t, log=logvars))
-                else:
-                    sim.run(t)
-            result = self.measure_fn(data)
-            res_sim.append(result)
+        try:
+            for run in range(n_runs):
+                data = []
+                sim.reset()
+                for i, (time, level) in enumerate(zip(times, levels)):
+                    if isinstance(time, list):
+                        t = time[run]
+                    else:
+                        t = time
+                    if isinstance(level, list):
+                        l = level[run]
+                    else:
+                        l = level
+                    sim.set_constant(vvar, l)
+                    if i in self.measure_index:
+                        data.append(sim.run(t, log=logvars))
+                    else:
+                        sim.run(t)
+                result = self.measure_fn(data)
+                res_sim.append(result)
+            if self.post_fn is not None:
+                res_sim = self.post_fn(res_sim)
+        except:
+            res_sim = None
 
-        if self.post_fn is not None:
-            res_sim = self.post_fn(res_sim)
         return ind_var, res_sim
 
 
@@ -185,7 +188,8 @@ class Experiment():
         Returns:
             Loss value as float.
         """
-        assert self.logs is not None, 'Need to run experiments first!'
+        if self.logs is None:
+            return float("inf")
         return error_fn(self.logs[1], self.data)
 
     def reset(self):
