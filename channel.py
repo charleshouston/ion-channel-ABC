@@ -50,6 +50,8 @@ class Channel():
         self.experiments = []
         self._sim = None
 
+        self.abc_plotting_results = None
+
     def _generate_sim(self):
         """Creates class instance of Model and Simulation."""
         m, _, _ = myokit.load(self.modelfile)
@@ -156,17 +158,18 @@ class Channel():
         """
         pool = abc_distr.pool
         weights = abc_distr.weights
-
-        # Original parameter values.
         self.reset()
-        results_original = self.run_experiments(step)
 
-        # Updated values for each ABC posterior particle.
-        results_abc = []
-        for i, params in enumerate(pool):
-            self.set_abc_params(params)
-            results_abc.append(self.run_experiments(step))
-        results_abc = np.array(results_abc).swapaxes(0, 1)
+        if self.abc_plotting_results is not None:
+            # Updated values for each ABC posterior particle.
+            results_abc = []
+            for i, params in enumerate(pool):
+                self.set_abc_params(params)
+                results_abc.append(self.run_experiments(step))
+            results_abc = np.array(results_abc).swapaxes(0, 1)
+            self.abc_plotting_results = results_abc
+        else:
+            results_abc = self.abc_plotting_results
 
         results_abc_mean = []
         results_abc_sd = []
