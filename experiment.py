@@ -188,7 +188,7 @@ class Experiment():
         Returns:
             Loss value as float.
         """
-        if self.logs is None:
+        if self.logs[1] is None:
             return float("inf")
         return error_fn(self.logs[1], self.data)
 
