@@ -10,7 +10,7 @@ import numpy as np
 
 def normaliseby(a, b):
     """Normalise `a` between -1 and 1 using `b` as normalisation data."""
-    temp = a
+    temp = np.copy(a)
     temp /= np.max(np.abs(b), axis=0)
     return temp
 
