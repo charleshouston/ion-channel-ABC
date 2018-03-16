@@ -35,10 +35,6 @@ def cvchisq(sim_results, experiment_data):
     N = np.array(experiment_data.N)
     err_bars = np.array(experiment_data.errs)
 
-    # Normalise all data points to between -1 and 1 by experimental value.
-    s = normaliseby(s, e)
-    e = normaliseby(e, e)
-    err_bars = normaliseby(err_bars, e)
     if experiment_data.err_type == 'SEM':
         sd = err_bars * np.sqrt(N)
     elif experiment_data.err_type == 'STD':
@@ -64,6 +60,9 @@ def cvchisq(sim_results, experiment_data):
         return float("inf")
 
     err = pow(err / len(s), 0.5)
+    err = err / np.ptp(e)
+    if err > 100:
+        return float("inf")
     warnings.resetwarnings()
     return err
 
@@ -74,9 +73,6 @@ def cvrmsd(sim_results, experiment_data):
     s = np.array(sim_results)
     e = np.array(experiment_data.y)
 
-    s = normaliseby(s, e)
-    e = normaliseby(e, e)
-
     try:
         err = np.sum(np.square(s - e))
     except Warning:
@@ -85,5 +81,8 @@ def cvrmsd(sim_results, experiment_data):
         return float("inf")
 
     err = pow(err / len(s), 0.5)
+    err = err / np.ptp(e)
+    if err > 100:
+        return float("inf")
     warnings.resetwarnings()
     return err
