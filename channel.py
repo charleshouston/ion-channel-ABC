@@ -8,7 +8,6 @@ if os.environ.get('DISPLAY') is None:
     plt.switch_backend('agg')
 import numpy as np
 import dill as pickle
-import seaborn as sns
 import plotting_helpers as ph
 
 
