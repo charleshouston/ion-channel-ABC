@@ -154,7 +154,6 @@ class ExperimentStimProtocol():
                 res_sim = self.post_fn(res_sim)
         except:
             res_sim = None
-
         return ind_var, res_sim
 
 
@@ -175,8 +174,7 @@ class Experiment():
 
     def run(self, sim, vvar, logvars, step_override=-1):
         """Wrapper to run simulation."""
-        if self.logs is None:
-            self.logs = self.protocol(sim, vvar, logvars, step_override)
+        self.logs = self.protocol(sim, vvar, logvars, step_override)
         return self.logs
 
     def eval_err(self, error_fn):
