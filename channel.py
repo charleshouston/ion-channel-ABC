@@ -8,6 +8,7 @@ if os.environ.get('DISPLAY') is None:
     plt.switch_backend('agg')
 import numpy as np
 import dill as pickle
+import seaborn as sns
 
 
 def add_subfig_letters(axes):
@@ -41,11 +42,12 @@ class Channel():
 
         self.param_names = []
         self.param_priors = []
-        self.kernel = []
+        self.param_ranges = []
+        self.kernel = dist.Normal(0.0, 1.0)
         for param, val in abc_params.iteritems():
             self.param_names.append(param)
             self.param_priors.append((val[0], val[1]))
-            self.kernel.append(dist.Normal(0.0, 0.2 * (val[1]-val[0])))
+            self.param_ranges.append(val[1] - val[0])
 
         self.experiments = []
         self._sim = None
@@ -160,7 +162,7 @@ class Channel():
         weights = abc_distr.weights
         self.reset()
 
-        if self.abc_plotting_results is not None:
+        if self.abc_plotting_results is None:
             # Updated values for each ABC posterior particle.
             results_abc = []
             for i, params in enumerate(pool):
@@ -214,6 +216,37 @@ class Channel():
         if ncols > 1:
             ax = add_subfig_letters(ax)
         plt.tight_layout()
+        return fig
+
+    def plot_final_params(self, abc_distr):
+        """Plot posterior distributions for each parameter.
+
+        Args:
+            abc_distr (dist.Arbitrary): Posterior distribution estimate from
+                ABC algorithm.
+
+        Returns:
+            Figure handle with violin plots for each parameter posterior.
+        """
+        pool = abc_distr.pool
+        wts = abc_distr.weights
+        pool = np.asarray(pool)
+        pool = pool.swapaxes(0, 1)
+
+        # Scale between min and max of prior.
+        pool_norm = np.empty_like(pool)
+        for i, param in enumerate(pool):
+            pool_norm[i] = ((param - ikur.param_priors[i][0])
+                            / ikur.param_ranges[i])
+        pool_norm = pool_norm.swapaxes(0, 1)
+
+        vpstats = ph.custom_violin_stats(pool_norm, wts)
+        pos = range(pool_norm.shape[1])
+        fig, ax = plt.subplots()
+        vplot = ax.violin(vpstats, pos, vert=False,
+                          showmeans=True, showextrema=True, showmedians=True)
+        ax.set_yticks(pos)
+        ax.set_yticklabels(ikur.param_names)
         return fig
 
     def save(self, filename):

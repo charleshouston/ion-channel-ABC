@@ -4,6 +4,7 @@ import fitting
 import distributions as dist
 import myokit
 import logging
+import numpy as np
 
 
 def prior_fn(priors, params):
@@ -68,19 +69,21 @@ class ABCSolver():
             channel_iter.set_abc_params(new_params)
             return channel_iter.eval_error(self.error_fn)
 
-        def kern(orig, new=None):
+        def kern(orig, new=None, kern_width=0.2):
             """Perturbation kernel."""
             kernel = channel.kernel
+            param_ranges = channel.param_ranges
             if new == None:
                 new = []
-                perturb = [distr.draw() for distr in kernel]
-                for i in range(len(orig)):
-                    new = new + [orig[i] + perturb[i]]
+                perturb = [kernel.draw()*r*kern_width for r in param_ranges]
+                for o, p in zip(orig, perturb):
+                    new.append(o+p)
                 return new
             else:
                 prob = 1.0
-                for i, distr in enumerate(kernel):
-                    prob = prob * distr.pdf(new[i] - orig[i])
+                for i, r in enumerate(param_ranges):
+                    prob = prob * kernel.pdf((new[i] - orig[i])
+                                              / (kern_width*r))
                 return prob
 
         result = fitting.abc_smc_adaptive_error(channel=channel,
