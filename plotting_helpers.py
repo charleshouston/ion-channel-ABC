@@ -1,4 +1,7 @@
+import os
 import matplotlib.pyplot as plt
+if os.environ.get('DISPLAY') is None:
+    plt.switch_backend('agg')
 from matplotlib.cbook import violin_stats
 from scipy import stats
 import statsmodels.api as sm
