@@ -9,6 +9,7 @@ if os.environ.get('DISPLAY') is None:
 import numpy as np
 import dill as pickle
 import seaborn as sns
+import plotting_helpers as ph
 
 
 def add_subfig_letters(axes):
@@ -236,8 +237,8 @@ class Channel():
         # Scale between min and max of prior.
         pool_norm = np.empty_like(pool)
         for i, param in enumerate(pool):
-            pool_norm[i] = ((param - ikur.param_priors[i][0])
-                            / ikur.param_ranges[i])
+            pool_norm[i] = ((param - self.param_priors[i][0])
+                            / self.param_ranges[i])
         pool_norm = pool_norm.swapaxes(0, 1)
 
         vpstats = ph.custom_violin_stats(pool_norm, wts)
@@ -246,7 +247,7 @@ class Channel():
         vplot = ax.violin(vpstats, pos, vert=False,
                           showmeans=True, showextrema=True, showmedians=True)
         ax.set_yticks(pos)
-        ax.set_yticklabels(ikur.param_names)
+        ax.set_yticklabels(self.param_names)
         return fig
 
     def save(self, filename):
