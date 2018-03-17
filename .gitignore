@@ -5,3 +5,4 @@ plotting/
 *.DS_Store
 *.bak
 results/*
+src/*
