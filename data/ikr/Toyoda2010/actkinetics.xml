@@ -1,0 +1,15 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Wed Mar 14 14:02:59 GMT 2018 -->
+<data>
+<image file='ToyodaFig3C.png' />
+<axesnames x='X'  y='Y' />
+<calibpoints minXaxisX='528.0' minXaxisY='852.0' maxXaxisX='763.0' maxXaxisY='852.0' minYaxisX='192.0' minYaxisY='853.0' maxYaxisX='192.0' maxYaxisY='195.0' aX1='-30.0' aX2='40.0' aY1='0.0' aY2='600.0' isXLog='false' isYLog='false' />
+<point n='0' x='527.0' y='351.0' dx='-30.297872340425556' dy='457.75075987841944' />
+<point n='1' x='561.0' y='568.0' dx='-20.170212765957473' dy='259.87841945288756' />
+<point n='2' x='594.0' y='651.0' dx='-10.340425531914917' dy='184.1945288753799' />
+<point n='3' x='628.0' y='725.0' dx='-0.2127659574468339' dy='116.71732522796344' />
+<point n='4' x='662.0' y='768.0' dx='9.91489361702125' dy='77.50759878419456' />
+<point n='5' x='695.0' y='800.0' dx='19.744680851063805' dy='48.32826747720367' />
+<point n='6' x='728.0' y='799.0' dx='29.57446808510636' dy='49.24012158054711' />
+<point n='7' x='762.0' y='813.0' dx='39.702127659574444' dy='36.474164133738554' />
+</data>
