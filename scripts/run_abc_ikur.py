@@ -61,14 +61,14 @@ def rising_exponential_fit(data):
         warnings.simplefilter("error")
         try:
             # Greater than 300us
-            tmax_i = data[0]['ikur.i_Kur'].index(max(data[0]['ikur.i_Kur']))
+            tmax_i = data[0]['ikur.i_Kur'].index(max(data[0]['ikur.G_Kur']))
             tmax = data[0]['environment.time'][tmax_i]
             t = [time for time in data[0]['environment.time']
                  if time > min(data[0]['environment.time'])+0.3
                  and time <= tmax]
             t = [ti - min(t) for ti in t]
             I = [curr for (time, curr) in zip(data[0]['environment.time'],
-                                              data[0]['ikur.i_Kur'])
+                                              data[0]['ikur.G_Kur'])
                  if time > min(data[0]['environment.time'])+0.3
                  and time <= tmax]
 
@@ -90,7 +90,7 @@ act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1,
                                   measure_fn=rising_exponential_fit)
 act_exp = Experiment(act_prot, act_data)
-#ikur.add_experiment(act_exp)
+ikur.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation curve
 inact_vsteps, inact_cond, inact_errs, inact_N = data.Inact_Brouillette()
@@ -99,7 +99,7 @@ inact_data = ExperimentData(x=inact_vsteps, y=inact_cond, N=inact_N,
 stim_times = [5000, 100, 2500]
 stim_levels = [inact_vsteps, -40, 30]
 def max_ikur(data):
-    return max(data[0]['ikur.i_Kur'])
+    return max(data[0]['ikur.G_Kur'])
 def normalise_positives(sim_results):
     m = np.max(sim_results)
     if m > 0:
@@ -128,10 +128,10 @@ ikur.add_experiment(rec_exp)
 
 abc_solver = abc.ABCSolver(error_fn=cvrmsd, post_size=100, maxiter=500,
                            err_cutoff=0.001)
-final_distr = abc_solver(ikur, logfile='logs/ikur_cvrmsd.log')
+final_distr = abc_solver(ikur, logfile='logs/ikur_cvchisq.log')
 ikur.save('ikur.pkl')
 final_distr.save('ikur_res.pkl')
 
-fig = ikur.plot_results(final_distr, 2)
+fig = ikur.plot_results(final_distr, 1)
 plt.savefig('ikur_plot.pdf')
 plt.close(fig)
