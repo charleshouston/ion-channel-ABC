@@ -61,7 +61,7 @@ def rising_exponential_fit(data):
         warnings.simplefilter("error")
         try:
             # Greater than 300us
-            tmax_i = data[0]['ikur.i_Kur'].index(max(data[0]['ikur.G_Kur']))
+            tmax_i = data[0]['ikur.G_Kur'].index(max(data[0]['ikur.G_Kur']))
             tmax = data[0]['environment.time'][tmax_i]
             t = [time for time in data[0]['environment.time']
                  if time > min(data[0]['environment.time'])+0.3
@@ -73,7 +73,7 @@ def rising_exponential_fit(data):
                  and time <= tmax]
 
             if len(t) == 0 or len(I) == 0:
-                np.set_err(**old_settings)
+                np.seterr(**old_settings)
                 return float("inf")
 
             def single_exp(t, I_max, tau):
