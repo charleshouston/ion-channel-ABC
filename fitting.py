@@ -138,7 +138,7 @@ def abc_inner(engine, thresh_val, post_size):
 
 
 def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
-                           post_size, maxiter, err_cutoff, init_err_max):
+                           post_size, maxiter, err_cutoff, init_max_err):
     """ABC-SMC with adaptive error shrinking algorithm.
 
     Args:
@@ -159,7 +159,7 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
             reduction and reattempt sampling.
         err_cutoff (float): Minimum decrease in relative error between
             rounds, algorithm terminates after value reached.
-        init_err_max (float): Maximum value of error when generating initial
+        init_max_err (float): Maximum value of error when generating initial
             set of posterior particles.
 
     Returns:
@@ -174,7 +174,7 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
     for i in range(post_size):
         logging.info('Initialising %s / ' + str(post_size), i)
         curr_err = float("inf")
-        while curr_err >= init_err_max:
+        while curr_err >= init_max_err:
             post[i] = [uniform.draw() * (channel.param_ranges[j])
                        + channel.param_priors[j][0]
                        for j in range(len(channel.param_names))]
