@@ -61,8 +61,6 @@ def cvchisq(sim_results, experiment_data):
 
     err = pow(err / len(s), 0.5)
     err = err / np.ptp(e)
-    if err > 100:
-        return float("inf")
     warnings.resetwarnings()
     return err
 
@@ -82,7 +80,5 @@ def cvrmsd(sim_results, experiment_data):
 
     err = pow(err / len(s), 0.5)
     err = err / np.ptp(e)
-    if err > 100:
-        return float("inf")
     warnings.resetwarnings()
     return err

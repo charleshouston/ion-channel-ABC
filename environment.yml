@@ -7,6 +7,5 @@ dependencies:
   - matplotlib
   - statsmodels
   - pip:
-    - "--editable=git+https://github.com/sahilm89/lhsmdu.git@master#egg=lhsmdu"
     - "--editable=git+https://github.com/uqfoundation/pathos.git@master#egg=pathos"
     - "--editable=git+https://github.com/MichaelClerx/myokit.git@master#egg=myokit"

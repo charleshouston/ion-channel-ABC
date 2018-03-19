@@ -138,7 +138,7 @@ def abc_inner(engine, thresh_val, post_size):
 
 
 def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
-                           post_size, maxiter, err_cutoff):
+                           post_size, maxiter, err_cutoff, init_err_max):
     """ABC-SMC with adaptive error shrinking algorithm.
 
     Args:
@@ -159,6 +159,8 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
             reduction and reattempt sampling.
         err_cutoff (float): Minimum decrease in relative error between
             rounds, algorithm terminates after value reached.
+        init_err_max (float): Maximum value of error when generating initial
+            set of posterior particles.
 
     Returns:
         A posterior distribution as a Distribution.Arbitrary class.
@@ -167,35 +169,19 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
     post, wts = [None] * post_size, [1.0/post_size] * post_size
     total_err, max_err = 0.0, 0.0
 
-    # Initialise posterior by drawing from latin hypercube over parameters.
-    post_lhs = lhsmdu.sample(len(priors), post_size)
-    prior_width = [pr[1] - pr[0] for pr in channel.param_priors]
-    prior_lows = [pr[0] for pr in channel.param_priors]
-    valid_post_size = post_size
-    errs = []
+    # Initialise initial particles.
+    uniform = dist.Uniform(0.0, 1.0)
     for i in range(post_size):
-        post[i] = post_lhs[:, i].flatten().tolist()[0]
-        post[i] = np.array(post[i]) * np.array(prior_width)
-        post[i] += prior_lows
-        # Evaluate error from simulation
-        curr_err = loss(post[i], channel)
-        errs.append(curr_err)
+        logging.info('Initialising %s / ' + str(post_size), i)
+        curr_err = float("inf")
+        while curr_err >= init_err_max:
+            post[i] = [uniform.draw() * (channel.param_ranges[j])
+                       + channel.param_priors[j][0]
+                       for j in range(len(channel.param_names))]
+            curr_err = loss(post[i], channel)
 
-    # Process errors and get indices with inf error
-    inf_indices = [i for i, e in enumerate(errs) if e == float("inf")]
-    # set weights of these particles to zero
-    for ii in inf_indices:
-        errs[ii] = 0.0
-        wts[ii] = 0.0
-        valid_post_size -= 1
-
-    logging.info("Original post size: " + str(post_size))
-    logging.info("Valid results: " + str(valid_post_size))
-    max_err = max(errs)
-    total_err = np.sum(errs)
-
-    # Update weights to sum to 1 after eliminating invalid simulations.
-    wts = [1.0/valid_post_size if w > 0.0 else w for w in wts]
+        total_err += curr_err
+        max_err = max(curr_err, max_err)
 
     # Initialize K to half the average population error.
     K = total_err / (2.0 * post_size)

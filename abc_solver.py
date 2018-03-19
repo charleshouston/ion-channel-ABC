@@ -26,7 +26,7 @@ def prior_fn(priors, params):
 class ABCSolver():
     """Solver for ABC parameter fitting."""
     def __init__(self, error_fn, post_size=100, maxiter=10000,
-                 err_cutoff=0.001):
+                 err_cutoff=0.001, init_err_max=float("inf")):
         """Initialisation.
 
         Args:
@@ -37,11 +37,14 @@ class ABCSolver():
                 relaxing fitting conditions.
             err_cutoff (float): Stopping conditions after improvement to
                 error drops below this value.
+            init_err_max (float): Maximum value of error function when
+                generating first set of posterior particles.
         """
         self.error_fn = error_fn
         self.post_size = post_size
         self.maxiter = maxiter
         self.err_cutoff = err_cutoff
+        self.init_err_max = init_err_max
 
     def __call__(self, channel, logfile='abc_solve.log'):
         """Run the ABC fit.
@@ -93,7 +96,8 @@ class ABCSolver():
                                                 loss=distance,
                                                 post_size=self.post_size,
                                                 maxiter=self.maxiter,
-                                                err_cutoff=self.err_cutoff)
+                                                err_cutoff=self.err_cutoff,
+                                                init_err_max=self.init_err_max)
 
         # Write results to the standard output and results log
         logging.info("Result mean:\n" + str(result.getmean()))
