@@ -8,7 +8,6 @@ import warnings
 import matplotlib.pyplot as plt
 import myokit
 import numpy as np
-import scipy.optimize as so
 
 
 def pretty_results_print(channel, distr):
@@ -56,6 +55,9 @@ act_data = ExperimentData(x=act_vsteps, y=act_tau, errs=act_errs,
 stim_times = [15000, 4500]
 stim_levels = [-70, act_vsteps]
 def rising_exponential_fit(data):
+    import numpy as np
+    import scipy.optimize as so
+    import warnings
     old_settings = np.seterr(all="warn")
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -126,12 +128,17 @@ rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
 rec_exp = Experiment(rec_prot, rec_data)
 ikur.add_experiment(rec_exp)
 
-abc_solver = abc.ABCSolver(error_fn=cvrmsd, post_size=100, maxiter=500,
-                           err_cutoff=0.001)
+abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=100, maxiter=1000,
+                           err_cutoff=0.001, init_max_err=10)
 final_distr = abc_solver(ikur, logfile='logs/ikur_cvchisq.log')
+
 ikur.save('ikur.pkl')
 final_distr.save('ikur_res.pkl')
 
-fig = ikur.plot_results(final_distr, 1)
-plt.savefig('ikur_plot.pdf')
-plt.close(fig)
+fig1 = ikur.plot_results(final_distr)
+plt.savefig('ikur_res_plot.pdf')
+plt.close(fig1)
+
+fig2 = ikur.plot_final_params(final_distr)
+plt.savefig('ikur_params.pdf')
+plt.close(fig2)
