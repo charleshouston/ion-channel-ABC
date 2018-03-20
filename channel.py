@@ -245,6 +245,7 @@ class Channel():
         fig, ax = plt.subplots()
         vplot = ax.violin(vpstats, pos, vert=False,
                           showmeans=True, showextrema=True, showmedians=True)
+        vplot['cmeans'].set_color('r')
         ax.set_yticks(pos)
         ax.set_yticklabels(self.param_names)
         return fig
@@ -255,73 +256,6 @@ class Channel():
         pickle.dump(self, open(filename, 'wb'))
 
 """
-class ikur(AbstractChannel):
-    def __init__(self):
-        self.name = 'ikur'
-        self.model_name = 'Bondarenko2004_iKur.mmt'
-        self.publication = 'Bondarenko et al., 2004'
-
-        # Parameters involved in ABC process
-        self.parameter_names = ['g_Kur',
-                                'k_ass1',
-                                'k_ass2',
-                                'k_atau1',
-                                'k_atau2',
-                                'k_atau3',
-                                'k_iss1',
-                                'k_iss2',
-                                'k_itau1',
-                                'k_itau2']
-
-        # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1),     # 0.0975
-                                (0, 100),   # 22.5
-                                (1, 10),    # 7.7
-                                (0, 1),     # 0.493
-                                (0, 10),    # 6.29
-                                (0, 10),    # 2.058
-                                (0, 100),   # 45.2
-                                (1, 10),    # 5.7
-                                (0, 10),    # 1.2
-                                (0, 10)]    # 1.7
-
-        # Edit which parameters to vary
-        #use = [1,1,1,0,0,0,1,1,0,0]
-        use = [1 for i in range(len(self.parameter_names))]
-        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
-        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
-
-        # Loading experimental data
-        vsteps, act_peaks_exp = data_ikur.IV_MaharaniFig2B()
-        prepulses, inact_exp = data_ikur.Inact_BrouilleteFig6B()
-        intervals, rec_exp = data_ikur.Recovery_BrouilleteFig6D()
-        self.data_exp = [[vsteps, act_peaks_exp],
-                         [prepulses, inact_exp],
-                         [intervals, rec_exp]]
-
-        # Define experimental setup for simulations
-        setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ikur.i_Kur', 'vhold': -60, 'thold': 6000,
-                         'vsteps': vsteps, 'tstep': 300,
-                         'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
-        setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'ikur.G_Kur', 'vhold': 30, 'thold': 2500,
-                           'vsteps': prepulses, 'tstep': 5000,
-                           'xlabel': 'Membrane potential (mV)',
-                           'ylabel': 'Normalised conductance'}
-        setup_exp_rec = {'sim_type': 'RecoverySim',
-                         'variable': 'ikur.G_Kur', 'vhold': -80, 'thold': 2000,
-                         'vstep': 30, 'tstep1': 1500, 'tstep2': 500,
-                         'twaits': intervals,
-                         'xlabel': 'Interval (ms)',
-                         'ylabel': 'Relative recovery'}
-
-        self.setup_exp = [setup_exp_act, setup_exp_inact, setup_exp_rec]
-
-        super(ikur, self).__init__()
-
-
 class ical(AbstractChannel):
     def __init__(self):
         self.name = 'ical'
