@@ -4,7 +4,6 @@ from channel import Channel
 from error_functions import cvrmsd, cvchisq
 import data.ikur.data_ikur as data
 
-import warnings
 import matplotlib.pyplot as plt
 import myokit
 import numpy as np
@@ -52,8 +51,8 @@ ikur.add_experiment(iv_exp)
 act_vsteps, act_tau, act_errs, _ = data.ActTau_Xu()
 act_data = ExperimentData(x=act_vsteps, y=act_tau, errs=act_errs,
                           err_type='STD')
-stim_times = [15000, 4500]
-stim_levels = [-70, act_vsteps]
+stim_times = [15000, 0.3, 4500]
+stim_levels = [-70, act_vsteps, act_vsteps]
 def rising_exponential_fit(data):
     import numpy as np
     import scipy.optimize as so
@@ -62,17 +61,14 @@ def rising_exponential_fit(data):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         try:
-            # Greater than 300us
             tmax_i = data[0]['ikur.G_Kur'].index(max(data[0]['ikur.G_Kur']))
             tmax = data[0]['environment.time'][tmax_i]
             t = [time for time in data[0]['environment.time']
-                 if time > min(data[0]['environment.time'])+0.3
-                 and time <= tmax]
+                 if time <= tmax]
             t = [ti - min(t) for ti in t]
             I = [curr for (time, curr) in zip(data[0]['environment.time'],
                                               data[0]['ikur.G_Kur'])
-                 if time > min(data[0]['environment.time'])+0.3
-                 and time <= tmax]
+                 if time <= tmax]
 
             if len(t) == 0 or len(I) == 0:
                 np.seterr(**old_settings)
@@ -89,7 +85,7 @@ def rising_exponential_fit(data):
             return float("inf")
 
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                  measure_index=1,
+                                  measure_index=2,
                                   measure_fn=rising_exponential_fit)
 act_exp = Experiment(act_prot, act_data)
 ikur.add_experiment(act_exp)
@@ -140,5 +136,5 @@ plt.savefig('ikur_res_plot.pdf')
 plt.close(fig1)
 
 fig2 = ikur.plot_final_params(final_distr)
-plt.savefig('ikur_params.pdf')
+plt.savefig('ikur_params_plot.pdf')
 plt.close(fig2)

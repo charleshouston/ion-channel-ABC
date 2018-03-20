@@ -141,7 +141,6 @@ deact_prot = ExperimentStimProtocol(stim_times, stim_levels,
 deact_exp = Experiment(deact_prot, deact_data)
 ikr.add_experiment(deact_exp)
 
-
 abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=100, maxiter=1000,
                            err_cutoff=0.001, init_max_err=10)
 final_distr = abc_solver(ikr, logfile='logs/ikr_cvchisq.log')
@@ -154,5 +153,5 @@ plt.savefig('ikr_res_plot.pdf')
 plt.close(fig1)
 
 fig2 = ikr.plot_final_params(final_distr)
-plt.savefig('ikr_params.pdf')
+plt.savefig('ikr_params_plot.pdf')
 plt.close(fig2)
