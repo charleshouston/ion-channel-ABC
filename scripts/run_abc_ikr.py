@@ -53,10 +53,16 @@ act_data = ExperimentData(x=act_vsteps, y=act_cond, N=act_N, errs=act_errs,
                           err_type='SEM')
 stim_times = [1000, 1000, 500]
 stim_levels = [-50, act_vsteps, -50]
-def max_ikr(data):
+def max_gkr(data):
     return max(data[0]['ikr.G_Kr'])
+def normalise_positives(sim_results):
+    m = np.max(sim_results)
+    if m > 0:
+        sim_results = sim_results / m
+    return sim_results
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                  measure_index=2, measure_fn=max_ikr)
+                                  measure_index=2, measure_fn=max_gkr,
+                                  post_fn=normalise_positives)
 act_exp = Experiment(act_prot, act_data)
 ikr.add_experiment(act_exp)
 
@@ -99,10 +105,16 @@ akin_prot = ExperimentStimProtocol(stim_times, stim_levels,
 akin_exp = Experiment(akin_prot, akin_data)
 ikr.add_experiment(akin_exp)
 
-### Exp 4 - Deactivation kinetics.
-deact_vsteps, deact_tauf, deact_errs, deact_N = data.DeactKinFast_Toyoda()
-deact_data = ExperimentData(x=deact_vsteps, y=deact_tauf, N=deact_N,
-                            errs=deact_errs, err_type='SEM')
+### Exp 4, 5, 6 - Deactivation kinetics (fast and slow).
+deact_vsteps, deact_tauf, deact_f_errs, deact_N = data.DeactKinFast_Toyoda()
+_, deact_taus, deact_s_errs, _ = data.DeactKinSlow_Toyoda()
+_, deact_amp, deact_amp_errs, _ = data.DeactKinRelAmp_Toyoda()
+deact_f_data = ExperimentData(x=deact_vsteps, y=deact_tauf, N=deact_N,
+                              errs=deact_f_errs, err_type='SEM')
+deact_s_data = ExperimentData(x=deact_vsteps, y=deact_taus, N=deact_N,
+                              errs=deact_s_errs, err_type='SEM')
+deact_amp_data = ExperimentData(x=deact_vsteps, y=deact_amp, N=deact_N,
+                                errs=deact_amp_errs, err_type='SEM')
 stim_times = [1000, 1000]
 stim_levels = [20, deact_vsteps]
 def double_exp_decay_fit(data):
@@ -127,19 +139,57 @@ def double_exp_decay_fit(data):
 
             def double_exp(t, G_max1, G_max2, tauf, taus):
                 return G_max1 * np.exp(-t / tauf) + G_max2 * np.exp(-t / taus)
+            popt, _ = so.curve_fit(double_exp, t, G, bounds=(0, np.inf))
+            G_max = (popt[0], popt[1])
+            tau = (popt[2], popt[3])
+            tauf = min(tau)
+            taus = max(tau)
+            tauf_i = tau.index(min(tau))
+            taus_i = tau.index(max(tau))
+            G_maxf = G_max[tauf_i]
+            G_maxs = G_max[taus_i]
+            A_relative = G_maxf / (G_maxf + G_maxs)
 
-            [_, _, tauf, taus], _ = so.curve_fit(double_exp, t, G)
             np.seterr(**old_settings)
-            return min(tauf, taus)
+            return (tauf, taus, A_relative)
         except:
             np.seterr(**old_settings)
             return float("inf")
+def takefirst(data): return [d[0] for d in data]
+def takesecond(data): return [d[1] for d in data]
+def takethird(data): return [d[2] for d in data]
 
-deact_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                    measure_index=1,
-                                    measure_fn=double_exp_decay_fit)
-deact_exp = Experiment(deact_prot, deact_data)
-ikr.add_experiment(deact_exp)
+deact_f_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                      measure_index=1,
+                                      measure_fn=double_exp_decay_fit,
+                                      post_fn=takefirst)
+deact_s_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                      measure_index=1,
+                                      measure_fn=double_exp_decay_fit,
+                                      post_fn=takesecond)
+deact_amp_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                        measure_index=1,
+                                        measure_fn=double_exp_decay_fit,
+                                        post_fn=takethird)
+deact_f_exp = Experiment(deact_f_prot, deact_f_data)
+deact_s_exp = Experiment(deact_s_prot, deact_s_data)
+deact_amp_exp = Experiment(deact_amp_prot, deact_amp_data)
+ikr.add_experiment(deact_f_exp)
+ikr.add_experiment(deact_s_exp)
+ikr.add_experiment(deact_amp_exp)
+
+### Exp 7 - Inactivation.
+inact_vsteps, inact_cond, _, _ = data.Inact_Toyoda()
+inact_data = ExperimentData(x=inact_vsteps, y=inact_cond)
+stim_times = [1000, 1000, 10, 1000]
+stim_levels = [-50, 20, inact_vsteps, 20]
+inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                    measure_index=3,
+                                    measure_fn=max_gkr,
+                                    post_fn=normalise_positives)
+inact_exp = Experiment(inact_prot, inact_data)
+ikr.add_experiment(inact_exp)
+
 
 abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=100, maxiter=1000,
                            err_cutoff=0.001, init_max_err=10)
