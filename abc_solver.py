@@ -102,6 +102,4 @@ class ABCSolver():
         # Write results to the standard output and results log
         logging.info("Result mean:\n" + str(result.getmean()))
         logging.info("Result var:\n" + str(result.getvar()))
-        logging.info("Result pool:\n" + str(result.pool))
-        logging.info("Result weights:\n" + str(result.weights))
         return result

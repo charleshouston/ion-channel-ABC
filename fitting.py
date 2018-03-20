@@ -31,18 +31,13 @@ class ParallelEngine(object):
         draw = None
         iters = 0
         while draw == None:
-            # At time 0, draw from prior distribution.
-            if self.post == None:
-                draw = [distr.draw() for distr in self.priors]
-            # Otherwise, draw the posterior distribution.
-            else:
-                sum = 0.0
-                r = np.random.random()
-                for idx in range(self.post_size):
-                    sum = sum + self.wts[idx]
-                    if sum >= r:
-                        break
-                draw = self.post[idx]
+            sum = 0.0
+            r = np.random.random()
+            for idx in range(self.post_size):
+                sum = sum + self.wts[idx]
+                if sum >= r:
+                    break
+            draw = self.post[idx]
 
             # Apply pertubation kernel, then check if new distribution is valid.
             draw = self.kern(draw)
@@ -57,13 +52,10 @@ class ParallelEngine(object):
 
         # If we get here, draw is accepted.
         next_post = draw
-        if self.wts == None:
-            next_wt = self.prior_fn(self.priors, draw)
-        else:
-            denom = 0
-            for idx, particle in enumerate(self.post):
-                denom = denom + self.wts[idx] * self.kern(particle, draw)
-            next_wt = self.prior_fn(self.priors, draw) / denom
+        denom = 0
+        for idx, particle in enumerate(self.post):
+            denom = denom + self.wts[idx] * self.kern(particle, draw)
+        next_wt = self.prior_fn(self.priors, draw) / denom
 
         return [i, next_post, next_wt, iters]
 
@@ -128,7 +120,7 @@ def abc_inner(engine, thresh_val, post_size):
             return None, None
         next_post[output[0]] = output[1]
         next_wts[output[0]] = output[2]
-        total_iters += output[3] # sum total iterations
+        total_iters += output[3]
 
     logging.info("ACCEPTANCE RATE: "
                  + str(float(post_size) / total_iters))
@@ -170,14 +162,11 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
     total_err, max_err = 0.0, 0.0
 
     # Initialise initial particles.
-    uniform = dist.Uniform(0.0, 1.0)
     for i in range(post_size):
         logging.info('Initialising %s / ' + str(post_size), i)
         curr_err = float("inf")
         while curr_err >= init_max_err:
-            post[i] = [uniform.draw() * (channel.param_ranges[j])
-                       + channel.param_priors[j][0]
-                       for j in range(len(channel.param_names))]
+            post[i] = [p.draw() for p in priors]
             curr_err = loss(post[i], channel)
 
         total_err += curr_err
@@ -202,15 +191,11 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
             post = next_post
             wts = next_wts
 
-            # Write current output to log
-            # in case simulation trips up and we lose results.
             logging.info("Target met.")
             logging.info("Current mean posterior estimate: "
                          + str(np.mean(post, 0).tolist()))
             logging.info("Current posterior variance: "
                          + str(np.var(post, 0).tolist()))
-            logging.info(str(post))
-            logging.info(str(wts))
 
             thresh_val -= K
             if K >= 0.5 * thresh_val:
