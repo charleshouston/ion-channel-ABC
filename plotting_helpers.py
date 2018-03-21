@@ -18,6 +18,7 @@ def vdensity_with_weights(weights):
         return weighted_cost.evaluate(coords)
     return vdensity
 
+
 def custom_violin_stats(data, weights):
     median = np.asarray(DescrStatsW(data, weights).quantile(0.5))[0]
     mean, sumw = np.ma.average(data, weights=list(weights), axis=0,
@@ -29,3 +30,14 @@ def custom_violin_stats(data, weights):
         results[i][u"median"] = median[i]
 
     return results
+
+
+def add_subfig_letters(axes):
+    """Add uppercase letters to sub figures in plot."""
+    uppercase_letters = map(chr, range(65, 91))
+    for i, ax in enumerate(axes.flatten()):
+        ax.text(-0.07, 0.06,
+                uppercase_letters[i], transform=ax.transAxes,
+                fontsize=16, fontweight='bold', va='top', ha='right')
+    return axes
+

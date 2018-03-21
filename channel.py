@@ -11,16 +11,6 @@ import dill as pickle
 import plotting_helpers as ph
 
 
-def add_subfig_letters(axes):
-    """Add uppercase letters to sub figures in plot."""
-    uppercase_letters = map(chr, range(65, 91))
-    for i, ax in enumerate(axes.flatten()):
-        ax.text(-0.07, 0.06,
-                uppercase_letters[i], transform=ax.transAxes,
-                fontsize=16, fontweight='bold', va='top', ha='right')
-    return axes
-
-
 class Channel():
     def __init__(self, modelfile, abc_params, vvar='membrane.V',
                  logvars=myokit.LOG_ALL):
@@ -214,7 +204,7 @@ class Channel():
 
         # Mark letters on subfigures.
         if ncols > 1:
-            ax = add_subfig_letters(ax)
+            ax = ph.add_subfig_letters(ax)
         plt.tight_layout()
         return fig
 
