@@ -163,7 +163,7 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
 
     # Initialise initial particles.
     for i in range(post_size):
-        logging.info('Initialising %s / ' + str(post_size), i)
+        logging.info('Initialising %s / ' + str(post_size-1), i)
         curr_err = float("inf")
         while curr_err >= init_max_err:
             post[i] = [p.draw() for p in priors]
