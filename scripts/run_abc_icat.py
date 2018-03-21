@@ -97,15 +97,17 @@ rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
 rec_exp = Experiment(rec_prot, rec_data)
 icat.add_experiment(rec_exp)
 
-abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=20, maxiter=500)
+abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=100, maxiter=1000,
+                           err_cutoff=0.001, init_max_err=10)
 final_distr = abc_solver(icat, logfile='logs/icat_cvchisq.log')
 
-# Print and display results.
-pretty_results_print(icat, final_distr)
-fig = icat.plot_results(final_distr)
-plt.savefig('icat_plot.pdf')
-plt.close(fig)
+icat.save('results/icat.pkl')
+final_distr.save('results/icat_res.pkl')
 
-# Save results.
-icat.save('channel_icat.pkl')
-final_distr.save('abc_distr_icat.pkl')
+fig1 = icat.plot_results(final_distr)
+plt.savefig('results/icat_res_plot.pdf')
+plt.close(fig1)
+
+fig2 = icat.plot_final_params(final_distr)
+plt.savefig('results/icat_params_plot.pdf')
+plt.close(fig2)

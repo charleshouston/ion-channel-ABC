@@ -128,13 +128,13 @@ abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=100, maxiter=1000,
                            err_cutoff=0.001, init_max_err=10)
 final_distr = abc_solver(ikur, logfile='logs/ikur_cvchisq.log')
 
-ikur.save('ikur.pkl')
-final_distr.save('ikur_res.pkl')
+ikur.save('results/ikur.pkl')
+final_distr.save('results/ikur_res.pkl')
 
 fig1 = ikur.plot_results(final_distr)
-plt.savefig('ikur_res_plot.pdf')
+plt.savefig('results/ikur_res_plot.pdf')
 plt.close(fig1)
 
 fig2 = ikur.plot_final_params(final_distr)
-plt.savefig('ikur_params_plot.pdf')
+plt.savefig('results/ikur_params_plot.pdf')
 plt.close(fig2)

@@ -195,13 +195,13 @@ abc_solver = abc.ABCSolver(error_fn=cvchisq, post_size=100, maxiter=1000,
                            err_cutoff=0.001, init_max_err=10)
 final_distr = abc_solver(ikr, logfile='logs/ikr_cvchisq.log')
 
-ikr.save('ikr.pkl')
-final_distr.save('ikr_res.pkl')
+ikr.save('results/ikr.pkl')
+final_distr.save('results/ikr_res.pkl')
 
 fig1 = ikr.plot_results(final_distr)
-plt.savefig('ikr_res_plot.pdf')
+plt.savefig('results/ikr_res_plot.pdf')
 plt.close(fig1)
 
 fig2 = ikr.plot_final_params(final_distr)
-plt.savefig('ikr_params_plot.pdf')
+plt.savefig('results/ikr_params_plot.pdf')
 plt.close(fig2)
