@@ -1,0 +1,15 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Wed Mar 21 14:38:08 GMT 2018 -->
+<data>
+<image file='SartianiFig4B.png' />
+<axesnames x='X'  y='Y' />
+<calibpoints minXaxisX='476.0' minXaxisY='872.0' maxXaxisX='1074.0' maxXaxisY='871.0' minYaxisX='335.0' minYaxisY='844.0' maxYaxisX='336.0' maxYaxisY='308.0' aX1='-130.0' aX2='-40.0' aY1='0.0' aY2='1.0' isXLog='false' isYLog='false' />
+<point n='0' x='470.0' y='306.0' dx='-130.76055983557274' dy='1.003313293419899' />
+<point n='1' x='536.0' y='323.0' dx='-120.83175570811368' dy='0.9713908656681027' />
+<point n='2' x='601.0' y='350.0' dx='-111.05596957536946' dy='0.9208147831539932' />
+<point n='3' x='671.0' y='377.0' dx='-100.52767718572167' dy='0.8702231013299973' />
+<point n='4' x='744.0' y='491.0' dx='-89.56977670893862' dy='0.6573081206887407' />
+<point n='5' x='809.0' y='605.0' dx='-79.8158862432013' dy='0.44441809894330286' />
+<point n='6' x='876.0' y='749.0' dx='-69.76854350470492' dy='0.17555151360103838' />
+<point n='7' x='943.0' y='815.0' dx='-59.70157016820235' dy='0.052207770328240866' />
+</data>
