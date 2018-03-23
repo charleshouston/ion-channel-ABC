@@ -9,9 +9,10 @@ if os.environ.get('DISPLAY') is None:
 import numpy as np
 import dill as pickle
 import plotting_helpers as ph
+import logging
 
 
-class Channel():
+class Channel(object):
     def __init__(self, modelfile, abc_params, vvar='membrane.V',
                  logvars=myokit.LOG_ALL):
         """Initialisation.
@@ -98,8 +99,8 @@ class Channel():
             self._generate_sim()
         tot_err = 0
         for exp in self.experiments:
-            exp.run(self._sim, self.vvar, self.logvars)
-            tot_err += exp.eval_err(error_fn)
+            tot_err += exp.eval_err(error_fn, self._sim, self.vvar,
+                                    self.logvars)
         return tot_err
 
     def set_abc_params(self, new_params):
@@ -109,9 +110,6 @@ class Channel():
             new_params (List[float]): List of new parameters corresponding
                 to `param_names` attribute order.
         """
-        # Need to reset all stored logs in experiments.
-        for exp in self.experiments:
-            exp.reset()
         if self._sim is None:
             self._generate_sim()
         else:
@@ -135,8 +133,6 @@ class Channel():
     def reset(self):
         """Erases previously created simulations and experiment logs."""
         self._sim = None
-        for exp in self.experiments:
-            exp.reset()
 
     def plot_results(self, abc_distr, step=-1):
         """Plot results from ABC solver.

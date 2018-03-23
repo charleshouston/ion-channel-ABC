@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class ExperimentData():
+class ExperimentData(object):
     """Organises raw digitised data extracted from publications."""
 
     def __init__(self, x, y, N=None, errs=None, err_type=None):
@@ -33,7 +33,7 @@ class ExperimentData():
                              'Passed value: ' + err_type)
 
 
-class ExperimentStimProtocol():
+class ExperimentStimProtocol(object):
     """Stimulation times and measurement points for simulations."""
 
     def __init__(self, stim_times, stim_levels, measure_index, measure_fn,
@@ -147,7 +147,7 @@ class ExperimentStimProtocol():
                     if i in self.measure_index:
                         data.append(sim.run(t, log=logvars))
                     else:
-                        sim.run(t)
+                        d = sim.run(t)
                 result = self.measure_fn(data)
                 res_sim.append(result)
             if self.post_fn is not None:
@@ -157,7 +157,7 @@ class ExperimentStimProtocol():
         return ind_var, res_sim
 
 
-class Experiment():
+class Experiment(object):
     """Organises protocol and data related to a single experiment instance."""
 
     def __init__(self, protocol, data):
@@ -170,26 +170,25 @@ class Experiment():
         """
         self.protocol = protocol
         self.data = data
-        self.logs = None
 
     def run(self, sim, vvar, logvars, step_override=-1):
         """Wrapper to run simulation."""
-        self.logs = self.protocol(sim, vvar, logvars, step_override)
-        return self.logs
+        return self.protocol(sim, vvar, logvars, step_override)
 
-    def eval_err(self, error_fn):
+    def eval_err(self, error_fn, sim=None, vvar=None, logvars=None):
         """Evaluate difference between experimental and simulation output.
 
         Args:
             error_fn (Callable): Error function to use.
+            sim (Simulation): Simulation object.
+            vvar (string): Name of voltage variable in myokit model.
+            logvars (List[string]): List of variables in model to log.
 
         Returns:
             Loss value as float.
         """
-        if self.logs[1] is None:
+        res = self.run(sim, vvar, logvars)
+        # Results y values will be None if simulation failed.
+        if res[1] is None:
             return float("inf")
-        return error_fn(self.logs[1], self.data)
-
-    def reset(self):
-        """Reset Experiment simulations logs."""
-        self.logs=None
+        return error_fn(res[1], self.data)

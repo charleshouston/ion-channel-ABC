@@ -23,7 +23,7 @@ def prior_fn(priors, params):
     return prob
 
 
-class ABCSolver():
+class ABCSolver(object):
     """Solver for ABC parameter fitting."""
     def __init__(self, error_fn, post_size=100, maxiter=10000,
                  err_cutoff=0.001, init_max_err=float("inf")):
