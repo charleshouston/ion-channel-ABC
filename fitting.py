@@ -95,7 +95,7 @@ def abc_inner(engine, thresh_val, post_size):
     # Start parallel pool.
     try:
         pool_size = mp.cpu_count()
-        pool = mp.Pool(processes=pool_size, maxtasksperchild=None)
+        pool = mp.Pool(processes=pool_size, maxtasksperchild=1)
         logging.info("Starting parallel pool size " + str(pool_size))
     except:
         raise Exception("Could not start parallel pool!")
@@ -179,7 +179,7 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
     # Initialise initial particles using parallel engine.
     try:
         pool_size = mp.cpu_count()
-        pool = mp.Pool(processes=pool_size, maxtasksperchild=None)
+        pool = mp.Pool(processes=pool_size, maxtasksperchild=1)
         logging.info("Starting parallel pool size " + str(pool_size))
     except:
         raise Exception("Could not start parallel pool.")
