@@ -8,6 +8,24 @@ import logging
 import pathos.multiprocessing as mp
 
 
+class InitEngine(object):
+    """Parallelise initialisation of posterior particles."""
+
+    def __init__(self, channel, priors, init_max_err, loss):
+        self.channel = channel
+        self.priors = priors
+        self.init_max_err = init_max_err
+        self.loss = loss
+
+    def __call__(self, i):
+        np.random.seed()
+        curr_err = float("inf")
+        while curr_err >= self.init_max_err:
+            post = [p.draw() for p in self.priors]
+            curr_err = self.loss(post, self.channel)
+        return (i, post, curr_err)
+
+
 class ParallelEngine(object):
     """Parallelise the inner ABC algorithm."""
 
@@ -55,7 +73,7 @@ class ParallelEngine(object):
             denom = denom + self.wts[idx] * self.kern(particle, draw)
         next_wt = self.prior_fn(self.priors, draw) / denom
 
-        return [i, next_post, next_wt, iters]
+        return (i, next_post, next_wt, iters)
 
 def abc_inner(engine, thresh_val, post_size):
     """Helper function for `approx_bayes_smc_adaptive`.
@@ -80,7 +98,7 @@ def abc_inner(engine, thresh_val, post_size):
         pool = mp.Pool(processes=pool_size, maxtasksperchild=None)
         logging.info("Starting parallel pool size " + str(pool_size))
     except:
-        raise Exception('Could not start parallel pool!')
+        raise Exception("Could not start parallel pool!")
 
     def failed_sim_callback(r):
         # If failed, stop all other tasks.
@@ -158,16 +176,38 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
     post, wts = [None] * post_size, [1.0/post_size] * post_size
     total_err, max_err = 0.0, 0.0
 
-    # Initialise initial particles.
-    for i in range(post_size):
-        logging.info('Initialising %s / ' + str(post_size-1), i)
-        curr_err = float("inf")
-        while curr_err >= init_max_err:
-            post[i] = [p.draw() for p in priors]
-            curr_err = loss(post[i], channel)
+    # Initialise initial particles using parallel engine.
+    try:
+        pool_size = mp.cpu_count()
+        pool = mp.Pool(processes=pool_size, maxtasksperchild=None)
+        logging.info("Starting parallel pool size " + str(pool_size))
+    except:
+        raise Exception("Could not start parallel pool.")
+    init_engine = InitEngine(channel, priors, init_max_err, loss)
 
-        total_err += curr_err
-        max_err = max(curr_err, max_err)
+    # Run initialisation asynchronously.
+    logging.info("Initialising posterior particles")
+    results = []
+    def log_callback(r):
+        if r is not None:
+            logging.info("Completed particle " + str(r[0]))
+        else:
+            logging.info("Failed particle")
+    for i in range(post_size):
+        r = pool.apply_async(init_engine, args=(i,),
+                             callback=log_callback)
+        results.append(r)
+    pool.close()
+    pool.join()
+
+    # Process results after pool finished.
+    for r in results:
+        output = r.get()
+        post[output[0]] = output[1]
+        total_err += output[2]
+        max_err = max(output[2], max_err)
+    logging.info("Initial posterior generated. Total err: " + str(total_err)
+                 + " Max error: " + str(max_err))
 
     # Initialize K to half the average population error.
     K = total_err / (2.0 * post_size)
