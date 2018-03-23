@@ -3,10 +3,8 @@
 import math
 import numpy as np
 import distributions as dist
-import copy
 import myokit
 import logging
-import lhsmdu
 import pathos.multiprocessing as mp
 
 
@@ -58,7 +56,6 @@ class ParallelEngine(object):
         next_wt = self.prior_fn(self.priors, draw) / denom
 
         return [i, next_post, next_wt, iters]
-
 
 def abc_inner(engine, thresh_val, post_size):
     """Helper function for `approx_bayes_smc_adaptive`.
@@ -181,7 +178,6 @@ def abc_smc_adaptive_error(channel, priors, prior_fn, kern, loss,
         logging.info("Target = " + str(thresh_val-K) + " (K = "
                       + str(K) + ")")
 
-        # Parallel computation engine.
         channel.reset()
         engine = ParallelEngine(channel, priors, prior_fn, kern, loss,
                                 thresh_val, post, wts, post_size, maxiter)
