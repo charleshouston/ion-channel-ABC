@@ -39,17 +39,22 @@ else:
     raise ValueError("Unrecognised channel.")
 
 # Process arguments.
-error_fn = args.errorfn if args.errorfn else "cvchisq"
-post_size = args.postsize if args.postsize else 100
-maxiter = args.maxiter if args.maxiter else 1000
-err_cutoff = args.errcutoff if args.errcutoff else 0.001
-init_max_err = args.initmaxerr if args.initmaxerr else 10
+if args.errorfn == "cvrmsd":
+    error_fn = cvrmsd
+elif args.errorfn == "cvchisq":
+    error_fn = cvchisq
+else:
+    raise ValueError("Unrecognised error function.")
+post_size = args.postsize if int(args.postsize) else 100
+maxiter = args.maxiter if int(args.maxiter) else 1000
+err_cutoff = args.errcutoff if float(args.errcutoff) else 0.001
+init_max_err = args.initmaxerr if int(args.initmaxerr) else 10
 
 # Create ABC engine and run solver.
 abc_solver = abc.ABCSolver(error_fn=error_fn, post_size=post_size,
                            maxiter=maxiter, err_cutoff=err_cutoff,
                            init_max_err=init_max_err)
-savename = args.channel + "_" + error_fn + "_" + str(post_size)
+savename = args.channel + "_" + args.errorfn + "_" + str(post_size)
 post_dist = abc_solver(channel_obj,
     logfile="logs/" + savename + ".log")
 
