@@ -180,15 +180,10 @@ class Channel(object):
             axi.fill_between(x[i], results_abc_mean[i]-results_abc_sd[i],
                              results_abc_mean[i]+results_abc_sd[i], alpha=0.25,
                              lw=0)
-            if self.experiments[i].data.errs is not None:
-                axi.errorbar(x=self.experiments[i].data.x,
-                             y=self.experiments[i].data.y,
-                             yerr=self.experiments[i].data.errs,
-                             fmt='o')
-            else:
-                axi.plot(x=self.experiments[i].data.x,
+            axi.errorbar(x=self.experiments[i].data.x,
                          y=self.experiments[i].data.y,
-                         marker='o')
+                         yerr=self.experiments[i].data.errs,
+                         fmt='o')
 
             if i == ncols-1:
                 handles, labels = axi.get_legend_handles_labels()
