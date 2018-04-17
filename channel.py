@@ -322,67 +322,6 @@ class ical(AbstractChannel):
         super(ical, self).__init__()
 
 
-class ito(AbstractChannel):
-    def __init__(self):
-        self.name = 'ito'
-        self.model_name = 'Takeuchi2013_ito.mmt'
-        self.publication = 'Takeuchi et al., 2013'
-
-        # Parameters involved in ABC process
-        self.parameter_names = ['g_to',
-                                'k_xss1',
-                                'k_xss2',
-                                'k_xtau1',
-                                'k_xtau2',
-                                'k_xtau3',
-                                'k_yss1',
-                                'k_yss2',
-                                'k_ytau1',
-                                'k_ytau2',
-                                'k_ytau3',
-                                'k_ytau4']
-
-        # Parameter specific prior intervals
-        self.prior_intervals = [(0, 1),     # 0.12375
-                                (0, 10),    # 1
-                                (0, 100),   # 11
-                                (0, 10),    # 1.5
-                                (0, 10),    # 3.5
-                                (0, 100),   # 30
-                                (0, 100),   # 40.5
-                                (0, 100),   # 11.5
-                                (0, 100),   # 21.21
-                                (0, 100),   # 38.4525
-                                (0, 100),   # 52.45
-                                (0, 100)]   # 15.8827
-
-        # Edit which parameters to vary
-        use = [1,1,1,0,0,0,1,1,0,0,0,0]
-        #use = [1 for i in range(len(self.parameter_names))]
-        self.parameter_names = [p for i,p in enumerate(self.parameter_names) if use[i] == 1]
-        self.prior_intervals = [pr for i,pr in enumerate(self.prior_intervals) if use[i] == 1]
-
-        # Loading experimental data
-        vsteps, act_peaks_exp = data_ito.IV_KaoFig6()
-        prepulses, inact_exp = data_ito.Inact_XuFig9C()
-        self.data_exp = [[vsteps, act_peaks_exp],
-                         [prepulses, inact_exp]]
-
-        # Define experimental setup for simulations
-        setup_exp_act = {'sim_type': 'ActivationSim',
-                         'variable': 'ito.i_to', 'vhold': -40, 'thold': 1000,
-                         'vsteps': vsteps, 'tstep': 300,
-                         'xlabel': 'Membrane potential (mV)',
-                         'ylabel': 'Current density (pA/pF)'}
-        setup_exp_inact = {'sim_type': 'InactivationSim',
-                           'variable': 'ito.G_to', 'vhold': 50, 'thold': 500,
-                           'vsteps': prepulses, 'tstep': 500,
-                           'xlabel': 'Membrane potential (mV)',
-                           'ylabel': 'Normalised conductance'}
-        self.setup_exp = [setup_exp_act, setup_exp_inact]
-
-        super(ito, self).__init__()
-
 
 class ikach(AbstractChannel):
     def __init__(self):
