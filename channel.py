@@ -65,6 +65,17 @@ class Channel(object):
 
         self._sim = myokit.Simulation(m)
 
+    def get_original_param_vals(self):
+        """Return original values of parameters for ABC."""
+        m, _, _ = myokit.load(self.modelfile)
+        original_vals = []
+        for param in self.param_names:
+            try:
+                original_vals.append(m.get(param).value())
+            except:
+                raise ValueError("Could not access parameter: " + param)
+        return original_vals
+
     def run_experiments(self, step_override=-1):
         """Run channel with defined experiments.
 
@@ -97,11 +108,11 @@ class Channel(object):
         """
         if self._sim is None:
             self._generate_sim()
-        tot_err = 0
+        errs = []
         for exp in self.experiments:
-            tot_err += exp.eval_err(error_fn, self._sim, self.vvar,
-                                    self.logvars)
-        return tot_err
+            errs.append(exp.eval_err(error_fn, self._sim, self.vvar,
+                                     self.logvars))
+        return errs
 
     def set_abc_params(self, new_params):
         """Set model ABC parameters to new values.

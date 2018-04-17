@@ -70,7 +70,8 @@ class ABCSolver(object):
         def distance(new_params, channel_iter):
             """Error measure for output of single simulation run."""
             channel_iter.set_abc_params(new_params)
-            return channel_iter.eval_error(self.error_fn)
+            errs = channel_iter.eval_error(self.error_fn)
+            return np.sum(errs)
 
         def kern(orig, new=None, kern_width=0.2):
             """Perturbation kernel."""
