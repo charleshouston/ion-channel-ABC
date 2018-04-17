@@ -6,6 +6,7 @@ dependencies:
   - scipy
   - matplotlib
   - statsmodels
+  - scikit-learn
   - pip:
     - "--editable=git+https://github.com/uqfoundation/pathos.git@master#egg=pathos"
     - "--editable=git+https://github.com/MichaelClerx/myokit.git@master#egg=myokit"
