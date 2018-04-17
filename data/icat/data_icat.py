@@ -6,7 +6,8 @@
 def IV_Deng():
     """Data points in IV curve for i_CaT.
 
-    Data from figure 1B in Deng 2009. Reported as mean \pm SEM for 19 cells."""
+    Data from figure 1B in Deng 2009. Reported as mean \pm SEM for 19 cells.
+    """
     x = [-80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40]
     y = [0.0951474785918176,
          -0.2616555661274975,

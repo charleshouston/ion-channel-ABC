@@ -1,8 +1,0 @@
-<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
-<!-- PlotDigitizer data file: created on Fri Dec 15 15:36:04 GMT 2017 -->
-<data>
-<image file='Nakajima_Fig4D.png' />
-<axesnames x='X'  y='Y' />
-<calibpoints minXaxisX='290.0' minXaxisY='967.0' maxXaxisX='1600.0' maxXaxisY='966.0' minYaxisX='263.0' minYaxisY='897.0' maxYaxisX='263.0' maxYaxisY='192.0' aX1='-140.0' aX2='-20.0' aY1='0.0' aY2='1.0' isXLog='false' isYLog='false' />
-<point n='0' x='1491.0' y='879.0' dx='-29.978643448142066' dy='0.02420226300687589' />
-</data>

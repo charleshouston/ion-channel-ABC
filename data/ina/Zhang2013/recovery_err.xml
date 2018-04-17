@@ -1,0 +1,16 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Wed Apr 11 13:22:27 BST 2018 -->
+<data>
+<image file='ZhangFig4F.png' />
+<axesnames x='X'  y='Y' />
+<calibpoints minXaxisX='232.0' minXaxisY='766.0' maxXaxisX='1275.0' maxXaxisY='765.0' minYaxisX='234.0' minYaxisY='767.0' maxYaxisX='233.0' maxYaxisY='105.0' aX1='0.0' aX2='100.0' aY1='0.0' aY2='1.0' isXLog='false' isYLog='false' />
+<point n='0' x='234.0' y='753.0' dx='0.19294939559682334' dy='0.021148005625178268' />
+<point n='1' x='336.0' y='285.0' dx='10.015443305602798' dy='0.7279478961340657' />
+<point n='2' x='441.0' y='164.0' dx='20.093671002436007' dy='0.9105750166191867' />
+<point n='3' x='544.0' y='127.0' dx='29.972422668566434' dy='0.9663169999435165' />
+<point n='4' x='648.0' y='112.0' dx='39.94502918600911' dy='0.9888249547045695' />
+<point n='5' x='756.0' y='108.0' dx='50.30013329043527' dy='0.9947108261509964' />
+<point n='6' x='858.0' y='100.0' dx='60.080341958909784' dy='1.006647674689739' />
+<point n='7' x='961.0' y='95.0' dx='69.95615204302065' dy='1.0140513594422327' />
+<point n='8' x='1071.0' y='93.0' dx='80.50282667647195' dy='1.016913190637641' />
+</data>

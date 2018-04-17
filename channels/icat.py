@@ -48,6 +48,7 @@ stim_levels = [-75, act_vsteps, -75]
 def max_gcat(data):
     return max(data[0]['icat.G_CaT'])
 def normalise_positives(sim_results):
+    import numpy as np
     m = np.max(sim_results)
     if m > 0:
         sim_results = sim_results / m
