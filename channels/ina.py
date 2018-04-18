@@ -24,11 +24,11 @@ ina = Channel(modelfile, ina_params,
               vvar='membrane.V', logvars=['ina.i_Na', 'ina.G_Na'])
 
 ### Exp 1 - IV curve
-iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Dias()
+iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Nakajima()
 iv_data = ExperimentData(x=iv_vsteps, y=iv_curr, N=iv_N, errs=iv_errs,
                          err_type='SEM')
-stim_times = [1000, 100]
-stim_levels = [-80, iv_vsteps]
+stim_times = [1000, 20]
+stim_levels = [-120, iv_vsteps]
 def peak_curr(data):
     import numpy as np
     return max(data[0]['ina.i_Na'], key=abs)
