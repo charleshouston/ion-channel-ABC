@@ -43,36 +43,52 @@ use membrane.F as F
 use membrane.Ca_o as Ca_o
 use ca_conc.Ca_subSL as Ca_subSL
 
-i_CaL = g_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
+i_CaL = G_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
     in [pA/pF]
-G_CaL = 0.000063
+g_CaL = 0.000063
     in [dm^3/F/ms]
-g_CaL = G_CaL * d * f * fCa
+open = d * f * fCa
+    in [1]
+G_CaL = g_CaL * open
     in [dm^3/F/ms]
 
 dot(d) = (d_ss - d) / tau_d
     in [1]
 d_ss = (1 + exp((p1 - V) / p2)) ^ (-1)
     in [1]
-alpha_d = 1.4 * (1 + exp((-35 - V) / 13)) ^ (-1) + 0.25
+alpha_d = 1.4 * (1 + exp((p3 - V) / p4)) ^ (-1) + 0.25
     in [ms]
-beta_d = 1.4 * (1 + exp((V + 5) / 5)) ^ (-1)
+beta_d = 1.4 * (1 + exp((V + p5) / p6)) ^ (-1)
     in [ms]
-gamma_d = (1 + exp((50 - V) / 20)) ^ (-1)
+gamma_d = (1 + exp((p7 - V) / p8)) ^ (-1)
     in [ms]
 tau_d = alpha_d * beta_d + gamma_d
     in [ms]
 p1 = -11.1
 p2 = 7.2
+p3 = -35
+p4 = 13
+p5 = 5
+p6 = 5
+p7 = 50
+p8 = 20
+
 
 dot(f) = (f_ss - f) / tau_f
     in [1]
 f_ss = (1 + exp((q1 + V) / q2)) ^ (-1)
     in [1]
-tau_f = 1125 * exp(-(V + 27) ^ 2 / 240) + 165 * (1 + exp((25 - V) / 10)) ^ (-1) + 120
+tau_f = q3 * exp(-(V + q4) ^ 2 / q5) + q6 * (1 + exp((q7 - V) / q8)) ^ (-1) + q9
     in [ms]
 q1 = 23.3
 q2 = 5.4
+q3 = 1125
+q4 = 27
+q5 = 240
+q6 = 165
+q7 = 25
+q8 = 10
+q9 = 120
 
 dot(fCa) = k * (fCa_ss - fCa) / tau_fCa
     in [1]

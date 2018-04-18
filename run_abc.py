@@ -43,6 +43,9 @@ elif args.channel == 'ito':
 elif args.channel == 'ik1':
     import channels.ik1
     channel_obj = channels.ik1.ik1
+elif args.channel == 'ical':
+    import channels.ical
+    channel_obj = channels.ical.ical
 else:
     raise ValueError("Unrecognised channel.")
 

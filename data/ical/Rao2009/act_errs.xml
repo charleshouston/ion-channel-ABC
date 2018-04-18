@@ -1,0 +1,14 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Wed Apr 18 15:17:45 BST 2018 -->
+<data>
+<image file='RaoFig3C.png' />
+<axesnames x='X'  y='Y' />
+<calibpoints minXaxisX='323.0' minXaxisY='1174.0' maxXaxisX='1502.0' maxXaxisY='1175.0' minYaxisX='324.0' minYaxisY='1165.0' maxYaxisX='324.0' maxYaxisY='183.0' aX1='-100.0' aX2='20.0' aY1='0.0' aY2='1.0' isXLog='false' isYLog='false' />
+<point n='0' x='816.0' y='1150.0' dx='-49.82399092977046' dy='0.01569990101729335' />
+<point n='1' x='912.0' y='1144.0' dx='-40.05352356259739' dy='0.02189279810119027' />
+<point n='2' x='1012.0' y='1138.0' dx='-29.875931806377068' dy='0.028089150078857816' />
+<point n='3' x='1109.0' y='1035.0' dx='-20.012057189638867' dy='0.13306091495951722' />
+<point n='4' x='1204.0' y='683.0' dx='-10.373240520790006' dy='0.4915951071794419' />
+<point n='5' x='1301.0' y='337.0' dx='-0.5303436874569343' dy='0.8440210472128508' />
+<point n='6' x='1402.0' y='165.0' dx='9.734698663781359' dy='1.0192610327713947' />
+</data>
