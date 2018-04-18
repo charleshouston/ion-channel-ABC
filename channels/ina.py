@@ -30,7 +30,6 @@ iv_data = ExperimentData(x=iv_vsteps, y=iv_curr, N=iv_N, errs=iv_errs,
 stim_times = [1000, 20]
 stim_levels = [-120, iv_vsteps]
 def peak_curr(data):
-    import numpy as np
     return max(data[0]['ina.i_Na'], key=abs)
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=peak_curr)
