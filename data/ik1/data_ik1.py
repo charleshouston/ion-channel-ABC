@@ -1,22 +1,25 @@
-'''
-    Author: Charles Houston
-    Date: 3/7/2017
+### Digitised data for HL-1 i_K1 channel.
 
-    Data points extracted from Goldoni (2010) for ik1 (inward rectifier)
-    in HL-1 cardiomyocytes.
 
-    Data was digitised from graphs in the publication using
-    [http://plotdigitizer.sourceforge.net]
-'''
+# I-V curves.
 
-# PLOT DATA ACCESSORS
+def IV_Goldoni():
+    """IV curve for i_K1 in HL-1 cell.
 
-'''
-I-V curve
-
-Returns x, y data from points in Figure 3D from Goldoni et al., 2010.
-'''
-def IV_GoldoniFig3D():
-    x = [-150,-140,-130,-120,-110,-100,-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30]
-    y = [-8.645093,-7.674650,-7.104772,-6.413508,-5.673686,-5.043152,-4.109075,-3.405682,-2.495895,-1.768191,-1.016262,-0.616305,-0.264961,0.049976,0.255667,0.400617,0.509223,0.520670,0.410678]
-    return x, y
+    Data reported as single points in figure 3 from Goldoni 2010.
+    """
+    x = [-150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40,
+         -30, -20, -10, 0, 10, 20, 30]
+    y = [-8.610370907694442, -7.640677170562069, -7.095740481955988,
+         -6.417375164012246, -5.690280874305283, -5.048312940699572,
+         -4.066458295552736, -3.4365872651824665, -2.466744183565707,
+         -1.7640357146666945, -1.0006507152534052, -0.6013675687784685,
+         -0.28718944347844655, 0.05139583755587118, 0.26854271785626693,
+         0.43702463117246193, 0.532775780591618, 0.5435072485412249,
+         0.42070341252146815]
+    # Max current at -150mV reported as -42.4 \pm 9.4 pA/pF
+    peak_out_curr = y[0]
+    y = [yi * -42.4 / peak_out_curr for yi in y]
+    N = 10
+    errs = None
+    return x, y, errs, N

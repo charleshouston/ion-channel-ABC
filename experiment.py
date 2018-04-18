@@ -1,6 +1,7 @@
 ### Classes to store experimental and simulation output data.
 
 import numpy as np
+import myokit
 
 
 class ExperimentData(object):
@@ -37,7 +38,7 @@ class ExperimentStimProtocol(object):
     """Stimulation times and measurement points for simulations."""
 
     def __init__(self, stim_times, stim_levels, measure_index, measure_fn,
-                 post_fn=None):
+                 post_fn=None, time_independent=False):
         """Initialisation.
 
         `stim_times` and `stim_levels` may contain nested lists for multiple
@@ -54,6 +55,8 @@ class ExperimentStimProtocol(object):
                 of measure index and computes summary statistic for experiment.
             post_fn (Callable): Function that accepts results after all
                 simulations have run and carries out any post processing.
+            time_independent (bool): Whether the simulation needs to run or
+                variables can be extracted from the model.
 
         Raises:
             ValueError: When `stim_times` and `stim_levels` are not of equal
@@ -88,6 +91,7 @@ class ExperimentStimProtocol(object):
             self.measure_index = measure_index
         self.measure_fn = measure_fn
         self.post_fn = post_fn
+        self.time_independent = time_independent
 
     def __call__(self, sim, vvar, logvars, step_override=-1):
         """Runs the protocol in Myokit using the passed simulation model.
@@ -145,9 +149,16 @@ class ExperimentStimProtocol(object):
                         l = level
                     sim.set_constant(vvar, l)
                     if i in self.measure_index:
-                        data.append(sim.run(t, log=logvars))
+                        if self.time_independent:
+                            d = myokit.DataLog()
+                            for logi in logvars:
+                                d[logi] = sim._model.get(logi).value()
+                            data.append(d)
+                        else:
+                            data.append(sim.run(t, log=logvars))
                     else:
-                        d = sim.run(t)
+                        if not self.time_independent:
+                            d = sim.run(t)
                 result = self.measure_fn(data)
                 res_sim.append(result)
             if self.post_fn is not None:

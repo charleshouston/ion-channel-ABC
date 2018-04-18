@@ -40,6 +40,9 @@ elif args.channel == 'ina':
 elif args.channel == 'ito':
     import channels.ito
     channel_obj = channels.ito.ito
+elif args.channel == 'ik1':
+    import channels.ik1
+    channel_obj = channels.ik1.ik1
 else:
     raise ValueError("Unrecognised channel.")
 
