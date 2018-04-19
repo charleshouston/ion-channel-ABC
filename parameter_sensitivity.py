@@ -73,7 +73,7 @@ for i in range(n):
     Y[i, :] = channel.eval_error(cvrmsd)
 
 # Mean center and normalise
-X = np.log(X)
+#X = np.log(X)
 Y = np.log(Y)
 X = np.divide(X - np.mean(X, axis=0), np.std(X, axis=0))
 Y = np.divide(Y - np.mean(Y, axis=0), np.std(Y, axis=0))
@@ -89,6 +89,8 @@ Ypred = np.dot(X, beta)
 # Plot regression model prediction against actual.
 plt.style.use('seaborn-colorblind')
 fig1, ax1 = plt.subplots(ncols=m, figsize=(3*m, 2.8))
+if m == 1: 
+    ax1 = [ax1]
 for i, ax in enumerate(ax1):
     ax.plot(Y[:, i], Ypred[:, i], 'o',
             label=("r_2 score: "+format(r2_score(Y[:, i], Ypred[:, i]), '.2f')))
@@ -109,6 +111,8 @@ plt.close(fig1)
 params = [p.split('.')[-1] for p in channel.param_names]
 fig2, ax2 = plt.subplots(nrows=m, sharex=True)
 lims = [-np.amax(np.abs(beta)), np.amax(np.abs(beta))]
+if m == 1: 
+    ax2 = [ax2]
 for i, ax in enumerate(ax2):
     ax.bar(params, beta[:, i])
     ax.set_ylim(lims)
