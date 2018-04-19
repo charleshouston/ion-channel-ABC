@@ -2,6 +2,7 @@
 
 import numpy as np
 import myokit
+import pandas as pd
 
 
 class ExperimentData(object):
@@ -32,6 +33,8 @@ class ExperimentData(object):
         if self.err_type not in (None, 'SEM', 'STD'):
             raise ValueError('`err_type` must be either `SEM` or `STD`\n'
                              'Passed value: ' + err_type)
+
+        self.df = pd.DataFrame({'x': x, 'y': y})
 
 
 class ExperimentStimProtocol(object):
@@ -165,7 +168,7 @@ class ExperimentStimProtocol(object):
                 res_sim = self.post_fn(res_sim)
         except:
             res_sim = None
-        return ind_var, res_sim
+        return pd.DataFrame({'x': list(ind_var), 'y': list(res_sim)})
 
 
 class Experiment(object):

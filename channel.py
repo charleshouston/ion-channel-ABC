@@ -3,21 +3,19 @@
 import os
 import myokit
 import distributions as dist
-import matplotlib.pyplot as plt
-if os.environ.get('DISPLAY') is None:
-    plt.switch_backend('agg')
 import numpy as np
 import dill as pickle
-import plotting_helpers as ph
 import logging
+import pandas as pd
 
 
 class Channel(object):
-    def __init__(self, modelfile, abc_params, vvar='membrane.V',
+    def __init__(self, name, modelfile, abc_params, vvar='membrane.V',
                  logvars=myokit.LOG_ALL):
         """Initialisation.
 
         Args:
+            name (str): Shorthand for channel in myokit model.
             modelfile (str): Path to model for myokit to load.
             abc_params (Dict[str, Tuple[float]]): Dict mapping list of
                 parameter name string to upper and lower limit of prior
@@ -27,10 +25,12 @@ class Channel(object):
             logvars (Union[str, List[str]]): Model variables to log during
                 simulation runs.
         """
+        self.name = name
         self.modelfile = modelfile
         self.vvar = vvar
         self.logvars = logvars
 
+        self.pars = abc_params
         self.param_names = []
         self.param_priors = []
         self.param_ranges = []
@@ -44,6 +44,37 @@ class Channel(object):
         self._sim = None
 
         self.abc_plotting_results = None
+
+    def __call__(self, pars):
+        """Run channel experiments with passed parameters.
+
+        Args:
+            pars (Dict[str, float]): Mapping of parameter to to value for
+                this simulation.
+        """
+        if self._sim is None:
+            self._generate_sim()
+        else:
+            self._sim.reset()
+
+        # Set parameters
+        for p in pars:
+            try:
+                if pars[p] is not None:
+                    self._sim.set_constant(self.name + "." + p, pars[p])
+            except:
+                print("Could not set parameter " + p
+                      + " to value : " + str(pars[p]))
+
+        # Run experiments
+        sims = pd.DataFrame(columns = ['exp', 'x', 'y'])
+        i = 0
+        for e in self.experiments:
+            single_exp = e.run(self._sim, self.vvar, self.logvars)
+            single_exp['exp'] = i
+            sims = sims.append(single_exp)
+            i += 1
+        return sims
 
     def _generate_sim(self):
         """Creates class instance of Model and Simulation."""
@@ -60,7 +91,7 @@ class Channel(object):
 
         # Check model has all parameters listed.
         for param_name in self.param_names:
-            assert m.has_variable(param_name), (
+            assert m.has_variable(self.name + "." + param_name), (
                     'The parameter ' + param_name + ' does not exist.')
 
         self._sim = myokit.Simulation(m)
