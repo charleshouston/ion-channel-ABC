@@ -3,7 +3,7 @@
 """
 The parameter sensitivity approximation is based on the work by
 Sobie EA. Parameter sensitivity analysis in electrophysiological models using
-multivariable regression. Biophys J. 2009 Feb 18;96(4):1264–74.
+multivariable regression. Biophys J. 2009 Feb 18;96(4):1264-74.
 """
 
 from sklearn import linear_model
@@ -41,6 +41,15 @@ elif args.channel == 'iha':
 elif args.channel == 'ina':
     import channels.ina
     channel = channels.ina.ina
+elif args.channel == 'ito':
+    import channels.ito
+    channel = channels.ito.ito
+elif args.channel == 'ical':
+    import channels.ical
+    channel = channels.ical.ical
+elif args.channel == 'ik1':
+    import channels.ik1
+    channel = channels.ik1.ik1
 else:
     raise ValueError("Unrecognised channel.")
 n = int(args.numsamples) if args.numsamples else 500
