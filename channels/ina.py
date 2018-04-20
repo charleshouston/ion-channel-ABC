@@ -8,19 +8,19 @@ import numpy as np
 
 modelfile = 'models/Korhonen2009_iNa.mmt'
 
-ina_params = {'ina.g_Na': (0, 100),
-              'ina.E_Na': (0, 100),
-              'ina.p1': (0, 100),
-              'ina.p2': (-10, 0),
-              'ina.p3': (0, 1),
-              'ina.p4': (0, 100),
-              'ina.p5': (-1, 0),
-              'ina.p6': (0, 1),
-              'ina.p7': (0, 100),
-              'ina.q1': (0, 100),
-              'ina.q2': (0, 10)}
+ina_params = {'g_Na': (0, 100),
+              'E_Na': (0, 100),
+              'p1': (0, 100),
+              'p2': (-10, 0),
+              'p3': (0, 1),
+              'p4': (0, 100),
+              'p5': (-1, 0),
+              'p6': (0, 1),
+              'p7': (0, 100),
+              'q1': (0, 100),
+              'q2': (0, 10)}
 
-ina = Channel(modelfile, ina_params,
+ina = Channel("ina", modelfile, ina_params,
               vvar='membrane.V', logvars=['ina.i_Na', 'ina.G_Na'])
 
 ### Exp 1 - IV curve
