@@ -8,13 +8,13 @@ import numpy as np
 
 modelfile = 'models/Korhonen2009_iK1.mmt'
 
-ik1_params = {'ik1.g_K1': (0, 0.2),
-              'ik1.k_1': (-500, 500),
-              'ik1.k_2': (0, 50),
-              'ik1.k_3': (0, 1),
-              'ik1.k_4': (0, 0.1)}
+ik1_params = {'g_K1': (0, 0.2),
+              'k_1': (-500, 500),
+              'k_2': (0, 50),
+              'k_3': (0, 1),
+              'k_4': (0, 0.1)}
 
-ik1 = Channel(modelfile, ik1_params,
+ik1 = Channel("ik1", modelfile, ik1_params,
               vvar='membrane.V', logvars=['ik1.i_K1'])
 
 ### Exp 1 - IV Curve
