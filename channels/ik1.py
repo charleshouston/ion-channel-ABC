@@ -8,13 +8,13 @@ import numpy as np
 
 modelfile = 'models/Korhonen2009_iK1.mmt'
 
-ik1_params = {'g_K1': (0, 0.2),
-              'k_1': (-500, 500),
-              'k_2': (0, 50),
-              'k_3': (0, 1),
-              'k_4': (0, 0.1)}
+ik1_params = dict(g_K1=(0, 0.2),
+                  k_1=(-500, 500),
+                  k_2=(0, 50),
+                  k_3=(0, 1),
+                  k_4=(0, 0.1))
 
-ik1 = Channel("ik1", modelfile, ik1_params,
+ik1 = Channel('ik1', modelfile, ik1_params,
               vvar='membrane.V', logvars=['ik1.i_K1'])
 
 ### Exp 1 - IV Curve
@@ -28,5 +28,9 @@ def ss_curr(data):
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=ss_curr,
                                  time_independent=True)
-iv_exp = Experiment(iv_prot, iv_data)
+
+conditions = dict(Ko=120000,
+                  Ki=140000,
+                  T=310)
+iv_exp = Experiment(iv_prot, iv_data, conditions)
 ik1.add_experiment(iv_exp)
