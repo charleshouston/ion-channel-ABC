@@ -174,19 +174,28 @@ class ExperimentStimProtocol(object):
 class Experiment(object):
     """Organises protocol and data related to a single experiment instance."""
 
-    def __init__(self, protocol, data):
+    def __init__(self, protocol, data, conditions):
         """Initialisation.
 
         Args:
             protocol (ExperimentStimProtocol): Time and voltage steps for
                 experiment to replicate experimental results.
             data (ExperimentData): Experimental data to compare with.
+            conditions (dict[str: float]): Experimental conditions, usually
+                ion concentrations and temperature.
         """
         self.protocol = protocol
         self.data = data
+        self.conditions = conditions
 
     def run(self, sim, vvar, logvars, step_override=-1):
         """Wrapper to run simulation."""
+        for c_name, c_val in self.conditions.items():
+            try:
+                sim.set_constant('membrane.'+c_name, c_val)
+            except:
+                print("Could not set condition " + c_name
+                      + " to value: " + str(c_val))
         return self.protocol(sim, vvar, logvars, step_override)
 
     def eval_err(self, error_fn, sim=None, vvar=None, logvars=None):
