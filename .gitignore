@@ -6,3 +6,4 @@ plotting/
 *.bak
 results/*
 src/*
+*.ipynb_checkpoints
