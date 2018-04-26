@@ -8,19 +8,18 @@ import numpy as np
 
 modelfile = 'models/Korhonen2009_iNa.mmt'
 
-ina_params = {'g_Na': (0, 100),
-              'E_Na': (0, 100),
-              'p1': (0, 100),
-              'p2': (-10, 0),
-              'p3': (0, 1),
-              'p4': (0, 100),
-              'p5': (-1, 0),
-              'p6': (0, 1),
-              'p7': (0, 100),
-              'q1': (0, 100),
-              'q2': (0, 10)}
+ina_params = dict(g_Na=(0, 100),
+                  p1=(0, 100),
+                  p2=(-10, 0),
+                  p3=(0, 1),
+                  p4=(0, 100),
+                  p5=(-1, 0),
+                  p6=(0, 1),
+                  p7=(0, 100),
+                  q1=(0, 100),
+                  q2=(0, 10))
 
-ina = Channel("ina", modelfile, ina_params,
+ina = Channel('ina', modelfile, ina_params,
               vvar='membrane.V', logvars=['ina.i_Na', 'ina.G_Na'])
 
 ### Exp 1 - IV curve
@@ -33,7 +32,10 @@ def peak_curr(data):
     return max(data[0]['ina.i_Na'], key=abs)
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=peak_curr)
-iv_exp = Experiment(iv_prot, iv_data)
+conditions = dict(Nao=145000,
+                  Nai=10000,
+                  T=296)
+iv_exp = Experiment(iv_prot, iv_data, conditions)
 ina.add_experiment(iv_exp)
 
 ### Exp 2 - Activation
@@ -53,7 +55,7 @@ def normalise_positives(sim_results):
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gna,
                                   post_fn=normalise_positives)
-act_exp = Experiment(act_prot, act_data)
+act_exp = Experiment(act_prot, act_data, conditions)
 ina.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation
@@ -65,7 +67,7 @@ stim_levels = [-120, inact_vsteps, 20, -120]
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=2, measure_fn=max_gna,
                                     post_fn=normalise_positives)
-inact_exp = Experiment(inact_prot, inact_data)
+inact_exp = Experiment(inact_prot, inact_data, conditions)
 ina.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery
@@ -79,5 +81,8 @@ def ratio_cond(data):
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=[1, 3], measure_fn=ratio_cond,
                                   post_fn=normalise_positives)
+conditions = dict(Nao=136330,
+                  Nai=15000,
+                  T=293)
 rec_exp = Experiment(rec_prot, rec_data)
 ina.add_experiment(rec_exp)

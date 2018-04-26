@@ -21,13 +21,24 @@ time = 0 bind time
 [membrane]
 dot(V) = -ina.i_Na
     in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Nao = 145000
+    in [uM]
+Nai = 10000
+    in [uM]
+
 
 [ina]
 use membrane.V as V
 
 g_Na = 35
     in [mS/uF]
-E_Na = 68.2
+E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
     in [mV]
 G_Na = g_Na * m ^ 3 * h * j
     in [mS/uF]
