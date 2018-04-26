@@ -84,5 +84,5 @@ rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
 conditions = dict(Nao=136330,
                   Nai=15000,
                   T=293)
-rec_exp = Experiment(rec_prot, rec_data)
+rec_exp = Experiment(rec_prot, rec_data, conditions)
 ina.add_experiment(rec_exp)
