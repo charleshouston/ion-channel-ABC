@@ -45,12 +45,14 @@ class Channel(object):
 
         self.abc_plotting_results = None
 
-    def __call__(self, pars):
+    def __call__(self, pars=None, continuous=False):
         """Run channel experiments with passed parameters.
 
         Args:
-            pars (Dict[str, float]): Mapping of parameter to to value for
+            pars (Dict[str, float]): Mapping of parameter to value for
                 this simulation.
+            continuous (bool): Whether to run only at experimental points
+                for at finer resolution for plotting.
         """
         if self._sim is None:
             self._generate_sim()
@@ -58,19 +60,25 @@ class Channel(object):
             self._sim.reset()
 
         # Set parameters
-        for p in pars:
-            try:
-                if pars[p] is not None:
-                    self._sim.set_constant(self.name + "." + p, pars[p])
-            except:
-                print("Could not set parameter " + p
-                      + " to value : " + str(pars[p]))
+        if pars is not None:
+            for p in pars:
+                try:
+                    if pars[p] is not None:
+                        self._sim.set_constant(self.name + "." + p, pars[p])
+                except:
+                    print("Could not set parameter " + p
+                          + " to value : " + str(pars[p]))
 
         # Run experiments
         sims = pd.DataFrame(columns = ['exp', 'x', 'y'])
         i = 0
+        if continuous:
+            step = 1
+        else:
+            step = -1
         for e in self.experiments:
-            single_exp = e.run(self._sim, self.vvar, self.logvars)
+            single_exp = e.run(self._sim, self.vvar, self.logvars,
+                               step_override=step)
             single_exp['exp'] = i
             sims = sims.append(single_exp)
             i += 1

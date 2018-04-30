@@ -44,4 +44,4 @@ for exp in ch.experiments:
     measurements = measurements.append(data)
 
 with pd.option_context('display.max_rows', -1, 'display.max_columns', 5):
-    print measurements.to_string()
+    print measurements.to_string(index=False)

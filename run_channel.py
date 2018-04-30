@@ -37,10 +37,13 @@ else:
 # Collect parameters from input arguments.
 for p in ch.pars:
     parser.add_argument("-" + p, type=float)
+parser.add_argument('--continuous', action='store_true')
 args = parser.parse_args()
 args_d = vars(args)
+continuous = args_d['continuous']
 del args_d['channel']
-sim = ch(args_d)
+del args_d['continuous']
+sim = ch(args_d, continuous=continuous)
 
 with pd.option_context('display.max_rows', -1, 'display.max_columns', 5):
-    print sim.to_string()
+    print sim.to_string(index=False)
