@@ -22,6 +22,9 @@ elif args.channel == 'iha':
 elif args.channel == 'ina':
     import channels.ina
     ch = channels.ina.ina
+elif args.channel == 'ina_nrvm':
+    import channels.ina_nrvm
+    ch = channels.ina_nrvm.ina
 elif args.channel == 'ito':
     import channels.ito
     ch = channels.ito.ito

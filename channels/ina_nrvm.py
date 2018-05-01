@@ -6,17 +6,37 @@ import data.ina.data_ina as data
 import numpy as np
 
 
-modelfile = 'models/Korhonen2009_iNa.mmt'
+modelfile = 'models/BeelerReuter1976_iNa.mmt'
 
-parameters = dict(p1=(0, 100),
-                  p2=(-10, 0),
-                  p3=(0, 1),
-                  p4=(0, 100),
-                  p5=(-1, 0),
-                  p6=(0, 1),
-                  p7=(0, 100),
-                  q1=(0, 100),
-                  q2=(0, 10))
+parameters = dict(k1=(0, 100),
+                  k2=(-1, 0),
+                  k3=(0, 100),
+                  k4=(0, 100),
+                  k5=(-1, 0),
+                  k6=(0, 100),
+                  k7=(0, 1),
+                  k8=(-1, 0),
+                  k9=(0, 100),
+                  k10=(0, 10),
+                  k11=(-1, 0),
+                  k12=(0, 100),
+                  k13=(0, 1),
+                  k14=(-1, 0),
+                  k15=(0, 100),
+                  k16=(-1, 0),
+                  k17=(0, 1),
+                  k18=(-1, 0),
+                  k19=(0, 100))
+
+#parameters = dict(p1=(0, 100),
+#                  p2=(-10, 0),
+#                  p3=(0, 1),
+#                  p4=(0, 100),
+#                  p5=(-1, 0),
+#                  p6=(0, 1),
+#                  p7=(0, 100),
+#                  q1=(0, 100),
+#                  q2=(0, 10))
 
 ina = Channel('ina', modelfile, parameters,
               vvar='membrane.V', logvars=['ina.i_Na', 'ina.G_Na'])

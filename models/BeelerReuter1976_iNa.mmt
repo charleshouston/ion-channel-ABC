@@ -1,0 +1,100 @@
+[[model]]
+name: Beeler Reuter 1976 fast sodium current
+author: Charles Houston
+desc: """General form for Beeler-Reuter fast sodium current."""
+ref: """
+    Beeler et al. (1976) Reconstruction of the action potential of myocardial
+    fibres.
+    """
+# Initial values
+membrane.V                  = -67.0
+ina.m                       = 1e-3
+ina.h                       = 0.999
+ina.j                       = 0.999
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ina.i_Na
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Nao = 145000
+    in [uM]
+Nai = 10000
+    in [uM]
+
+[ina]
+use membrane.V as V
+use membrane.F as F
+use membrane.T as T
+use membrane.R as R
+use membrane.Nao as Nao
+use membrane.Nai as Nai
+
+g_Na = 35
+    in [mS/uF]
+E_Na = R * T / F * log(Nao / Nai)
+    in [mV]
+G_Na = g_Na * m ^ 3 * h * j
+    in [mS/uF]
+i_Na = G_Na * (V - E_Na)
+
+dot(m) = (m_ss - m) / tau_m
+    in [1]
+m_ss = alp_m / (alp_m + bet_m)
+    in [1]
+tau_m = 1 / (alp_m + bet_m)
+    in [ms]
+
+alp_m = -1 * (V + k1) / (exp(k2 * (V + k3)) - 1)
+    in [1/ms]
+k1 = 47
+k2 = -0.1
+k3 = 47
+
+bet_m = k4 * exp(k5 * (V + k6))
+k4 = 40
+k5 = -0.056
+k6 = 72
+
+dot(h) = (h_ss - h) / tau_h
+    in [1]
+h_ss = alp_h / (alp_h + bet_h)
+    in [1]
+tau_h = 1 / (alp_h + bet_h)
+    in [ms]
+
+alp_h = k7 * exp(k8 * (V + k9))
+k7 = 0.126
+k8 = -0.25
+k9 = 77
+
+bet_h = k10 / (exp(k11 * (V + k12)) + 1)
+k10 = 1.7
+k11 = -0.082
+k12 = 22.5
+
+dot(j) = (j_ss - j) / tau_j
+    in [1]
+j_ss = alp_j / (alp_j + bet_j)
+    in [1]
+tau_j = 1 / (alp_j + bet_j)
+    in [ms]
+
+alp_j = k13 * exp(k14 * (V + k15)) / (exp(k16 * (V + k15)) + 1)
+k13 = 0.055
+k14 = -0.25
+k15 = 78
+k16 = -0.2
+
+bet_j = k17 / (exp(k18 * (V + k19)) + 1)
+k17 = 0.3
+k18 = -0.1
+k19 = 32
