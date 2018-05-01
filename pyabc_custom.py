@@ -1,5 +1,6 @@
 import pandas as pd
 import subprocess
+from io import BytesIO
 
 
 def simulate(channel, continuous=False, **pars):
