@@ -41,7 +41,7 @@ class ExperimentStimProtocol(object):
     """Stimulation times and measurement points for simulations."""
 
     def __init__(self, stim_times, stim_levels, measure_index, measure_fn,
-                 post_fn=None, time_independent=False):
+                 post_fn=None, time_independent=False, ind_var=None):
         """Initialisation.
 
         `stim_times` and `stim_levels` may contain nested lists for multiple
@@ -60,6 +60,8 @@ class ExperimentStimProtocol(object):
                 simulations have run and carries out any post processing.
             time_independent (bool): Whether the simulation needs to run or
                 variables can be extracted from the model.
+            ind_var (list): Custom independent variable (x-axis) can be
+                passed explicitly.
 
         Raises:
             ValueError: When `stim_times` and `stim_levels` are not of equal
@@ -95,6 +97,11 @@ class ExperimentStimProtocol(object):
         self.measure_fn = measure_fn
         self.post_fn = post_fn
         self.time_independent = time_independent
+        # Defaults to one run TODO: not sure this is the best default
+        if self.n_runs is None: 
+            self.n_runs = 1
+        if ind_var is not None:
+            self.ind_var = ind_var
 
     def __call__(self, sim, vvar, logvars, step_override=-1):
         """Runs the protocol in Myokit using the passed simulation model.
@@ -136,38 +143,41 @@ class ExperimentStimProtocol(object):
             levels = self.stim_levels
             ind_var = self.ind_var
 
+        # Run simulations
         res_sim = []
-        try:
-            for run in range(n_runs):
-                data = []
-                sim.reset()
-                for i, (time, level) in enumerate(zip(times, levels)):
-                    if isinstance(time, list):
-                        t = time[run]
+        for run in range(n_runs):
+            data = []
+            sim.reset()
+            for i, (time, level) in enumerate(zip(times, levels)):
+                if isinstance(time, list):
+                    t = time[run]
+                else:
+                    t = time
+                if isinstance(level, list):
+                    l = level[run]
+                else:
+                    l = level
+                sim.set_constant(vvar, l)
+                if i in self.measure_index:
+                    if self.time_independent:
+                        d = myokit.DataLog()
+                        for logi in logvars:
+                            d[logi] = sim._model.get(logi).value()
+                        data.append(d)
                     else:
-                        t = time
-                    if isinstance(level, list):
-                        l = level[run]
-                    else:
-                        l = level
-                    sim.set_constant(vvar, l)
-                    if i in self.measure_index:
-                        if self.time_independent:
-                            d = myokit.DataLog()
-                            for logi in logvars:
-                                d[logi] = sim._model.get(logi).value()
-                            data.append(d)
-                        else:
-                            data.append(sim.run(t, log=logvars))
-                    else:
-                        if not self.time_independent:
-                            d = sim.run(t)
-                result = self.measure_fn(data)
-                res_sim.append(result)
-            if self.post_fn is not None:
-                res_sim = self.post_fn(res_sim)
-        except:
-            res_sim = None
+                        data.append(sim.run(t, log=logvars))
+                else:
+                    if not self.time_independent:
+                        d = sim.run(t)
+            result = self.measure_fn(data)
+            res_sim.append(result)
+
+        # Apply any post-processing function
+        if self.post_fn is not None:
+            res_sim = self.post_fn(res_sim)
+        # TODO: not sure this is the best way to catch this
+        if len(res_sim) == 1:
+            res_sim = res_sim[0]
         return pd.DataFrame({'x': list(ind_var), 'y': list(res_sim)})
 
 
