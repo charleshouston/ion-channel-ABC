@@ -1,0 +1,61 @@
+diff --git a/pyabc/transition/predict_population_size.py b/pyabc/transition/predict_population_size.py
+index 7228e40..d838650 100644
+--- a/pyabc/transition/predict_population_size.py
++++ b/pyabc/transition/predict_population_size.py
+@@ -40,7 +40,7 @@ def predict_population_size(current_poop_size: int,
+         popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+         suggested_pop_size = finv(target_cv)
+         return CVEstimate(suggested_pop_size, n_samples_list, cvs, f, popt)
+-    except RuntimeError:
++    except (RuntimeError, ValueError):
+         logger.warning("Power law fit failed. "
+                        "Falling back to current nr particles {}"
+                        .format(current_poop_size))
+diff --git a/pyabc/visualization.py b/pyabc/visualization.py
+index 687d53b..496f6f6 100644
+--- a/pyabc/visualization.py
++++ b/pyabc/visualization.py
+@@ -247,7 +247,7 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
+     return ax
+ 
+ 
+-def plot_kde_matrix(df, w, limits=None, colorbar=True):
++def plot_kde_matrix(df, w, limits=None, colorbar=True, grid=None):
+     """
+     Plot a KDE matrix.
+ 
+@@ -261,8 +261,12 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True):
+         Whether to plot the colorbars or not.
+     limits: dictionary, optional
+         Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
++    grid: sns.PairGrid
++        Optionally pass in an existing seaborn PairGrid to use.
+     """
+-    grid = sns.PairGrid(df, diag_sharey=False)
++    if grid is None:
++        grid = sns.PairGrid(df, diag_sharey=False)
++
+     if limits is None:
+         limits = {}
+diff --git a/pyabc/transition/multivariatenormal.py b/pyabc/transition/multivariatenormal.py
+index 48404a3..4f234ab 100644
+--- a/pyabc/transition/multivariatenormal.py
++++ b/pyabc/transition/multivariatenormal.py
+@@ -69,6 +69,16 @@ class MultivariateNormalTransition(Transition):
+         self.cov = sample_cov * bw_factor**2 * self.scaling
+         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
+ 
++    def rvs(self, size=None):
++        if size is None:
++            return self.rvs_single()
++        else:
++            sample = self.X.sample(n=size, replace=True, weights=self.w).iloc[:]
++            perturbed = (sample +
++                         np.random.multivariate_normal(
++                             np.zeros(self.cov.shape[0]), self.cov, size=size))
++            return pd.DataFrame(perturbed)
++
+     def rvs_single(self):
+         sample = self.X.sample(weights=self.w).iloc[0]
+         perturbed = (sample +
+
