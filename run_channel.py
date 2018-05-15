@@ -3,6 +3,10 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('channel', type=str)
+parser.add_argument('--experiment', type=int, nargs='?', default=None,
+                    const=None)
+parser.add_argument('--logvars', type=str, nargs='*', default=None,
+                    const=None)
 args = parser.parse_known_args()
 
 # Import correct channel.
@@ -37,6 +41,9 @@ elif args[0].channel == 'ical':
 else:
     raise ValueError("Unrecognised channel.")
 
+experiment = args[0].experiment
+logvars = args[0].logvars
+
 # Collect parameters from input arguments.
 for p in ch.pars:
     parser.add_argument("-" + p, type=float)
@@ -46,7 +53,9 @@ args_d = vars(args)
 continuous = args_d['continuous']
 del args_d['channel']
 del args_d['continuous']
-sim = ch(args_d, continuous=continuous)
+del args_d['experiment']
+del args_d['logvars']
+sim = ch(args_d, experiment=experiment, logvars=logvars, continuous=continuous)
 
 with pd.option_context('display.max_rows', -1, 'display.max_columns', 5):
     print sim.to_string(index=False)

@@ -3,16 +3,20 @@ import subprocess
 from io import BytesIO
 
 
-def simulate(channel, continuous=False, **pars):
+def simulate(channel, continuous=False, experiment=None,
+             logvars=None, **pars):
     """Wrapper to simulate the myokit model.
 
     Simulates in a subprocess running python2 by passing
     parameters as arguments to (another) wrapper script.
 
     Args:
-        pars (Dict[string, float]): Parameters as kwargs.
         continuous (bool): Whether to run only at experimental
             data points or finer x resolution.
+        experiment (int): Specific experiment number to run and
+            return raw output rather than measured results.
+        logvars (list(str)): List of variables to log in sim.
+        pars (Dict[string, float]): Parameters as kwargs.
 
     Returns:
         Dataframe with simulated output or empty if
@@ -25,6 +29,13 @@ def simulate(channel, continuous=False, **pars):
     args.append(channel)
     if continuous:
         args.append('--continuous')
+    if experiment is not None:
+        args.append('--experiment')
+        args.append(str(experiment))
+    if logvars is not None:
+        args.append('--logvars')
+        for var in logvars:
+            args.append(var)
     for p in pars:
         try:
             args.append("-" + str(p))

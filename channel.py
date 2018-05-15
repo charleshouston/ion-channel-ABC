@@ -22,8 +22,7 @@ class Channel(object):
                 for ABC algorithm.
             vvar (str): String name of dependent variable in simulations,
                 usually the voltage.
-            logvars (Union[str, List[str]]): Model variables to log during
-                simulation runs.
+            logvars (list(str)): List of variables to log in simulations.
         """
         self.name = name
         self.modelfile = modelfile
@@ -45,19 +44,32 @@ class Channel(object):
 
         self.abc_plotting_results = None
 
-    def __call__(self, pars=None, continuous=False):
+    def __call__(self, pars=None, experiment=None, continuous=False,
+                 logvars=None):
         """Run channel experiments with passed parameters.
 
         Args:
             pars (Dict[str, float]): Mapping of parameter to value for
                 this simulation.
+            experiment (int): Specific experiment number to run and
+                return raw output.
             continuous (bool): Whether to run only at experimental points
                 for at finer resolution for plotting.
+            logvars (list(str)): List of variables to log in the simulation.
         """
         if self._sim is None:
             self._generate_sim()
         else:
             self._sim.reset()
+
+        if logvars is None:
+            logvars = self.logvars
+
+        # Sanity check for experiment number.
+        if (experiment is not None and
+            (experiment < 0 or experiment > len(self.experiments)-1)):
+            return ValueError("Experiment number specified is not",
+                              "within range of possible values.")
 
         # Set parameters
         if pars is not None:
@@ -69,20 +81,27 @@ class Channel(object):
                     print("Could not set parameter " + p
                           + " to value : " + str(pars[p]))
 
-        # Run experiments
         sims = pd.DataFrame(columns = ['exp', 'x', 'y'])
-        i = 0
+        n_x = None
         if continuous:
-            step = 1
+            n_x = 100
+
+        if experiment is None:
+            # Run experiments
+            i = 0
+            for e in self.experiments:
+                single_exp = e.run(self._sim, self.vvar, logvars, n_x=n_x)
+                single_exp['exp'] = i
+                sims = sims.append(single_exp)
+                i += 1
+            return sims
         else:
-            step = -1
-        for e in self.experiments:
-            single_exp = e.run(self._sim, self.vvar, self.logvars,
-                               step_override=step)
-            single_exp['exp'] = i
-            sims = sims.append(single_exp)
-            i += 1
-        return sims
+            # Run specific experiment and return raw output
+            e = self.experiments[experiment]
+            single_exp = e.run(self._sim, self.vvar, logvars,
+                               n_x=n_x, process=False)
+            single_exp['exp'] = experiment
+            return single_exp
 
     def _generate_sim(self):
         """Creates class instance of Model and Simulation."""
