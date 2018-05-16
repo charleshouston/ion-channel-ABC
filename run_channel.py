@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import argparse
 
@@ -6,6 +7,8 @@ parser.add_argument('channel', type=str)
 parser.add_argument('--experiment', type=int, nargs='?', default=None,
                     const=None)
 parser.add_argument('--logvars', type=str, nargs='*', default=None,
+                    const=None)
+parser.add_argument('--vdep', type=str, nargs='*', default=None,
                     const=None)
 args = parser.parse_known_args()
 
@@ -43,19 +46,33 @@ else:
 
 experiment = args[0].experiment
 logvars = args[0].logvars
+vdep = args[0].vdep
 
 # Collect parameters from input arguments.
 for p in ch.pars:
     parser.add_argument("-" + p, type=float)
 parser.add_argument('--continuous', action='store_true')
 args = parser.parse_args()
+
+# Make dictionary of args to pass to simulation
 args_d = vars(args)
 continuous = args_d['continuous']
+
+# Delete all non-parameter arguments
 del args_d['channel']
 del args_d['continuous']
 del args_d['experiment']
 del args_d['logvars']
-sim = ch(args_d, experiment=experiment, logvars=logvars, continuous=continuous)
+del args_d['vdep']
+
+sim = None
+if vdep is not None:
+    sim = ch.get_V_dependence(variables=vdep,
+                              vvals=np.arange(-150, 60, 10),
+                              pars=args_d)
+else:
+    sim = ch(args_d, experiment=experiment, logvars=logvars,
+             continuous=continuous)
 
 with pd.option_context('display.max_rows', -1, 'display.max_columns', 5):
     print sim.to_string(index=False)

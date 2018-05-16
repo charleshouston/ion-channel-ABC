@@ -11,6 +11,7 @@ def simulate(channel, continuous=False, experiment=None,
     parameters as arguments to (another) wrapper script.
 
     Args:
+        channel (str): Name of channel.
         continuous (bool): Whether to run only at experimental
             data points or finer x resolution.
         experiment (int): Specific experiment number to run and
@@ -43,6 +44,45 @@ def simulate(channel, continuous=False, experiment=None,
         except:
             print("Error: " +
                   "args is " + str(args))
+    re = subprocess.run(args, stdout=subprocess.PIPE)
+    if len(re.stdout) > 0:
+        d = pd.read_table(BytesIO(re.stdout),
+                          delim_whitespace=True,
+                          header=0, index_col=False)
+        return d
+    else:
+        raise ValueError("Failed simulation.")
+        return None
+
+def voltage_dependence(channel, variables, **pars):
+    """Returns underlying model variables at different voltages.
+
+    Args:
+        channel (str): name of channel.
+        variables (list(str)): variables to log at voltages.
+        pars (dict(str -> float)): Dictionary mapping parameter
+            names to new parameter values.
+
+    Returns:
+        Dataframe containing voltage column and recorded variables.
+    """
+    myokit_python = ("/tmp/chouston/miniconda3/envs" +
+                     "/ion_channel_ABC/bin/python")
+    script = "run_channel.py"
+    args = [myokit_python, script]
+    args.append(channel)
+
+    args.append('--vdep')
+    for var in variables:
+        args.append(var)
+    for p in pars:
+        try:
+            args.append("-" + str(p))
+            args.append(str(pars[p]))
+        except:
+            print("Error: " +
+                  "args is " + str(args))
+
     re = subprocess.run(args, stdout=subprocess.PIPE)
     if len(re.stdout) > 0:
         d = pd.read_table(BytesIO(re.stdout),

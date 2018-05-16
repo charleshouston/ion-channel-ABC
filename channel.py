@@ -56,11 +56,11 @@ class Channel(object):
             continuous (bool): Whether to run only at experimental points
                 for at finer resolution for plotting.
             logvars (list(str)): List of variables to log in the simulation.
+
+        Returns:
+            Pandas dataframe of independent variable and dependent variable
+            for each experiment defined in channel.
         """
-        if self._sim is None:
-            self._generate_sim()
-        else:
-            self._sim.reset()
 
         if logvars is None:
             logvars = self.logvars
@@ -71,15 +71,7 @@ class Channel(object):
             return ValueError("Experiment number specified is not",
                               "within range of possible values.")
 
-        # Set parameters
-        if pars is not None:
-            for p in pars:
-                try:
-                    if pars[p] is not None:
-                        self._sim.set_constant(self.name + "." + p, pars[p])
-                except:
-                    print("Could not set parameter " + p
-                          + " to value : " + str(pars[p]))
+        self.set_params(pars)
 
         sims = pd.DataFrame(columns = ['exp', 'x', 'y'])
         n_x = None
@@ -122,6 +114,54 @@ class Channel(object):
                     'The parameter ' + param_name + ' does not exist.')
 
         self._sim = myokit.Simulation(m)
+
+    def set_params(self, pars):
+        """Sets parameters for simulation model."""
+        if self._sim is None:
+            self._generate_sim()
+        else:
+            self._sim.reset()
+
+        # Set parameters
+        for p in pars:
+            try:
+                if pars[p] is not None:
+                    self._sim.set_constant(self.name + "." + p, pars[p])
+            except:
+                return ValueError("Could not set parameter " + p
+                                  + " to value: " + str(pars[p]))
+
+    def get_V_dependence(self, variables, vvals, pars=None):
+        """Returns voltage dependence of a model variable.
+
+        Args:
+            variables (list(str)): Name of variable(s) in model to query.
+            vvals (list(float)): Voltage values to set simulation to.
+            pars (Dict(str -> float)): Parameter values to set in
+                model.
+
+        Returns:
+            Dataframe of variable at set voltages.
+        """
+
+        if pars is not None:
+            self.set_params(pars)
+
+        results = {'V': []}
+        for var in variables:
+            results[var] = []
+
+        for v in vvals:
+            results['V'].append(v)
+            self._sim.set_constant(self.vvar, v)
+            for var in variables:
+                try:
+                    results[var].append(
+                        self._sim._model.get(var).value())
+                except:
+                    return ValueError("Could not get " + var)
+
+        return pd.DataFrame(results)
 
     def get_original_param_vals(self):
         """Return original values of parameters for ABC."""
