@@ -45,7 +45,7 @@ parameters = dict(g_Na=(0, 100),
                   r16=(0, 100))
 
 ina = Channel('ina', modelfile, parameters,
-              vvar='membrane.V', logvars=['ina.i_Na', 'ina.G_Na'])
+              vvar='membrane.V', logvars=['environment.time', 'ina.i_Na', 'ina.G_Na'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, _, _ = data.IV_Lee()
@@ -127,3 +127,26 @@ rec_prot2 = ExperimentStimProtocol(stim_times, stim_levels,
                                   post_fn=normalise)
 rec_exp2 = Experiment(rec_prot2, rec_data2, conditions)
 ina.add_experiment(rec_exp2)
+
+### Exp 6 - Current trace
+time, curr, _, _ = data.Trace_Lee()
+peak_curr = abs(max(curr, key=abs))
+curr = [c / peak_curr for c in curr]
+trace_data = ExperimentData(x=time, y=curr)
+stim_times = [500, 20]
+stim_levels = [-80, -30]
+def interpolate_align(data):
+    import numpy as np
+    simtime = data[0]['environment.time']
+    simtime_min = min(simtime)
+    simtime = [t - simtime_min for t in simtime]
+    curr = data[0]['ina.i_Na']
+    max_curr = abs(max(curr, key=abs))
+    curr = [c / max_curr for c in curr]
+    return np.interp(time, simtime, curr)
+trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                    measure_index=1,
+                                    measure_fn=interpolate_align,
+                                    ind_var=time)
+trace_exp = Experiment(trace_prot, trace_data, conditions)
+ina.add_experiment(trace_exp)
