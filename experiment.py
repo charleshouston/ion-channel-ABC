@@ -210,14 +210,13 @@ class ExperimentStimProtocol(object):
         if process and self.post_fn is not None:
             res_sim = self.post_fn(res_sim)
 
-        # TODO: not sure this is the best way to catch this
-        if len(res_sim) == 1:
-            res_sim = res_sim[0]
-
         if process:
+            # TODO: not sure this is the best way to catch this
+            if len(res_sim) == 1:
+                res_sim = res_sim[0]
             return pd.DataFrame({'x': list(ind_var), 'y': list(res_sim)})
         else:
-            out = pd.DataFrame()
+            out = pd.DataFrame({})
             for stage in res_sim:
                 out = out.append(pd.DataFrame(stage), ignore_index=True)
             return out
