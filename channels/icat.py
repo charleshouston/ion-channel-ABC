@@ -36,7 +36,10 @@ def min_icat(data):
     return min(data[0]['icat.i_CaT'])
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=min_icat)
-iv_exp = Experiment(iv_prot, iv_data)
+nguyen_conditions = dict(Ca_o=5000,
+                         T=295)
+
+iv_exp = Experiment(iv_prot, iv_data, nguyen_conditions)
 icat.add_experiment(iv_exp)
 
 ### Exp 2 - Activation curve
@@ -56,7 +59,7 @@ def normalise_positives(sim_results):
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gcat,
                                   post_fn=normalise_positives)
-act_exp = Experiment(act_prot, act_data)
+act_exp = Experiment(act_prot, act_data, nguyen_conditions)
 icat.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation curve
@@ -68,7 +71,7 @@ stim_levels = [inact_vsteps, -10]
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=1, measure_fn=max_gcat,
                                     post_fn=normalise_positives)
-inact_exp = Experiment(inact_prot, inact_data)
+inact_exp = Experiment(inact_prot, inact_data, nguyen_conditions)
 icat.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery curve
@@ -82,5 +85,7 @@ def ratio_cond(data):
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=[1, 3], measure_fn=ratio_cond,
                                   post_fn=normalise_positives)
-rec_exp = Experiment(rec_prot, rec_data)
+deng_conditions = dict(Ca_o=5000,
+                       T=298)
+rec_exp = Experiment(rec_prot, rec_data, deng_conditions)
 icat.add_experiment(rec_exp)
