@@ -119,37 +119,45 @@ def double_exp_decay_fit(data):
     old_settings = np.seterr(all="warn")
     with warnings.catch_warnings():
         try:
-            tmax_i = data[0]['ikr.G_Kr'].index(max(np.abs(data[0]['ikr.G_Kr'])))
-            tmax = data[0]['environment.time'][tmax_i]
-            t = [time for time in data[0]['environment.time']
-                 if time >= tmax]
-            t = [ti - min(t) for ti in t]
-            G = [cond for (time, cond) in zip(data[0]['environment.time'],
-                                              data[0]['ikr.G_Kr'])
-                 if time >= tmax]
-
-            if len(t) == 0 or len(G) == 0:
+            curr = data[0]['ikr.i_Kr']
+            curr_diff = np.diff(curr)
+            if curr_diff[0] > 0:
+                index = np.argwhere(curr_diff < 0)[0][0]
+            else:
+                index = np.argwhere(curr_diff > 0)[0][0]
+            curr = curr[index:]
+            i0 = curr[0]
+            curr = [i - i0 for i in curr]
+            # Get time and move to zero
+            time = data[0]['environment.time'][index:]
+            t0 = time[0]
+            time = [t - t0 for t in time]
+            if len(time) == 0 or len(curr) == 0:
                 np.seterr(**old_settings)
                 return float("inf")
 
-            def double_exp(t, G_max1, G_max2, tauf, taus):
-                return G_max1 * np.exp(-t / tauf) + G_max2 * np.exp(-t / taus)
-            popt, _ = so.curve_fit(double_exp, t, G, bounds=(0, np.inf))
-            G_max = (popt[0], popt[1])
+            def double_exp(t, I_maxf, I_maxs, tauf, taus):
+                return (I_maxf * (1 - np.exp(-t / tauf)) +
+                        I_maxs * (1 - np.exp(-t / taus)))
+            popt, _ = so.curve_fit(double_exp, time, curr,
+                                   bounds=([-np.inf, -np.inf, 10, 0],
+                                           [np.inf, np.inf, 1000, 100])
+                                  )
+            I_max = (popt[0], popt[1])
             tau = (popt[2], popt[3])
-            tauf = min(tau)
-            taus = max(tau)
-            tauf_i = tau.index(min(tau))
-            taus_i = tau.index(max(tau))
-            G_maxf = G_max[tauf_i]
-            G_maxs = G_max[taus_i]
-            A_relative = G_maxf / (G_maxf + G_maxs)
+            tauf = max(tau)
+            taus = min(tau)
+            tauf_i = tau.index(max(tau))
+            taus_i = tau.index(min(tau))
+            I_maxf = abs(I_max[tauf_i])
+            I_maxs = abs(I_max[taus_i])
+            A_rel = I_maxf / (I_maxf + I_maxs)
 
             np.seterr(**old_settings)
-            return (tauf, taus, A_relative)
+            return (tauf, taus, A_rel)
         except:
             np.seterr(**old_settings)
-            return float("inf")
+            return (float("inf"), float("inf"), float("inf"))
 def takefirst(data): return [d[0] for d in data]
 def takesecond(data): return [d[1] for d in data]
 def takethird(data): return [d[2] for d in data]
