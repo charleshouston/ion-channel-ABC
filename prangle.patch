@@ -1,0 +1,113 @@
+diff --git a/pyabc/smc.py b/pyabc/smc.py
+index 6553de2..46bcb6b 100644
+--- a/pyabc/smc.py
++++ b/pyabc/smc.py
+@@ -20,6 +20,7 @@ from .transition import Transition, MultivariateNormalTransition
+ from .random_variables import RV, ModelPerturbationKernel, Distribution
+ from .storage import History
+ from .populationstrategy import PopulationStrategy
++from .population import Population
+ from .pyabc_rand_choice import fast_random_choice
+ from typing import Union
+ from .model import SimpleModel
+@@ -584,9 +585,10 @@ class ABCSMC:
+         self.distance_function.configure_sampler(self.sampler)
+         for t in range(t0, t_max):
+ 
+-            # get epsilon for generation t
+-            current_eps = self.eps(t, self.history, population)
+-            abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
++            # get epsilon for previous generations
++            eps_history = self.eps(t, self.history, population)
++            eps = sp.array(list(eps_history.values()))
++            abclogger.info('t:' + str(t) + ' M eps:' + str(eps))
+ 
+             # do some adaptations
+             self._fit_transitions(t)
+@@ -602,15 +604,50 @@ class ABCSMC:
+ 
+             def simulate_one():
+                 par = self._generate_valid_proposal(t, m, p)
+-                return self._evaluate_proposal(*par, current_eps, t,
++                return self._evaluate_proposal(*par, eps, t,
+                                                model_probabilities)
+ 
++            abclogger.debug('M population size: {}'
++                            .format(self.population_strategy.nr_particles))
++
++            import pdb;pdb.set_trace()
+             # sample
+             sample = self.sampler.sample_until_n_accepted(
+                 self.population_strategy.nr_particles, simulate_one)
++            # adapt distance function
++            df_updated = self.distance_function.update(
++                sample.all_summary_statistics)
+ 
+-            # retrieve accepted population
+-            population = sample.get_accepted_population()
++            # retrieve M accepted population
++            M_population = sample.get_accepted_population()
++            distances = [particle.accepted_distances[0]
++                         for particle in M_population.get_list()]
++            abclogger.debug('M population distances old df: {}'
++                            .format(distances))
++
++            # compute distances with the new distance measure
++            if df_updated:
++                def distance_to_ground_truth(x):
++                    return self.distance_function(x, self.x_0)[-1]
++                M_population.update_distances(distance_to_ground_truth)
++
++            # reduce to N population
++            distances = [particle.accepted_distances[0]
++                         for particle in M_population.get_list()]
++            abclogger.debug('M population distances new df: {}'
++                            .format(distances))
++            eps_t = self.eps(t + 1, self.history, M_population)
++            current_eps = eps_t
++            if isinstance(current_eps, dict):
++                current_eps = list(current_eps.values())[-1]
++            abclogger.info('t:' + str(t) + ' N eps:' + str(current_eps))
++
++            # reduce to N accepted population
++            N_particles = [particle
++                           for particle in M_population.get_list()
++                           if particle.accepted_distances[0] < current_eps]
++            abclogger.info('N population size: {}'.format(len(N_particles)))
++            population = Population(N_particles)
+ 
+             # save to database before making any changes to the population
+             abclogger.debug('population ' + str(t) + ' done')
+@@ -625,24 +662,13 @@ class ABCSMC:
+ 
+             # check early termination conditions
+             current_acceptance_rate = \
+-                len(population.get_list()) / nr_evaluations
++                len(M_population.get_list()) / nr_evaluations
+             if (current_eps <= minimum_epsilon
+                     or (self.stop_if_only_single_model_alive
+                         and self.history.nr_of_models_alive() <= 1)
+                     or current_acceptance_rate < min_acceptance_rate):
+                 break
+ 
+-            # adapt distance function
+-            df_updated = self.distance_function.update(
+-                sample.all_summary_statistics)
+-
+-            if t < t_max:
+-                # compute distances with the new distance measure
+-                if df_updated:
+-                    def distance_to_ground_truth(x):
+-                        return self.distance_function(x, self.x_0)
+-                    population.update_distances(distance_to_ground_truth)
+-
+         # end of run loop
+ 
+         self.history.done()
+@@ -682,4 +708,6 @@ class ABCSMC:
+ 
+         for m in self.history.alive_models(t - 1):
+             particles, w = self.history.get_distribution(m, t - 1)
++            abclogger.debug('Updating transitions with {} particles'
++                            .format(len(particles)))
+             self.transitions[m].fit(particles, w)

@@ -1,6 +1,7 @@
 import pandas as pd
 import subprocess
 from io import BytesIO
+from pyabc import Model, ModelResult
 
 
 def simulate(channel, continuous=False, experiment=None,
@@ -23,7 +24,9 @@ def simulate(channel, continuous=False, experiment=None,
         Dataframe with simulated output or empty if
         the simulation failed.
     """
-    myokit_python = ("/tmp/chouston/miniconda3/envs" +
+#    myokit_python = ("/tmp/chouston/miniconda3/envs" +
+#                     "/ion_channel_ABC/bin/python")
+    myokit_python = ("/Users/charles/miniconda3/envs" +
                      "/ion_channel_ABC/bin/python")
     script = "run_channel.py"
     args = [myokit_python, script]
@@ -53,6 +56,7 @@ def simulate(channel, continuous=False, experiment=None,
     else:
         raise ValueError("Failed simulation.")
         return None
+
 
 def voltage_dependence(channel, variables, **pars):
     """Returns underlying model variables at different voltages.
@@ -92,3 +96,41 @@ def voltage_dependence(channel, variables, **pars):
     else:
         raise ValueError("Failed simulation.")
         return None
+
+
+class MyokitSimulation(Model):
+
+    def __init__(self, channel: str):
+        super().__init__()
+        self.channel = channel
+
+    def sample(self, pars):
+        try:
+            res = simulate(self.channel, **pars).to_dict()['y']
+        except:
+            res = {}
+        return res
+
+    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) \
+            -> ModelResult:
+
+        # Run simulation and catch failed sims
+        result = self.summary_statistics(pars, sum_stats_calculator)
+        if not result.sum_stats:
+            result.accepted = False
+            result.distance = float('inf')
+            return result
+
+        distances = distance_calculator(result.sum_stats)
+
+        # Check result satisfies all previous iterations of distance
+        # and epsilon history
+        for d_i, eps_i in zip(distances, eps):
+            if d_i > eps_i:
+                result.accepted = False
+                result.distance = distances[-1]
+                return result
+
+        result.accepted = True
+        result.distance = distances[-1]
+        return result
