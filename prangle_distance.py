@@ -182,7 +182,7 @@ class PrangleDistance(DistanceFunction):
 
         # Ensuring bounded eccentricity.
         max_w = max(list(new_w.values()))
-        for k, v in new_w.values():
+        for v in new_w.values():
             v += self.delta * max_w
 
         self.w.append(new_w)
