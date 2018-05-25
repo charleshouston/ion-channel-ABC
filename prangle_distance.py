@@ -113,9 +113,17 @@ class PrangleEpsilon(Epsilon):
 
 
 class PrangleDistance(DistanceFunction):
-    def __init__(self, alpha: float):
+    def __init__(self, alpha: float, delta: float =0.):
+        """Initialisation.
+
+        Args:
+            alpha: tuning parameter for distance algorithm.
+            delta: parameter to ensure bounded eccentricity of
+                algorithm.
+        """
         super().__init__()
         self.alpha = alpha
+        self.delta = delta
         # need to store previous distances
         self.w = []
 
@@ -171,6 +179,11 @@ class PrangleDistance(DistanceFunction):
                 new_w[key] = 1
             else:
                 new_w[key] = 1 / val
+
+        # Ensuring bounded eccentricity.
+        max_w = max(list(new_w.values()))
+        for k, v in new_w.values():
+            v += self.delta * max_w
 
         self.w.append(new_w)
 
