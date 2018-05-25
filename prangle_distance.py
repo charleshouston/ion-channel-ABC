@@ -8,6 +8,7 @@ from pyabc.population import Population
 from pyabc.transition import Transition
 from pyabc.weighted_statistics import weighted_quantile
 import numpy as np
+from scipy.stats import iqr
 from typing import List
 import statistics
 import logging
@@ -86,7 +87,6 @@ class PrangleEpsilon(Epsilon):
         eps = self._look_up
         return eps
 
-
     def _update(self, t: int,
                 history: History,
                 latest_population: Population =None):
@@ -113,30 +113,36 @@ class PrangleEpsilon(Epsilon):
 
 
 class PrangleDistance(DistanceFunction):
-    def __init__(self, alpha: float, delta: float =0.):
+    def __init__(self, exp_map: dict, alpha: float, delta: float =0.):
         """Initialisation.
 
         Args:
+            exp_map: mapping from summary statistics to separate
+                experimental data sources.
             alpha: tuning parameter for distance algorithm.
             delta: parameter to ensure bounded eccentricity of
                 algorithm.
         """
         super().__init__()
+        self.exp = exp_map
         self.alpha = alpha
         self.delta = delta
         # need to store previous distances
-        self.w = []
+        self.w = [] # prangle distance weight based on MAD of ss
+        self.v = {} # normalisation weight from observation
 
     def __call__(self, x: dict, y: dict):
         # make sure weights are initialized
         if not self.w:
-            self._initialize_weights(x.keys())
+            self._initialize_adaptive_weights(x.keys())
+        if not self.v:
+            self._initialize_constant_weights(y)
 
         # calculate all distances up to this iteration
         distances = []
         for w in self.w:
             distances.append(pow(
-                sum(pow(abs(w[key] * (x[key] - y[key])), 2)
+                sum(pow(abs(w[key] * self.v[key] * (x[key] - y[key])), 2)
                     for key in w.keys()),
                 1 / 2))
         return distances
@@ -145,18 +151,53 @@ class PrangleDistance(DistanceFunction):
         super().configure_sampler(sampler)
         sampler.require_all_sum_stats()
 
-    def initialize(self, sample_from_prior: List[dict]):
+    def initialize(self, sample_from_prior: List[dict],
+                   x_0: dict =None):
         # retrieve keys, and init weights with 1
-        self._initialize_weights(sample_from_prior[0].keys())
+        self._initialize_adaptive_weights(sample_from_prior[0].keys())
+        # initialize constant weights
+        if x_0:
+            self._initialize_constant_weights(x_0)
 
-    def _initialize_weights(self, summary_statistics_keys):
-        # init weights with 1, and retrieve keys
+    def _initialize_adaptive_weights(self, summary_statistics_keys):
+        # init prangle weights with 1, and retrieve keys
         self.w.append({k: 1 for k in summary_statistics_keys})
 
-    def update(self, all_summary_statistics_list: List[dict]):
+    def _initialize_constant_weights(self, x_0: dict):
+        # init experiment normalisation weights
+        exp_N = self._count_experiments()
+        exp_IQR = self._calculate_experiment_IQR(x_0)
+        for ss, exp_i in self.exp.items():
+            self.v[ss] = 1. / np.sqrt(exp_N[exp_i] * exp_IQR[exp_i])
+
+    def _count_experiments(self):
+        exp_N = {}
+        for i in self.exp.values():
+            if i not in exp_N.keys():
+                exp_N[i] = 0
+            exp_N[i] += 1
+        return exp_N
+
+    def _calculate_experiment_IQR(self, x_0: dict):
+        exp_lists = {}
+        for k, v in x_0.items():
+            if self.exp[k] not in exp_lists:
+                exp_lists[self.exp[k]] = []
+            exp_lists[self.exp[k]].append(v)
+
+        exp_IQR = {}
+        for k, l in exp_lists.items():
+            exp_IQR[k] = iqr(l)
+        return exp_IQR
+
+    def update(self, all_summary_statistics_list: List[dict],
+               x_0: dict =None):
         # make sure weights are initialized
         if not self.w:
-            self._initialize_weights(all_summary_statistics_list[0].keys())
+            self._initialize_adaptive_weights(
+                    all_summary_statistics_list[0].keys())
+        if not self.v and x_0:
+            self._initialize_constant_weights(x_0)
 
         m = len(all_summary_statistics_list)
         df_logger.debug('number of summary_statistics: {}'.format(m))
@@ -171,7 +212,7 @@ class PrangleDistance(DistanceFunction):
                 if not ss:
                     current_list.append(float('inf'))
                 else:
-                    current_list.append(ss[key])
+                    current_list.append(self.v[key] * ss[key])
 
             # compute weighting
             val = median_absolute_deviation(current_list)
