@@ -7,3 +7,5 @@ plotting/
 results/*
 src/*
 *.ipynb_checkpoints
+*.pdf
+nohup.out
