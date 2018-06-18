@@ -113,7 +113,8 @@ class PrangleEpsilon(Epsilon):
 
 
 class PrangleDistance(DistanceFunction):
-    def __init__(self, exp_map: dict, alpha: float, delta: float =0.):
+    def __init__(self, exp_map: dict, alpha: float, delta: float =0.,
+                 adapt: bool =True):
         """Initialisation.
 
         Args:
@@ -122,11 +123,13 @@ class PrangleDistance(DistanceFunction):
             alpha: tuning parameter for distance algorithm.
             delta: parameter to ensure bounded eccentricity of
                 algorithm.
+            adapt: whether to use the prangle weighting algorithm.
         """
         super().__init__()
         self.exp = exp_map
         self.alpha = alpha
         self.delta = delta
+        self.adapt = adapt
         # need to store previous distances
         self.w = [] # prangle distance weight based on MAD of ss
         self.v = {} # normalisation weight from observation
@@ -169,6 +172,9 @@ class PrangleDistance(DistanceFunction):
         exp_IQR = self._calculate_experiment_IQR(x_0)
         for ss, exp_i in self.exp.items():
             self.v[ss] = 1. / np.sqrt(exp_N[exp_i] * exp_IQR[exp_i])
+        mean_weight = statistics.mean(list(self.v.values()))
+        for key in self.v.keys():
+            self.v[key] /= mean_weight
 
     def _count_experiments(self):
         exp_N = {}
@@ -198,6 +204,11 @@ class PrangleDistance(DistanceFunction):
                     all_summary_statistics_list[0].keys())
         if not self.v and x_0:
             self._initialize_constant_weights(x_0)
+        
+        if not self.adapt:
+            self._initialize_adaptive_weights(
+                    all_summary_statistics_list[0].keys())
+            return True
 
         m = len(all_summary_statistics_list)
         df_logger.debug('number of summary_statistics: {}'.format(m))
@@ -223,8 +234,8 @@ class PrangleDistance(DistanceFunction):
 
         # Ensuring bounded eccentricity.
         max_w = max(list(new_w.values()))
-        for v in new_w.values():
-            v += self.delta * max_w
+        for key in new_w.keys():
+            new_w[key] += self.delta * max_w
 
         self.w.append(new_w)
 
@@ -235,5 +246,5 @@ class PrangleDistance(DistanceFunction):
             self.w[-1][key] /= mean_weight
 
         # logging
-        df_logger.debug("update distance weights = {}".format(self.w))
+        df_logger.debug("update distance weights = {}".format(self.w[-1]))
         return True
