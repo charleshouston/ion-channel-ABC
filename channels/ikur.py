@@ -8,19 +8,20 @@ import numpy as np
 
 modelfile = 'models/Bondarenko2004_iKur.mmt'
 
-ikur_params = {'ikur.g_Kur': (0, 1),
-               'ikur.k_ass1': (0, 100),
-               'ikur.k_ass2': (1, 10),
-               'ikur.k_atau1': (0, 1),
-               'ikur.k_atau2': (0, 10),
-               'ikur.k_atau3': (0, 10),
-               'ikur.k_iss1': (0, 100),
-               'ikur.k_iss2': (1, 10),
-               'ikur.k_itau1': (0, 10),
-               'ikur.k_itau2': (0, 10)}
+ikur_params = {'g_Kur': (0, 1),
+               'k_ass1': (0, 100),
+               'k_ass2': (1, 10),
+               'k_atau1': (0, 1),
+               'k_atau2': (0, 10),
+               'k_atau3': (0, 10),
+               'k_iss1': (0, 100),
+               'k_iss2': (1, 10),
+               'k_itau1': (0, 10),
+               'k_itau2': (0, 10)}
 
-ikur = Channel(modelfile, ikur_params,
-               vvar='membrane.V', logvars=['environment.time', 'ikur.i_Kur',
+ikur = Channel('ikur', modelfile, ikur_params,
+               vvar='membrane.V', logvars=['environment.time',
+                                           'ikur.i_Kur',
                                            'ikur.G_Kur'])
 
 ### Exp 1 - IV curve
@@ -33,7 +34,10 @@ def max_ikur(data):
     return max(data[0]['ikur.i_Kur'])
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=max_ikur)
-iv_exp = Experiment(iv_prot, iv_data)
+maharani_conditions = dict(T=310,
+                           Ko=4000,
+                           Ki=120000)
+iv_exp = Experiment(iv_prot, iv_data, maharani_conditions)
 ikur.add_experiment(iv_exp)
 
 ### Exp 2 - Activation time constants
@@ -46,27 +50,28 @@ def rising_exponential_fit(data):
     import numpy as np
     import scipy.optimize as so
     import warnings
-    old_settings = np.seterr(all="warn")
+    # First subset so only rising phase of current
+    curr = data[0]['ikur.i_Kur']
+    curr_diff = np.diff(curr)
+    index = 0
+    if curr_diff[0] > 0:
+        index = np.argwhere(curr_diff < 0)[0][0]
+    else:
+        index = np.argwhere(curr_diff > 0)[0][0]
+    curr = curr[:index+1]
+    i0 = curr[0]
+    curr = [i - i0 for i in curr]
+    # Get time and move to zero
+    time = data[0]['environment.time'][:index+1]
+    t0 = time[0]
+    time = [t - t0 for t in time]
+
+    old_settings = np.seterr(all="ignore")
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
         try:
-            tmax_i = data[0]['ikur.G_Kur'].index(max(data[0]['ikur.G_Kur']))
-            tmax = data[0]['environment.time'][tmax_i]
-            t = [time for time in data[0]['environment.time']
-                 if time <= tmax]
-            t = [ti - min(t) for ti in t]
-            I = [curr for (time, curr) in zip(data[0]['environment.time'],
-                                              data[0]['ikur.G_Kur'])
-                 if time <= tmax]
-
-            if len(t) == 0 or len(I) == 0:
-                np.seterr(**old_settings)
-                return float("inf")
-
             def single_exp(t, I_max, tau):
                 return I_max * (1 - np.exp(-t / tau))
-
-            [_, tau], _ = so.curve_fit(single_exp, t, I)
+            [_, tau], _ = so.curve_fit(single_exp, time, curr)
             np.seterr(**old_settings)
             return tau
         except:
@@ -76,7 +81,10 @@ def rising_exponential_fit(data):
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=2,
                                   measure_fn=rising_exponential_fit)
-act_exp = Experiment(act_prot, act_data)
+xu_conditions = dict(T=296,
+                     Ko=4000,
+                     Ki=135000)
+act_exp = Experiment(act_prot, act_data, xu_conditions)
 ikur.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation curve
@@ -87,15 +95,17 @@ stim_times = [5000, 100, 2500]
 stim_levels = [inact_vsteps, -40, 30]
 def max_ikur(data):
     return max(data[0]['ikur.G_Kur'])
-def normalise_positives(sim_results):
-    m = np.max(sim_results)
-    if m > 0:
-        sim_results = sim_results / m
+def normalise(sim_results):
+    cond_max = max(sim_results, key=abs)
+    sim_results = [result / cond_max for result in sim_results]
     return sim_results
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=2, measure_fn=max_ikur,
-                                    post_fn=normalise_positives)
-inact_exp = Experiment(inact_prot, inact_data)
+                                    post_fn=normalise)
+brouillette_conditions = dict(T=294,
+                              Ko=5400,
+                              Ki=28000)
+inact_exp = Experiment(inact_prot, inact_data, brouillette_conditions)
 ikur.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery curve
@@ -109,6 +119,6 @@ def ratio_ikur(data):
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_index = [2, 5],
                                    measure_fn=ratio_ikur,
-                                   post_fn=normalise_positives)
-rec_exp = Experiment(rec_prot, rec_data)
+                                   post_fn=normalise)
+rec_exp = Experiment(rec_prot, rec_data, brouillette_conditions)
 ikur.add_experiment(rec_exp)
