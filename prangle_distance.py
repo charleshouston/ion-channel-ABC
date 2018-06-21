@@ -12,6 +12,7 @@ from scipy.stats import iqr
 from typing import List
 import statistics
 import logging
+import warnings
 df_logger = logging.getLogger("DistanceFunction")
 eps_logger = logging.getLogger("Epsilon")
 
@@ -143,11 +144,17 @@ class PrangleDistance(DistanceFunction):
 
         # calculate all distances up to this iteration
         distances = []
-        for w in self.w:
-            distances.append(pow(
-                sum(pow(abs(w[key] * self.v[key] * (x[key] - y[key])), 2)
-                    for key in w.keys()),
-                1 / 2))
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                for w in self.w:
+                    distances.append(pow(
+                        sum(pow(abs(w[key] * self.v[key]
+                                    * (x[key] - y[key])), 2)
+                            for key in w.keys()),
+                        1 / 2))
+            except RuntimeWarning:
+                return [float('inf')] * len(self.w)
         return distances
 
     def configure_sampler(self, sampler: Sampler):
