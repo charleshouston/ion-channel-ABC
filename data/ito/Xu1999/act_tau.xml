@@ -1,0 +1,14 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Thu Jun 21 14:55:09 BST 2018 -->
+<data>
+<image file='XuFig8B.png' />
+<axesnames x='X'  y='Y' />
+<calibpoints minXaxisX='385.0' minXaxisY='930.0' maxXaxisX='1292.0' maxXaxisY='928.0' minYaxisX='250.0' minYaxisY='822.0' maxYaxisX='250.0' maxYaxisY='86.0' aX1='0.0' aX2='60.0' aY1='0.0' aY2='60.0' isXLog='false' isYLog='false' />
+<point n='0' x='385.0' y='679.0' dx='0.03661325005804272' dy='11.633340923253925' />
+<point n='1' x='535.0' y='715.0' dx='9.95413619107935' dy='8.67159412300466' />
+<point n='2' x='686.0' y='748.0' dx='19.938248568959203' dy='5.954232778869674' />
+<point n='3' x='837.0' y='771.0' dx='29.9238196420605' dy='4.052088826039039' />
+<point n='4' x='989.0' y='782.0' dx='39.97729297771965' dy='3.1280259814965916' />
+<point n='5' x='1141.0' y='790.0' dx='50.03120392194521' dy='2.4485283543454415' />
+<point n='6' x='1292.0' y='796.0' dx='60.01925477692294' dy='1.9322539667321905' />
+</data>

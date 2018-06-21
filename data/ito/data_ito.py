@@ -3,11 +3,6 @@
 
 # I-V curves
 
-'''
-I-V curve
-
-Returns x, y data from points in Figure 6 from Kao et al., 2016.
-'''
 def IV_Kao():
     """Data points in IV curve for i_to in HL-1.
 
@@ -27,11 +22,35 @@ def IV_Kao():
 
     return x, y, errs, N
 
+def IV_Lu():
+    """Data points in IV curve for i_to in HL-1.
+
+    Data from figure 3A in Lu 2016.
+    """
+    x = [-40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60]
+    y = [0.03659423788829841, 0.9650303127850197, 1.58526959600837,
+         2.513705670905088, 3.724710553141259, 4.601830570309563,
+         5.812775363485162, 7.357785288910344, 8.645794302269431,
+         9.625666613015717, 11.196244433714252]
+    return x, y, None, None
+
+# Activation rate constant
+
+def ActTau_Xu():
+    """Activation time constant of ito in mouse ventricular cells.
+
+    Data from figure 8B in Xu 1999.
+    """
+    x = [0, 10, 20, 30, 40, 50, 60]
+    y = [11.633340923253925, 8.67159412300466, 5.954232778869674,
+         4.052088826039039, 3.1280259814965916, 2.4485283543454415,
+         1.9322539667321905]
+    return x, y, None, None
 
 # Inactivation.
 
 def Inact_Xu():
-    """Inactivation for HL-1 cells.
+    """Inactivation of ito in mouse ventricular cells.
 
     Data from figure 9 in Xu 1999. Reported as mean \pm SEM in
     n=7 cells.
@@ -47,8 +66,3 @@ def Inact_Xu():
             0.9978354978354979, 0.8484848484848486, 0.28787878787878785,
             0.04761904761904767]
     return x, y, errs, N
-
-
-# Recovery
-
-
