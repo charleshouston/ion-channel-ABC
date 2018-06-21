@@ -20,7 +20,7 @@ iha_params = {'k_yss1': (0, 100),
               'k_i_haNa': (0, 1.0),
               'g_ha': (0, 0.1)}
 
-iha = Channel(modelfile, iha_params,
+iha = Channel('iha', modelfile, iha_params,
               vvar='membrane.V', logvars=['environment.time', 'iha.i_ha',
                                           'iha.G_ha'])
 
