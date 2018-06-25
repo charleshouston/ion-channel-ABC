@@ -10,14 +10,14 @@ modelfile = 'models/Bondarenko2004_iKur.mmt'
 
 ikur_params = {'g_Kur': (0, 1),
                'k_ass1': (0, 100),
-               'k_ass2': (1, 10),
-               'k_atau1': (0, 1),
-               'k_atau2': (0, 10),
+               'k_ass2': (0, 100),
+               'k_atau1': (0, 100),
+               'k_atau2': (0, 100),
                'k_atau3': (0, 10),
                'k_iss1': (0, 100),
-               'k_iss2': (1, 10),
+               'k_iss2': (0, 100),
                'k_itau1': (0, 10),
-               'k_itau2': (0, 10)}
+               'k_itau2': (0, 100)}
 
 ikur = Channel('ikur', modelfile, ikur_params,
                vvar='membrane.V', logvars=['environment.time',

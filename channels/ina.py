@@ -35,7 +35,7 @@ iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
 nakajima_conditions = dict(Nao=145000,
                            Nai=10000,
                            T=296)
-iv_exp = Experiment(iv_prot, iv_data, conditions)
+iv_exp = Experiment(iv_prot, iv_data, nakajima_conditions)
 ina.add_experiment(iv_exp)
 
 ### Exp 2 - Activation
