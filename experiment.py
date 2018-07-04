@@ -125,7 +125,7 @@ class ExperimentStimProtocol(object):
             return ValueError("If not processing must specify two",
                               "logging variables.")
 
-                # Setup if x resolution is being overridden.
+        # Setup if x resolution is being overridden.
         if n_x is not None:
             n_runs = None
             times = []

@@ -29,7 +29,6 @@ class Channel(object):
         self.vvar = vvar
         self.logvars = logvars
 
-        self.pars = abc_params
         self.param_names = []
         self.param_priors = []
         self.param_ranges = []
@@ -126,7 +125,10 @@ class Channel(object):
         for p in pars:
             try:
                 if pars[p] is not None:
-                    self._sim.set_constant(self.name + "." + p, pars[p])
+                    if '.' not in p:
+                        self._sim.set_constant(self.name + "." + p, pars[p])
+                    else:
+                        self._sim.set_constant(p, pars[p])
             except:
                 return ValueError("Could not set parameter " + p
                                   + " to value: " + str(pars[p]))
