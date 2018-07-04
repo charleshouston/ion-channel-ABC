@@ -37,7 +37,7 @@ params = {'icat.g_CaT': (0, 2),
           'ical.q6': (0, 1000),
           'ical.q7': (0, 100),
           'ical.q8': (0, 100),
-          'ical.q9': (-500, 500)
+          'ical.q9': (-500, 500),
           'ina.g_Na': (0, 100),
           'ina.p1': (0, 100),
           'ina.p2': (-10, 0),
@@ -47,7 +47,7 @@ params = {'icat.g_CaT': (0, 2),
           'ina.p6': (0, 1),
           'ina.p7': (0, 100),
           'ina.q1': (0, 100),
-          'ina.q2': (0, 10)),
+          'ina.q2': (0, 10),
           'iha.k_yss1': (0, 100),
           'iha.k_yss2': (1, 10),
           'iha.k_ytau1': (0, 10),
@@ -106,11 +106,19 @@ params = {'icat.g_CaT': (0, 2),
 hl1 = Channel('hl1', modelfile, {}, vvar='membrane.i_stim')
 stim_times = [10000]
 stim_levels = [0.0]
+time = np.linspace(0, stim_times[0])
 # See resting state behaviour....
-def get_V(data):
-    return data[0]['membrane.V']
+def interpolate_align(data):
+    import numpy as np
+    simtime = data[0]['environment.time']
+    simtime_min = min(simtime)
+    simtime = [t - simtime_min for t in simtime]
+    voltage = data[0]['membrane.V']
+    return np.interp(time, simtime, voltage)
 resting_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                      measure_index=0, measure_fn=get_V)
+                                      measure_index=0,
+                                      measure_fn=interpolate_align,
+                                      ind_var=time)
 dias_conditions = dict(T=305,
                        Ca_o=1800,
                        Na_o=1.4e5,

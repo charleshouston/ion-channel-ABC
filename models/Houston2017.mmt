@@ -9,7 +9,7 @@ name: houston_2017
 
 # Initial values
 membrane.V = -67.0
-membrane.i_stim = 0.0
+#membrane.i_stim = 0.0
 ical.d = 1.40562700000000000e-3
 ical.f = 0.99
 ical.fCa = 0.99
@@ -165,6 +165,7 @@ r16 = 40.14
 
 # Rapid delayed rectifier K+ current - Korhonen et al. (2009)
 [ikr]
+use membrane.FoRT as FoRT
 use membrane.V as V
 use membrane.K_o as K_o
 use k_conc.K_i as K_i
@@ -661,7 +662,7 @@ use membrane.K_o as K_o
 dot(K_i) = -(iha.i_haK + ito.i_to + ik1.i_K1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * Acap * Cm / (V_myo * F * 1e-6)
     in [uM]
 #K_i = 1.3e5
-    in [uM]
+#   in [uM]
 E_K = 1 / FoRT * log(K_o / K_i)
     in [mV]
 
