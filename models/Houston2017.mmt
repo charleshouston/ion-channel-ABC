@@ -6,8 +6,10 @@ desc: """
     Bondarenko et al., 2004.
     """
 name: houston_2017
+
 # Initial values
 membrane.V = -67.0
+membrane.i_stim = 0.0
 ical.d = 1.40562700000000000e-3
 ical.f = 0.99
 ical.fCa = 0.99
@@ -37,6 +39,7 @@ k_conc.K_i = 1.3e5
 time = 0 bind time
     in [ms]
 
+
 [membrane]
 # Extracellular ion concentrations set to values from Dias et al (2014)
 Ca_o = 1800
@@ -57,9 +60,9 @@ FoRT = F / (R * T)
     in [1/mV]
 
 
-dot(V) = -(ical.i_CaL + incx.i_NCX + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr + icat.i_CaT + iha.i_ha + i_stim) / Cm
+dot(V) = -(ical.i_CaL + incx.i_NCX + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr + icat.i_CaT + iha.i_ha - i_stim) / Cm
     in [mV]
-i_stim = 0.0 [pA/pF]
+i_stim = 0.0
     in [pA/pF]
 
 # Helper math declaration

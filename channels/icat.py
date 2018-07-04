@@ -23,10 +23,10 @@ icat_params = {'g_CaT': (0, 2),
                'q5': (0, 0.1),
                'q6': (0, 100)}
 
-icat = Channel("icat", modelfile, icat_params,
-               vvar="membrane.V", logvars=["environment.time", 
-                                           "icat.i_CaT",
-                                           "icat.G_CaT"])
+icat = Channel('icat', modelfile, icat_params,
+               vvar='membrane.V', logvars=['environment.time', 
+                                           'icat.i_CaT',
+                                           'icat.G_CaT'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Nguyen()
