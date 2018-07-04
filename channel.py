@@ -29,6 +29,7 @@ class Channel(object):
         self.vvar = vvar
         self.logvars = logvars
 
+        self.pars = abc_params
         self.param_names = []
         self.param_priors = []
         self.param_ranges = []
