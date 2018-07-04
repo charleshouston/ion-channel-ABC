@@ -20,7 +20,9 @@ ina_params = dict(g_Na=(0, 100),
                   q2=(0, 10))
 
 ina = Channel('ina', modelfile, ina_params,
-              vvar='membrane.V', logvars=['ina.i_Na', 'ina.G_Na'])
+              vvar='membrane.V', logvars=['environment.time',
+                                          'ina.i_Na',
+                                          'ina.G_Na'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Nakajima()

@@ -60,11 +60,15 @@ def fit_mono_exp(data):
     curr_diff = np.diff(curr)
     index = 0
     if curr_diff[0] > 0:
-        index = np.argwhere(curr_diff < 0)[0][0]
+        turn_point = np.argwhere(curr_diff < 0)
     else:
-        index = np.argwhere(curr_diff > 0)[0][0]
-    curr = curr[:index+1]
-    time = data[0]['environment.time'][:index+1]
+        turn_point = np.argwhere(curr_diff > 0)
+    if turn_point.size > 0:
+        index = turn_point[0][0]+1
+    else:
+        index = -1
+    curr = curr[:index]
+    time = data[0]['environment.time'][:index]
     t0 = time[0]
     time = [(t - t0)/1000 for t in time] # Units in seconds.
 
@@ -87,13 +91,13 @@ def takesecond(data): return [d[1] for d in data]
 def normalise(data):
     sim_results = [d[0] for d in data]
     m = max(sim_results, key=abs)
-    sim_results = [result / m for result in sim_results
+    sim_results = [result / m for result in sim_results]
     return sim_results
 
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1,
                                   measure_fn=fit_mono_exp,
-                                  post_fn=normalise_positives_firsts)
+                                  post_fn=normalise)
 act_tau_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                       measure_index=1,
                                       measure_fn=fit_mono_exp,

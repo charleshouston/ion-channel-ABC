@@ -95,7 +95,7 @@ def max_gto(data):
     return max(data[0]['ito.G_to'])
 def normalise_positives(sim_results):
     m = max(sim_results, key=abs)
-    sim_results = [results / m for result in sim_results]
+    sim_results = [result / m for result in sim_results]
     return sim_results
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=1, measure_fn=max_gto,
