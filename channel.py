@@ -110,8 +110,12 @@ class Channel(object):
 
         # Check model has all parameters listed.
         for param_name in self.param_names:
-            assert m.has_variable(self.name + "." + param_name), (
-                    'The parameter ' + param_name + ' does not exist.')
+            if '.' in param_name:
+                assert m.has_variable(param_name), (
+                        'The parameter ' + param_name + ' does not exist.')
+            else:
+                assert m.has_variable(self.name + "." + param_name), (
+                        'The parameter ' + param_name + ' does not exist.')
 
         self._sim = myokit.Simulation(m)
 
