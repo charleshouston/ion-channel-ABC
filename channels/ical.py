@@ -43,7 +43,7 @@ iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1,
                                  measure_fn=peak_curr)
 rao_conditions = dict(T=298,
-                      Cao=5000)
+                      Ca_o=5000)
 iv_exp = Experiment(iv_prot, iv_data, rao_conditions)
 ical.add_experiment(iv_exp)
 
@@ -55,7 +55,7 @@ stim_times = [1000, 100, 500]
 stim_levels = [-80, act_vsteps, -80]
 def max_gcal(data):
     return max(data[0]['ical.G_CaL'])
-def normalise_positives(sim_results):
+def normalise(sim_results):
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]
     return sim_results
