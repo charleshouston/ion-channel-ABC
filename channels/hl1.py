@@ -103,17 +103,22 @@ params = {'icat.g_CaT': (0, 2),
           'ik1.k_4': (0, 0.1)}
 
 # TODO: this is a bit of a hack of the Channel class...
-hl1 = Channel('hl1', modelfile, {}, vvar='membrane.i_stim')
-stim_times = [10000]
+hl1 = Channel('hl1', modelfile, params, vvar='membrane.i_stim')
+
+stim_times = [100000]
 stim_levels = [0.0]
-time = np.linspace(0, stim_times[0])
+time = np.linspace(0, stim_times[0], 1000)
 # See resting state behaviour....
-def interpolate_align(data):
+def interpolate_align(data_list):
     import numpy as np
-    simtime = data[0]['environment.time']
+    data = data_list[0]
+    if len(data_list) > 1:
+        for log in data_list[1:]:
+            data = data.extend(log)
+    simtime = data['environment.time']
     simtime_min = min(simtime)
     simtime = [t - simtime_min for t in simtime]
-    voltage = data[0]['membrane.V']
+    voltage = data['membrane.V']
     return np.interp(time, simtime, voltage)
 resting_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                       measure_index=0,
@@ -125,3 +130,14 @@ dias_conditions = dict(T=305,
                        K_o=4e3)
 resting_exp = Experiment(resting_prot, None, dias_conditions)
 hl1.add_experiment(resting_exp)
+
+stim_times = [10000, 2, 1000]
+stim_levels = [0, 10, 0]
+time = np.linspace(0, sum(stim_times), 1000)
+
+pulse_train_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                          measure_index=(0, 1, 2),
+                                          measure_fn=interpolate_align,
+                                          ind_var=time)
+pulse_train_exp = Experiment(pulse_train_prot, None, dias_conditions)
+hl1.add_experiment(pulse_train_exp)
