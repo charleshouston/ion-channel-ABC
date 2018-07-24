@@ -71,7 +71,8 @@ class SeabornFig2Grid():
         self.sg.fig.set_size_inches(self.fig.get_size_inches())
 
 
-def plot_sim_results(history, channel, n_samples=10, obs=None):
+def plot_sim_results(history, channel, n_samples=10, obs=None,
+                     original=True):
     """Plot the simulation results using parameter distributions.
 
     Args:
@@ -79,24 +80,28 @@ def plot_sim_results(history, channel, n_samples=10, obs=None):
         channel (str): Name of channel to simulate.
         n_samples (int): Number of samples to compute statistics on plot.
         obs (DataFrame): Experimental observations to overlay on simulation.
+        original (bool): Whether to also plot original settings.
 
     Returns:
         Seaborn plot of each experiment separately showing mean and standard
         deviation for simulation results.
     """
+    #sns.set_context('paper')
+    #sns.set_style('white')
+
     samples = pd.DataFrame()
 
     # Get prior samples
-    prior_df, prior_w = history.get_distribution(t=0, m=0)
-    prior_th = (prior_df.sample(n=n_samples,
-                                weights=prior_w,
-                                replace=True)
-                .to_dict(orient='records'))
-    for i, th in enumerate(prior_th):
-        output = simulate(channel, **th)
-        output['sample'] = i
-        output['distribution'] = 'prior'
-        samples = samples.append(output, ignore_index=True)
+    # prior_df, prior_w = history.get_distribution(t=0, m=0)
+    # prior_th = (prior_df.sample(n=n_samples,
+    #                             weights=prior_w,
+    #                             replace=True)
+    #             .to_dict(orient='records'))
+    # for i, th in enumerate(prior_th):
+    #     output = simulate(channel, continuous=True, **th)
+    #     output['sample'] = i
+    #     output['distribution'] = 'prior'
+    #     samples = samples.append(output, ignore_index=True)
 
     # Get posterior samples
     post_df, post_w = history.get_distribution(m=0)
@@ -105,7 +110,7 @@ def plot_sim_results(history, channel, n_samples=10, obs=None):
                               replace=True)
                .to_dict(orient='records'))
     for i, th in enumerate(post_th):
-        output = simulate(channel, **th)
+        output = simulate(channel, continuous=True, **th)
         output['sample'] = i
         output['distribution'] = 'post'
         samples = samples.append(output, ignore_index=True)
@@ -122,10 +127,11 @@ def plot_sim_results(history, channel, n_samples=10, obs=None):
                  ls='None', marker='x', c='k')
 
     # Plotting original settings
-    output = simulate(channel, {})
-    output['sample'] = 0
-    output['distribution'] = 'original'
-    samples = samples.append(output, ignore_index=True)
+    if original:
+        output = simulate(channel, {})
+        output['sample'] = 0
+        output['distribution'] = 'original'
+        samples = samples.append(output, ignore_index=True)
 
     grid = sns.FacetGrid(samples,
                          col="exp", sharex='col', sharey='col',
@@ -134,13 +140,17 @@ def plot_sim_results(history, channel, n_samples=10, obs=None):
                               unit="sample", condition="distribution",
                               estimator=np.median,
                               err_style="ci_band", ci=95,
-                              color=sns.color_palette())
+                              color='black')
 
     # Fix markers for different observations
-    markers = ["o", "s", "v"]
+    #markers = ["o", "s"]
+    #if original:
+    #    markers.append("v")
     for ax in grid.axes.flatten():
-        for l, m in zip(ax.lines, markers):
-            l.set_marker(m)
+        #for l, m in zip(ax.lines, markers):
+        for l in ax.lines:
+            #l.set_marker(m)
+            l.set_linestyle('--')
 
     if obs is not None:
         grid = (grid.map_dataframe(measured_plot, measurements=obs)

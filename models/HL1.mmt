@@ -6,30 +6,38 @@ desc: """
     Bondarenko et al., 2004.
     """
 name: houston_2017
+
 # Initial values
-membrane.V = -67.0
-ical.d = 1.40562700000000000e-3
-ical.f = 0.99
-ical.fCa = 0.99
-ina.m = 1.40562700000000000e-3
-ina.h = 0.9867005
-ina.j = 0.991562
-ito.xto = 4.05157399999999963e-3
-ito.yto = 0.9945511
-ikur.a_ur =  4.17069000000000001e-4
-ikur.i_ur = 0.998543
-ikr.xkr = 8.64138599999999917e-3
-icat.b = 0.01
-icat.g = 0.99
-iha.y = 0.01
-ryanodine_receptors.P_open = 0.0002
-ca_conc_sr.Ca_SRuptake = 790
-ca_conc_sr.Ca_SRrelease = 790
-ca_conc.Ca_i = 0.138
+membrane.V = -68.0
+ical.d = 0.0001075
+ical.f = 0.9907780000000002
+ical.fCa = 0.9965785
+ina.m = 0.089167
+ina.h = 0.527405
+ina.j = 0.527337
+ito.xto = 0.0024785
+ito.yto = 0.9999894999999999
+ikr.C_K1 = 0.1426775
+ikr.C_K2 = 0.280485
+ikr.O_K = 0.0052035
+ikr.I_K = 0.00017950000000000003
+ikur.a_ur = 0.10595349999999999
+ikur.i_ur = 0.952489
+icat.b = 0.001507
+icat.g = 0.9842110000000001
+iha.y = 0.434359
+ryanodine_receptors.P_open = 0.012001999999999999
+ca_conc_sr.Ca_SRuptake = 787.180644
+ca_conc_sr.Ca_SRrelease = 776.6058415
+ca_conc.Ca_i = 0.215237
+na_conc.Na_i = 15558.639856999998
+k_conc.K_i = 120499.57624000001
+
 
 [environment]
 time = 0 bind time
     in [ms]
+
 
 [membrane]
 # Extracellular ion concentrations set to values from Dias et al (2014)
@@ -51,9 +59,9 @@ FoRT = F / (R * T)
     in [1/mV]
 
 
-dot(V) = -(ical.i_CaL + incx.i_NCX + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr + icat.i_CaT + iha.i_ha + i_stim) / Cm
+dot(V) = -(ical.i_CaL + incx.i_NCX + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr + icat.i_CaT + iha.i_ha - i_stim) / Cm
     in [mV]
-i_stim = 0.0 [pA/pF]
+i_stim = 0.0
     in [pA/pF]
 
 # Helper math declaration
@@ -77,15 +85,13 @@ use membrane.FoRT as FoRT
 use membrane.Na_o as Na_o
 use na_conc.Na_i as Na_i
 
-g_Na = 2.5 #35 - changed to reproduce peak potential from Dias 2014
+g_Na = 35
     in [mS/uF]
-v_offset = 0
-    in [mV]
 E_Na = 1 / FoRT * log(Na_o / Na_i)
     in [mV]
 G_Na = g_Na * m ^ 3 * h * j
     in [mS/uF]
-i_Na = G_Na * (V - E_Na + v_offset)
+i_Na = G_Na * (V - E_Na)
     in [pA/pF]
 
 dot(m) = (m_ss - m) / tau_m
@@ -96,10 +102,10 @@ tau_m = (p3 * (V + p4) / (1 - exp(p5 * (V + p4))) + p6 * exp(-V / p7)) ^ (-1)
     in [ms]
 p1 = 45
 p2 = -6.5
-p3 = 1.36 * 0.32
+p3 = 0.32 / 1.36
 p4 = 47.13
 p5 = -0.1
-p6 = 1.36 * 0.08
+p6 = 0.08 / 1.36
 p7 = 11
 
 dot(h) = (h_ss - h) / tau_h
@@ -125,6 +131,7 @@ q10 = 3.56 / 3.49
 q11 = 0.079
 q12 = 3.1e5 / 3.49
 q13 = 0.35
+
 
 dot(j) = (j_ss - j) / tau_j
     in [1]
@@ -155,50 +162,63 @@ r15 = -0.1378
 r16 = 40.14
 
 
-# Rapid delayed rectifier K+ current - Takeuchi et al. (2013)
+# Rapid delayed rectifier K+ current - Korhonen et al. (2009)
 [ikr]
+use membrane.FoRT as FoRT
 use membrane.V as V
 use membrane.K_o as K_o
-use k_conc.E_K as E_K
+use k_conc.K_i as K_i
+use membrane.Na_o as Na_o
+use na_conc.Na_i as Na_i
 
-g_Kr = 0.73 [nS/pF]
-    in [nS/pF]
-G_Kr = g_Kr * sqrt(K_o / 5400 [uM]) * xkr * rkr
-    in [nS/pF]
-i_Kr = G_Kr * (V - E_K)
+g_Kr = 0.06
+    in [mS/uF]
+G_Kr = g_Kr * O_K
+    in [mS/uF]
+E_Kr = 1 / FoRT * log((0.98 * K_o + 0.02 * Na_o) / (0.98 * K_i + 0.02 * Na_i))
+    in [mV]
+i_Kr = G_Kr * (V - E_Kr)
     in [pA/pF]
 
-xkr_ss = 1 / (1 + exp(-(V + k_xss1) / k_xss2))
+alpha_a0 = p1 * exp(p2 * V)
     in [1]
-tau_xkr = k_xtau1 * (k_xtau2 + k_xtau3 * exp(-((V + k_xtau4)/k_xtau5) ^ 2))
-    in [ms]
-rkr = 1 / (1 + exp((V + k_r1) / k_r2))
+alpha_a1 = p3 * exp(p4 * V)
     in [1]
-dot(xkr) = (xkr_ss - xkr) / tau_xkr
+alpha_i = p5 * exp(p6 * V)
+    in [1]
+beta_a0 = q1 * exp(q2 * V)
+    in [1]
+beta_a1 = q3 * 1e-3 * exp(q4 * V)
+    in [1]
+beta_i = q5 * exp(q6 * V)
     in [1]
 
-k_xss1 = 15 [mV]
-    in [mV]
-k_xss2 = 6 [mV]
-    in [mV]
-k_xtau1 = 2.5 [ms]
-    in [ms]
-k_xtau2 = 31.18
-    in [1]
-k_xtau3 = 217.18
-    in [1]
-k_xtau4 = 20.1376 [mV]
-    in [mV]
-k_xtau5 = 22.1996 [mV]
-    in [mV]
-k_r1 = 55 [mV]
-    in [mV]
-k_r2 = 24 [mV]
-    in [mV]
+p1 = 0.022348
+p2 = 0.01176
+p3 = 0.013733
+p4 = 0.038198
+p5 = 0.090821
+p6 = 0.023391
+
+q1 = 0.047002
+q2 = -0.0631
+q3 = 0.0689
+q4 = -0.04178
+q5 = 0.006497
+q6 = -0.03268
+
+k_f = 0.023761
+k_b = 0.036778
+
+dot(C_K1) = alpha_a0 * C_K0 - beta_a1 * C_K1 + k_b * C_K2 - k_f * C_K1
+dot(C_K2) = k_f * C_K1 - k_b * C_K2 + beta_a1 * O_K - alpha_a1 * C_K2
+dot(O_K) = alpha_a1 * C_K2 - beta_a1 * O_K + beta_i * I_K - alpha_i * O_K
+dot(I_K) =  alpha_i * O_K - beta_i * I_K
+C_K0 = 1 - (C_K1 + C_K2 + O_K + I_K)
 
 
-# Ultrarapidly activating delayed rectifier K+ current - Bondarenko et al.
-# (2004)
+# Ultrarapidly activating delayed rectifier K+ current
+# - Bondarenko et al. (2004)
 [ikur]
 use membrane.V as V
 use k_conc.E_K as E_K
@@ -244,6 +264,7 @@ k_itau1 = 1.2
 k_itau2 = 1.7
     in [ms]
 
+
 # Transient outward K+ current - Takeuchi et al. (2013)
 [ito]
 use membrane.V as V
@@ -253,16 +274,16 @@ g_to = 0.12375 [nS/pF]
      in [nS/pF]
 G_to = g_to * xto * yto
     in [nS/pF]
-i_to = G_to * (V - E_K)
+i_to = G_to * (membrane.V - E_K)
     in [pA/pF]
 
-xto_ss = 1 / (1 + exp(-(V - k_xss1) / k_xss2))
+xto_ss = 1 / (1 + exp(-(membrane.V - k_xss1) / k_xss2))
     in [1]
-tau_xto = k_xtau1 + k_xtau2 * exp(-((V) / k_xtau3) ^ 2)
+tau_xto = k_xtau1 + k_xtau2 * exp(-((membrane.V) / k_xtau3) ^ 2)
     in [ms]
-yto_ss = 1 / (1 + exp((V + k_yss1) / k_yss2))
+yto_ss = 1 / (1 + exp((membrane.V + k_yss1) / k_yss2))
     in [1]
-tau_yto = k_ytau1 + k_ytau2 * exp(-((V + k_ytau3) / k_ytau4) ^ 2)
+tau_yto = k_ytau1 + k_ytau2 * exp(-((membrane.V + k_ytau3) / k_ytau4) ^ 2)
     in [ms]
 dot(xto) = (xto_ss - xto) / tau_xto
     in [1]
@@ -303,23 +324,23 @@ g_ha = 0.021 [mS/uF]
     in [mS/uF]
 G_ha = g_ha * y
     in [mS/uF]
-i_haNa = G_ha * k_i_haNa * (V - E_Na)
+i_haNa = G_ha * k_i_haNa * (membrane.V - E_Na)
     in [pA/pF]
-i_haK = G_ha * (1 - k_i_haNa) * (V - E_K)
+i_haK = G_ha * (1-k_i_haNa) * (membrane.V - E_K)
     in [pA/pF]
 k_i_haNa = 0.2
     in [1]
 i_ha = i_haNa + i_haK
     in [pA/pF]
 
-y_ss = 1 / (1 + exp((V + k_yss1) / k_yss2))
+y_ss = 1 / (1 + exp((membrane.V + k_yss1) / k_yss2))
     in [1]
 k_yss1 = 78.65 [mV]
     in [mV]
 k_yss2 = 6.33 [mV]
     in [mV]
 
-tau_y = 1000 * k_ytau1 / (k_ytau2 * exp((V + k_ytau3) / k_ytau4) + k_ytau5 * exp((V + k_ytau6) / -k_ytau7))
+tau_y = 1000 * k_ytau1 / (k_ytau2 * exp((membrane.V + k_ytau3) / k_ytau4) + k_ytau5 * exp((membrane.V + k_ytau6) / -k_ytau7))
     in [ms]
 k_ytau1 = 1 [ms]
     in [ms]
@@ -335,7 +356,6 @@ k_ytau6 = 75 [mV]
     in [mV]
 k_ytau7 = 14.19 [mV]
     in [mV]
-
 dot(y) = (y_ss - y) / tau_y
     in [1]
 
@@ -347,7 +367,7 @@ use ca_conc.E_Ca as E_Ca
 
 g_CaT = 0.2
     in [mS/uF]
-E_CaT = 45#E_Ca - 106.5
+E_CaT = 33
     in [mV]
 G_CaT = g_CaT * b * g
     in [mS/uF]
@@ -382,6 +402,7 @@ q4 = 40
 q5 = 0.08
 q6 = 65
 
+
 # L-type Ca2+ current - Korhonen et al. (2009)
 [ical]
 use membrane.V as V
@@ -390,13 +411,13 @@ use membrane.F as F
 use membrane.Ca_o as Ca_o
 use ca_conc.Ca_subSL as Ca_subSL
 
-i_CaL = g_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
+i_CaL = G_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
     in [pA/pF]
-G_CaL = 0.000063
+g_CaL = 0.000063
     in [dm^3/F/ms]
 open = d * f * fCa
     in [1]
-g_CaL = G_CaL * open
+G_CaL = g_CaL * open
     in [dm^3/F/ms]
 
 dot(d) = (d_ss - d) / tau_d
@@ -452,13 +473,14 @@ tau_fCa = 10
 k = piecewise(fCa_ss > fCa and V > -60, 0, 1)
     in [1]
 
-# Inward rectifying K+ current - Bondarenko et al. (2004)
+
+# Inward rectifying K+ current - Korhonen et al. (2009)
 [ik1]
 use membrane.K_o as K_o
 use membrane.V as V
 use k_conc.E_K as E_K
 
-i_K1 = g_K1 * K_o / (K_o + k_1) * (membrane.V - E_K + k_2) / (k_3 + exp(k_4 * (membrane.V - E_K + k_2)))
+i_K1 = g_K1 * K_o / (K_o + k_1) * (V - E_K + k_2) / (k_3 + exp(k_4 * (V - E_K + k_2)))
     in [pA/pF]
 g_K1 = 0.0515 [mS/uF]
     in [mS/uF]
@@ -471,6 +493,7 @@ k_3 = 0.1653 [1/mV]
 k_4 = 0.0319
     in [1]
 
+
 # Na+/Ca2+ exchanger current - Korhonen et al. (2009)
 [incx]
 use membrane.Na_o as Na_o
@@ -479,17 +502,17 @@ use ca_conc.Ca_subSL as Ca_subSL
 use membrane.V as V
 use na_conc.Na_i as Na_i
 
-k_NCX = 2.268e-16           # scaling factor
+k_NCX = 2.268e-16 # scaling factor
     in [pA/pF/uM^4]
-d_NCX = 1e-16              # denominator constant
+d_NCX = 1e-16 # denominator constant
     in [uM^-4]
-gamma = 0.5                 # energy barrier
+gamma = 0.5 # energy barrier
     in [1]
 
 i_NCX = k_NCX * (Na_i ^ 3 * Ca_o * exp(0.03743 * gamma * V) - Na_o ^ 3 * Ca_subSL * exp(0.03743 * (gamma - 1) * V)) / (1 + d_NCX * (Na_o ^ 3 * Ca_subSL + Na_i ^ 3 * Ca_o))
 
 
-# Na+/K+ ATPase - Bondarenko et al. (2004)
+# Na+/K+ ATPase - Korhonen et al. (2009)
 [inak]
 use membrane.V as V
 use membrane.FoRT as FoRT
@@ -515,7 +538,7 @@ i_NaK = i_NaK_max * f_NaK * (1 + (Km_Nai / Na_i) ^ n_NaK) ^ (-1) * (1 + (Km_Ko /
     in [pA/pF]
 
 
-# Ca2+ background current - Bondarenko et al. (2004)
+# Ca2+ background current - Korhonen et al. (2009)
 [icab]
 use membrane.V as V
 use ca_conc.E_Ca as E_Ca
@@ -525,7 +548,7 @@ g_Cab = 0.0008
 i_Cab = g_Cab * (V - E_Ca)
   in [pA/pF]
 
-# Background Na+ current - Bondarenko et al. (2004)
+# Background Na+ current - Korhonen et al. (2009)
 [inab]
 use membrane.V as V
 use na_conc.E_Na as E_Na
@@ -534,6 +557,7 @@ g_Nab = 0.0026
     in [mS/uF]
 i_Nab = g_Nab * (V - E_Na)
     in [pA/pF]
+
 
 # Sarcoplasmic reticulum - Korhonen et al. (2009)
 [ryanodine_receptors]
@@ -620,12 +644,10 @@ use membrane.F as F
 use membrane.FoRT as FoRT
 use membrane.Na_o as Na_o
 
-# dot(Na_i) = -(ina.i_Na + inab.i_Nab + iha.i_haNa + 3 * incx.i_NCX + 3 * inak.i_NaK) * Acap * Cm / (V_myo * F * 1e-6)
-#     in [uM]
-# Na_i = 1.38e4
-#     in [uM]
-Na_i = 1e4
-     in [uM]
+dot(Na_i) = -(ina.i_Na + inab.i_Nab + iha.i_haNa + 3 * incx.i_NCX + 3 * inak.i_NaK) * Acap * Cm / (V_myo * F * 1e-6)
+    in [uM]
+#Na_i = 1.5e4
+#    in [uM]
 E_Na = 1 / FoRT * log(Na_o / Na_i)
     in [mV]
 
@@ -637,10 +659,10 @@ use membrane.F as F
 use membrane.FoRT as FoRT
 use membrane.K_o as K_o
 
-# dot(K_i) = -(iha.i_haK + ito.i_to + ik1.i_K1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * Acap * Cm / (V_myo * F * 1e-6)
-#     in [uM]
-K_i = 1.3e5
+dot(K_i) = -(iha.i_haK + ito.i_to + ik1.i_K1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * Acap * Cm / (V_myo * F * 1e-6)
     in [uM]
+#K_i = 1.2e5
+#    in [uM]
 E_K = 1 / FoRT * log(K_o / K_i)
     in [mV]
 

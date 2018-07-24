@@ -101,7 +101,7 @@ akin_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_fn=measure_maxes,
                                    post_fn=partial(map, fit_single_exp))
 akin_exp = Experiment(akin_prot, akin_data, toyoda_conditions1)
-ikr.add_experiment(akin_exp)
+#ikr.add_experiment(akin_exp)
 
 ### Exp 4, 5, 6 - Deactivation kinetics (fast and slow).
 deact_vsteps, deact_tauf, _, _ = data.DeactKinFast_Toyoda()
@@ -178,9 +178,9 @@ deact_f_exp = Experiment(deact_f_prot, deact_f_data, toyoda_conditions1)
 deact_s_exp = Experiment(deact_s_prot, deact_s_data, toyoda_conditions1)
 deact_amp_exp = Experiment(deact_amp_prot, deact_amp_data,
                            toyoda_conditions1)
-ikr.add_experiment(deact_f_exp)
-ikr.add_experiment(deact_s_exp)
-ikr.add_experiment(deact_amp_exp)
+#ikr.add_experiment(deact_f_exp)
+#ikr.add_experiment(deact_s_exp)
+#ikr.add_experiment(deact_amp_exp)
 
 ### Exp 7 - Kinetic properties of recovery from inactivation
 inact_vsteps, inact_tau, _, _, = data.InactKin_Toyoda()
@@ -227,7 +227,7 @@ toyoda_conditions2 = dict(K_o=5400,
                           T=298)
 inact_kin_exp = Experiment(inact_kin_prot, inact_kin_data,
                            toyoda_conditions2)
-ikr.add_experiment(inact_kin_exp)
+#ikr.add_experiment(inact_kin_exp)
 
 ### Exp 8 - Voltage dependence of steady-state inactivation.
 inact_vsteps, inact_cond, _, _ = data.Inact_Toyoda()

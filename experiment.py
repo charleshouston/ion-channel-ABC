@@ -40,8 +40,9 @@ class ExperimentData(object):
 class ExperimentStimProtocol(object):
     """Stimulation times and measurement points for simulations."""
 
-    def __init__(self, stim_times, stim_levels, measure_index, measure_fn,
-                 post_fn=None, time_independent=False, ind_var=None):
+    def __init__(self, stim_times, stim_levels, measure_index=None, 
+                 measure_fn=None, post_fn=None, time_independent=False, 
+                 ind_var=None):
         """Initialisation.
 
         `stim_times` and `stim_levels` may contain nested lists for multiple
@@ -103,7 +104,7 @@ class ExperimentStimProtocol(object):
         if ind_var is not None:
             self.ind_var = ind_var
 
-    def __call__(self, sim, vvar, logvars, n_x=None, process=True):
+    def __call__(self, sim, vvar, logvars, n_x=None):
         """Runs the protocol in Myokit using the passed simulation model.
 
         Args:
@@ -111,8 +112,6 @@ class ExperimentStimProtocol(object):
             vvar (str): Name of voltage variable in Simulation.
             logvars (list(str)): Name of variables to log when running.
             n_x (int): Override defined x resolution.
-            process (bool): Whether to process simulation output or
-                return raw data from simulation.
             ind_var (list): Custom independent variable (x-axis) can be
                 passed explicitly.
 
@@ -120,12 +119,8 @@ class ExperimentStimProtocol(object):
             Independent (changing) variable and results
             from measured experiment values.
         """
-        # Must only specify one logvar if no processing.
-        if not process and len(logvars) is not 2:
-            return ValueError("If not processing must specify two",
-                              "logging variables.")
 
-                # Setup if x resolution is being overridden.
+        # Setup if x resolution is being overridden.
         if n_x is not None:
             n_runs = None
             times = []
@@ -163,6 +158,12 @@ class ExperimentStimProtocol(object):
             levels = self.stim_levels
             ind_var = self.ind_var
 
+        # If no measure_index specified, record all
+        if self.measure_index is None:
+            measure_index = range(len(zip(times, levels)))
+        else:
+            measure_index = self.measure_index
+
         # Run simulations
         res_sim = []
         for run in range(n_runs):
@@ -181,7 +182,7 @@ class ExperimentStimProtocol(object):
 
                 # Store data values if it is a measurment region of interest
                 # or if we are simply spitting out the raw sim output.
-                if i in self.measure_index:
+                if i in measure_index:
                     # Query values if simulation does not depend
                     # on time (and thus running would error).
                     if self.time_independent:
@@ -195,10 +196,11 @@ class ExperimentStimProtocol(object):
                 else:
                     if not self.time_independent:
                         d = sim.run(t)
-            if process:
+
+            if self.measure_fn is not None:
                 data = self.measure_fn(data)
             else:
-                # Let's combine them by default
+                # Combine by default
                 d0 = data[0]
                 for d in data[1:]:
                     d0 = d0.extend(d)
@@ -207,19 +209,18 @@ class ExperimentStimProtocol(object):
             res_sim.append(data)
 
         # Apply any post-processing function
-        if process and self.post_fn is not None:
+        if self.post_fn is not None:
             res_sim = self.post_fn(res_sim)
-
-        if process:
-            # TODO: not sure this is the best way to catch this
-            if len(res_sim) == 1:
-                res_sim = res_sim[0]
-            return pd.DataFrame({'x': list(ind_var), 'y': list(res_sim)})
-        else:
-            out = pd.DataFrame({})
-            for stage in res_sim:
-                out = out.append(pd.DataFrame(stage), ignore_index=True)
-            return out
+        
+        out = pd.DataFrame({})
+        #if self.measure_fn is not None:
+        #    if len(res_sim) is 1:
+        #        res_sim = res_sim[0]
+        #    return pd.DataFrame({'x': list(ind_var), 'y': list(res_sim)})
+        #else:
+        for stage in res_sim:
+            out = out.append(pd.DataFrame(stage), ignore_index=True)
+        return out
 
 
 class Experiment(object):
@@ -239,7 +240,7 @@ class Experiment(object):
         self.data = data
         self.conditions = conditions
 
-    def run(self, sim, vvar, logvars, n_x=None, process=True):
+    def run(self, sim, vvar, logvars, n_x=None):
         """Wrapper to run simulation."""
         for c_name, c_val in self.conditions.items():
             try:
@@ -247,7 +248,7 @@ class Experiment(object):
             except:
                 print("Could not set condition " + c_name
                       + " to value: " + str(c_val))
-        return self.protocol(sim, vvar, logvars, n_x, process)
+        return self.protocol(sim, vvar, logvars, n_x)
 
     def eval_err(self, error_fn, sim=None, vvar=None, logvars=None):
         """Evaluate difference between experimental and simulation output.

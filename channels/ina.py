@@ -20,7 +20,9 @@ ina_params = dict(g_Na=(0, 100),
                   q2=(0, 10))
 
 ina = Channel('ina', modelfile, ina_params,
-              vvar='membrane.V', logvars=['ina.i_Na', 'ina.G_Na'])
+              vvar='membrane.V', logvars=['environment.time',
+                                          'ina.i_Na',
+                                          'ina.G_Na'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Nakajima()
@@ -32,10 +34,10 @@ def peak_curr(data):
     return max(data[0]['ina.i_Na'], key=abs)
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=peak_curr)
-conditions = dict(Nao=145000,
-                  Nai=10000,
-                  T=296)
-iv_exp = Experiment(iv_prot, iv_data, conditions)
+nakajima_conditions = dict(Nao=145000,
+                           Nai=10000,
+                           T=296)
+iv_exp = Experiment(iv_prot, iv_data, nakajima_conditions)
 ina.add_experiment(iv_exp)
 
 ### Exp 2 - Activation
@@ -46,16 +48,14 @@ stim_times = [1000, 20, 100]
 stim_levels = [-120, act_vsteps, -120]
 def max_gna(data):
     return max(data[0]['ina.G_Na'])
-def normalise_positives(sim_results):
-    import numpy as np
-    m = np.max(sim_results)
-    if m > 0:
-        sim_results = sim_results / m
+def normalise(sim_results):
+    m = max(sim_results, key=abs)
+    sim_results = [result / m for result in sim_results]
     return sim_results
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gna,
-                                  post_fn=normalise_positives)
-act_exp = Experiment(act_prot, act_data, conditions)
+                                  post_fn=normalise)
+act_exp = Experiment(act_prot, act_data, nakajima_conditions)
 ina.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation
@@ -66,8 +66,8 @@ stim_times = [500, 500, 20, 500]
 stim_levels = [-120, inact_vsteps, 20, -120]
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=2, measure_fn=max_gna,
-                                    post_fn=normalise_positives)
-inact_exp = Experiment(inact_prot, inact_data, conditions)
+                                    post_fn=normalise)
+inact_exp = Experiment(inact_prot, inact_data, nakajima_conditions)
 ina.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery
@@ -80,9 +80,32 @@ def ratio_cond(data):
     return max(data[1]['ina.G_Na'])/max(data[0]['ina.G_Na'])
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=[1, 3], measure_fn=ratio_cond,
-                                  post_fn=normalise_positives)
-conditions = dict(Nao=136330,
-                  Nai=15000,
-                  T=293)
-rec_exp = Experiment(rec_prot, rec_data, conditions)
+                                  post_fn=normalise)
+zhang_conditions = dict(Nao=136330,
+                        Nai=15000,
+                        T=293)
+rec_exp = Experiment(rec_prot, rec_data, zhang_conditions)
 ina.add_experiment(rec_exp)
+
+### Exp 5 - Current Trace
+time, curr, _, _ = data.Trace_Nakajima()
+peak_curr = abs(max(curr, key=abs))
+curr = [c / peak_curr for c in curr]
+trace_data = ExperimentData(x=time, y=curr)
+stim_times = [1000, 20]
+stim_levels = [-120, -20]
+def interpolate_align(data):
+    import numpy as np
+    simtime = data[0]['environment.time']
+    simtime_min = min(simtime)
+    simtime = [t - simtime_min for t in simtime]
+    curr = data[0]['ina.i_Na']
+    max_curr = abs(max(curr, key=abs))
+    curr = [c / max_curr for c in curr]
+    return np.interp(time, simtime, curr)
+trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                    measure_index=1,
+                                    measure_fn=interpolate_align,
+                                    ind_var=time)
+trace_exp = Experiment(trace_prot, trace_data, nakajima_conditions)
+ina.add_experiment(trace_exp)

@@ -64,7 +64,8 @@ def normalise(sim_results):
     return sim_results
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=peak_curr,
-                                 post_fn=normalise_by_peak)
+                                 post_fn=normalise)
+                                 #post_fn=normalise_by_peak)
 conditions = dict(Nao=20000, Nai=10000, T=295)
 iv_exp = Experiment(iv_prot, iv_data, conditions)
 ina.add_experiment(iv_exp)
@@ -149,4 +150,4 @@ trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_fn=interpolate_align,
                                     ind_var=time)
 trace_exp = Experiment(trace_prot, trace_data, conditions)
-ina.add_experiment(trace_exp)
+#ina.add_experiment(trace_exp)

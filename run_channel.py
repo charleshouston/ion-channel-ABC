@@ -4,7 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('channel', type=str)
-parser.add_argument('--experiment', type=int, nargs='?', default=None,
+parser.add_argument('--exp_num', type=int, nargs='?', default=None,
                     const=None)
 parser.add_argument('--logvars', type=str, nargs='*', default=None,
                     const=None)
@@ -41,10 +41,13 @@ elif args[0].channel == 'ik1':
 elif args[0].channel == 'ical':
     import channels.ical
     ch = channels.ical.ical
+elif args[0].channel == 'hl1':
+    import channels.hl1
+    ch = channels.hl1.hl1
 else:
     raise ValueError("Unrecognised channel.")
 
-experiment = args[0].experiment
+exp_num = args[0].exp_num
 logvars = args[0].logvars
 vdep = args[0].vdep
 
@@ -61,7 +64,7 @@ continuous = args_d['continuous']
 # Delete all non-parameter arguments
 del args_d['channel']
 del args_d['continuous']
-del args_d['experiment']
+del args_d['exp_num']
 del args_d['logvars']
 del args_d['vdep']
 
@@ -71,8 +74,7 @@ if vdep is not None:
                               vvals=np.arange(-150, 60, 10),
                               pars=args_d)
 else:
-    sim = ch(args_d, experiment=experiment, logvars=logvars,
+    sim = ch(args_d, exp_num=exp_num, logvars=logvars,
              continuous=continuous)
-
-with pd.option_context('display.max_rows', -1, 'display.max_columns', 5):
+with pd.option_context('display.max_rows', -1, 'display.max_columns', -1):
     print sim.to_string(index=False)
