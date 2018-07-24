@@ -4,7 +4,7 @@ from channel import Channel
 import numpy as np
 
 
-modelfile = 'models/Houston2017.mmt'
+modelfile = 'models/HL1.mmt'
 
 params = {'icat.g_CaT': (0, 2),
           'icat.E_CaT': (0, 50),
@@ -100,12 +100,16 @@ params = {'icat.g_CaT': (0, 2),
           'ik1.k_1': (-500, 500),
           'ik1.k_2': (0, 50),
           'ik1.k_3': (0, 1),
-          'ik1.k_4': (0, 0.1)}
+          'ik1.k_4': (0, 0.1),
+          'icab.g_Cab': (0, 0.001),
+          'incx.k_NCX': (0, 2.6e16),
+          'inab.g_Nab': (0, 0.0026),
+          'inak.i_NaK_max': (0, 2.7)}
 
 # TODO: this is a bit of a hack of the Channel class...
 hl1 = Channel('hl1', modelfile, params, vvar='membrane.i_stim')
 
-stim_times = [100000]
+stim_times = [500000]
 stim_levels = [0.0]
 time = np.linspace(0, stim_times[0], 1000)
 # See resting state behaviour....
@@ -118,12 +122,15 @@ def interpolate_align(data_list):
     simtime = data['environment.time']
     simtime_min = min(simtime)
     simtime = [t - simtime_min for t in simtime]
-    voltage = data['membrane.V']
-    return np.interp(time, simtime, voltage)
+    data_output = dict()
+    data_output['environment.time'] = simtime
+    for var in data:
+        data_output[var] = np.interp(time, simtime, data[var])
+    return data_output
 resting_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                      measure_index=0,
-                                      measure_fn=interpolate_align,
-                                      ind_var=time)
+                                      ind_var=time,
+                                      measure_index=range(len(stim_times)),
+                                      measure_fn=interpolate_align)
 dias_conditions = dict(T=305,
                        Ca_o=1800,
                        Na_o=1.4e5,
@@ -131,13 +138,46 @@ dias_conditions = dict(T=305,
 resting_exp = Experiment(resting_prot, None, dias_conditions)
 hl1.add_experiment(resting_exp)
 
-stim_times = [10000, 2, 1000]
-stim_levels = [0, 10, 0]
-time = np.linspace(0, sum(stim_times), 1000)
+n_pulses = 100
+stim_times = [10000] + [2, 998]*n_pulses + [2, 998]
+stim_levels = [0] + [40, 0]*n_pulses + [40, 0]
+pace_time = np.linspace(0, 1998, 1998)
+def interpolate_align_pace(data_list):
+    import numpy as np
+    data = data_list[0]
+    if len(data_list) > 1:
+        for log in data_list[1:]:
+            data = data.extend(log)
+    simtime = data['environment.time']
+    simtime_min = min(simtime)
+    simtime = [t - simtime_min for t in simtime]
+    data_output = dict()
+    data_output['environment.time'] = simtime
+    for var in data:
+        data_output[var] = np.interp(pace_time, simtime, data[var])
+    return data_output
 
 pulse_train_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                          measure_index=(0, 1, 2),
-                                          measure_fn=interpolate_align,
-                                          ind_var=time)
+                                          ind_var=pace_time,
+                                          measure_index=[len(stim_times)-3,
+                                                         len(stim_times)-2,
+                                                         len(stim_times)-1],
+                                          measure_fn=interpolate_align_pace)
 pulse_train_exp = Experiment(pulse_train_prot, None, dias_conditions)
 hl1.add_experiment(pulse_train_exp)
+
+# Increasing pulse train
+stims = range(0, 45, 5)
+stim_times = [100000] + [2, 4998]*len(stims)
+stim_levels = [0]
+for lev in stims:
+    stim_levels.append(lev)
+    stim_levels.append(0)
+pace_time = np.linspace(0, sum(stim_times[1:]), 2000)
+
+increasing_pulse_train_prot = ExperimentStimProtocol(stim_times, stim_levels,
+                                                     ind_var=pace_time,
+                                                     measure_index = range(1, len(stim_times)),
+                                                     measure_fn=interpolate_align_pace)
+increasing_pulse_train_exp = Experiment(increasing_pulse_train_prot, None, dias_conditions)
+hl1.add_experiment(increasing_pulse_train_exp)

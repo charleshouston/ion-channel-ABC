@@ -8,31 +8,30 @@ desc: """
 name: houston_2017
 
 # Initial values
-membrane.V = -67.0
-#membrane.i_stim = 0.0
-ical.d = 1.40562700000000000e-3
-ical.f = 0.99
-ical.fCa = 0.99
-ina.m = 1.40562700000000000e-3
-ina.h = 0.9867005
-ina.j = 0.991562
-ito.xto = 4.05157399999999963e-3
-ito.yto = 0.9945511
-ikr.C_K1 = 0.96
-ikr.C_K2 = 0.01
-ikr.O_K = 0.01
-ikr.I_K = 0.01
-ikur.a_ur = 4.17069000000000001e-4
-ikur.i_ur = 0.998543
-icat.b = 0.01
-icat.g = 0.99
-iha.y = 0.01
-ryanodine_receptors.P_open = 0.0002
-ca_conc_sr.Ca_SRuptake = 790
-ca_conc_sr.Ca_SRrelease = 790
-ca_conc.Ca_i = 0.138
-na_conc.Na_i = 1e4
-k_conc.K_i = 1.3e5
+membrane.V = -68.0
+ical.d = 0.0001075
+ical.f = 0.9907780000000002
+ical.fCa = 0.9965785
+ina.m = 0.089167
+ina.h = 0.527405
+ina.j = 0.527337
+ito.xto = 0.0024785
+ito.yto = 0.9999894999999999
+ikr.C_K1 = 0.1426775
+ikr.C_K2 = 0.280485
+ikr.O_K = 0.0052035
+ikr.I_K = 0.00017950000000000003
+ikur.a_ur = 0.10595349999999999
+ikur.i_ur = 0.952489
+icat.b = 0.001507
+icat.g = 0.9842110000000001
+iha.y = 0.434359
+ryanodine_receptors.P_open = 0.012001999999999999
+ca_conc_sr.Ca_SRuptake = 787.180644
+ca_conc_sr.Ca_SRrelease = 776.6058415
+ca_conc.Ca_i = 0.215237
+na_conc.Na_i = 15558.639856999998
+k_conc.K_i = 120499.57624000001
 
 
 [environment]
@@ -503,17 +502,17 @@ use ca_conc.Ca_subSL as Ca_subSL
 use membrane.V as V
 use na_conc.Na_i as Na_i
 
-k_NCX = 2.268e-16           # scaling factor
+k_NCX = 2.268e-16 # scaling factor
     in [pA/pF/uM^4]
-d_NCX = 1e-16              # denominator constant
+d_NCX = 1e-16 # denominator constant
     in [uM^-4]
-gamma = 0.5                 # energy barrier
+gamma = 0.5 # energy barrier
     in [1]
 
 i_NCX = k_NCX * (Na_i ^ 3 * Ca_o * exp(0.03743 * gamma * V) - Na_o ^ 3 * Ca_subSL * exp(0.03743 * (gamma - 1) * V)) / (1 + d_NCX * (Na_o ^ 3 * Ca_subSL + Na_i ^ 3 * Ca_o))
 
 
-# Na+/K+ ATPase - Bondarenko et al. (2004)
+# Na+/K+ ATPase - Korhonen et al. (2009)
 [inak]
 use membrane.V as V
 use membrane.FoRT as FoRT
@@ -539,7 +538,7 @@ i_NaK = i_NaK_max * f_NaK * (1 + (Km_Nai / Na_i) ^ n_NaK) ^ (-1) * (1 + (Km_Ko /
     in [pA/pF]
 
 
-# Ca2+ background current - Bondarenko et al. (2004)
+# Ca2+ background current - Korhonen et al. (2009)
 [icab]
 use membrane.V as V
 use ca_conc.E_Ca as E_Ca
@@ -549,7 +548,7 @@ g_Cab = 0.0008
 i_Cab = g_Cab * (V - E_Ca)
   in [pA/pF]
 
-# Background Na+ current - Bondarenko et al. (2004)
+# Background Na+ current - Korhonen et al. (2009)
 [inab]
 use membrane.V as V
 use na_conc.E_Na as E_Na
@@ -558,6 +557,7 @@ g_Nab = 0.0026
     in [mS/uF]
 i_Nab = g_Nab * (V - E_Na)
     in [pA/pF]
+
 
 # Sarcoplasmic reticulum - Korhonen et al. (2009)
 [ryanodine_receptors]
@@ -646,8 +646,8 @@ use membrane.Na_o as Na_o
 
 dot(Na_i) = -(ina.i_Na + inab.i_Nab + iha.i_haNa + 3 * incx.i_NCX + 3 * inak.i_NaK) * Acap * Cm / (V_myo * F * 1e-6)
     in [uM]
-# Na_i = 1e4
-#     in [uM]
+#Na_i = 1.5e4
+#    in [uM]
 E_Na = 1 / FoRT * log(Na_o / Na_i)
     in [mV]
 
@@ -661,8 +661,8 @@ use membrane.K_o as K_o
 
 dot(K_i) = -(iha.i_haK + ito.i_to + ik1.i_K1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * Acap * Cm / (V_myo * F * 1e-6)
     in [uM]
-#K_i = 1.3e5
-#   in [uM]
+#K_i = 1.2e5
+#    in [uM]
 E_K = 1 / FoRT * log(K_o / K_i)
     in [mV]
 
