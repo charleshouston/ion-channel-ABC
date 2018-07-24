@@ -44,14 +44,14 @@ class Channel(object):
 
         self.abc_plotting_results = None
 
-    def __call__(self, pars=None, experiment=None, continuous=False,
+    def __call__(self, pars=None, exp_num=None, continuous=False,
                  logvars=None):
         """Run channel experiments with passed parameters.
 
         Args:
             pars (Dict[str, float]): Mapping of parameter to value for
                 this simulation.
-            experiment (int): Specific experiment number to run and
+            exp_num (int): Specific experiment number to run and
                 return raw output.
             continuous (bool): Whether to run only at experimental points
                 for at finer resolution for plotting.
@@ -66,34 +66,32 @@ class Channel(object):
             logvars = self.logvars
 
         # Sanity check for experiment number.
-        if (experiment is not None and
-            (experiment < 0 or experiment > len(self.experiments)-1)):
+        if (exp_num is not None and
+            (exp_num < 0 or exp_num > len(self.experiments)-1)):
             return ValueError("Experiment number specified is not",
                               "within range of possible values.")
 
         self.set_params(pars)
 
-        sims = pd.DataFrame(columns = ['exp', 'x', 'y'])
+        all_results = pd.DataFrame({})
+
         n_x = None
         if continuous:
             n_x = 100
 
-        if experiment is None:
-            # Run experiments
-            i = 0
-            for e in self.experiments:
-                single_exp = e.run(self._sim, self.vvar, logvars, n_x=n_x)
-                single_exp['exp'] = i
-                sims = sims.append(single_exp)
-                i += 1
-            return sims
-        else:
-            # Run specific experiment and return raw output
-            e = self.experiments[experiment]
-            single_exp = e.run(self._sim, self.vvar, logvars,
-                               n_x=n_x, process=False)
-            single_exp['exp'] = experiment
-            return single_exp
+        for i, e in enumerate(self.experiments):
+            if exp_num is not None and i is not exp_num:
+                continue
+
+            results = e.run(self._sim, self.vvar, logvars, n_x=n_x)
+            results['exp'] = i
+            if i is 0:
+                all_results = results
+            else:
+                all_results = all_results.append(results)
+
+        return all_results
+
 
     def _generate_sim(self):
         """Creates class instance of Model and Simulation."""
