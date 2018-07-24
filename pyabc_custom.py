@@ -4,7 +4,7 @@ from io import BytesIO
 from pyabc import Model, ModelResult
 
 
-def simulate(channel, continuous=False, experiment=None,
+def simulate(channel, continuous=False, exp_num=None,
              logvars=None, **pars):
     """Wrapper to simulate the myokit model.
 
@@ -15,7 +15,7 @@ def simulate(channel, continuous=False, experiment=None,
         channel (str): Name of channel.
         continuous (bool): Whether to run only at experimental
             data points or finer x resolution.
-        experiment (int): Specific experiment number to run and
+        exp_num (int): Specific experiment number to run and
             return raw output rather than measured results.
         logvars (list(str)): List of variables to log in sim.
         pars (Dict[string, float]): Parameters as kwargs.
@@ -24,8 +24,8 @@ def simulate(channel, continuous=False, experiment=None,
         Dataframe with simulated output or empty if
         the simulation failed.
     """
-#    myokit_python = ("/tmp/chouston/miniconda3/envs" +
-#                     "/ion_channel_ABC/bin/python")
+    #myokit_python = ("/storage/hhecm/cellrotor/chouston/miniconda3/envs" +
+    #                 "/ion_channel_ABC/bin/python")
     myokit_python = ("/Users/charles/miniconda3/envs" +
                      "/ion_channel_ABC/bin/python")
     script = "run_channel.py"
@@ -33,9 +33,9 @@ def simulate(channel, continuous=False, experiment=None,
     args.append(channel)
     if continuous:
         args.append('--continuous')
-    if experiment is not None:
-        args.append('--experiment')
-        args.append(str(experiment))
+    if exp_num is not None:
+        args.append('--exp_num')
+        args.append(str(exp_num))
     if logvars is not None:
         args.append('--logvars')
         for var in logvars:
