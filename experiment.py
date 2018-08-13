@@ -34,7 +34,11 @@ class ExperimentData(object):
             raise ValueError('`err_type` must be either `SEM` or `STD`\n'
                              'Passed value: ' + err_type)
 
-        self.df = pd.DataFrame({'x': x, 'y': y})
+        if self.errs is None:
+            df_errs = [1.]*len(x)
+        else:
+            df_errs = self.errs
+        self.df = pd.DataFrame({'x': x, 'y': y, 'errs': df_errs})
 
 
 class ExperimentStimProtocol(object):
@@ -101,8 +105,10 @@ class ExperimentStimProtocol(object):
         # Defaults to one run TODO: not sure this is the best default
         if self.n_runs is None: 
             self.n_runs = 1
+
         if ind_var is not None:
             self.ind_var = ind_var
+
 
     def __call__(self, sim, vvar, logvars, n_x=None):
         """Runs the protocol in Myokit using the passed simulation model.
@@ -141,17 +147,18 @@ class ExperimentStimProtocol(object):
                 if isinstance(level, list):
                     levels.append(
                          [float(min(level)) +
-                          x*(float(max(level))-float(min(level))) /
-                          (n_x-1) for x in range(n_x)]
+                          x*(float(max(level))-float(min(level))) / (n_x-1)
+                          for x in range(n_x)]
                         )
                     n_runs = len(levels[-1])
                     ind_var = levels[-1]
                 else:
                     levels.append(level)
             if n_runs is None:
-                # TODO: make custom resolution work on these kind of sims
                 n_runs = 1
-                ind_var = self.ind_var
+                ind_var = [min(self.ind_var) +
+                           x*(max(self.ind_var)-min(self.ind_var)) / (n_x-1)
+                           for x in range(n_x)]
         else:
             n_runs = self.n_runs
             times = self.stim_times
@@ -165,7 +172,7 @@ class ExperimentStimProtocol(object):
             measure_index = self.measure_index
 
         # Run simulations
-        res_sim = []
+        full_results = []
         for run in range(n_runs):
             data = []
             sim.reset()
@@ -206,22 +213,18 @@ class ExperimentStimProtocol(object):
                     d0 = d0.extend(d)
                 data = d0
                 data['run'] = run
-            res_sim.append(data)
+            full_results.append(data)
 
         # Apply any post-processing function
         if self.post_fn is not None:
-            res_sim = self.post_fn(res_sim)
-        
-        out = pd.DataFrame({})
-        #if self.measure_fn is not None:
-        #    if len(res_sim) is 1:
-        #        res_sim = res_sim[0]
-        #    return pd.DataFrame({'x': list(ind_var), 'y': list(res_sim)})
+            full_results = self.post_fn(full_results, ind_var)
+        return pd.DataFrame({'x': ind_var, 'y': full_results})
+        #out = pd.DataFrame({})
+        #if len(full_results) == 1:
+        #    for stage in full_results:
+        #        out = out.append(pd.DataFrame(stage), ignore_index=True)
         #else:
-        for stage in res_sim:
-            out = out.append(pd.DataFrame(stage), ignore_index=True)
-        return out
-
+        #    out = out.append(pd.DataFrame(full_results), ignore_index=True)
 
 class Experiment(object):
     """Organises protocol and data related to a single experiment instance."""
@@ -249,21 +252,21 @@ class Experiment(object):
                 print("Could not set condition " + c_name
                       + " to value: " + str(c_val))
         return self.protocol(sim, vvar, logvars, n_x)
-
-    def eval_err(self, error_fn, sim=None, vvar=None, logvars=None):
-        """Evaluate difference between experimental and simulation output.
-
-        Args:
-            error_fn (Callable): Error function to use.
-            sim (Simulation): Simulation object.
-            vvar (string): Name of voltage variable in myokit model.
-            logvars (List[string]): List of variables in model to log.
-
-        Returns:
-            Loss value as float.
-        """
-        res = self.run(sim, vvar, logvars)
-        # Results y values will be None if simulation failed.
-        if res[1] is None:
-            return float("inf")
-        return error_fn(res[1], self.data)
+#
+#    def eval_err(self, error_fn, sim=None, vvar=None, logvars=None):
+#        """Evaluate difference between experimental and simulation output.
+#
+#        Args:
+#            error_fn (Callable): Error function to use.
+#            sim (Simulation): Simulation object.
+#            vvar (string): Name of voltage variable in myokit model.
+#            logvars (List[string]): List of variables in model to log.
+#
+#        Returns:
+#            Loss value as float.
+#        """
+#        res = self.run(sim, vvar, logvars)
+#        # Results y values will be None if simulation failed.
+#        if res[1] is None:
+#            return float("inf")
+#        return error_fn(res[1], self.data)

@@ -54,16 +54,18 @@ vdep = args[0].vdep
 # Collect parameters from input arguments.
 for p in ch.pars:
     parser.add_argument("-" + p, type=float)
-parser.add_argument('--continuous', action='store_true')
+parser.add_argument('--n_x', type=int, nargs='?', default=None,
+                    const=None)
 args = parser.parse_args()
 
 # Make dictionary of args to pass to simulation
 args_d = vars(args)
-continuous = args_d['continuous']
+
+# Resolution of independent variable
+n_x = args_d['n_x'] 
 
 # Delete all non-parameter arguments
 del args_d['channel']
-del args_d['continuous']
 del args_d['exp_num']
 del args_d['logvars']
 del args_d['vdep']
@@ -75,6 +77,6 @@ if vdep is not None:
                               pars=args_d)
 else:
     sim = ch(args_d, exp_num=exp_num, logvars=logvars,
-             continuous=continuous)
+             n_x=n_x)
 with pd.option_context('display.max_rows', -1, 'display.max_columns', -1):
     print sim.to_string(index=False)

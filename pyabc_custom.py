@@ -1,10 +1,12 @@
 import pandas as pd
 import subprocess
+import numpy as np
 from io import BytesIO
 from pyabc import Model, ModelResult
+from typing import List, Dict, Callable
 
 
-def simulate(channel, continuous=False, exp_num=None,
+def simulate(channel, n_x=None, exp_num=None,
              logvars=None, **pars):
     """Wrapper to simulate the myokit model.
 
@@ -13,8 +15,7 @@ def simulate(channel, continuous=False, exp_num=None,
 
     Args:
         channel (str): Name of channel.
-        continuous (bool): Whether to run only at experimental
-            data points or finer x resolution.
+        n_x (int): Resolution of independent variable.
         exp_num (int): Specific experiment number to run and
             return raw output rather than measured results.
         logvars (list(str)): List of variables to log in sim.
@@ -24,15 +25,16 @@ def simulate(channel, continuous=False, exp_num=None,
         Dataframe with simulated output or empty if
         the simulation failed.
     """
-    #myokit_python = ("/storage/hhecm/cellrotor/chouston/miniconda3/envs" +
-    #                 "/ion_channel_ABC/bin/python")
-    myokit_python = ("/Users/charles/miniconda3/envs" +
+    myokit_python = ("/scratch/cph211/miniconda3/envs" +
                      "/ion_channel_ABC/bin/python")
+    #myokit_python = ("/Users/charles/miniconda3/envs" +
+    #                 "/ion_channel_ABC/bin/python")
     script = "run_channel.py"
     args = [myokit_python, script]
     args.append(channel)
-    if continuous:
-        args.append('--continuous')
+    if n_x is not None:
+        args.append('--n_x')
+        args.append(str(n_x))
     if exp_num is not None:
         args.append('--exp_num')
         args.append(str(exp_num))
@@ -100,13 +102,26 @@ def voltage_dependence(channel, variables, **pars):
 
 class MyokitSimulation(Model):
 
-    def __init__(self, channel: str):
+    def __init__(self, channel: str, par_samples: List[Dict[str, float]] =None,
+                 measure_fn: Callable =lambda x: x):
         super().__init__()
         self.channel = channel
+        # List of samples to randomly chosen external from ABC sampling.
+        self.par_samples = par_samples
+        # How to convert results from `simulate` into model output.
+        # Default is identity function.
+        self.measure_fn = measure_fn
 
     def sample(self, pars):
+        # Add any parameters varying external to ABC fitting
+        if self.par_samples is not None:
+            full_pars = dict(np.random.choice(self.par_samples), **pars)
+        else:
+            full_pars = pars
+
+        # Run simulation
         try:
-            res = simulate(self.channel, **pars).to_dict()['y']
+            res = self.measure_fn(simulate(self.channel, **full_pars))
         except:
             res = {}
         return res
@@ -116,7 +131,7 @@ class MyokitSimulation(Model):
 
         # Run simulation and catch failed sims
         result = self.summary_statistics(pars, sum_stats_calculator)
-        if not result.sum_stats:
+        if len(result.sum_stats) == 0:
             result.accepted = False
             result.distance = float('inf')
             return result

@@ -44,7 +44,7 @@ class Channel(object):
 
         self.abc_plotting_results = None
 
-    def __call__(self, pars=None, exp_num=None, continuous=False,
+    def __call__(self, pars=None, exp_num=None, n_x=None,
                  logvars=None):
         """Run channel experiments with passed parameters.
 
@@ -53,8 +53,10 @@ class Channel(object):
                 this simulation.
             exp_num (int): Specific experiment number to run and
                 return raw output.
-            continuous (bool): Whether to run only at experimental points
-                for at finer resolution for plotting.
+            n_x (int): Independent variable resolution to run experiment.
+                Leaving as `None` will run the default resolution as defined
+                while giving a value will run equispaced simulations between
+                the max and min of the defined resolution.
             logvars (list(str)): List of variables to log in the simulation.
 
         Returns:
@@ -70,14 +72,8 @@ class Channel(object):
             (exp_num < 0 or exp_num > len(self.experiments)-1)):
             return ValueError("Experiment number specified is not",
                               "within range of possible values.")
-
         self.set_params(pars)
-
         all_results = pd.DataFrame({})
-
-        n_x = None
-        if continuous:
-            n_x = 100
 
         for i, e in enumerate(self.experiments):
             if exp_num is not None and i is not exp_num:
