@@ -502,14 +502,14 @@ use ca_conc.Ca_subSL as Ca_subSL
 use membrane.V as V
 use na_conc.Na_i as Na_i
 
-k_NCX = 2.268e-16 # scaling factor
+k_NCX = 2.268 # scaling factor
     in [pA/pF/uM^4]
 d_NCX = 1e-16 # denominator constant
     in [uM^-4]
 gamma = 0.5 # energy barrier
     in [1]
 
-i_NCX = k_NCX * (Na_i ^ 3 * Ca_o * exp(0.03743 * gamma * V) - Na_o ^ 3 * Ca_subSL * exp(0.03743 * (gamma - 1) * V)) / (1 + d_NCX * (Na_o ^ 3 * Ca_subSL + Na_i ^ 3 * Ca_o))
+i_NCX = k_NCX * 1e-16 * (Na_i ^ 3 * Ca_o * exp(0.03743 * gamma * V) - Na_o ^ 3 * Ca_subSL * exp(0.03743 * (gamma - 1) * V)) / (1 + d_NCX * (Na_o ^ 3 * Ca_subSL + Na_i ^ 3 * Ca_o))
 
 
 # Na+/K+ ATPase - Korhonen et al. (2009)
