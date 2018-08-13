@@ -34,13 +34,14 @@ iv_data = ExperimentData(x=iv_vsteps, y=iv_curr, N=iv_N, errs=iv_errs,
                          err_type='SEM')
 stim_times = [5000, 300, 500]
 stim_levels = [-75, iv_vsteps, -75]
-def min_icat(data):
-    return min(data[0]['icat.i_CaT'])
+def max_icat(data):
+    return max(data[0]['icat.i_CaT'],
+               key=lambda x: abs(x))
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                 measure_index=1, measure_fn=min_icat)
+                                 measure_index=1,
+                                 measure_fn=max_icat)
 nguyen_conditions = dict(Ca_o=5000,
                          T=295)
-
 iv_exp = Experiment(iv_prot, iv_data, nguyen_conditions)
 icat.add_experiment(iv_exp)
 
@@ -52,7 +53,7 @@ stim_times = [5000, 300, 500]
 stim_levels = [-75, act_vsteps, -75]
 def max_gcat(data):
     return max(data[0]['icat.G_CaT'])
-def normalise(sim_results):
+def normalise(sim_results, ind_var):
     cond_max = max(sim_results, key=abs)
     sim_results = [result / cond_max for result in sim_results]
     return sim_results
@@ -97,7 +98,7 @@ curr = [c / peak_curr for c in curr]
 trace_data = ExperimentData(x=time, y=curr)
 stim_times = [5000, 300]
 stim_levels = [-80, -20]
-def interpolate_align(data):
+def interpolate_align(data, time):
     import numpy as np
     simtime = data[0]['environment.time']
     simtime_min = min(simtime)
@@ -108,7 +109,7 @@ def interpolate_align(data):
     return np.interp(time, simtime, curr)
 trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=1,
-                                    measure_fn=interpolate_align,
+                                    post_fn=interpolate_align,
                                     ind_var=time)
 trace_exp = Experiment(trace_prot, trace_data, deng_conditions)
 icat.add_experiment(trace_exp)
