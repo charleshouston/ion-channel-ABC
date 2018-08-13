@@ -37,14 +37,15 @@ elif args.channel == 'ical':
 else:
     raise ValueError("Unrecognised channel.")
 
-measurements = pd.DataFrame(columns = ['exp', 'x', 'y'])
+measurements = pd.DataFrame(columns = ['exp', 'x', 'y', 'errs'])
 
 i = 0
 for exp in ch.experiments:
     data = exp.data.df
     data['exp'] = i
     i += 1
-    measurements = measurements.append(data)
+    measurements = measurements.append(data, sort=True)
 
 with pd.option_context('display.max_rows', -1, 'display.max_columns', 5):
     print measurements.to_string(index=False)
+

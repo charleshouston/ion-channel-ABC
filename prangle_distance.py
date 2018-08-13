@@ -114,13 +114,15 @@ class PrangleEpsilon(Epsilon):
 
 
 class PrangleDistance(DistanceFunction):
-    def __init__(self, exp_map: dict, alpha: float, delta: float =0.,
-                 adapt: bool =True):
+    def __init__(self, exp_map: dict, err_bars: dict =None, 
+                 adapt: bool =False, alpha: float =0.5, delta: float =0.5):
         """Initialisation.
 
         Args:
             exp_map: mapping from summary statistics to separate
                 experimental data sources.
+            err_bars: error bars for observed data points used to
+                weight between points within an individual experiment.
             alpha: tuning parameter for distance algorithm.
             delta: parameter to ensure bounded eccentricity of
                 algorithm.
@@ -128,19 +130,28 @@ class PrangleDistance(DistanceFunction):
         """
         super().__init__()
         self.exp = exp_map
+        self.errs = err_bars
+        self.adapt = adapt
         self.alpha = alpha
         self.delta = delta
-        self.adapt = adapt
         # need to store previous distances
-        self.w = [] # prangle distance weight based on MAD of ss
-        self.v = {} # normalisation weight from observation
+        self.w = [] # adaptive distance weight based on MAD of ss
+        self.v = {} # constant weights
 
     def __call__(self, x: dict, y: dict):
+        """Return distance.
+
+        Args:
+            x: mapping from arbitrary index to output from
+                simulation.
+            y: mapping from arbitrary index to observed
+                output.
+        """
         # make sure weights are initialized
         if not self.w:
             self._initialize_adaptive_weights(x.keys())
         if not self.v:
-            self._initialize_constant_weights(y)
+            self._initialize_constant_weights(y, self.errs)
 
         # calculate all distances up to this iteration
         distances = []
@@ -164,21 +175,32 @@ class PrangleDistance(DistanceFunction):
     def initialize(self, sample_from_prior: List[dict],
                    x_0: dict =None):
         # retrieve keys, and init weights with 1
-        self._initialize_adaptive_weights(sample_from_prior[0].keys())
+        if self.adapt:
+            self._initialize_adaptive_weights(
+                    sample_from_prior[0].keys())
         # initialize constant weights
         if x_0:
-            self._initialize_constant_weights(x_0)
+            self._initialize_constant_weights(x_0, self.errs)
 
     def _initialize_adaptive_weights(self, summary_statistics_keys):
         # init prangle weights with 1, and retrieve keys
         self.w.append({k: 1 for k in summary_statistics_keys})
 
-    def _initialize_constant_weights(self, x_0: dict):
-        # init experiment normalisation weights
+    def _initialize_constant_weights(self, x_0: dict, errs: dict):
+        """
+        Initialise the constant weights based from obs and err bars.
+
+        Args:
+            x_0: mapping from data points index to observed output.
+            errs: mapping from data points index to error bar in
+                publication. Note that this only changes the relative
+                weight for data point within an experiment.
+        """
         exp_N = self._count_experiments()
         exp_IQR = self._calculate_experiment_IQR(x_0)
+        exp_sdi = self._calculate_experiment_sdi(errs)
         for ss, exp_i in self.exp.items():
-            self.v[ss] = 1. / np.sqrt(exp_N[exp_i] * exp_IQR[exp_i])
+            self.v[ss] = 1. / (exp_sdi[ss] * np.sqrt(exp_N[exp_i] * exp_IQR[exp_i]))
         mean_weight = statistics.mean(list(self.v.values()))
         for key in self.v.keys():
             self.v[key] /= mean_weight
@@ -200,8 +222,31 @@ class PrangleDistance(DistanceFunction):
 
         exp_IQR = {}
         for k, l in exp_lists.items():
-            exp_IQR[k] = iqr(l)
+            weight = iqr(l)
+            if weight == 0:
+                # if `l` is a single value
+                weight = abs(l[0])
+            exp_IQR[k] = weight
         return exp_IQR
+
+    def _calculate_experiment_sdi(self, errs: dict):
+        exp_lists = {}
+        exp_sdi = {}
+        for k, e in errs.items():
+            if self.exp[k] not in exp_lists:
+                exp_lists[self.exp[k]] = []
+            if e is None:
+                weight = 1.0
+            else:
+                weight = e
+            exp_lists[self.exp[k]].append(weight)
+            exp_sdi[k] = weight
+
+        # Normalise between experiments
+        for k, weight in exp_sdi.items():
+            exp_sdi[k] = (exp_sdi[k] / sum(exp_lists[self.exp[k]]) *
+                          len(exp_lists[self.exp[k]]))
+        return exp_sdi
 
     def update(self, all_summary_statistics_list: List[dict],
                x_0: dict =None):
