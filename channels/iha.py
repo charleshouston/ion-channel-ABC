@@ -21,7 +21,8 @@ iha_params = {'k_yss1': (0, 100),
               'g_ha': (0, 0.1)}
 
 iha = Channel('iha', modelfile, iha_params,
-              vvar='membrane.V', logvars=['environment.time', 'iha.i_ha',
+              vvar='membrane.V', logvars=['environment.time',
+                                          'iha.i_ha',
                                           'iha.G_ha'])
 
 ### Exp 1 - IV curve.
@@ -33,7 +34,8 @@ stim_levels = [-40, -120, iv_vsteps]
 def max_curr(data):
     return max(data[0]['iha.i_ha'], key=abs)
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                 measure_index=2, measure_fn=max_curr)
+                                 measure_index=2,
+                                 measure_fn=max_curr)
 sartiani_conditions = dict(T=293,
                            Ko=25000,
                            Ki=120000,
@@ -87,8 +89,9 @@ def fit_mono_exp(data):
             np.seterr(**old_settings)
             return [float("inf"), float("inf")]
 
-def takesecond(data): return [d[1] for d in data]
-def normalise(data):
+def takesecond(data, ind_var):
+    return [d[1] for d in data]
+def normalise(data, ind_var):
     sim_results = [d[0] for d in data]
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]

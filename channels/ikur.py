@@ -95,7 +95,7 @@ stim_times = [5000, 100, 2500]
 stim_levels = [inact_vsteps, -40, 30]
 def max_ikur(data):
     return max(data[0]['ikur.G_Kur'])
-def normalise(sim_results):
+def normalise(sim_results, ind_var):
     cond_max = max(sim_results, key=abs)
     sim_results = [result / cond_max for result in sim_results]
     return sim_results

@@ -55,7 +55,7 @@ stim_times = [1000, 100, 500]
 stim_levels = [-80, act_vsteps, -80]
 def max_gcal(data):
     return max(data[0]['ical.G_CaL'])
-def normalise(sim_results):
+def normalise(sim_results, ind_var):
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]
     return sim_results
@@ -73,13 +73,6 @@ stim_times = [1000, 1000, 400]
 stim_levels = [-80, inact_vsteps, -20]
 def gcal_inact_max(data):
     return max(data[0]['ical.G_CaL'], key=abs)
-#    d = data[0]['ical.G_CaL']
-#    if d[1] - d[0] > 0:
-#        # Increasing -> find max
-#        return max(d)
-#    else:
-#        # Decreasing -> find min
-#        return min(d)
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=2,
                                     measure_fn=gcal_inact_max,

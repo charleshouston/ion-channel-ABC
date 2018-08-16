@@ -48,7 +48,7 @@ stim_times = [1000, 20, 100]
 stim_levels = [-120, act_vsteps, -120]
 def max_gna(data):
     return max(data[0]['ina.G_Na'])
-def normalise(sim_results):
+def normalise(sim_results, ind_var):
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]
     return sim_results
@@ -94,7 +94,7 @@ curr = [c / peak_curr for c in curr]
 trace_data = ExperimentData(x=time, y=curr)
 stim_times = [1000, 20]
 stim_levels = [-120, -20]
-def interpolate_align(data):
+def interpolate_align(data, time):
     import numpy as np
     simtime = data[0]['environment.time']
     simtime_min = min(simtime)
@@ -105,7 +105,7 @@ def interpolate_align(data):
     return np.interp(time, simtime, curr)
 trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=1,
-                                    measure_fn=interpolate_align,
+                                    post_fn=interpolate_align,
                                     ind_var=time)
 trace_exp = Experiment(trace_prot, trace_data, nakajima_conditions)
 ina.add_experiment(trace_exp)
