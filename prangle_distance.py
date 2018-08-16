@@ -235,7 +235,7 @@ class PrangleDistance(DistanceFunction):
         for k, e in errs.items():
             if self.exp[k] not in exp_lists:
                 exp_lists[self.exp[k]] = []
-            if e is None:
+            if np.isnan(e):
                 weight = 1.0
             else:
                 weight = e

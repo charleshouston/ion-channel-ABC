@@ -35,7 +35,7 @@ class ExperimentData(object):
                              'Passed value: ' + err_type)
 
         if self.errs is None:
-            df_errs = [1.]*len(x)
+            df_errs = [np.nan]*len(x)
         else:
             df_errs = self.errs
         self.df = pd.DataFrame({'x': x, 'y': y, 'errs': df_errs})
