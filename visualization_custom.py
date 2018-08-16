@@ -90,7 +90,7 @@ def plot_sim_results(history, channel, n_samples=10, obs=None,
     samples = pd.DataFrame()
 
     # Get posterior samples
-    post_df, post_w = history.get_distribution(m=0)
+    post_df, post_w = history.get_distribution(m=0, t=5)
     post_th = (post_df.sample(n=n_samples,
                               weights=post_w,
                               replace=True)
@@ -107,16 +107,17 @@ def plot_sim_results(history, channel, n_samples=10, obs=None,
         ax = plt.gca()
         data = kwargs.pop('data')
         exp = data['exp'].unique()[0]
-        plt.plot(measurements.loc[measurements['exp']==exp]['x'],
-                 measurements.loc[measurements['exp']==exp]['y'],
-                 label='obs',
-                 ls='None', marker='x', c='k')
+        plt.errorbar(measurements.loc[measurements['exp']==exp]['x'],
+                     measurements.loc[measurements['exp']==exp]['y'],
+                     yerr=measurements.loc[measurements['exp']==exp]['errs'],
+                     label='obs',
+                     ls='None', marker='x', c='k')
 
     grid = sns.FacetGrid(samples,
                          col='exp', sharex='col', sharey='col',
                          legend_out=True)
     grid = grid.map_dataframe(sns.lineplot, x='x', y='y',
-                              estimator=mean,
+                              estimator=np.mean,
                               err_style='band', ci='sd',
                               color='black')
 
