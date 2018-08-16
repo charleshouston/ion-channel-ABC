@@ -1,0 +1,14 @@
+<?xml version = '1.0'  encoding = 'ISO-8859-1'  standalone = 'yes' ?>
+<!-- PlotDigitizer data file: created on Wed Aug 15 14:05:26 BST 2018 -->
+<data>
+<image file='null' />
+<axesnames x='X'  y='Y' />
+<calibpoints minXaxisX='385.0' minXaxisY='930.0' maxXaxisX='1292.0' maxXaxisY='926.0' minYaxisX='249.0' minYaxisY='821.0' maxYaxisX='251.0' maxYaxisY='85.0' aX1='0.0' aX2='60.0' aY1='0.0' aY2='60.0' isXLog='false' isYLog='false' />
+<point n='0' x='385.0' y='667.0' dx='0.07672624944540374' dy='12.505602626942945' />
+<point n='1' x='535.0' y='706.0' dx='9.987978095579614' dy='9.272287669427037' />
+<point n='2' x='685.0' y='738.0' dx='19.901272085235192' dy='6.609631724650356' />
+<point n='3' x='837.0' y='762.0' dx='29.949201679906174' dy='4.598438454993236' />
+<point n='4' x='988.0' y='773.0' dx='39.93477296347846' dy='3.647400021571613' />
+<point n='5' x='1140.0' y='781.0' dx='49.9873703147697' dy='2.940570209604168' />
+<point n='6' x='1292.0' y='786.0' dx='60.04084287042722' dy='2.4783085459535243' />
+</data>
