@@ -32,8 +32,9 @@ ikr = Channel("ikr", modelfile, ikr_params,
                        'ikr.G_Kr'])
 
 ### Exp 1 - IV curve.
-iv_vsteps, iv_curr, _, _ = data.IV_Toyoda()
-iv_data = ExperimentData(x=iv_vsteps, y=iv_curr)
+iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Toyoda()
+iv_data = ExperimentData(x=iv_vsteps, y=iv_curr,
+                         errs=iv_errs)
 stim_times = [1000, 1000, 100]
 stim_levels = [-50, iv_vsteps, -50]
 def tail_curr(data):
@@ -49,13 +50,14 @@ iv_exp = Experiment(iv_prot, iv_data, toyoda_conditions1)
 ikr.add_experiment(iv_exp)
 
 ### Exp 2 - Activation curve.
-act_vsteps, act_cond, _, _ = data.Act_Toyoda()
-act_data = ExperimentData(x=act_vsteps, y=act_cond)
+act_vsteps, act_cond, act_errs, act_N = data.Act_Toyoda()
+act_data = ExperimentData(x=act_vsteps, y=act_cond,
+                          errs=act_errs)
 stim_times = [1000, 1000, 500]
 stim_levels = [-50, act_vsteps, -50]
 def max_gkr(data):
-    return max(data[0]['ikr.G_Kr'])
-def normalise(sim_results):
+    return max(data[0]['ikr.G_Kr'], key=abs)
+def normalise(sim_results, ind_var):
     max_cond = abs(max(sim_results, key=abs))
     sim_results = [result / max_cond for result in sim_results]
     return sim_results
@@ -66,8 +68,9 @@ act_exp = Experiment(act_prot, act_data, toyoda_conditions1)
 ikr.add_experiment(act_exp)
 
 ### Exp 3 - Activation kinetics.
-akin_vsteps, akin_tau, _, _ = data.ActKin_Toyoda()
-akin_data = ExperimentData(x=akin_vsteps, y=akin_tau)
+akin_vsteps, akin_tau, akin_errs, akin_N = data.ActKin_Toyoda()
+akin_data = ExperimentData(x=akin_vsteps, y=akin_tau,
+                           errs=akin_errs)
 intervals = np.arange(25, 975+50, 50)
 stim_times = []
 stim_levels = []
@@ -81,7 +84,7 @@ def measure_maxes(data):
     for d in data:
         maxes.append(max(d['ikr.G_Kr']))
     return maxes
-def fit_single_exp(data, xvar=intervals):
+def fit_single_exp(data, ind_var, xvar=intervals):
     import numpy as np
     import scipy.optimize as so
     import warnings
@@ -104,12 +107,15 @@ akin_exp = Experiment(akin_prot, akin_data, toyoda_conditions1)
 #ikr.add_experiment(akin_exp)
 
 ### Exp 4, 5, 6 - Deactivation kinetics (fast and slow).
-deact_vsteps, deact_tauf, _, _ = data.DeactKinFast_Toyoda()
-_, deact_taus, _, _ = data.DeactKinSlow_Toyoda()
-_, deact_amp, _, _ = data.DeactKinRelAmp_Toyoda()
-deact_f_data = ExperimentData(x=deact_vsteps, y=deact_tauf)
-deact_s_data = ExperimentData(x=deact_vsteps, y=deact_taus)
-deact_amp_data = ExperimentData(x=deact_vsteps, y=deact_amp)
+deact_vsteps, deact_tauf, deactfast_errs, _ = data.DeactKinFast_Toyoda()
+_, deact_taus, deactslow_errs, _ = data.DeactKinSlow_Toyoda()
+_, deact_amp, deactamp_errs, _ = data.DeactKinRelAmp_Toyoda()
+deact_f_data = ExperimentData(x=deact_vsteps, y=deact_tauf,
+                              errs=deactfast_errs)
+deact_s_data = ExperimentData(x=deact_vsteps, y=deact_taus,
+                              errs=deactslow_errs)
+deact_amp_data = ExperimentData(x=deact_vsteps, y=deact_amp,
+                                errs=deactamp_errs)
 stim_times = [1000, 1000, 1000]
 stim_levels = [-50, 20, deact_vsteps]
 def double_exp_decay_fit(data):
@@ -158,9 +164,9 @@ def double_exp_decay_fit(data):
         except:
             np.seterr(**old_settings)
             return (float("inf"), float("inf"), float("inf"))
-def takefirst(data): return [d[0] for d in data]
-def takesecond(data): return [d[1] for d in data]
-def takethird(data): return [d[2] for d in data]
+def takefirst(data, ind_var): return [d[0] for d in data]
+def takesecond(data, ind_var): return [d[1] for d in data]
+def takethird(data, ind_var): return [d[2] for d in data]
 
 deact_f_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                       measure_index=2,
@@ -183,8 +189,9 @@ deact_amp_exp = Experiment(deact_amp_prot, deact_amp_data,
 #ikr.add_experiment(deact_amp_exp)
 
 ### Exp 7 - Kinetic properties of recovery from inactivation
-inact_vsteps, inact_tau, _, _, = data.InactKin_Toyoda()
-inact_kin_data = ExperimentData(x=inact_vsteps, y=inact_tau)
+inact_vsteps, inact_tau, inactkin_errs, _, = data.InactKin_Toyoda()
+inact_kin_data = ExperimentData(x=inact_vsteps, y=inact_tau,
+                                errs=inactkin_errs)
 stim_times = [1000, 1000, 1000]
 stim_levels = [-50, 20, inact_vsteps]
 def fit_exp_rising_phase(data):
