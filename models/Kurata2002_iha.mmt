@@ -1,0 +1,82 @@
+[[model]]
+name: Kurata 2002 hyperpolarisation activated non-selective cation current
+author: Charles Houston
+
+# Initial values
+membrane.V = -67
+iha.y = 0.01
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -iha.i_ha
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 25000 # modified Tyrode soln from Sartiani
+    in [uM]
+Ki = 120000
+    in [uM]
+Nai = 5400
+    in [uM]
+Nao = 140000
+    in [uM]
+FoRT = F / (R * T)
+
+[iha]
+use membrane.V as V
+use membrane.FoRT as FoRT
+use membrane.Nao as Nao
+use membrane.Nai as Nai
+use membrane.Ko as Ko
+use membrane.Ki as Ki
+
+g_ha = 0.021
+    in [mS/uF]
+
+dot(y) = (y_ss - y) / tau_y
+    in [1]
+
+y_ss = 1 / (1 + exp((V + p1) / p2))
+    in [1]
+p1 = 64
+    in [mV]
+p2 = 13.5
+    in [mV]
+
+tau_y = p3 * (exp(-(V + p4)/p5) + exp((V - p6)/p7))
+    in [ms]
+p3 = 0.71665
+    in [ms]
+p4 = 386.9
+    in [mV]
+p5 = 45.3
+    in [mV]
+p6 = 73.08
+    in [mV]
+p7 = 19.23
+    in [mV]
+
+E_Na = 1 / FoRT * log(Nao / Nai)
+    in [mV]
+E_K = 1 / FoRT * log(Ko / Ki)
+    in [mV]
+
+G_ha = g_ha * y^2
+    in [mS/uF]
+i_haNa = G_ha * k_i_haNa * (V - E_Na)
+    in [pA/pF]
+i_haK = G_ha * (1-k_i_haNa) * (V - E_K)
+    in [pA/pF]
+
+k_i_haNa = 0.2
+    in [1]
+
+i_ha = i_haNa + i_haK
+    in [pA/pF]
