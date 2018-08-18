@@ -186,7 +186,7 @@ class PrangleDistance(DistanceFunction):
         # init prangle weights with 1, and retrieve keys
         self.w.append({k: 1 for k in summary_statistics_keys})
 
-    def _initialize_constant_weights(self, x_0: dict, errs: dict):
+    def _initialize_constant_weights(self, x_0: dict, errs: dict =None):
         """
         Initialise the constant weights based from obs and err bars.
 
@@ -198,12 +198,18 @@ class PrangleDistance(DistanceFunction):
         """
         exp_N = self._count_experiments()
         exp_IQR = self._calculate_experiment_IQR(x_0)
-        exp_sdi = self._calculate_experiment_sdi(errs)
+
+        if errs is None:
+            exp_sdi = [1.0] * len(self.exp.items())
+        else:
+            exp_sdi = self._calculate_experiment_sdi(errs)
+
         for ss, exp_i in self.exp.items():
             self.v[ss] = 1. / (exp_sdi[ss] * np.sqrt(exp_N[exp_i] * exp_IQR[exp_i]))
         mean_weight = statistics.mean(list(self.v.values()))
         for key in self.v.keys():
             self.v[key] /= mean_weight
+        df_logger.debug('initialize constant weights: {}'.format(self.v))
 
     def _count_experiments(self):
         exp_N = {}
@@ -298,5 +304,6 @@ class PrangleDistance(DistanceFunction):
             self.w[-1][key] /= mean_weight
 
         # logging
-        df_logger.debug("update distance weights = {}".format(self.w[-1]))
+        df_logger.debug('update adaptive distance weights = {}'
+                        .format(self.w[-1]))
         return True
