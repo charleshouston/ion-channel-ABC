@@ -1,0 +1,78 @@
+[[model]]
+name: Majumder 2016 rapid delayed rectifier potassium channel
+author: Charles Houston
+
+# Initial values
+membrane.V = -67
+ikr.X = 0.022974096706871682
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikr.i_Kr
+    in [mV]
+K_o = 5400
+    in [uM]
+K_i = 143720
+    in [uM]
+Na_o = 140000
+    in [uM]
+Na_i = 14237.1
+    in [uM]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 305
+    in [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[ikr]
+use membrane.V as V
+use membrane.FoRT as FoRT
+use membrane.K_o as K_o
+use membrane.K_i as K_i
+
+g_Kr = 0.0005228
+    in [mS/uF]
+G_Kr = g_Kr * sqrt(K_o/5.4) * X * R
+    in [mS/uF]
+E_K = 1 / FoRT * log(K_o/K_i)
+    in [mV]
+i_Kr = G_Kr * (V - E_K)
+    in [pA/pF]
+
+dot(X) = (X_ss - X) / tau_X
+    in [1]
+
+X_ss = 1.0/(1.0+exp(-(V+p1)/p2))
+    in [mV]
+p1 = 12.5
+    in [mV]
+p2 = 10.0
+    in [mV]
+
+tau_X = 1.0/((p3*(V+p4)/(1.0-exp(p5*(V+p4))))+(p6*(V+p7)/(exp(p8*(V+p7))-1.0)))
+    in [ms]
+p3 = 0.00138
+    in [1/ms]
+p4 = 14.2
+    in [mV]
+p5 = -0.123
+    in [1]
+p6 = 0.00061
+    in [1/ms]
+p7 = 38.9
+    in [mV]
+p8 = 0.145
+    in [1]
+
+R = 1.0/(1.0+exp((V+q1)/q2))
+    in [mV]
+q1 = 9.0
+    in [mV]
+q2 = 22.4
+    in [mV]

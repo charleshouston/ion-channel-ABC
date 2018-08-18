@@ -7,29 +7,27 @@ import numpy as np
 from functools import partial
 
 
-modelfile = 'models/Korhonen2009_iKr.mmt'
+modelfile = 'models/Majumder2016_iKr.mmt'
 
-ikr_params = {'g_Kr': (0, 1),
-              'p1': (0, 0.1),
-              'p2': (0, 0.1),
+ikr_params = {'g_Kr': (0, 0.001),
+              'p1': (0, 100),
+              'p2': (0, 100),
               'p3': (0, 0.1),
-              'p4': (0, 0.1),
-              'p5': (-0.1, 0.1),
-              'p6': (0, 0.1),
-              'q1': (0, 0.1),
-              'q2': (-0.1, 0),
-              'q3': (0, 0.1),
-              'q4': (-0.1, 0),
-              'q5': (0, 0.01),
-              'q6': (-0.1, 0),
-              'k_f': (0, 0.5),
-              'k_b': (0, 0.1)}
+              'p4': (0, 100),
+              'p5': (-1.0, 0),
+              'p6': (0, 0.001),
+              'p7': (0, 100),
+              'p8': (0, 1.0),
+              'q1': (0, 100),
+              'q2': (0, 100)}
 
-ikr = Channel("ikr", modelfile, ikr_params,
+ikr = Channel('ikr', modelfile,
+              ikr_params,
               vvar='membrane.V',
               logvars=['environment.time',
                        'ikr.i_Kr',
-                       'ikr.G_Kr'])
+                       'ikr.G_Kr'
+                       ])
 
 ### Exp 1 - IV curve.
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Toyoda()
@@ -40,7 +38,8 @@ stim_levels = [-50, iv_vsteps, -50]
 def tail_curr(data):
     return data[0]['ikr.i_Kr'][-1]
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                 measure_index=1, measure_fn=tail_curr)
+                                 measure_index=1,
+                                 measure_fn=tail_curr)
 toyoda_conditions1 = dict(K_o=5400,
                           K_i=130000,
                           Na_o=140330,
