@@ -90,7 +90,7 @@ def plot_sim_results(history, channel, n_samples=10, obs=None,
     samples = pd.DataFrame()
 
     # Get posterior samples
-    post_df, post_w = history.get_distribution(m=0, t=5)
+    post_df, post_w = history.get_distribution(m=0)
     post_th = (post_df.sample(n=n_samples,
                               weights=post_w,
                               replace=True)
