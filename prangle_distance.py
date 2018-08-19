@@ -114,8 +114,13 @@ class PrangleEpsilon(Epsilon):
 
 
 class PrangleDistance(DistanceFunction):
-    def __init__(self, exp_map: dict, err_bars: dict =None, 
-                 adapt: bool =False, alpha: float =0.5, delta: float =0.5):
+    def __init__(self,
+                 exp_map: dict,
+                 err_bars: dict =None,
+                 err_th: float =None,
+                 adapt: bool =False,
+                 alpha: float =0.5,
+                 delta: float =0.5):
         """Initialisation.
 
         Args:
@@ -123,6 +128,8 @@ class PrangleDistance(DistanceFunction):
                 experimental data sources.
             err_bars: error bars for observed data points used to
                 weight between points within an individual experiment.
+            err_th: upper threshold of included errors in weighting, to
+                avoid huge overweighting of 'certain' points.
             alpha: tuning parameter for distance algorithm.
             delta: parameter to ensure bounded eccentricity of
                 algorithm.
@@ -131,9 +138,11 @@ class PrangleDistance(DistanceFunction):
         super().__init__()
         self.exp = exp_map
         self.errs = err_bars
+        self.err_th = err_th
         self.adapt = adapt
         self.alpha = alpha
         self.delta = delta
+
         # need to store previous distances
         self.w = [] # adaptive distance weight based on MAD of ss
         self.v = {} # constant weights
@@ -151,7 +160,9 @@ class PrangleDistance(DistanceFunction):
         if not self.w:
             self._initialize_adaptive_weights(x.keys())
         if not self.v:
-            self._initialize_constant_weights(y, self.errs)
+            self._initialize_constant_weights(y,
+                                              self.errs,
+                                              self.err_th)
 
         # calculate all distances up to this iteration
         distances = []
@@ -180,13 +191,16 @@ class PrangleDistance(DistanceFunction):
                     sample_from_prior[0].keys())
         # initialize constant weights
         if x_0:
-            self._initialize_constant_weights(x_0, self.errs)
+            self._initialize_constant_weights(x_0, self.errs,
+                                              self.err_th)
 
     def _initialize_adaptive_weights(self, summary_statistics_keys):
         # init prangle weights with 1, and retrieve keys
         self.w.append({k: 1 for k in summary_statistics_keys})
 
-    def _initialize_constant_weights(self, x_0: dict, errs: dict =None):
+    def _initialize_constant_weights(self, x_0: dict,
+                                     errs: dict =None,
+                                     err_th: float =None):
         """
         Initialise the constant weights based from obs and err bars.
 
@@ -202,10 +216,13 @@ class PrangleDistance(DistanceFunction):
         if errs is None:
             exp_sdi = [1.0] * len(self.exp.items())
         else:
-            exp_sdi = self._calculate_experiment_sdi(errs)
+            if err_th is None:
+                raise ValueError('err_th value must be supplied with errs')
+            exp_sdi = self._calculate_experiment_sdi(errs, err_th, exp_IQR)
 
         for ss, exp_i in self.exp.items():
             self.v[ss] = 1. / (exp_sdi[ss] * np.sqrt(exp_N[exp_i] * exp_IQR[exp_i]))
+
         mean_weight = statistics.mean(list(self.v.values()))
         for key in self.v.keys():
             self.v[key] /= mean_weight
@@ -235,7 +252,10 @@ class PrangleDistance(DistanceFunction):
             exp_IQR[k] = weight
         return exp_IQR
 
-    def _calculate_experiment_sdi(self, errs: dict):
+    def _calculate_experiment_sdi(self,
+                                  errs: dict,
+                                  err_th: float,
+                                  exp_IQR: dict):
         exp_lists = {}
         exp_sdi = {}
         for k, e in errs.items():
@@ -244,7 +264,11 @@ class PrangleDistance(DistanceFunction):
             if np.isnan(e):
                 weight = 1.0
             else:
-                weight = e
+                iqr = exp_IQR[self.exp[k]]
+                th = err_th * iqr # error threshold given as % of exp IQR
+                weight = e/th
+                if weight < 1.0:
+                    weight = 1.0
             exp_lists[self.exp[k]].append(weight)
             exp_sdi[k] = weight
 
@@ -252,6 +276,7 @@ class PrangleDistance(DistanceFunction):
         for k, weight in exp_sdi.items():
             exp_sdi[k] = (exp_sdi[k] / sum(exp_lists[self.exp[k]]) *
                           len(exp_lists[self.exp[k]]))
+        df_logger.debug('initialize sdi weights: {}'.format(exp_sdi))
         return exp_sdi
 
     def update(self, all_summary_statistics_list: List[dict],
