@@ -97,7 +97,6 @@ def plot_sim_results(history, channel, n_samples=10, obs=None,
                .to_dict(orient='records'))
     for i, th in enumerate(post_th):
         output = simulate(channel, n_x=n_x, **th)
-        #output['sample'] = i
         output['distribution'] = 'post'
         samples = samples.append(output, ignore_index=True)
 

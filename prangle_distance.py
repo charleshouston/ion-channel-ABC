@@ -175,7 +175,7 @@ class PrangleDistance(DistanceFunction):
                                     * (x[key] - y[key])), 2)
                             for key in w.keys()),
                         1 / 2))
-            except RuntimeWarning:
+            except:
                 return [float('inf')] * len(self.w)
         return distances
 
