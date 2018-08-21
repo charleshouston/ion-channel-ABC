@@ -228,7 +228,8 @@ class IonChannelModel(Model):
         for i, exp in enumerate(self.experiments):
             data = exp.data.df
             data['exp'] = i
-            measurements = measurements.append(data, sort=True)
+            measurements = measurements.append(data, ignore_index=True,
+                                               sort=True)
         return measurements
 
 
