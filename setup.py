@@ -10,7 +10,7 @@ with open('LICENSE') as f:
     license = f.read()
 
 setup(
-    name='ion-channel-ABC',
+    name='ionchannelABC',
     version='0.1.0',
     description='Approximate Bayesian computation for ion channel models',
     long_description=readme,
