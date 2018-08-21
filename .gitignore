@@ -47,6 +47,9 @@ coverage.xml
 *.mo
 *.pot
 
+# Mac files
+*.DS_Store
+
 # IPython notebooks
 *.ipynb_checkpoints
 
