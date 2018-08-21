@@ -9,7 +9,7 @@ from functools import partial
 
 modelfile = 'models/Majumder2016_iKr.mmt'
 
-ikr_params = {'g_Kr': (0, 0.001),
+ikr_params = {'g_Kr': (0, 0.01),
               'p1': (0, 100),
               'p2': (0, 100),
               'p3': (0, 0.1),
@@ -103,7 +103,7 @@ akin_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_fn=measure_maxes,
                                    post_fn=partial(map, fit_single_exp))
 akin_exp = Experiment(akin_prot, akin_data, toyoda_conditions1)
-#ikr.add_experiment(akin_exp)
+ikr.add_experiment(akin_exp)
 
 ### Exp 4, 5, 6 - Deactivation kinetics (fast and slow).
 deact_vsteps, deact_tauf, deactfast_errs, _ = data.DeactKinFast_Toyoda()
@@ -245,4 +245,4 @@ inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_fn=max_gkr,
                                     post_fn=normalise)
 inact_exp = Experiment(inact_prot, inact_data, toyoda_conditions2)
-ikr.add_experiment(inact_exp)
+#ikr.add_experiment(inact_exp)

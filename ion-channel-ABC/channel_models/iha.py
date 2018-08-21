@@ -57,21 +57,20 @@ def fit_mono_exp(data):
     import scipy.optimize as so
     import warnings
     # Exclude initial rising phase of current
-    #curr = data[0]['iha.i_ha']
-    #curr_diff = np.diff(curr)
-    #index = 0
-    #if curr_diff[0] > 0:
-    #    turn_point = np.argwhere(curr_diff < 0)
-    #else:
-    #    turn_point = np.argwhere(curr_diff > 0)
-    #if turn_point.size > 0:
-    #    index = turn_point[0][0]+1
-    #else:
-    #    index = -1
-    #curr = curr[:index]
-    #time = data[0]['environment.time'][:index]
     curr = data[0]['iha.i_ha']
-    time = data[0]['environment.time']
+    curr_diff = np.diff(curr)
+    index = 0
+    if curr_diff[0] > 0:
+        turn_point = np.argwhere(curr_diff < 0)
+    else:
+        turn_point = np.argwhere(curr_diff > 0)
+    if turn_point.size > 0:
+        index = turn_point[0][0]+1
+    else:
+        index = -1
+    curr = curr[:index]
+    time = data[0]['environment.time'][:index]
+    curr = data[0]['iha.i_ha'][:index]
     t0 = time[0]
     time = [(t - t0)/1000 for t in time] # Units in seconds.
 
