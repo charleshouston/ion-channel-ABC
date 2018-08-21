@@ -3,6 +3,9 @@ from pyabc.acceptor import SimpleAcceptor, accept_use_complete_history
 from pyabc.model import Model
 from pyabc.transition.multivariatenormal import MultivariateNormalTransition
 
+from experiment import Experiment
+import myokit
+
 import scipy.stats as stats
 import numpy as np
 import pandas as pd
@@ -42,10 +45,9 @@ class EfficientMultivariateNormalTransition(MultivariateNormalTransition):
             return pd.DataFrame(perturbed)
 
 
-
 class IonChannelModel(Model):
     """
-    Interface to run external simulations in myokit.
+    Pyabc model to run myokit simulations for ion channel.
 
     Parameters
     ----------
@@ -53,11 +55,14 @@ class IonChannelModel(Model):
     channel: str
         Shortcode name of channel to simulate.
 
-    myokit_python_root: str
-        Location of python 2 environment where myokit is installed.
+    modelfile: str
+        Location myokit mmt file defining model formulation.
 
-    wrapper_script: str
-        Location of wrapper script for running channel in python 2.
+    vvar: str
+        Name of voltage variable in `modelfile`.
+
+    logvars: List[str]
+        Variables to log during simulation runs.
 
     external_par_samples: List[Dict[str, float]]
         List of dictionaries of parameters to randomly choose external to the
@@ -67,87 +72,158 @@ class IonChannelModel(Model):
 
     def __init__(self,
                  channel: str,
-                 myokit_python_root: str,
-                 wrapper_script: str,
+                 modelfile: str,
+                 vvar: str,
+                 logvars: List[str]=myokit.LOG_ALL,
                  external_par_samples: List[Dict[str, float]]=None):
+
+        self.channel = channel
         self.external_par_samples = external_par_samples
-        self.simulate_args = [myokit_python_root, wrapper_script, channel]
+        self.modelfile = modelfile
+
+        self.vvar = vvar
+        self.logvars = logvars
+
+        self._sim = None
+        self.experiments = []
+
         super().__init__(name = channel+"_model")
 
     def sample(self,
-               pars: Dict[str, float]) -> pd.DataFrame:
+               pars: Dict[str, float],
+               n_x: int=None,
+               exp_num: int=None,
+               logvars: List[str]=myokit.LOG_ALL) -> pd.DataFrame:
+
         if self.external_par_samples is not None:
             full_pars = dict(np.random.choice(self.external_par_samples),
                              **pars)
         else:
             full_pars = pars
 
-        # Run simulation
+        # Run myokit simulation and return empty dataframe if failure.
         try:
-            res = self._simulate(**full_pars)
+            results = self._simulate(n_x, **full_pars)
         except:
-            res = pd.DataFrame({})
-        return res
+            results = pd.DataFrame({})
+        return results
 
     def _simulate(self,
                   n_x: int=None,
                   exp_num: int=None,
-                  logvars: List[str]=None,
+                  logvars: List[str]=myokit.LOG_ALL,
                   **pars) -> pd.DataFrame:
         """
-        Wrapper to simulate a model in myokit using Python 2.
-
-        Simulates in a subprocess python 2 by passing parameters as args
-        to another wrapper script.
+        Simulate model in myokit.
 
         Parameters
         ----------
 
         n_x: int
-            Resolution of independent variable to simulate at.
+            Resolution of independent variable to simulate. If `None` uses the
+            default resolution of the observed data defined by the experiment.
+
         exp_num: int
             Number of specific experiment to run on its own.
+
         logvars: List[str]
-            List of variables to log in simulations.
+            List of variables to log from simulation.
+
         pars: Dict[str, float]
-            Parameters as kwargs.
+            Model parameters as separate kwargs.
 
         Returns
         -------
-        
+
         Pandas dataframe with simulated output.
 
         Errors
         ------
 
-        Throws a ValueError if the simulation fails.
+        Throws a RuntimeError if the simulation fails.
+        Throws a ValueError if exp_num is outside range of experiments.
         """
-        args = self.simulate_args
-        if n_x is not None:
-            args.extend(['--n_x', str(n_x)])
-        if exp_num is not None:
-            args.extend(['--exp_num', str(exp_num)])
-        if logvars is not None:
-            args.append('--logvars')
-            args.extend([var for var in logvars])
-        for p, v in pars.items():
-            args.extend(['-'+str(p), str(v)])
 
-        # Run simulation in subprocess
-        result = subprocess.run(args, stdout=subprocess.PIPE)
-        if len(result.stdout) > 0:
-            df = pd.read_table(io.BytesIO(result.stdout),
-                               delim_whitespace=True,
-                               header=0,
-                               index_col=False)
-            return df
+        if logvars is None:
+            logvars = self.logvars
+
+        # Sanity check for experiment number
+        if (exp_num is not None and
+                (exp_num < 0 or exp_num > len(self.experiments)-1)):
+            raise ValueError("Experiment number is outside range.")
+
+        self._set_channel_parameters(**pars)
+        all_results = pd.DataFrame({})
+
+        for i, e in enumerate(self.experiments):
+            if exp_num is not None and i is not exp_num:
+                continue
+
+            try:
+                results = e.run(self._sim, self.vvar, logvars, n_x=n_x)
+            except:
+                raise RuntimeError("Failed simulation.")
+
+            results['exp'] = i
+
+            if i is 0:
+                all_results = results
+            else:
+                all_results = all_results.append(results)
+
+        return all_results
+
+    def _set_channel_parameters(self, **pars):
+        """
+        Set parameters of simulation model.
+        """
+
+        # Make sure a myokit simulation exists
+        if self._sim is None:
+            self._build_simulation()
         else:
-            raise ValueError("Failed simulation.")
-        
+            self._sim.reset()
+
+        # Set parameters
+        for name, value in pars.items():
+            try:
+                if value is not None:
+                    if '.' not in name:
+                        self._sim.set_constant(
+                                self.channel+'.'+name, value)
+                    else:
+                        self._sim.set_constant(name, value)
+            except:
+                raise ValueError('Could not set parameter {0} to {1}'
+                                 .format(name, value))
+
+    def _build_simulation(self):
+        """
+        Creates a class instance of myokit.Model and myokit.Simulation.
+        """
+        m, _, _ = myokit.load(self.modelfile)
+        try:
+            v = m.get(self.vvar)
+        except:
+            raise ValueError('Model does not have vvar: {}'
+                             .format(self.vvar))
+        if v.is_state():
+            v.demote()
+        v.set_rhs(0)
+        v.set_binding(None)
+        self._sim = myokit.Simulation(m)
+
+    def add_experiments(self,
+                        experiments: Union[Experiment, List[Experiment]]):
+        """
+        Add Experiment object to be run when model is sampled.
+        """
+        self.experiments.extend(experiments)
+
 
 class IonChannelAcceptor(SimpleAcceptor):
     """
-    Identical to SimpleAcceptor other than uses complete history.
+    Identical to pyabc.acceptor.SimpleAcceptor other than uses complete history.
     """
     def __init__(self):
         fun = accept_use_complete_history
@@ -157,13 +233,14 @@ class IonChannelAcceptor(SimpleAcceptor):
 class IonChannelDistance(PNormDistance):
     """
     Distance function to automatically set weights for a given ion channel.
-   
+
     Reduces weighting between separate experimental data sets according
     to number of data points, scale of experiment y-axis, and error bars
     in reported values.
 
-    Calling is identical to PNormDistance, other than it checks whether
-    the simulated input is empty, in which case it returns np.inf.
+    Calling is identical to pyabc.distance_functions.PNormDistance, other than
+    it checks whether the simulated input is empty, in which case it returns
+    np.inf.
 
     Parameters
     ----------
@@ -190,7 +267,7 @@ class IonChannelDistance(PNormDistance):
                  err_th: float=0.0):
 
         data_by_exp = self._group_data_by_exp(obs, exp_map)
-        
+
         N_by_exp = {k: len(l) for k, l in data_by_exp.items()}
         IQR_by_exp = self._calculate_experiment_IQR(data_by_exp)
 
@@ -210,7 +287,7 @@ class IonChannelDistance(PNormDistance):
         mean_weight = np.mean(list(w.values()))
         for key in w.keys():
             w[key] /= mean_weight
-        
+
         abclogger.debug('ion channel weights: {}'.format(w))
 
         # now initialize PNormDistance
