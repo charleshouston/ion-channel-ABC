@@ -310,7 +310,8 @@ class IonChannelDistance(PNormDistance):
                  x: dict,
                  y: dict) -> float:
         # x is the simulated output
-        if len(x) is 0:
+        if (len(x) is 0 or
+            any(np.isinf(xi) for xi in x.values())):
             return np.inf
         return super().__call__(t, x, y)
 
