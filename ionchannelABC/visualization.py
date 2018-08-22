@@ -73,13 +73,13 @@ def plot_sim_results(df: pd.DataFrame,
                        col='exp', kind='line',
                        data=samples,
                        facet_kws={'sharex': 'col',
-                                  'sharey': 'col',
-                                  'color': 'black'})
+                                  'sharey': 'col'})
 
     # Format lines in all plots
     for ax in grid.axes.flatten():
         for l in ax.lines:
             l.set_linestyle('--')
+            l.set_color('k')
 
     if obs is not None:
         grid = (grid.map_dataframe(measured_plot, measurements=obs)
