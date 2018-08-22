@@ -106,6 +106,7 @@ class ExperimentStimProtocol(object):
                              'be same size')
 
         self.n_runs = None
+        self.ind_var = None
         for time, level in zip(stim_times, stim_levels):
             if isinstance(time, list):
                 if self.n_runs is None:
@@ -167,7 +168,7 @@ class ExperimentStimProtocol(object):
         """
         # Setup if x resolution is being overridden.
         if n_x is not None:
-            (n_runs, times, levels, ind_var) = _calculate_custom_res(n_x)
+            (n_runs, times, levels, ind_var) = self._calculate_custom_res(n_x)
         else:
             n_runs = self.n_runs
             times = self.stim_times
