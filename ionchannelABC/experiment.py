@@ -256,7 +256,7 @@ class ExperimentStimProtocol(object):
             if isinstance(time, list):
                 times.append(
                              [float(min(time)) +
-                              x*(float(max(times))-float(min(time))) /
+                              x*(float(max(time))-float(min(time))) /
                               (n_x-1) for x in range(n_x)]
                             )
                 n_runs = len(times[-1])
