@@ -80,11 +80,12 @@ def measure_maxes(data):
     for d in data:
         maxes.append(max(d['ikr.G_Kr']))
     return maxes
-def fit_single_exp(data, ind_var, xvar=intervals):
+def fit_single_exp(data, xvar=intervals):
     import numpy as np
     import scipy.optimize as so
     import warnings
     with warnings.catch_warnings():
+        warnings.simplefilter('error')
         try:
             def single_exp(t, I_max, tau):
                 return I_max * (1 - np.exp(-t / tau))
@@ -92,10 +93,15 @@ def fit_single_exp(data, ind_var, xvar=intervals):
             return tau
         except:
             return float("inf")
+def map_return(func, iterable, ind_var=None):
+    out = []
+    for i in iterable:
+        out.append(func(i))
+    return out
 akin_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_index=measure_index,
                                    measure_fn=measure_maxes,
-                                   post_fn=partial(map, fit_single_exp))
+                                   post_fn=partial(map_return, fit_single_exp))
 akin_exp = Experiment(akin_prot, akin_data, toyoda_conditions1)
 
 ### Exp 4, 5, 6 - Deactivation kinetics (fast and slow).
