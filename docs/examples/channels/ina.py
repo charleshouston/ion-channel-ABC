@@ -1,28 +1,30 @@
-from experiment import Experiment
-from experiment import ExperimentData
-from experiment import ExperimentStimProtocol
-from channel import Channel
+from ionchannelABC import (Experiment,
+                           ExperimentData,
+                           ExperimentStimProtocol,
+                           IonChannelModel)
 import data.ina.data_ina as data
 import numpy as np
 
 
 modelfile = 'models/Korhonen2009_iNa.mmt'
 
-ina_params = dict(g_Na=(0, 100),
-                  p1=(0, 100),
-                  p2=(-10, 0),
-                  p3=(0, 1),
-                  p4=(0, 100),
-                  p5=(-1, 0),
-                  p6=(0, 1),
-                  p7=(0, 100),
-                  q1=(0, 100),
-                  q2=(0, 10))
+#ina_params = dict(g_Na=(0, 100),
+#                  p1=(0, 100),
+#                  p2=(-10, 0),
+#                  p3=(0, 1),
+#                  p4=(0, 100),
+#                  p5=(-1, 0),
+#                  p6=(0, 1),
+#                  p7=(0, 100),
+#                  q1=(0, 100),
+#                  q2=(0, 10))
 
-ina = Channel('ina', modelfile, ina_params,
-              vvar='membrane.V', logvars=['environment.time',
-                                          'ina.i_Na',
-                                          'ina.G_Na'])
+ina = IonChannelModel('ina',
+                      modelfile,
+                      vvar='membrane.V',
+                      logvars=['environment.time',
+                               'ina.i_Na',
+                               'ina.G_Na'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Nakajima()
@@ -38,7 +40,6 @@ nakajima_conditions = dict(Nao=145000,
                            Nai=10000,
                            T=296)
 iv_exp = Experiment(iv_prot, iv_data, nakajima_conditions)
-ina.add_experiment(iv_exp)
 
 ### Exp 2 - Activation
 act_vsteps, act_cond, act_errs, act_N = data.Act_Nakajima()
@@ -56,7 +57,6 @@ act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gna,
                                   post_fn=normalise)
 act_exp = Experiment(act_prot, act_data, nakajima_conditions)
-ina.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation
 inact_vsteps, inact_cond, inact_errs, inact_N = data.Inact_Nakajima()
@@ -68,7 +68,6 @@ inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=2, measure_fn=max_gna,
                                     post_fn=normalise)
 inact_exp = Experiment(inact_prot, inact_data, nakajima_conditions)
-ina.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery
 rec_intervals, rec_cond, rec_errs, rec_N = data.Recovery_Zhang()
@@ -85,7 +84,6 @@ zhang_conditions = dict(Nao=136330,
                         Nai=15000,
                         T=293)
 rec_exp = Experiment(rec_prot, rec_data, zhang_conditions)
-ina.add_experiment(rec_exp)
 
 ### Exp 5 - Current Trace
 time, curr, _, _ = data.Trace_Nakajima()
@@ -108,4 +106,5 @@ trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     post_fn=interpolate_align,
                                     ind_var=time)
 trace_exp = Experiment(trace_prot, trace_data, nakajima_conditions)
-ina.add_experiment(trace_exp)
+
+ina.add_experiments([iv_exp, act_exp, inact_exp, rec_exp, trace_exp])

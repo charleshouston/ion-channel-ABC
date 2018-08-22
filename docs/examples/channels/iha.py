@@ -1,28 +1,19 @@
-from experiment import Experiment
-from experiment import ExperimentData
-from experiment import ExperimentStimProtocol
-from channel import Channel
+from ionchannelABC import (Experiment,
+                           ExperimentData,
+                           ExperimentStimProtocol,
+                           IonChannelModel)
 import data.iha.data_iha as data
 import numpy as np
 
 
 modelfile = 'models/Korhonen2009_iha.mmt'
 
-iha_params = {'p1': (0, 100),
-              'p2': (0, 100),
-              'p3': (0, 1),
-              'p4': (0, 100),
-              'p5': (0, 100),
-              'p6': (0, 1),
-              'p7': (0, 100),
-              'p8': (-100, 0),
-              'k_i_haNa': (0, 1.0),
-              'g_ha': (0, 0.5)}
-
-iha = Channel('iha', modelfile, iha_params,
-              vvar='membrane.V', logvars=['environment.time',
-                                          'iha.i_ha',
-                                          'iha.G_ha'])
+iha = IonChannelModel('iha',
+                      modelfile,
+                      vvar='membrane.V',
+                      logvars=['environment.time',
+                               'iha.i_ha',
+                               'iha.G_ha'])
 
 ### Exp 1 - IV curve.
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Sartiani()
@@ -41,7 +32,6 @@ sartiani_conditions = dict(T=293,
                            Nao=140000,
                            Nai=10800)
 iv_exp = Experiment(iv_prot, iv_data, sartiani_conditions)
-iha.add_experiment(iv_exp)
 
 ### Exp 2, 3 - Activation.
 act_vsteps, act_cond, act_errs, act_N = data.Act_Sartiani()
@@ -74,18 +64,16 @@ def fit_mono_exp(data):
     t0 = time[0]
     time = [(t - t0)/1000 for t in time] # Units in seconds.
 
-    old_settings = np.seterr(all="ignore")
     with warnings.catch_warnings():
+        warnings.simplefilter('error')
         try:
             def single_exp(t, I_max, I_diff, tau):
                 return I_max * np.exp(-t / tau) + I_diff
             [I_max, _, tau], _ = so.curve_fit(
                     single_exp, time, curr, bounds=([-np.inf, -np.inf, 0],
                                                     np.inf))
-            np.seterr(**old_settings)
             return [I_max, tau]
         except:
-            np.seterr(**old_settings)
             return [float("inf"), float("inf")]
 
 def takesecond(data, ind_var):
@@ -106,5 +94,5 @@ act_tau_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                       post_fn=takesecond)
 act_exp = Experiment(act_prot, act_data, sartiani_conditions)
 act_tau_exp = Experiment(act_tau_prot, act_tau_data, sartiani_conditions)
-iha.add_experiment(act_exp)
-iha.add_experiment(act_tau_exp)
+
+iha.add_experiments([iv_exp, act_exp, act_tau_exp])

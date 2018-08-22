@@ -1,28 +1,30 @@
-from experiment import Experiment
-from experiment import ExperimentData
-from experiment import ExperimentStimProtocol
-from channel import Channel
+from ionchannelABC import (Experiment,
+                           ExperimentData,
+                           ExperimentStimProtocol,
+                           IonChannelModel)
 import data.ikur.data_ikur as data
 import numpy as np
 
 
 modelfile = 'models/Bondarenko2004_iKur.mmt'
 
-ikur_params = {'g_Kur': (0, 1),
-               'k_ass1': (0, 100),
-               'k_ass2': (0, 100),
-               'k_atau1': (0, 100),
-               'k_atau2': (0, 100),
-               'k_atau3': (0, 10),
-               'k_iss1': (0, 100),
-               'k_iss2': (0, 100),
-               'k_itau1': (0, 10),
-               'k_itau2': (0, 100)}
+#ikur_params = {'g_Kur': (0, 1),
+#               'k_ass1': (0, 100),
+#               'k_ass2': (0, 100),
+#               'k_atau1': (0, 100),
+#               'k_atau2': (0, 100),
+#               'k_atau3': (0, 10),
+#               'k_iss1': (0, 100),
+#               'k_iss2': (0, 100),
+#               'k_itau1': (0, 10),
+#               'k_itau2': (0, 100)}
 
-ikur = Channel('ikur', modelfile, ikur_params,
-               vvar='membrane.V', logvars=['environment.time',
-                                           'ikur.i_Kur',
-                                           'ikur.G_Kur'])
+ikur = IonChannelModel('ikur',
+                       modelfile,
+                       vvar='membrane.V',
+                       logvars=['environment.time',
+                                'ikur.i_Kur',
+                                'ikur.G_Kur'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, _ = data.IV_Maharani()
@@ -38,7 +40,6 @@ maharani_conditions = dict(T=310,
                            Ko=4000,
                            Ki=120000)
 iv_exp = Experiment(iv_prot, iv_data, maharani_conditions)
-ikur.add_experiment(iv_exp)
 
 ### Exp 2 - Activation time constants
 act_vsteps, act_tau, act_errs, _ = data.ActTau_Xu()
@@ -66,16 +67,14 @@ def rising_exponential_fit(data):
     t0 = time[0]
     time = [t - t0 for t in time]
 
-    old_settings = np.seterr(all="ignore")
     with warnings.catch_warnings():
+        warnings.simplefilter('error')
         try:
             def single_exp(t, I_max, tau):
                 return I_max * (1 - np.exp(-t / tau))
             [_, tau], _ = so.curve_fit(single_exp, time, curr)
-            np.seterr(**old_settings)
             return tau
         except:
-            np.seterr(**old_settings)
             return float("inf")
 
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
@@ -85,7 +84,6 @@ xu_conditions = dict(T=296,
                      Ko=4000,
                      Ki=135000)
 act_exp = Experiment(act_prot, act_data, xu_conditions)
-ikur.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation curve
 inact_vsteps, inact_cond, inact_errs, inact_N = data.Inact_Brouillette()
@@ -106,7 +104,6 @@ brouillette_conditions = dict(T=294,
                               Ko=5400,
                               Ki=28000)
 inact_exp = Experiment(inact_prot, inact_data, brouillette_conditions)
-ikur.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery curve
 rec_steps, rec_react, rec_errs, rec_N = data.Rec_Brouillette()
@@ -121,4 +118,5 @@ rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_fn=ratio_ikur,
                                    post_fn=normalise)
 rec_exp = Experiment(rec_prot, rec_data, brouillette_conditions)
-ikur.add_experiment(rec_exp)
+
+ikur.add_experiments([iv_exp, act_exp, inact_exp, rec_exp])

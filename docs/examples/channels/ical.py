@@ -1,35 +1,38 @@
-from experiment import Experiment
-from experiment import ExperimentData
-from experiment import ExperimentStimProtocol
-from channel import Channel
+from ionchannelABC import (Experiment,
+                           ExperimentData,
+                           ExperimentStimProtocol,
+                           IonChannelModel)
 import data.ical.data_ical as data
 import numpy as np
 
 
 modelfile = 'models/Korhonen2009_iCaL.mmt'
 
-ical_params = {'g_CaL': (0, 0.001),
-               'p1': (-50, 50),
-               'p2': (0, 50),
-               'p3': (-100, 50),
-               'p4': (-50, 50),
-               'p5': (-50, 50),
-               'p6': (-50, 50),
-               'p7': (0, 200),
-               'p8': (0, 200),
-               'q1': (0, 100),
-               'q2': (0, 50),
-               'q3': (0, 10000),
-               'q4': (0, 100),
-               'q5': (0, 1000),
-               'q6': (0, 1000),
-               'q7': (0, 100),
-               'q8': (0, 100),
-               'q9': (-500, 500)}
+#ical_params = {'g_CaL': (0, 0.001),
+#               'p1': (-50, 50),
+#               'p2': (0, 50),
+#               'p3': (-100, 50),
+#               'p4': (-50, 50),
+#               'p5': (-50, 50),
+#               'p6': (-50, 50),
+#               'p7': (0, 200),
+#               'p8': (0, 200),
+#               'q1': (0, 100),
+#               'q2': (0, 50),
+#               'q3': (0, 10000),
+#               'q4': (0, 100),
+#               'q5': (0, 1000),
+#               'q6': (0, 1000),
+#               'q7': (0, 100),
+#               'q8': (0, 100),
+#               'q9': (-500, 500)}
 
-ical = Channel('ical', modelfile, ical_params,
-               vvar='membrane.V', logvars=['ical.i_CaL', 'ical.G_CaL',
-                                           'environment.time'])
+ical = IonChannelModel('ical',
+                       modelfile,
+                       vvar='membrane.V',
+                       logvars=['ical.i_CaL',
+                                'ical.G_CaL',
+                                'environment.time'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Rao()
@@ -45,7 +48,6 @@ iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
 rao_conditions = dict(T=298,
                       Ca_o=5000)
 iv_exp = Experiment(iv_prot, iv_data, rao_conditions)
-ical.add_experiment(iv_exp)
 
 ### Exp 2 - activation
 act_vsteps, act_cond, act_errs, act_N = data.Act_Rao()
@@ -63,7 +65,6 @@ act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gcal,
                                   post_fn=normalise)
 act_exp = Experiment(act_prot, act_data, rao_conditions)
-ical.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation
 inact_vsteps, inact_cond, inact_errs, inact_N = data.Inact_Rao()
@@ -78,7 +79,6 @@ inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_fn=gcal_inact_max,
                                     post_fn=normalise)
 inact_exp = Experiment(inact_prot, inact_data, rao_conditions)
-ical.add_experiment(inact_exp)
 
 ### Exp 4 - recovery
 rec_intervals, rec_cond, rec_errs, rec_N = data.Rec_Rao()
@@ -93,4 +93,5 @@ rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_fn=ratio_cond,
                                   post_fn=normalise)
 rec_exp = Experiment(rec_prot, rec_data, rao_conditions)
-ical.add_experiment(rec_exp)
+
+ical.add_experiments([iv_exp, act_exp, inact_exp, rec_exp])

@@ -1,32 +1,19 @@
-from experiment import Experiment
-from experiment import ExperimentData
-from experiment import ExperimentStimProtocol
-from channel import Channel
+from ionchannelABC import (Experiment,
+                           ExperimentData,
+                           ExperimentStimProtocol,
+                           IonChannelModel)
 import data.icat.data_icat as data
 import numpy as np
 
 
 modelfile = 'models/Korhonen2009_iCaT.mmt'
 
-icat_params = {'g_CaT': (0, 2),
-               'E_CaT': (0, 50),
-               'p1': (0, 100),
-               'p2': (1, 10),
-               'p3': (0, 1),
-               'p4': (0, 10),
-               'p5': (0, 0.1),
-               'p6': (0, 200),
-               'q1': (0, 100),
-               'q2': (1, 10),
-               'q3': (0, 10),
-               'q4': (0, 100),
-               'q5': (0, 0.1),
-               'q6': (0, 100)}
-
-icat = Channel('icat', modelfile, icat_params,
-               vvar='membrane.V', logvars=['environment.time', 
-                                           'icat.i_CaT',
-                                           'icat.G_CaT'])
+icat = IonChannelModel('icat',
+                       modelfile,
+                       vvar='membrane.V',
+                       logvars=['environment.time', 
+                                'icat.i_CaT',
+                                'icat.G_CaT'])
 
 ### Exp 1 - IV curve
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Nguyen()
@@ -43,7 +30,6 @@ iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
 nguyen_conditions = dict(Ca_o=5000,
                          T=295)
 iv_exp = Experiment(iv_prot, iv_data, nguyen_conditions)
-icat.add_experiment(iv_exp)
 
 ### Exp 2 - Activation curve
 act_vsteps, act_cond, act_errs, act_N = data.Act_Nguyen()
@@ -61,7 +47,6 @@ act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gcat,
                                   post_fn=normalise)
 act_exp = Experiment(act_prot, act_data, nguyen_conditions)
-icat.add_experiment(act_exp)
 
 ### Exp 3 - Inactivation curve
 inact_vsteps, inact_cond, inact_errs, inact_N = data.Inact_Nguyen()
@@ -73,7 +58,6 @@ inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=1, measure_fn=max_gcat,
                                     post_fn=normalise)
 inact_exp = Experiment(inact_prot, inact_data, nguyen_conditions)
-icat.add_experiment(inact_exp)
 
 ### Exp 4 - Recovery curve
 rec_intervals, rec_cond, rec_errs, rec_N = data.Rec_Deng()
@@ -89,7 +73,6 @@ rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
 deng_conditions = dict(Ca_o=5000,
                        T=298)
 rec_exp = Experiment(rec_prot, rec_data, deng_conditions)
-icat.add_experiment(rec_exp)
 
 ### Exp 5 - Current trace
 time, curr, _, _ = data.CurrTrace_Deng()
@@ -112,4 +95,5 @@ trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     post_fn=interpolate_align,
                                     ind_var=time)
 trace_exp = Experiment(trace_prot, trace_data, deng_conditions)
-icat.add_experiment(trace_exp)
+
+icat.add_experiments([iv_exp, act_exp, inact_exp, rec_exp, trace_exp])

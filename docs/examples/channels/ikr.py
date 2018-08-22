@@ -1,7 +1,7 @@
-from experiment import Experiment
-from experiment import ExperimentData
-from experiment import ExperimentStimProtocol
-from channel import Channel
+from ionchannelABC import (Experiment,
+                           ExperimentData,
+                           ExperimentStimProtocol,
+                           IonChannelModel)
 import data.ikr.data_ikr as data
 import numpy as np
 from functools import partial
@@ -9,25 +9,24 @@ from functools import partial
 
 modelfile = 'models/Majumder2016_iKr.mmt'
 
-ikr_params = {'g_Kr': (0, 0.01),
-              'p1': (0, 100),
-              'p2': (0, 100),
-              'p3': (0, 0.1),
-              'p4': (0, 100),
-              'p5': (-1.0, 0),
-              'p6': (0, 0.001),
-              'p7': (0, 100),
-              'p8': (0, 1.0),
-              'q1': (0, 100),
-              'q2': (0, 100)}
+#ikr_params = {'g_Kr': (0, 0.01),
+#              'p1': (0, 100),
+#              'p2': (0, 100),
+#              'p3': (0, 0.1),
+#              'p4': (0, 100),
+#              'p5': (-1.0, 0),
+#              'p6': (0, 0.001),
+#              'p7': (0, 100),
+#              'p8': (0, 1.0),
+#              'q1': (0, 100),
+#              'q2': (0, 100)}
 
-ikr = Channel('ikr', modelfile,
-              ikr_params,
-              vvar='membrane.V',
-              logvars=['environment.time',
-                       'ikr.i_Kr',
-                       'ikr.G_Kr'
-                       ])
+ikr = IonChannelModel('ikr',
+                      modelfile,
+                      vvar='membrane.V',
+                      logvars=['environment.time',
+                               'ikr.i_Kr',
+                               'ikr.G_Kr'])
 
 ### Exp 1 - IV curve.
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Toyoda()
@@ -46,7 +45,6 @@ toyoda_conditions1 = dict(K_o=5400,
                           Na_i=6000,
                           T=308)
 iv_exp = Experiment(iv_prot, iv_data, toyoda_conditions1)
-ikr.add_experiment(iv_exp)
 
 ### Exp 2 - Activation curve.
 act_vsteps, act_cond, act_errs, act_N = data.Act_Toyoda()
@@ -64,7 +62,6 @@ act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=2, measure_fn=max_gkr,
                                   post_fn=normalise)
 act_exp = Experiment(act_prot, act_data, toyoda_conditions1)
-ikr.add_experiment(act_exp)
 
 ### Exp 3 - Activation kinetics.
 akin_vsteps, akin_tau, akin_errs, akin_N = data.ActKin_Toyoda()
@@ -87,23 +84,19 @@ def fit_single_exp(data, ind_var, xvar=intervals):
     import numpy as np
     import scipy.optimize as so
     import warnings
-    old_settings = np.seterr(all="ignore")
     with warnings.catch_warnings():
         try:
             def single_exp(t, I_max, tau):
                 return I_max * (1 - np.exp(-t / tau))
             [_, tau], _ = so.curve_fit(single_exp, xvar, data)
-            np.seterr(**old_settings)
             return tau
         except:
-            np.seterr(**old_settings)
             return float("inf")
 akin_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_index=measure_index,
                                    measure_fn=measure_maxes,
                                    post_fn=partial(map, fit_single_exp))
 akin_exp = Experiment(akin_prot, akin_data, toyoda_conditions1)
-ikr.add_experiment(akin_exp)
 
 ### Exp 4, 5, 6 - Deactivation kinetics (fast and slow).
 deact_vsteps, deact_tauf, deactfast_errs, _ = data.DeactKinFast_Toyoda()
@@ -183,9 +176,6 @@ deact_f_exp = Experiment(deact_f_prot, deact_f_data, toyoda_conditions1)
 deact_s_exp = Experiment(deact_s_prot, deact_s_data, toyoda_conditions1)
 deact_amp_exp = Experiment(deact_amp_prot, deact_amp_data,
                            toyoda_conditions1)
-#ikr.add_experiment(deact_f_exp)
-#ikr.add_experiment(deact_s_exp)
-#ikr.add_experiment(deact_amp_exp)
 
 ### Exp 7 - Kinetic properties of recovery from inactivation
 inact_vsteps, inact_tau, inactkin_errs, _, = data.InactKin_Toyoda()
@@ -233,7 +223,6 @@ toyoda_conditions2 = dict(K_o=5400,
                           T=298)
 inact_kin_exp = Experiment(inact_kin_prot, inact_kin_data,
                            toyoda_conditions2)
-#ikr.add_experiment(inact_kin_exp)
 
 ### Exp 8 - Voltage dependence of steady-state inactivation.
 inact_vsteps, inact_cond, _, _ = data.Inact_Toyoda()
@@ -245,4 +234,5 @@ inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_fn=max_gkr,
                                     post_fn=normalise)
 inact_exp = Experiment(inact_prot, inact_data, toyoda_conditions2)
-#ikr.add_experiment(inact_exp)
+
+ikr.add_experiments([iv_exp, act_exp, akin_exp])
