@@ -204,6 +204,9 @@ class ExperimentStimProtocol(object):
                     # on time (and thus running would error).
                     if self.time_independent:
                         d = myokit.DataLog()
+                        # Record everything is unspecified
+                        if logvars is None or logvars is myokit.LOG_ALL:
+                            logvars = sim._model.variables()
                         for logi in logvars:
                             d[logi] = sim._model.get(logi).value()
                         data.append(d)

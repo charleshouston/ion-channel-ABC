@@ -93,7 +93,7 @@ class IonChannelModel(Model):
                pars: Dict[str, float],
                n_x: int=None,
                exp_num: int=None,
-               logvars: List[str]=myokit.LOG_ALL) -> pd.DataFrame:
+               logvars: List[str]=None) -> pd.DataFrame:
 
         if self.external_par_samples is not None:
             full_pars = dict(np.random.choice(self.external_par_samples),
@@ -103,7 +103,7 @@ class IonChannelModel(Model):
 
         # Run myokit simulation and return empty dataframe if failure.
         try:
-            results = self._simulate(n_x, **full_pars)
+            results = self._simulate(n_x, exp_num, logvars, **full_pars)
         except:
             results = pd.DataFrame({})
         return results
@@ -111,7 +111,7 @@ class IonChannelModel(Model):
     def _simulate(self,
                   n_x: int=None,
                   exp_num: int=None,
-                  logvars: List[str]=myokit.LOG_ALL,
+                  logvars: List[str]=None,
                   **pars) -> pd.DataFrame:
         """
         Simulate model in myokit.
@@ -160,7 +160,10 @@ class IonChannelModel(Model):
                 continue
 
             try:
-                results = e.run(self._sim, self.vvar, logvars, n_x=n_x)
+                results = e.run(sim=self._sim,
+                                vvar=self.vvar,
+                                logvars=logvars,
+                                n_x=n_x)
             except:
                 raise RuntimeError("Failed simulation.")
 
