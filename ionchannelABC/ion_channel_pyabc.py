@@ -8,6 +8,7 @@ import myokit
 
 import scipy.stats as stats
 import numpy as np
+import warnings
 import pandas as pd
 import subprocess
 import io
@@ -316,7 +317,14 @@ class IonChannelDistance(PNormDistance):
         if (len(x) is 0 or
             any(np.isinf(xi) for xi in x.values())):
             return np.inf
-        return super().__call__(t, x, y)
+
+        # Catch possible runtime overflow warnings
+        warnings.simplefilter('error', RuntimeWarning)
+        try:
+            distance = super().__call__(t, x, y)
+            return distance
+        except RuntimeWarning:
+            return np.inf
 
     def _group_data_by_exp(
             self,
