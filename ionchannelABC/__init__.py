@@ -9,3 +9,5 @@ from .experiment import (ExperimentData,
                          Experiment)
 
 from .visualization import plot_sim_results
+
+from .parameter_sensitivity import plot_parameter_sensitivity

@@ -39,10 +39,13 @@ class EfficientMultivariateNormalTransition(MultivariateNormalTransition):
         if size is None:
             return self.rvs_single()
         else:
-            sample = self.X.sample(n=size, replace=True, weights=self.w).iloc[:]
+            sample = (self.X.sample(n=size, replace=True, weights=self.w)
+                      .iloc[:])
             perturbed = (sample +
                          np.random.multivariate_normal(
-                             np.zeros(self.cov.shape[0]), self.cov, size=size))
+                             np.zeros(self.cov.shape[0]),
+                             self.cov,
+                             size=size))
             return pd.DataFrame(perturbed)
 
 
@@ -236,10 +239,23 @@ class IonChannelModel(Model):
                                                sort=True)
         return measurements
 
+    def get_parameter_vals(self, parameters: List[str]) -> List[float]:
+        """
+        Return values of variables in model or nan if variable does not exist.
+        """
+        m, _, _ = myokit.load(self.modelfile)
+        parameter_values = []
+        for p in parameters:
+            if m.has_variable(p):
+                parameter_values.append(m.get(p).value())
+            else:
+                parameter_values.append(np.nan)
+        return parameter_values
+
 
 class IonChannelAcceptor(SimpleAcceptor):
     """
-    Identical to pyabc.acceptor.SimpleAcceptor other than uses complete history.
+    Identical to SimpleAcceptor other than uses complete history.
     """
     def __init__(self):
         fun = accept_use_complete_history
@@ -261,28 +277,29 @@ class IonChannelDistance(PNormDistance):
     Parameters
     ----------
 
-    obs: dict
+    obs: Dict[int, float]
         Mapping from data point index to value.
 
-    exp_map: dict
+    exp_map: Dict[int, int]
         Mapping from data point index to separate experiments.
 
-    err_bars: dict
+    err_bars: Dict[int, float]
         Mapping from data point index to absolute error bars.
 
     err_th: float
-        Upper threshold of errors as percentage of experiment IQR to include in 
-        down-weighting, avoids overweighting of points with very low uncertainty.
-        Defaults to 0.0, i.e. no threshold for the errors.
+        Upper threshold of errors as percentage of experiment IQR to include 
+        in down-weighting, avoids overweighting of points with very low 
+        uncertainty. Defaults to 0.0, i.e. no threshold for the errors.
     """
 
     def __init__(self,
-                 obs: dict,
-                 exp_map: dict,
-                 err_bars: dict=None,
+                 obs: Dict[int, float],
+                 exp_map: Dict[int, int],
+                 err_bars: Dict[int, float]=None,
                  err_th: float=0.0):
 
-        data_by_exp = self._group_data_by_exp(obs, exp_map)
+        self.exp_map = exp_map
+        data_by_exp = self._group_data_by_exp(obs)
 
         N_by_exp = {k: len(l) for k, l in data_by_exp.items()}
         IQR_by_exp = self._calculate_experiment_IQR(data_by_exp)
@@ -292,11 +309,11 @@ class IonChannelDistance(PNormDistance):
             err_by_pt = [1.0] * len(obs)
         else:
             err_by_pt = self._calculate_err_by_pt(
-                    exp_map, err_bars, err_th, IQR_by_exp)
+                    err_bars, err_th, IQR_by_exp)
 
         # Create dictionary of weights
         w = {} 
-        for ss, exp_num in exp_map.items():
+        for ss, exp_num in self.exp_map.items():
             w[ss] = 1. / (err_by_pt[ss] * np.sqrt(N_by_exp[exp_num] *
                                                   IQR_by_exp[exp_num]))
 
@@ -322,20 +339,21 @@ class IonChannelDistance(PNormDistance):
         warnings.simplefilter('error', RuntimeWarning)
         try:
             distance = super().__call__(t, x, y)
+            warnings.resetwarnings()
             return distance
         except RuntimeWarning:
+            warnings.resetwarnings()
             return np.inf
 
     def _group_data_by_exp(
             self,
-            obs: Dict[int, float],
-            exp_map: Dict[int, int]) -> Dict[int, List[float]]:
+            obs: Dict[int, float]) -> Dict[int, List[float]]:
         """
         Computes a dictionary mapping experiment number to data points.
         """
         data_by_exp = {}
         for index, value in obs.items():
-            exp_num = exp_map[index]
+            exp_num = self.exp_map[index]
             if exp_num not in data_by_exp:
                 data_by_exp[exp_num] = []
             data_by_exp[exp_num].append(value)
@@ -358,18 +376,17 @@ class IonChannelDistance(PNormDistance):
 
     def _calculate_err_by_pt(
             self,
-            exp_map: Dict[int, int],
             err_bars: Dict[int, float],
             err_th: float, 
             IQR_by_exp: Dict[int, float]) -> Dict[int, float]:
         """
-        Calculates weighting due to larger error bars for each observed data point.
+        Calculates weighting due to error bars for each observed data point.
         """
 
         err_by_pt = {}
         err_by_exp = {}
         for index, err in err_bars.items():
-            exp_num = exp_map[index]
+            exp_num = self.exp_map[index]
 
             if exp_num not in err_by_exp:
                 err_by_exp[exp_num] = []
@@ -381,10 +398,10 @@ class IonChannelDistance(PNormDistance):
                 weight = err
                 if err_th > 0.0:
                     iqr = IQR_by_exp[exp_num]
-                    # Error threshold given as % of experiment data scale (IQR)
+                    # Error threshold given as % of experiment IQR
                     th = err_th * iqr
                     weight /= th
-                    # If weight is below the threshold, set to no downweighting
+                    # If weight is below the threshold, no downweighting
                     if weight < 1.0:
                         weight = 1.0
             err_by_pt[index] = weight
@@ -392,7 +409,7 @@ class IonChannelDistance(PNormDistance):
 
         # Normalise between all points in a given experiment
         for index, weight in err_by_pt.items():
-            exp_num = exp_map[index]
+            exp_num = self.exp_map[index]
             err_by_pt[index] = (err_by_pt[index] / sum(err_by_exp[exp_num]) *
                                 len(err_by_exp[exp_num]))
         return err_by_pt
