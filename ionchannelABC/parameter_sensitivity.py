@@ -16,6 +16,7 @@ def plot_parameter_sensitivity(
         distance_fn: IonChannelDistance,
         sigma: float=0.1,
         n_samples: int=500,
+        plot_cutoff: float=0.0,
         log_transform_x: bool=False,
         log_transform_y: bool=False) -> sns.FacetGrid:
     """
@@ -43,6 +44,10 @@ def plot_parameter_sensitivity(
 
     n_samples: int
         Number of parameter samples to make to fit model.
+
+    plot_cutoff: float
+        Plot dotted line on graphs to indicate cutoff for non-sensitive
+        parameters.
 
     log_transform_x: bool
         Whether to log transform the X variable (parameter values).
@@ -122,6 +127,9 @@ def plot_parameter_sensitivity(
                         data=fitted, kind='bar',
                         aspect=3,
                         sharey=False)
-                        .despine(left=True))
+                        .despine(left=True, bottom=True))
+    for i, ax in enumerate(grid.axes.flatten()):
+        ax.axhline(y=plot_cutoff, linewidth=1, color='k', linestyle='--')
+        ax.axhline(y=-1*plot_cutoff, linewidth=1, color='k', linestyle='--')
 
     return grid
