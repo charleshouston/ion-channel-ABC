@@ -1,9 +1,10 @@
 from sklearn import linear_model
+from sklearn.metrics import r2_score
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from .ion_channel_pyabc import (IonChannelModel,
                                 IonChannelDistance,
@@ -18,7 +19,7 @@ def plot_parameter_sensitivity(
         n_samples: int=500,
         plot_cutoff: float=0.0,
         log_transform_x: bool=False,
-        log_transform_y: bool=False) -> sns.FacetGrid:
+        log_transform_y: bool=False) -> Tuple[sns.FacetGrid, sns.FacetGrid]:
     """
     Plots estimate of distance function to parameter variation.
 
@@ -111,6 +112,9 @@ def plot_parameter_sensitivity(
     reg.fit(X, Y)
     beta = reg.coef_
 
+    # Predicted values
+    Ypred = np.dot(X, beta.transpose())
+
     # Create dataframe for plotting
     parameter_names = [p.split('.')[-1] for p in parameters]
     exp = [0,]*len(parameter_names)
@@ -132,4 +136,28 @@ def plot_parameter_sensitivity(
         ax.axhline(y=plot_cutoff, linewidth=1, color='k', linestyle='--')
         ax.axhline(y=-1*plot_cutoff, linewidth=1, color='k', linestyle='--')
 
-    return grid
+    # Plot regression fit
+    r2 = []
+    exp = []
+    for i in range(m):
+        r2.append(r2_score(Y[:, i], Ypred[:, i]))
+        exp += [i,]*Y.shape[0]
+    # Need to transpose Y and Ypred to correctly match up
+    # with experiment map.
+    d = {'Y': Y.transpose().reshape(-1),
+         'Y_predicted': Ypred.transpose().reshape(-1),
+         'exp': exp}
+    regression_fit = pd.DataFrame(data=d)
+    grid2 = (sns.relplot(x='Y', y='Y_predicted',
+                         col='exp',
+                         data=regression_fit,
+                         palette='Purples',
+                         facet_kws={'sharex': False,
+                                    'sharey': False}))
+    for i, ax in enumerate(grid2.axes.flatten()):
+        lims = [np.min([ax.get_xlim(), ax.get_ylim()]),
+                np.max([ax.get_xlim(), ax.get_ylim()])]
+        ax.plot(lims, lims, 'k--', alpha=0.75, zorder=0)
+        ax.set_title('exp = {exp}\nr_2 score: {r2:.2f}'.format(exp=i, r2=r2[i]))
+
+    return (grid, grid2)
