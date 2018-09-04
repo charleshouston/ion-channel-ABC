@@ -21,7 +21,7 @@ def plot_parameter_sensitivity(
         log_transform_x: bool=False,
         log_transform_y: bool=False) -> Tuple[sns.FacetGrid, sns.FacetGrid]:
     """
-    Plots estimate of distance function to parameter variation.
+    Plots estimate of sensitivity to parameter variation and regression fit.
 
     Based on work of:
     Sobie EA. Parameter sensitivity analysis in electrophysiological models

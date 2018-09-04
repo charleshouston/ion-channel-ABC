@@ -8,6 +8,7 @@ from .experiment import (ExperimentData,
                          ExperimentStimProtocol,
                          Experiment)
 
-from .visualization import plot_sim_results
+from .visualization import (plot_sim_results,
+                            plot_distance_weights)
 
 from .parameter_sensitivity import plot_parameter_sensitivity

@@ -1,4 +1,6 @@
-from .ion_channel_pyabc import IonChannelModel
+from .ion_channel_pyabc import (IonChannelModel,
+                                IonChannelDistance,
+                                ion_channel_sum_stats_calculator)
 
 import numpy as np
 import pandas as pd
@@ -86,4 +88,31 @@ def plot_sim_results(df: pd.DataFrame,
                 .add_legend())
     else:
         grid = grid.add_legend()
+    return grid
+
+
+def plot_distance_weights(
+        model: IonChannelModel,
+        distance_fn: IonChannelDistance) -> sns.FacetGrid:
+    """
+    Plots weighting of each sampling statistic by distance function.
+    """
+    m = len(model.experiments)
+    observations = ion_channel_sum_stats_calculator(
+            model.get_experiment_data())
+
+    # Initialize weights
+    _ = distance_fn(0, observations, observations)
+
+    w = distance_fn.w[0]
+    exp = distance_fn.exp_map
+
+    df = pd.DataFrame({'data_point': list(w.keys()),
+                       'weights': list(w.values())})
+    grid = (sns.catplot(x='data_point', y='weights',
+                        data=df, aspect=m,
+                        kind='bar')
+                        .set(xticklabels=[], 
+                             xticks=[]))
+
     return grid
