@@ -158,6 +158,6 @@ def plot_parameter_sensitivity(
         lims = [np.min([ax.get_xlim(), ax.get_ylim()]),
                 np.max([ax.get_xlim(), ax.get_ylim()])]
         ax.plot(lims, lims, 'k--', alpha=0.75, zorder=0)
-        ax.set_title('exp = {exp}\nr_2 score: {r2:.2f}'.format(exp=i, r2=r2[i]))
+        ax.set_title('exp={exp}\nr_2 score={r2:.2f}'.format(exp=i, r2=r2[i]))
 
     return (grid, grid2)
