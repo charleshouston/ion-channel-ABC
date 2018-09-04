@@ -115,5 +115,5 @@ def plot_distance_weights(
                         .set(xticklabels=[], 
                              xticks=[]))
     for ax in grid.axes.flatten():
-        ax.axhline(y=0, color='k', linestyle='--')
+        ax.axhline(y=1, color='k', linestyle='--')
     return grid

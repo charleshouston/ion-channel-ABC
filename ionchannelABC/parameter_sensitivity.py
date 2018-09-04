@@ -129,7 +129,7 @@ def plot_parameter_sensitivity(
     grid = (sns.catplot(x='param', y='beta',
                         row='exp',
                         data=fitted, kind='bar',
-                        aspect=3,
+                        aspect=len(parameter_names)/m,
                         sharey=False)
                         .despine(left=True, bottom=True))
     for i, ax in enumerate(grid.axes.flatten()):
