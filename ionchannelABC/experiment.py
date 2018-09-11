@@ -21,12 +21,11 @@ class ExperimentData(object):
         Number of experimental repetitions.
 
     errs: List[float]
-        Error bars points. NOT VALUE OF ERROR BARS FROM Y POINTS - THIS
+        Error bars points. NOT VALUE OF ERROR BARS RELATIVE TO Y POINTS - THIS
         IS CALCULATED AT INITIALISATION.
 
     err_type: str
-        One of `SEM` (standard error of the mean) or `STD` (standard
-        deviation) for error bars.
+        Type of error given by error bars, e.g. `std` or `sem`.
     """
 
     def __init__(self,
@@ -36,22 +35,13 @@ class ExperimentData(object):
                  errs: List[float]=None,
                  err_type: str=None):
 
-#        self.x = x
-#        self.y = y
-#        self.N = N
-
         if errs is not None:
             errs = np.abs(np.asarray(errs) - np.asarray(y))
         else:
             errs = [np.nan]*len(x)
-
-#        self.err_type = err_type
-#
-#        if self.err_type not in (None, 'SEM', 'STD'):
-#            raise ValueError('`err_type` must be either `SEM` or `STD`\n'
-#                             'Passed value: ' + err_type)
-
         self.df = pd.DataFrame({'x': x, 'y': y, 'errs': errs})
+        self.N = N
+        self.err_type=err_type
 
 
 class ExperimentStimProtocol(object):
