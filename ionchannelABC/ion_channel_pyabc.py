@@ -156,7 +156,7 @@ class IonChannelModel(Model):
                 (exp_num < 0 or exp_num > len(self.experiments)-1)):
             raise ValueError("Experiment number is outside range.")
 
-        self._set_channel_parameters(**pars)
+        self.set_parameters(**pars)
         all_results = pd.DataFrame({})
 
         for i, e in enumerate(self.experiments):
@@ -180,7 +180,7 @@ class IonChannelModel(Model):
 
         return all_results
 
-    def _set_channel_parameters(self, **pars):
+    def set_parameters(self, **pars):
         """
         Set parameters of simulation model.
         """
@@ -239,17 +239,17 @@ class IonChannelModel(Model):
                                                sort=True)
         return measurements
 
-    def get_parameter_vals(self, parameters: List[str]) -> List[float]:
+    def get_parameter_vals(self, parameters: List[str]) -> Dict[str, float]:
         """
-        Return values of variables in model or nan if variable does not exist.
+        Return dict with value of variables or nan if variable does not exist.
         """
         m, _, _ = myokit.load(self.modelfile)
-        parameter_values = []
+        parameter_values = {} 
         for p in parameters:
             if m.has_variable(p):
-                parameter_values.append(m.get(p).value())
+                parameter_values[p] = m.get(p).value()
             else:
-                parameter_values.append(np.nan)
+                parameter_values[p] = np.nan
         return parameter_values
 
 
