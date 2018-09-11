@@ -1,0 +1,26 @@
+diff --git a/pyabc/smc.py b/pyabc/smc.py
+index 6fe7a47..b3bfbb8 100644
+--- a/pyabc/smc.py
++++ b/pyabc/smc.py
+@@ -427,6 +427,9 @@ class ABCSMC:
+         the history of the distance function or the epsilon.
+         """
+ 
++        def distance_to_ground_truth(x):
++            return self.distance_function(t, x, self.x_0)
++
+         # simulation function, simplifying some parts compared to later
+         def simulate_one():
+             m = int(self.model_prior.rvs())
+@@ -438,7 +441,10 @@ class ABCSMC:
+             all_sum_stats.append(model_result.sum_stats)
+             weight = 0
+             accepted_distances = []
+-            accepted = True
++            if distance_to_ground_truth(model_result.sum_stats) == float('Inf'):
++                accepted = False
++            else:
++                accepted = True
+             # only the all_summary_statistics field will be read later
+             return Particle(
+                 m, theta, weight, accepted_distances,
