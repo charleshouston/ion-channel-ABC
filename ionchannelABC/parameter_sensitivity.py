@@ -66,12 +66,13 @@ def plot_parameter_sensitivity(
                                         size=(n_samples, len(parameters)))
 
     # Get original parameter values
-    original_values = np.asarray(model.get_parameter_vals(parameters))
+    original = model.get_parameter_vals(parameters)
+    original_vals = np.asarray(list(original.values()))
     observations = ion_channel_sum_stats_calculator(
             model.get_experiment_data())
 
     m = len(model.experiments)
-    X = np.empty((n_samples, len(original_values)))
+    X = np.empty((n_samples, len(original_vals)))
     Y = np.empty((n_samples, m))
 
     # Initialize weights
@@ -96,7 +97,7 @@ def plot_parameter_sensitivity(
         return d_out
 
     for i in range(n_samples):
-        X[i, :] = np.multiply(original_values, scale_dist_ln[i, :])
+        X[i, :] = np.multiply(original_vals, scale_dist_ln[i, :])
         results = ion_channel_sum_stats_calculator(
                 model.sample(dict(zip(parameters, X[i, :]))))
         Y[i, :] = dist(results, observations)
@@ -125,12 +126,16 @@ def plot_parameter_sensitivity(
          'exp': exp}
     fitted = pd.DataFrame(data=d)
 
+    # Setup seaborn
+    pal = sns.cubehelix_palette(len(parameter_names), rot=-.25, light=.7)
+
     # Plot parameter sensitivity
     grid = (sns.catplot(x='param', y='beta',
                         row='exp',
                         data=fitted, kind='bar',
                         aspect=len(parameter_names)/m,
-                        sharey=False)
+                        sharey=False,
+                        palette=pal)
                         .despine(left=True, bottom=True))
     for i, ax in enumerate(grid.axes.flatten()):
         ax.axhline(y=plot_cutoff, linewidth=1, color='k', linestyle='--')
@@ -159,5 +164,8 @@ def plot_parameter_sensitivity(
                 np.max([ax.get_xlim(), ax.get_ylim()])]
         ax.plot(lims, lims, 'k--', alpha=0.75, zorder=0)
         ax.set_title('exp={exp}\nr_2 score={r2:.2f}'.format(exp=i, r2=r2[i]))
+
+    # Reset model to original parameters
+    model.set_parameters(**original)
 
     return (grid, grid2)
