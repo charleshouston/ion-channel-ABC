@@ -115,8 +115,7 @@ def ratio_ikur(data):
     return max(data[1]['ikur.G_Kur'])/max(data[0]['ikur.G_Kur'])
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_index = [2, 5],
-                                   measure_fn=ratio_ikur,
-                                   post_fn=normalise)
+                                   measure_fn=ratio_ikur)
 rec_exp = Experiment(rec_prot, rec_data, brouillette_conditions)
 
 ikur.add_experiments([iv_exp, act_exp, inact_exp, rec_exp])

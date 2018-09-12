@@ -6,7 +6,7 @@ import data.ina.data_ina as data
 import numpy as np
 
 
-modelfile = 'models/Korhonen2009_iNa.mmt'
+modelfile = 'models/Korhonen2009_iNa_all.mmt'
 
 #ina_params = dict(g_Na=(0, 100),
 #                  p1=(0, 100),
@@ -17,7 +17,32 @@ modelfile = 'models/Korhonen2009_iNa.mmt'
 #                  p6=(0, 1),
 #                  p7=(0, 100),
 #                  q1=(0, 100),
-#                  q2=(0, 10))
+#                  q2=(0, 10),
+#                  q4=(0, 100),
+#                  q5=(-100, 0),
+#                  q6=(0, 10),
+#                  q7=(0, 10),
+#                  q8=(0, 100),
+#                  q9=(-100, 0),
+#                  q10=(0, 10),
+#                  q11=(0, 1),
+#                  q12=(0, 10),
+#                  q13=(0, 1),
+#                  r2=(-1, 0),
+#                  r3=(0, 100),
+#                  r4=(-10, 0),
+#                  r5=(0, 10),
+#                  r6=(0, 100),
+#                  r7=(0, 1),
+#                  r8=(0, 100),
+#                  r9=(-10, 0),
+#                  r10=(0, 1),
+#                  r11=(0, 10),
+#                  r12=(-1, 1),
+#                  r13=(0, 1),
+#                  r14=(-1, 1),
+#                  r15=(-1, 1),
+#                  r16=(0, 100))
 
 ina = IonChannelModel('ina',
                       modelfile,
@@ -78,8 +103,8 @@ stim_levels = [-120, -40, -120, -40]
 def ratio_cond(data):
     return max(data[1]['ina.G_Na'])/max(data[0]['ina.G_Na'])
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
-                                  measure_index=[1, 3], measure_fn=ratio_cond,
-                                  post_fn=normalise)
+                                  measure_index=[1, 3],
+                                  measure_fn=ratio_cond)
 zhang_conditions = dict(Nao=136330,
                         Nai=15000,
                         T=293)

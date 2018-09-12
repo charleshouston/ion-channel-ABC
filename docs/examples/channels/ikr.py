@@ -7,19 +7,36 @@ import numpy as np
 from functools import partial
 
 
-modelfile = 'models/Majumder2016_iKr.mmt'
+modelfile = 'models/Korhonen2009_iKr.mmt'
 
-#ikr_params = {'g_Kr': (0, 0.01),
-#              'p1': (0, 100),
-#              'p2': (0, 100),
-#              'p3': (0, 0.1),
-#              'p4': (0, 100),
-#              'p5': (-1.0, 0),
-#              'p6': (0, 0.001),
-#              'p7': (0, 100),
-#              'p8': (0, 1.0),
-#              'q1': (0, 100),
-#              'q2': (0, 100)}
+#ikr_params = dict('g_Kr'=(0, 1.0),
+#                  'p1'=(0, 1.0),
+#                  'p2'=(0, 1.0),
+#                  'p3'=(0, 1.0),
+#                  'p4'=(0, 1.0),
+#                  'p5'=(0, 1.0),
+#                  'p6'=(0, 1.0),
+#                  'q1'=(0, 0.1),
+#                  'q2'=(-1.0, 0),
+#                  'q3'=(0, 1.0),
+#                  'q4'=(-1.0, 0),
+#                  'q5'=(0, 0.1),
+#                  'q6'=(-1.0, 0),
+#                  'k_f'=(0, 0.1),
+#                  'k_b'=(0, 0.1))
+               
+
+#majumder_ikr_params = {'g_Kr': (0, 0.01),
+#                       'p1': (0, 100),
+#                       'p2': (0, 100),
+#                       'p3': (0, 0.1),
+#                       'p4': (0, 100),
+#                       'p5': (-1.0, 0),
+#                       'p6': (0, 0.001),
+#                       'p7': (0, 100),
+#                       'p8': (0, 1.0),
+#                       'q1': (0, 100),
+#                       'q2': (0, 100)}
 
 ikr = IonChannelModel('ikr',
                       modelfile,
@@ -241,4 +258,4 @@ inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     post_fn=normalise)
 inact_exp = Experiment(inact_prot, inact_data, toyoda_conditions2)
 
-ikr.add_experiments([iv_exp, act_exp, akin_exp])
+ikr.add_experiments([iv_exp, act_exp, inact_exp])
