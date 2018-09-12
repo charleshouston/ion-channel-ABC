@@ -53,8 +53,8 @@ coverage.xml
 # IPython notebooks
 *.ipynb_checkpoints
 
-# Related to specific runs
-results/*
+# pyabc database files
+*.db
 
 # Running headless notebooks
 nohup.out
