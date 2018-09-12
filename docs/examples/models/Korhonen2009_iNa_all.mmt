@@ -1,0 +1,114 @@
+[[model]]
+name: Korhonen 2009 fast sodium channel
+author: Charles Houston
+desc: """
+      The Korhonen 2009 model for the fast sodium current.
+      """
+ref: """
+     T Korhonen et al. (2009) Model of Excitation-Contraction Coupling of Rat
+     Neonatal Ventricular Myocytes.
+     """
+# Initial values
+membrane.V = -67.0
+ina.m                         = 1.40562700000000000e-3
+ina.h                         = 0.9867005
+ina.j                         = 0.991562
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ina.i_Na
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Nao = 145000
+    in [uM]
+Nai = 10000
+    in [uM]
+
+
+[ina]
+use membrane.V as V
+
+g_Na = 35
+    in [mS/uF]
+E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
+    in [mV]
+G_Na = g_Na * m ^ 3 * h * j
+    in [mS/uF]
+i_Na = G_Na * (V - E_Na)
+    in [pA/pF]
+
+dot(m) = (m_ss - m) / tau_m
+    in [1]
+m_ss = (1 + exp((p1 + V) / p2)) ^ (-1)
+    in [1]
+tau_m = (p3 * (V + p4) / (1 - exp(p5 * (V + p4))) + p6 * exp(-V / p7)) ^ (-1)
+    in [ms]
+p1 = 45
+p2 = -6.5
+p3 = 0.32 / 1.36
+p4 = 47.13
+p5 = -0.1
+p6 = 0.08 / 1.36
+p7 = 11
+
+dot(h) = (h_ss - h) / tau_h
+    in [1]
+h_ss = (1 + exp((q1 + V) / q2)) ^ (-1)
+    in [1]
+tau_h_high = q3 * (1 + exp((V + q4) / q5))
+    in [ms]
+tau_h_low = (q7 * exp((V + q8) / q9) + q10 * exp(q11 * V) + q12 * 1e5 * exp(q13 * V)) ^ (-1)
+    in [ms]
+tau_h = piecewise(V < -40, tau_h_low, tau_h_high)
+    in [ms]
+q1 = 76.1
+q2 = 6.07
+q4 = 10.66
+q5 = -11.1
+q6 = 3.49
+q7 = 0.135 / 3.49
+q8 = 80
+q9 = -6.8
+q10 = 3.56 / 3.49
+q11 = 0.079
+q12 = 3.1 / 3.49
+q13 = 0.35
+# Use p3 to match tau_h_low and tau_h_high at V=-40
+q3 = ((1+exp((q4-40)/q5))*(q7*exp((q8-40)/q9)+q10*exp(q11*(-40))+q12*1e5*exp(q13*(-40))))^(-1)
+
+dot(j) = (j_ss - j) / tau_j
+    in [1]
+j_ss = h_ss
+    in [1]
+tau_j_high = r1 * (1 + exp(r2 * (V + r3))) * (exp(r4 * 1e-7 * V)) ^ (-1)
+    in [ms]
+tau_j_low = r5 * ((V + r6) / (1 + exp(r7 * (V + r8))) * (r9 * 1e5 * exp(r10 * V) - r11 * 1e-5 * exp(r12 * V)) + r13 * exp(r14 * V) / (1 + exp(r15 * (V + r16)))) ^ (-1)
+    in [ms]
+tau_j = piecewise(V < -40, tau_j_low, tau_j_high)
+    in [ms]
+
+r2 = -0.1
+r3 = 32
+r4 = -2.535
+r5 = 3.49
+r6 = 37.78
+r7 = 0.311
+r8 = 79.23
+r9 = -1.27140
+r10 = 0.2444
+r11 = 3.474
+r12 = -0.04391
+r13 = 0.1212
+r14 = -0.01052
+r15 = -0.1378
+r16 = 40.14
+# Use r1 to match tau_j_high and tau_j_low at V=-40
+r1 = (exp(r4*1e-7*(-40))/(1+exp(r2*(r3-40))))*(r5*((r6-40)/(1+exp(r7*(r8-40)))*(r9*1e5*exp(r10*(-40))-r11*1e-5*exp(r12*(-40)))+r13*exp(r14*(-40))/(1+exp(r15*(r16-40))))^(-1))
