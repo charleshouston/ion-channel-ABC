@@ -128,7 +128,7 @@ def plot_parameters_kde(df, w, limits, aspect=None, height=None):
 
     df_melt = pd.melt(normalise(df, limits))
     g = sns.FacetGrid(df_melt, row="name", hue="name", aspect=aspect,
-                      height=height, palette=pal)
+                      height=height, palette=pal, sharex=False)
 
     def custom_kde(x, shade=False, **kwargs):
         df = pd.concat((x,), axis=1)
@@ -161,14 +161,19 @@ def plot_parameters_kde(df, w, limits, aspect=None, height=None):
         ax = plt.gca()
         ax.text(0, .2, label, fontweight="bold", color=color,
                 ha="left", va="center", transform=ax.transAxes)
-
     g.map(label, "name")
+
+    def xlims(x, color, label):
+        ax = plt.gca()
+        ax.set(xticks=[0, 1])
+        ax.set(xticklabels=[limits[label][0], limits[label][1]])
+    g.map(xlims, "name")
 
     # Set subplots to overlap
     g.fig.subplots_adjust(hspace=-.25)
 
     # Update axes details
-    g.set_xlabels("normalised posterior")
+    g.set_xlabels("posterior")
     g.set_titles("")
     g.set(yticks=[])
     g.despine(bottom=True, left=True)
