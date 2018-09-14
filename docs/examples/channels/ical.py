@@ -90,8 +90,7 @@ def ratio_cond(data):
     return max(data[1]['ical.G_CaL']) / max(data[0]['ical.G_CaL'])
 rec_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=[1, 3], 
-                                  measure_fn=ratio_cond,
-                                  post_fn=normalise)
+                                  measure_fn=ratio_cond)
 rec_exp = Experiment(rec_prot, rec_data, rao_conditions)
 
 ical.add_experiments([iv_exp, act_exp, inact_exp, rec_exp])
