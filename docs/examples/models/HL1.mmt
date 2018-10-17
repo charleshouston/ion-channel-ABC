@@ -5,7 +5,7 @@ desc: """
     Initially developed from model of mouse ventricular myocytes by
     Bondarenko et al., 2004.
     """
-name: houston_2017
+name: hl1
 
 # Initial values
 membrane.V = -68.0
@@ -87,7 +87,7 @@ use na_conc.Na_i as Na_i
 
 g_Na = 35
     in [mS/uF]
-E_Na = 1 / FoRT * log(Na_o / Na_i)
+E_Na = 1 / FoRT * log(Na_o/Na_i)
     in [mV]
 G_Na = g_Na * m ^ 3 * h * j
     in [mS/uF]
@@ -114,13 +114,12 @@ h_ss = (1 + exp((q1 + V) / q2)) ^ (-1)
     in [1]
 tau_h_high = q3 * (1 + exp((V + q4) / q5))
     in [ms]
-tau_h_low = (q7 * exp((V + q8) / q9) + q10 * exp(q11 * V) + q12 * exp(q13 * V)) ^ (-1)
+tau_h_low = (q7 * exp((V + q8) / q9) + q10 * exp(q11 * V) + q12 * 1e5 * exp(q13 * V)) ^ (-1)
     in [ms]
 tau_h = piecewise(V < -40, tau_h_low, tau_h_high)
     in [ms]
 q1 = 76.1
 q2 = 6.07
-q3 = 0.4537
 q4 = 10.66
 q5 = -11.1
 q6 = 3.49
@@ -129,37 +128,39 @@ q8 = 80
 q9 = -6.8
 q10 = 3.56 / 3.49
 q11 = 0.079
-q12 = 3.1e5 / 3.49
+q12 = 3.1 / 3.49
 q13 = 0.35
-
+# Use p3 to match tau_h_low and tau_h_high at V=-40
+q3 = ((1+exp((q4-40)/q5))*(q7*exp((q8-40)/q9)+q10*exp(q11*(-40))+q12*1e5*exp(q13*(-40))))^(-1)
 
 dot(j) = (j_ss - j) / tau_j
     in [1]
 j_ss = h_ss
     in [1]
-tau_j_high = r1 * (1 + exp(r2 * (V + r3))) * (exp(r4 * V)) ^ (-1)
+tau_j_high = r1 * (1 + exp(r2 * (V + r3))) * (exp(r4 * 1e-7 * V)) ^ (-1)
     in [ms]
-tau_j_low = r5 * ((V + r6) / (1 + exp(r7 * (V + r8))) * (r9 * exp(r10 * V) - r11 * exp(r12 * V)) + r13 * exp(r14 * V) / (1 + exp(r15 * (V + r16)))) ^ (-1)
+tau_j_low = r5 * ((V + r6) / (1 + exp(r7 * (V + r8))) * (r9 * 1e5 * exp(r10 * V) - r11 * 1e-5 * exp(r12 * V)) + r13 * exp(r14 * V) / (1 + exp(r15 * (V + r16)))) ^ (-1)
     in [ms]
 tau_j = piecewise(V < -40, tau_j_low, tau_j_high)
     in [ms]
 
-r1 = 11.63
 r2 = -0.1
 r3 = 32
-r4 = -2.535e-7
+r4 = -2.535
 r5 = 3.49
 r6 = 37.78
 r7 = 0.311
 r8 = 79.23
-r9 = -127140
+r9 = -1.27140
 r10 = 0.2444
-r11 = 3.474e-5
+r11 = 3.474
 r12 = -0.04391
 r13 = 0.1212
 r14 = -0.01052
 r15 = -0.1378
 r16 = 40.14
+# Use r1 to match tau_j_high and tau_j_low at V=-40
+r1 = (exp(r4*1e-7*(-40))/(1+exp(r2*(r3-40))))*(r5*((r6-40)/(1+exp(r7*(r8-40)))*(r9*1e5*exp(r10*(-40))-r11*1e-5*exp(r12*(-40)))+r13*exp(r14*(-40))/(1+exp(r15*(r16-40))))^(-1))
 
 
 # Rapid delayed rectifier K+ current - Korhonen et al. (2009)
@@ -313,57 +314,57 @@ k_ytau4 = 15.8827 [mV]
     in [mV]
 
 
-# Hyperpolarisation activated nonselective cation current - Majumder et al.
-# (2016)
+# Hyperpolarisation activated nonselective cation current - Korhonen et al.
+# (2009)
 [iha]
 use membrane.V as V
 use na_conc.E_Na as E_Na
 use k_conc.E_K as E_K
 
-g_ha = 0.021 [mS/uF]
+g_ha = 0.021
     in [mS/uF]
 G_ha = g_ha * y
     in [mS/uF]
-i_haNa = G_ha * k_i_haNa * (membrane.V - E_Na)
+i_haNa = G_ha * k_i_haNa * (V - E_Na)
     in [pA/pF]
-i_haK = G_ha * (1-k_i_haNa) * (membrane.V - E_K)
+i_haK = G_ha * (1-k_i_haNa) * (V - E_K)
     in [pA/pF]
+
 k_i_haNa = 0.2
     in [1]
+
 i_ha = i_haNa + i_haK
     in [pA/pF]
 
-y_ss = 1 / (1 + exp((membrane.V + k_yss1) / k_yss2))
-    in [1]
-k_yss1 = 78.65 [mV]
-    in [mV]
-k_yss2 = 6.33 [mV]
-    in [mV]
-
-tau_y = 1000 * k_ytau1 / (k_ytau2 * exp((membrane.V + k_ytau3) / k_ytau4) + k_ytau5 * exp((membrane.V + k_ytau6) / -k_ytau7))
-    in [ms]
-k_ytau1 = 1 [ms]
-    in [ms]
-k_ytau2 = 0.11885
-    in [1]
-k_ytau3 = 75 [mV]
-    in [mV]
-k_ytau4 = 28.37 [mV]
-    in [mV]
-k_ytau5 = 0.56236
-    in [1]
-k_ytau6 = 75 [mV]
-    in [mV]
-k_ytau7 = 14.19 [mV]
-    in [mV]
 dot(y) = (y_ss - y) / tau_y
     in [1]
+
+y_ss = 1 / (1 + exp((V + p1) / p2))
+    in [1]
+p1 = 78.65
+    in [mV]
+p2 = 6.33
+    in [mV]
+
+tau_y = 1000 [ms] * (p3 * exp((V + p4)/p5) + p6 * exp((V + p7)/p8)) ^ (-1)
+    in [ms]
+p3 = 0.11885
+    in [1]
+p4 = 75
+    in [mV]
+p5 = 28.37
+    in [mV]
+p6 = 0.56236
+    in [1]
+p7 = 75
+    in [mV]
+p8 = -14.19
+    in [mV]
 
 
 # T-type Ca2+ current - Korhonen et al. (2009)
 [icat]
 use membrane.V as V
-use ca_conc.E_Ca as E_Ca
 
 g_CaT = 0.2
     in [mS/uF]
