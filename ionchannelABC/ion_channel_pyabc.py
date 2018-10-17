@@ -14,11 +14,28 @@ import subprocess
 import io
 from typing import List, Dict, Union
 import logging
+import signal # for function timeouts
+from contextlib import contextmanager # for function timeouts
 
 abclogger = logging.getLogger('ABC')
 
 
-def ion_channel_sum_stats_calculator(model_output: pd.DataFrame):
+class TimeoutException(Exception): pass
+
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+
+
+def ion_channel_sum_stats_calculator(model_output: pd.DataFrame) -> dict:
     """
     Converts myokit simulation wrapper output into ABC-readable output.
     """
@@ -26,7 +43,7 @@ def ion_channel_sum_stats_calculator(model_output: pd.DataFrame):
         keys = range(len(model_output))
         return dict(zip(keys, model_output.y))
     else:
-        return model_output
+        return {}
 
 
 class EfficientMultivariateNormalTransition(MultivariateNormalTransition):
@@ -112,6 +129,10 @@ class IonChannelModel(Model):
             results = pd.DataFrame({})
         return results
 
+    def add_external_par_samples(self,
+                                 samples: List[Dict[str, float]]=None):
+        self.external_par_samples = samples
+
     def _simulate(self,
                   n_x: int=None,
                   exp_num: int=None,
@@ -155,6 +176,10 @@ class IonChannelModel(Model):
         if (exp_num is not None and
                 (exp_num < 0 or exp_num > len(self.experiments)-1)):
             raise ValueError("Experiment number is outside range.")
+       
+
+        # Get original parameter values to reset later
+        original_vals = self.get_parameter_vals(list(pars.keys()))
 
         self.set_parameters(**pars)
         all_results = pd.DataFrame({})
@@ -164,11 +189,13 @@ class IonChannelModel(Model):
                 continue
 
             try:
-                results = e.run(sim=self._sim,
-                                vvar=self.vvar,
-                                logvars=logvars,
-                                n_x=n_x)
+                with time_limit(5):
+                    results = e.run(sim=self._sim,
+                                    vvar=self.vvar,
+                                    logvars=logvars,
+                                    n_x=n_x)
             except:
+                self.set_parameters(**original_vals)
                 raise RuntimeError("Failed simulation.")
 
             results['exp'] = i
@@ -177,6 +204,9 @@ class IonChannelModel(Model):
                 all_results = results
             else:
                 all_results = all_results.append(results)
+    
+        # Reset to original values
+        self.set_parameters(**original_vals)
 
         return all_results
 
@@ -203,6 +233,19 @@ class IonChannelModel(Model):
             except:
                 raise ValueError('Could not set parameter {0} to {1}'
                                  .format(name, value))
+
+    def get_parameter_vals(self, parameters: List[str]) -> Dict[str, float]:
+        """
+        Return dict with value of variables or nan if variable does not exist.
+        """
+        m, _, _ = myokit.load(self.modelfile)
+        parameter_values = {} 
+        for p in parameters:
+            if m.has_variable(p):
+                parameter_values[p] = m.get(p).value()
+            else:
+                parameter_values[p] = np.nan
+        return parameter_values
 
     def _build_simulation(self):
         """
@@ -238,19 +281,6 @@ class IonChannelModel(Model):
             measurements = measurements.append(data, ignore_index=True,
                                                sort=True)
         return measurements
-
-    def get_parameter_vals(self, parameters: List[str]) -> Dict[str, float]:
-        """
-        Return dict with value of variables or nan if variable does not exist.
-        """
-        m, _, _ = myokit.load(self.modelfile)
-        parameter_values = {} 
-        for p in parameters:
-            if m.has_variable(p):
-                parameter_values[p] = m.get(p).value()
-            else:
-                parameter_values[p] = np.nan
-        return parameter_values
 
 
 class IonChannelAcceptor(SimpleAcceptor):
@@ -410,6 +440,7 @@ class IonChannelDistance(PNormDistance):
         # Normalise between all points in a given experiment
         for index, weight in err_by_pt.items():
             exp_num = self.exp_map[index]
-            err_by_pt[index] = (err_by_pt[index] / sum(err_by_exp[exp_num]) *
-                                len(err_by_exp[exp_num]))
+            if len(err_by_exp[exp_num]) > 1:
+                err_by_pt[index] = (err_by_pt[index] / sum(err_by_exp[exp_num]) *
+                                    len(err_by_exp[exp_num]))
         return err_by_pt
