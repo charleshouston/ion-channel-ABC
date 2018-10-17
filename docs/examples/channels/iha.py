@@ -64,12 +64,12 @@ def fit_mono_exp(data):
             return [float("inf"), float("inf")]
 
 def takesecond(data, ind_var):
-    return [d[1] for d in data]
+    return [d[1] for d in data], False
 def normalise(data, ind_var):
     sim_results = [d[0] for d in data]
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]
-    return sim_results
+    return sim_results, False
 
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1,

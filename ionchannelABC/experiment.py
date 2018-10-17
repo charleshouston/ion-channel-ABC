@@ -71,7 +71,10 @@ class ExperimentStimProtocol(object):
 
     post_fn: Callable
         Function that accepts results after all simulations have run
-        for any additional processing (e.g. normalising).
+        for any additional processing (e.g. normalising). Inputs to function
+        are list of results for each measure index and the independent variable.
+        Outputs are the processed data and a boolean flag for whether the keys
+        of the results should be used to fill up the results dataframe.
 
     time_independent: bool
         Whether the simulation needs to be solved or variables can be
@@ -221,18 +224,17 @@ class ExperimentStimProtocol(object):
 
         # Apply any post-processing function
         output = pd.DataFrame({})
+        use_result_keys = False
         if self.post_fn is not None:
-            full_results = self.post_fn(full_results, ind_var)
-        output = output.append(pd.DataFrame({'x': ind_var, 'y': full_results}),
-                               ignore_index=True)
+            full_results, use_result_keys = self.post_fn(full_results, ind_var)
+        if not use_result_keys:
+            output = output.append(pd.DataFrame({'x': ind_var, 'y': full_results}),
+                                   ignore_index=True)
+        else:
+            output = output.append(pd.DataFrame({'x': list(full_results.keys()),
+                                                 'y': list(full_results.values())}),
+                                   ignore_index=True)
         return output
-
-        #out = pd.DataFrame({})
-        #if len(full_results) == 1:
-        #    for stage in full_results:
-        #        out = out.append(pd.DataFrame(stage), ignore_index=True)
-        #else:
-        #    out = out.append(pd.DataFrame(full_results), ignore_index=True)
 
     def _calculate_custom_res(self,
                               n_x: int) -> Tuple[int,

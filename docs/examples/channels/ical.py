@@ -60,7 +60,7 @@ def max_gcal(data):
 def normalise(sim_results, ind_var):
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]
-    return sim_results
+    return sim_results, False
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gcal,
                                   post_fn=normalise)

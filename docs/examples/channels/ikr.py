@@ -74,7 +74,7 @@ def max_gkr(data):
 def normalise(sim_results, ind_var):
     max_cond = abs(max(sim_results, key=abs))
     sim_results = [result / max_cond for result in sim_results]
-    return sim_results
+    return sim_results, False
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=2, measure_fn=max_gkr,
                                   post_fn=normalise)
@@ -114,7 +114,7 @@ def map_return(func, iterable, ind_var=None):
     out = []
     for i in iterable:
         out.append(func(i))
-    return out
+    return out, False
 akin_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                    measure_index=measure_index,
                                    measure_fn=measure_maxes,
@@ -179,9 +179,9 @@ def double_exp_decay_fit(data):
         except:
             np.seterr(**old_settings)
             return (float("inf"), float("inf"), float("inf"))
-def takefirst(data, ind_var): return [d[0] for d in data]
-def takesecond(data, ind_var): return [d[1] for d in data]
-def takethird(data, ind_var): return [d[2] for d in data]
+def takefirst(data, ind_var): return [d[0] for d in data], False
+def takesecond(data, ind_var): return [d[1] for d in data], False
+def takethird(data, ind_var): return [d[2] for d in data], False
 
 deact_f_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                       measure_index=2,

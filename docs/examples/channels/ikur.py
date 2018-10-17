@@ -96,7 +96,7 @@ def max_ikur(data):
 def normalise(sim_results, ind_var):
     cond_max = max(sim_results, key=abs)
     sim_results = [result / cond_max for result in sim_results]
-    return sim_results
+    return sim_results, False
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=2, measure_fn=max_ikur,
                                     post_fn=normalise)

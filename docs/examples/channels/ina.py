@@ -77,7 +77,7 @@ def max_gna(data):
 def normalise(sim_results, ind_var):
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]
-    return sim_results
+    return sim_results, False
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1, measure_fn=max_gna,
                                   post_fn=normalise)
@@ -125,7 +125,7 @@ def interpolate_align(data, time):
     curr = data[0]['ina.i_Na']
     max_curr = abs(max(curr, key=abs))
     curr = [c / max_curr for c in curr]
-    return np.interp(time, simtime, curr)
+    return np.interp(time, simtime, curr), False
 trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=1,
                                     post_fn=interpolate_align,

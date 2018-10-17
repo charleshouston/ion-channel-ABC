@@ -65,7 +65,7 @@ def peak_curr(data):
 def normalise(sim_results):
     m = abs(max(sim_results, key=abs))
     sim_results = [r / m for r in sim_results]
-    return sim_results
+    return sim_results, False
 iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1, measure_fn=peak_curr,
                                  post_fn=normalise)
