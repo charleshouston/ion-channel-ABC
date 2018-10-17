@@ -13,3 +13,5 @@ from .visualization import (plot_sim_results,
                             plot_parameters_kde)
 
 from .parameter_sensitivity import plot_parameter_sensitivity
+
+from .full_parameters import generate_training_data
