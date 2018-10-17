@@ -71,16 +71,16 @@ def plot_parameter_sensitivity(
     observations = ion_channel_sum_stats_calculator(
             model.get_experiment_data())
 
-    m = len(model.experiments)
-    X = np.empty((n_samples, len(original_vals)))
-    Y = np.empty((n_samples, m))
-
     # Initialize weights
     _ = distance_fn(0, observations, observations)
 
     p = distance_fn.p
     w = distance_fn.w[0]
     exp_map = distance_fn.exp_map
+
+    m = max(exp_map.values())+1
+    X = np.empty((n_samples, len(original_vals)))
+    Y = np.empty((n_samples, m))
     def dist(x, y):
         d = [pow(abs(w[key]*(x[key]-y[key])), p)
              if key in x and key in y else 0
