@@ -11,15 +11,14 @@ from .ion_channel_pyabc import (IonChannelModel,
                                 ion_channel_sum_stats_calculator)
 
 
-def plot_parameter_sensitivity(
+def calculate_parameter_sensitivity(
         model: IonChannelModel,
         parameters: List[str],
         distance_fn: IonChannelDistance,
         sigma: float=0.1,
         n_samples: int=500,
-        plot_cutoff: float=0.0,
         log_transform_x: bool=False,
-        log_transform_y: bool=False) -> Tuple[sns.FacetGrid, sns.FacetGrid]:
+        log_transform_y: bool=False) -> Tuple[pd.DataFrame, pd.DataFrame, List[float]]:
     """
     Plots estimate of sensitivity to parameter variation and regression fit.
 
@@ -40,7 +39,7 @@ def plot_parameter_sensitivity(
         Distance function to measure between simulation and observations.
 
     sigma: float
-        Parameter lognormal distribution with moves parameters from original
+        Parameter lognormal distribution which moves parameters from original
         values.
 
     n_samples: int
@@ -58,7 +57,9 @@ def plot_parameter_sensitivity(
 
     Returns
     -------
-    Seaborn catplot showing sensitivity of each parameter by experiment.
+    Dataframes of sensitivty of each parameter and goodness of regression fit.
+    List of r2 scores for regression fits.
+    All outputs are used in subsequent functions to produce plots.
     """
 
     # Generate lognormal distribution for parameters
@@ -96,11 +97,20 @@ def plot_parameter_sensitivity(
             d_out.append(pow(sum(val), 1/p))
         return d_out
 
-    for i in range(n_samples):
+    # Loop through requested samples and eliminate NaN values
+    i = 0
+    while i < n_samples:
         X[i, :] = np.multiply(original_vals, scale_dist_ln[i, :])
         results = ion_channel_sum_stats_calculator(
                 model.sample(dict(zip(parameters, X[i, :]))))
+        if not np.all(np.isfinite(list(results.values()))):
+            # Change scale multiplier for this sample
+            scale_dist_ln[i, :] = np.random.lognormal(mean=0.0, sigma=sigma,
+                                        size=(1, len(parameters)))
+            continue
+        # Otherwise continue and add to results
         Y[i, :] = dist(results, observations)
+        i = i + 1
 
     # Mean center and normalise
     if log_transform_x: X = np.log(X)
@@ -117,7 +127,8 @@ def plot_parameter_sensitivity(
     Ypred = np.dot(X, beta.transpose())
 
     # Create dataframe for plotting
-    parameter_names = [p.split('.')[-1] for p in parameters]
+    parameter_names = parameters
+    #parameter_names = [p.split('.')[-1] for p in parameters]
     exp = [0,]*len(parameter_names)
     for i in range(1, m):
         exp += [i,]*len(parameter_names)
@@ -126,6 +137,30 @@ def plot_parameter_sensitivity(
          'exp': exp}
     fitted = pd.DataFrame(data=d)
 
+    # Error measure (r2)
+    r2 = []
+    exp = []
+    for i in range(m):
+        r2.append(r2_score(Y[:, i], Ypred[:, i]))
+        exp += [i,]*Y.shape[0]
+    # Need to transpose Y and Ypred to correctly match up
+    # with experiment map.
+    d = {'Y': Y.transpose().reshape(-1),
+         'Y_predicted': Ypred.transpose().reshape(-1),
+         'exp': exp}
+    regression_fit = pd.DataFrame(data=d)
+
+    return (fitted, regression_fit, r2)
+
+
+def plot_parameter_sensitivity(
+        fitted: pd.DataFrame,
+        plot_cutoff: float=0.0) -> sns.FacetGrid:
+    """Plot sensitivity of each model measure to parameters."""
+
+    parameter_names = fitted.param.unique()
+    m = len(fitted[fitted.param==parameter_names[0]])
+    
     # Setup seaborn
     pal = sns.cubehelix_palette(len(parameter_names), rot=-.25, light=.7)
 
@@ -141,31 +176,24 @@ def plot_parameter_sensitivity(
         ax.axhline(y=plot_cutoff, linewidth=1, color='k', linestyle='--')
         ax.axhline(y=-1*plot_cutoff, linewidth=1, color='k', linestyle='--')
 
-    # Plot regression fit
-    r2 = []
-    exp = []
-    for i in range(m):
-        r2.append(r2_score(Y[:, i], Ypred[:, i]))
-        exp += [i,]*Y.shape[0]
-    # Need to transpose Y and Ypred to correctly match up
-    # with experiment map.
-    d = {'Y': Y.transpose().reshape(-1),
-         'Y_predicted': Ypred.transpose().reshape(-1),
-         'exp': exp}
-    regression_fit = pd.DataFrame(data=d)
-    grid2 = (sns.relplot(x='Y', y='Y_predicted',
+    return grid
+
+
+def plot_regression_fit(
+        regression_fit: pd.DataFrame,
+        r2: List[float]) -> sns.FacetGrid:
+    """Plot goodness of fit of regression for sensitivity study."""
+
+    grid = (sns.relplot(x='Y', y='Y_predicted',
                          col='exp',
                          data=regression_fit,
                          palette='Purples',
                          facet_kws={'sharex': False,
                                     'sharey': False}))
-    for i, ax in enumerate(grid2.axes.flatten()):
+    for i, ax in enumerate(grid.axes.flatten()):
         lims = [np.min([ax.get_xlim(), ax.get_ylim()]),
                 np.max([ax.get_xlim(), ax.get_ylim()])]
         ax.plot(lims, lims, 'k--', alpha=0.75, zorder=0)
         ax.set_title('exp={exp}\nr_2 score={r2:.2f}'.format(exp=i, r2=r2[i]))
 
-    # Reset model to original parameters
-    model.set_parameters(**original)
-
-    return (grid, grid2)
+    return grid
