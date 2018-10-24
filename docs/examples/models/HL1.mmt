@@ -365,14 +365,17 @@ p8 = -14.19
 # T-type Ca2+ current - Korhonen et al. (2009)
 [icat]
 use membrane.V as V
+use ca_conc.E_Ca as E_Ca
 
 g_CaT = 0.2
     in [mS/uF]
-E_CaT = 33
+#E_CaT = 33
+#    in [mV]
+v_offset = 106.5
     in [mV]
 G_CaT = g_CaT * b * g
     in [mS/uF]
-i_CaT = G_CaT * (V - E_CaT)
+i_CaT = G_CaT * (V - E_Ca + v_offset)
     in [pA/pF]
 
 dot(b) = (bss - b) / tau_b
