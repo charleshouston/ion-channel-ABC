@@ -397,9 +397,12 @@ class IonChannelDistance(PNormDistance):
         """
         IQR_by_exp = {}
         for exp_num, l_obs in data_by_exp.items():
-            weight = stats.iqr(l_obs)
-            if weight == 0:
-                # if list has only one entry
+            if len(l_obs) > 1:
+                weight = stats.iqr(l_obs)
+                if weight == 0:
+                    # each value is the same
+                    weight = 1.0 # TODO: better way to handle this edge case?
+            else:
                 weight = abs(l_obs[0])
             IQR_by_exp[exp_num] = weight
         return IQR_by_exp
