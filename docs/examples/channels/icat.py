@@ -74,7 +74,7 @@ deng_conditions = dict(Ca_o=5000,
                        T=298)
 rec_exp = Experiment(rec_prot, rec_data, deng_conditions)
 
-### Exp 5 - Current trace
+### Exp 5 - Current trace from HP=-80mV to -20mV (peak current)
 time, curr, _, _ = data.CurrTrace_Deng()
 peak_curr = abs(max(curr, key=abs))
 curr = [c / peak_curr for c in curr]
@@ -96,4 +96,19 @@ trace_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     ind_var=time)
 trace_exp = Experiment(trace_prot, trace_data, deng_conditions)
 
-icat.add_experiments([iv_exp, act_exp, inact_exp, rec_exp, trace_exp])
+### Exp 6 - IV curve from HP=-40mV
+# iCaT should not activate from -40mV HP
+iv_vsteps2, _, _, _ = data.IV_Deng()
+iv_data2 = ExperimentData(x=iv_vsteps2, y=[0.,]*len(iv_vsteps2))
+stim_times = [5000, 300, 500]
+stim_levels = [-40, iv_vsteps2, -40]
+def max_icat(data):
+    return max(data[0]['icat.i_CaT'],
+               key=lambda x: abs(x))
+iv_prot2 = ExperimentStimProtocol(stim_times, stim_levels,
+                                 measure_index=1,
+                                 measure_fn=max_icat)
+iv_exp2 = Experiment(iv_prot2, iv_data2, deng_conditions)
+
+
+icat.add_experiments([iv_exp, act_exp, inact_exp, rec_exp, trace_exp, iv_exp2])
