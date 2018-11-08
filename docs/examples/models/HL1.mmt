@@ -445,7 +445,6 @@ p6 = 5
 p7 = 50
 p8 = 20
 
-
 dot(f) = (f_ss - f) / tau_f
     in [1]
 f_ss = (1 + exp((q1 + V) / q2)) ^ (-1)
@@ -464,18 +463,27 @@ q9 = 120
 
 dot(fCa) = k * (fCa_ss - fCa) / tau_fCa
     in [1]
-alpha_fCa = (1 + (Ca_subSL / 0.4875) ^ 8) ^ (-1)
+alpha_fCa = (1 + (Ca_subSL / r1) ^ 8) ^ (-1)
     in [1]
-beta_fCa = 0.1 * (1 + exp((Ca_subSL - 0.5) / 0.1)) ^ (-1)
+beta_fCa = r2 * (1 + exp((Ca_subSL - r3) / r4)) ^ (-1)
     in [1]
-gamma_fCa = 0.2 * (1 + exp((Ca_subSL - 0.75) / 0.8)) ^ (-1)
+gamma_fCa = r5 * (1 + exp((Ca_subSL - r6) / r7)) ^ (-1)
     in [1]
-fCa_ss = (alpha_fCa + beta_fCa + gamma_fCa + 0.23) / 1.46
+fCa_ss = (alpha_fCa + beta_fCa + gamma_fCa + r8) / r9
     in [1]
 tau_fCa = 10
     in [ms]
 k = piecewise(fCa_ss > fCa and V > -60, 0, 1)
     in [1]
+r1 = 0.4875
+r2 = 0.1
+r3 = 0.5
+r4 = 0.1
+r5 = 0.2
+r6 = 0.75
+r7 = 0.8
+r8 = 0.23
+r9 = 1.46
 
 
 # Inward rectifying K+ current - Korhonen et al. (2009)

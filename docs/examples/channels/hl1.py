@@ -53,7 +53,7 @@ def ap_measurements(data_list):
                 for i in range(len(pulses)-1)]
     if sum(triggers) == 0:
         # No action potentials
-        return [float('inf')]*9
+        return [float('inf')]*6
     
     Vrp = []
     Cai = []
@@ -61,19 +61,19 @@ def ap_measurements(data_list):
     Ki = []
     APA = []
     APD90 = []
+    ca_amplitude = []
     t_ca_rise = []
     t_ca50 = []
     t_ca90 = []
     for i, fire in enumerate(triggers):
         tsubset = data['environment.time'][pulses[i]:pulses[i+1]]
         Vsubset = data['membrane.V'][pulses[i]:pulses[i+1]]
-        tsubset = data['environment.time'][pulses[i]:pulses[i+1]]
         Casubset = data['ca_conc.Ca_i'][pulses[i]:pulses[i+1]]
         Ksubset = data['k_conc.K_i'][pulses[i]:pulses[i+1]]
         Nasubset = data['na_conc.Na_i'][pulses[i]:pulses[i+1]]
 
         # Take last 500ms as resting V
-        t_index = np.where(np.array(tsubset) > tsubset[0]+500)[0][0]
+        t_index = np.where(np.array(tsubset) > tsubset[0]+100)[0][0]
         Vrp.append(np.mean(Vsubset[t_index:]))
         Cai.append(np.mean(Casubset[t_index:]))
         Nai.append(np.mean(Nasubset[t_index:]))
@@ -103,6 +103,7 @@ def ap_measurements(data_list):
                                    max(Casubset))[0][0]
         ca_rp = Casubset[0]
         ca_amp = max(Casubset) - ca_rp
+        ca_amplitude.append(ca_amp)
         t_ca_rise.append(tsubset[ca_peak_index] - tsubset[0])
         t_ca50i = 0.0
         t_ca90i = 0.0
@@ -123,11 +124,12 @@ def ap_measurements(data_list):
         else:
             t_ca90.append(t_ca90i)
     data_output = [np.mean(Vrp),
-                   np.mean(Cai),
-                   np.mean(Ki),
-                   np.mean(Nai),
+#                   np.mean(Cai),
+#                   np.mean(Ki),
+#                   np.mean(Nai),
                    np.mean(APA),
                    np.mean(APD90),
+#                   np.mean(ca_amplitude),
                    np.mean(t_ca_rise),
                    np.mean(t_ca50),
                    np.mean(t_ca90)]
@@ -141,18 +143,30 @@ dias_conditions = dict(T=305,
                        Na_o=1.4e5,
                        K_o=4e3)
 pulse_train_prot = ExperimentStimProtocol(stim_times, stim_levels,
-        ind_var=['vrp', 'ca_i', 'k_i', 'na_i', 'apa','apd90',
+        ind_var=['vrp', #'ca_i', #'k_i', 'na_i', 
+                 'apa',
+                 'apd90',
+                 #'ca_amp', 
                  't_ca_rise','t_ca50','t_ca90'],
         measure_index=range(1, len(stim_times)),
         measure_fn=ap_measurements,
         post_fn=unwrap)
 
-pulse_train_data = ExperimentData(x=['vrp', 'ca_i', 'k_i', 'na_i', 'apa',
-                                     'apd90','t_ca_rise','t_ca50','t_ca90'],
-                                  y=[-67.0, 0.2, 1.2e5, 1.5e4, 105, 42, 52,
-                                     157, 397],
-                                  errs=[-69, 0.1, 1.5e5, 0.8e4, 103, 33, 50,
-                                        151, 383])
+pulse_train_data = ExperimentData(x=['vrp', #'ca_i', #'k_i', 'na_i', 
+                                     'apa',
+                                     'apd90',
+                                     #'ca_amp',
+                                     't_ca_rise','t_ca50','t_ca90'],
+                                  y=[-67.0, #0.1, #1.5e5, 2.0e4, 
+                                      105,
+                                     42, 
+                                     #0.7,
+                                     52, 157, 397],
+                                  errs=[-69, #0.05, #0.75e5, 1.0e4, 
+                                       103,
+                                        33,
+                                        #0.35,
+                                        50, 151, 383])
 pulse_train_exp = Experiment(pulse_train_prot, pulse_train_data, dias_conditions)
 
 hl1.add_experiments([pulse_train_exp])
