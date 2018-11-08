@@ -46,7 +46,8 @@ iv_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                  measure_index=1,
                                  measure_fn=peak_curr)
 rao_conditions = dict(T=298,
-                      Ca_o=5000)
+                      Ca_o=5000,
+                      Ca_subSL=0.2)
 iv_exp = Experiment(iv_prot, iv_data, rao_conditions)
 
 ### Exp 2 - activation
