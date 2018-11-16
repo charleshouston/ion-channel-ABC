@@ -1,0 +1,97 @@
+[[model]]
+name: L-type calcium channel model
+author: Charles Houston
+desc: """
+      Generic model for the L-type calcium channel.
+      """
+
+# Initial values
+membrane.V = -67.0
+ical.d   = 0.01
+ical.f   = 0.99
+ical.fCa = 0.99
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ical.i_CaL
+    in [mV]
+T = 296
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+FoRT = F / (R * T)
+    in [1/mV]
+Ca_o = 1800
+    in [uM]
+Ca_subSL = 0.115001
+    in [uM]
+
+[ical]
+use membrane.V as V
+use membrane.FoRT as FoRT
+use membrane.F as F
+use membrane.Ca_o as Ca_o
+use membrane.Ca_subSL as Ca_subSL
+
+i_CaL = G_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
+    in [pA/pF]
+g_CaL = 0.000063
+    in [dm^3/F/ms]
+G_CaL = g_CaL * d * f * fCa
+    in [dm^3/F/ms]
+
+dot(d) = (dss - d) / tau_d
+    in [1]
+dss = (1 + exp((Vhalf_d - V) / k_d)) ^ (-1)
+    in [1]
+tau_d = c_bd + c_ad * exp(-1 * (Vmax_d - V)^2 / (sigma_d^2))
+    in [ms]
+Vhalf_d = -11.1
+k_d = 7.2
+c_bd = 0.25
+c_ad = 1.4
+sigma_d = 2
+Vmax_d = -35
+
+dot(f) = (fss - f) / tau_f
+    in [1]
+fss = (1 + exp((Vhalf_f - V) / k_f)) ^ (-1)
+    in [1]
+tau_f = c_bf + c_af * exp(-1 * (Vmax_d - V)^2 / (sigma_f^2))
+    in [ms]
+Vhalf_f = -23.3
+k_f = -5.4
+c_bf = 120
+c_af = 1125
+Vmax_f = -27
+sigma_f = 15
+
+
+dot(fCa) = k * (fCa_ss - fCa) / tau_fCa
+    in [1]
+alpha_fCa = (1 + (Ca_subSL / r1) ^ 8) ^ (-1)
+    in [1]
+beta_fCa = r2 * (1 + exp((Ca_subSL - r3) / r4)) ^ (-1)
+    in [1]
+gamma_fCa = r5 * (1 + exp((Ca_subSL - r6) / r7)) ^ (-1)
+    in [1]
+fCa_ss = (alpha_fCa + beta_fCa + gamma_fCa + r8) / r9
+    in [1]
+tau_fCa = 10
+    in [ms]
+k = piecewise(fCa_ss > fCa and V > -60, 0, 1)
+    in [1]
+r1 = 0.4875
+r2 = 0.1
+r3 = 0.5
+r4 = 0.1
+r5 = 0.2
+r6 = 0.75
+r7 = 0.8
+r8 = 0.23
+r9 = 1.46

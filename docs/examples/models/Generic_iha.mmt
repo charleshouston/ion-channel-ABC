@@ -1,0 +1,83 @@
+[[model]]
+name: Generic model for funny current
+author: Charles Houston
+desc: """
+      Generic model for the funny current.
+      """
+# Initial values
+membrane.V = -67
+iha.y = 0.01
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -iha.i_ha
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+FoRT = F / (R * T)
+    in [1/mV]
+Ko = 25000 # modified Tyrode soln from Sartiani
+    in [uM]
+Ki = 120000
+    in [uM]
+Nai = 5400
+    in [uM]
+Nao = 140000
+    in [uM]
+
+[k_conc]
+use membrane.Ko as Ko
+use membrane.Ki as Ki
+use membrane.FoRT as FoRT
+
+E_K = (1 / FoRT) * log(Ko / Ki)
+    in [mV]
+
+[na_conc]
+use membrane.Nao as Nao
+use membrane.Nai as Nai
+use membrane.FoRT as FoRT
+
+E_Na = (1 / FoRT) * log(Nao / Nai)
+    in [mV]
+
+[iha]
+use membrane.V as V
+use na_conc.E_Na as E_Na
+use k_conc.E_K as E_K
+
+g_ha = 0.021
+    in [mS/uF]
+G_ha = g_ha * y
+    in [mS/uF]
+i_haNa = G_ha * k_i_haNa * (V - E_Na)
+    in [pA/pF]
+i_haK = G_ha * (1-k_i_haNa) * (V - E_K)
+    in [pA/pF]
+i_ha = i_haNa + i_haK
+    in [pA/pF]
+
+k_i_haNa = 0.2
+    in [1]
+
+dot(y) = (yss - y) / tau_y
+    in [1]
+yss = (1 + exp((Vhalf_y - V) / k_y)) ^ (-1)
+    in [1]
+tau_y = c_by + c_ay * exp(-1 * (Vmax_y - V)^2 / (sigma_y^2))
+    in [ms]
+Vhalf_y = -78.65
+k_y = -6.33
+c_by = 0.0
+c_ay = 5000
+sigma_y = 5
+Vmax_y = -75
+
+

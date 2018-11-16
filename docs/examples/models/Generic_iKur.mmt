@@ -1,0 +1,77 @@
+[[model]]
+name: Ultra rapidly activating potassium channel model
+author: Charles Houston
+desc: """
+      Generic model for iKur channel.
+      """
+
+# Initial values
+membrane.V = -67.0
+ikur.a     = 0.001
+ikur.i     = 0.999
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikur.i_Kur
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+Ko = 4000
+    in [uM]
+Ki = 120000
+    in [uM]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[k_conc]
+use membrane.FoRT as FoRT
+use membrane.Ko as Ko
+use membrane.Ki as Ki
+    
+E_K = 1 / FoRT * log(Ko / Ki)
+    
+[ikur]
+use membrane.V as V
+use k_conc.E_K as E_K
+    
+g_Kur = 0.0975
+    in [mS/uF]
+G_Kur = g_Kur * a * i
+    in [mS/uF]
+i_Kur = G_Kur * (V - E_K)
+    in [pA/pF]
+
+dot(a) = (ass - a) / tau_a
+    in [1]
+ass = (1 + exp((Vhalf_a - V) / k_a)) ^ (-1)
+    in [mV]
+tau_a = c_ba + c_aa * exp(-1 * (Vmax_a - V)^2 / (sigma_a^2))
+    in [ms]
+
+Vhalf_a = -22.5
+k_a = 7.7
+c_ba = 2.058
+c_aa = 0.493
+sigma_a = 4
+Vmax_a = -20
+
+dot(i) = (iss - i) / tau_i
+    in [1]
+iss = (1 + exp((Vhalf_i - V) / k_i)) ^ (-1)
+    in [mV]
+tau_i = c_bi + c_ai * exp(-1 * (Vmax_i - V)^2 / (sigma_i^2))
+    in [ms]
+
+Vhalf_i = -45.2
+k_i = -5.7
+c_bi = 1200
+c_ai = -1700
+sigma_i = 5
+Vmax_i = -45.2

@@ -1,0 +1,81 @@
+[[model]]
+name: T-type calcium channel model
+author: Charles Houston
+desc: """
+      Generic model for the T-type calcium channel.
+      """
+# Initial values
+membrane.V = -67
+icat.b = 0.01
+icat.g = 0.99
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -icat.i_CaT
+    in [mV]
+Ca_o = 5000
+    in [uM]
+Ca_subSL = 0.15001
+    in [uM]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 305
+    in [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[ca_conc]
+use membrane.FoRT as FoRT
+use membrane.Ca_o as Ca_o
+use membrane.Ca_subSL as Ca_subSL
+    
+E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_subSL)
+    in [mV]
+
+[icat]
+use membrane.V as V
+use ca_conc.E_Ca as E_Ca
+
+g_CaT = 0.2
+    in [mS/uF]
+E_CaT = 33
+    in [mV]
+v_offset = 0.0
+    in [mV]
+G_CaT = g_CaT * b * g
+    in [mS/uF]
+i_CaT = G_CaT * (V - E_Ca + v_offset)
+    in [pA/pF]
+
+dot(b) = (bss - b) / tau_b
+    in [1]
+bss = (1 + exp((Vhalf_b - V) / k_b)) ^ (-1)
+    in [mV]
+tau_b = c_bb + c_ab * exp(-1 * (Vmax_b - V)^2 / (sigma_b^2))
+    in [ms]
+
+Vhalf_b = -33.4 
+k_b = 5.40634
+c_bb = 0.6
+c_ab = 5.4
+sigma_b = 5
+Vmax_b = 100
+
+dot(g) = (gss - g) / tau_g
+    in [1]
+gss = (1 + exp((Vhalf_g - V) / k_g)) ^ (-1)
+    in [mV]
+tau_g = c_bg + c_ag * exp(-1 * (Vmax_g - V)^2 / (sigma_g^2))
+    in [ms]
+
+Vhalf_g = 66
+k_g = -6
+c_bg = 1
+c_ag = 40
+sigma_g = 3.5
+Vmax_g = 65

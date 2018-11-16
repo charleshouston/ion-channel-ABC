@@ -1,0 +1,83 @@
+[[model]]
+name: Rapid delayed rectifier potassium channel
+author: Charles Houston
+desc: """
+      Generic model for ikr.
+      """
+# Initial values
+membrane.V = -67
+ikr.x = 0.01
+ikr.r = 0.99
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikr.i_Kr
+    in [mV]
+K_o = 5400
+    in [uM]
+K_i = 143720
+    in [uM]
+Na_i = 14000
+    in [uM]
+Na_o = 140000
+    in [uM]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 305
+    in [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[k_conc]
+use membrane.K_o as K_o
+use membrane.K_i as K_i
+use membrane.FoRT as FoRT
+    
+E_K = 1 / FoRT * log(K_o / K_i)
+    in [mV]   
+    
+[ikr]
+use membrane.V as V
+use membrane.K_o as K_o
+use k_conc.E_K as E_K
+
+g_Kr = 0.5228
+    in [mS/uF]
+G_Kr = g_Kr * sqrt(K_o / 5400) * x * r
+    in [mS/uF]
+
+i_Kr = G_Kr * (V - E_K)
+    in [pA/pF]
+
+dot(x) = (xss - x) / tau_x
+    in [1]
+xss = (1 + exp((Vhalf_x - V) / k_x)) ^ (-1)
+    in [mV]
+tau_x = c_bx + c_ax * exp(-1 * (Vmax_x - V)^2 / (sigma_x^2))
+    in [ms]
+    
+Vhalf_x = -12.5
+k_x = 10.0
+c_bx = 1.0
+c_ax = 1.5
+sigma_x = 2.8
+Vmax_x = -14.2
+
+dot(r) = (rss - r) / tau_r
+    in [1]
+rss = (1 + exp((Vhalf_r - V) / k_r)) ^ (-1)
+    in [mV]
+tau_r = c_br + c_ar * exp(-1 * (Vmax_r - V)^2 / (sigma_r^2))
+    in [ms]
+
+Vhalf_r = -9.0
+k_r = -22.4
+c_br = 1.0
+c_ar = 1.5
+sigma_r = 2.8
+Vmax_r = -9.2   
