@@ -68,7 +68,7 @@ def plot_sim_results(samples: pd.DataFrame,
         grid = sns.relplot(x='x', y='y',
                            col='exp', kind='line',
                            data=samples,
-                           estimator=np.median, ci=95,
+                           ci='sd',
                            facet_kws={'sharex': 'col',
                                       'sharey': 'col'})
 
@@ -153,8 +153,8 @@ def plot_parameters_kde(df, w, limits, aspect=None, height=None):
         ax.set_ylim(0, auto=None)
         return ax
 
-    g.map(custom_kde, "value", alpha=1, lw=1.5, shade=True)
-    g.map(custom_kde, "value", color="w", lw=2)
+    g.map(custom_kde, "value", alpha=1, lw=1, shade=True)
+    g.map(custom_kde, "value", color="w", lw=1)
     g.map(plt.axhline, y=0, lw=2, clip_on=False)
 
     def label(x, color, label):
