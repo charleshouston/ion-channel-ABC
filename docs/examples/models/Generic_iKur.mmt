@@ -55,12 +55,12 @@ ass = (1 + exp((Vhalf_a - V) / k_a)) ^ (-1)
 tau_a = c_ba + c_aa * exp(-1 * (Vmax_a - V)^2 / (sigma_a^2))
     in [ms]
 
-Vhalf_a = -22.5
+Vhalf_a = -20
 k_a = 7.7
 c_ba = 2.058
 c_aa = 0.493
 sigma_a = 4
-Vmax_a = -20
+Vmax_a = -80
 
 dot(i) = (iss - i) / tau_i
     in [1]
@@ -72,6 +72,6 @@ tau_i = c_bi + c_ai * exp(-1 * (Vmax_i - V)^2 / (sigma_i^2))
 Vhalf_i = -45.2
 k_i = -5.7
 c_bi = 1200
-c_ai = -1700
+c_ai = 1700
 sigma_i = 5
-Vmax_i = -45.2
+Vmax_i = 20

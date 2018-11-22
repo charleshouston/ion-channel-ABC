@@ -1,0 +1,56 @@
+[[model]]
+name: Inward rectifying potassium current channel model
+author: Charles Houston
+desc: """
+      Generic model for the inward rectifying K+ current.
+      """
+
+# Initial values
+membrane.V = -67.0
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ik1.i_K1
+    in [mV]
+T = 310
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+FoRT = F / (R * T)
+    in [1/mV]
+Ko = 120000
+    in [uM]
+Ki = 120000
+    in [uM]
+
+[k_conc]
+use membrane.Ko as Ko
+use membrane.Ki as Ki
+use membrane.FoRT as FoRT
+
+E_K = (1 / FoRT) * log(Ko / Ki)
+    in [mV]
+
+[ik1]
+use membrane.V as V
+use k_conc.E_K as E_K
+use membrane.Ko as Ko
+
+i_K1 = G_K1 * (Ko / (Ko + Km)) * (V - E_K) 
+G_K1 = g_K1 * xss
+    in [mS/uF]
+g_K1 = 0.0515 [mS/uF]
+    in [mS/uF]
+
+xss = (1 + exp((Vhalf_x - V) / k_x)) ^ (-1)
+    in [1]
+
+Km = 210
+    in [mM]
+Vhalf_x = -80
+k_x = 30

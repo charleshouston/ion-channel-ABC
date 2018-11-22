@@ -45,7 +45,7 @@ g_CaT = 0.2
     in [mS/uF]
 E_CaT = 33
     in [mV]
-v_offset = 0.0
+v_offset = 100.0
     in [mV]
 G_CaT = g_CaT * b * g
     in [mS/uF]
@@ -59,12 +59,12 @@ bss = (1 + exp((Vhalf_b - V) / k_b)) ^ (-1)
 tau_b = c_bb + c_ab * exp(-1 * (Vmax_b - V)^2 / (sigma_b^2))
     in [ms]
 
-Vhalf_b = -33.4 
+Vhalf_b = -40 
 k_b = 5.40634
-c_bb = 0.6
+c_bb = 5
 c_ab = 5.4
-sigma_b = 5
-Vmax_b = 100
+sigma_b = 15
+Vmax_b = 50
 
 dot(g) = (gss - g) / tau_g
     in [1]
@@ -73,9 +73,9 @@ gss = (1 + exp((Vhalf_g - V) / k_g)) ^ (-1)
 tau_g = c_bg + c_ag * exp(-1 * (Vmax_g - V)^2 / (sigma_g^2))
     in [ms]
 
-Vhalf_g = 66
-k_g = -6
-c_bg = 1
-c_ag = 40
-sigma_g = 3.5
-Vmax_g = 65
+Vhalf_g = -60
+k_g = -2
+c_bg = 10
+c_ag = 100
+sigma_g = 10
+Vmax_g = -70

@@ -31,19 +31,26 @@ Ca_o = 1800
 Ca_subSL = 0.115001
     in [uM]
 
-[ical]
-use membrane.V as V
+[ca_conc]
 use membrane.FoRT as FoRT
-use membrane.F as F
 use membrane.Ca_o as Ca_o
 use membrane.Ca_subSL as Ca_subSL
+    
+E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_subSL)
+    in [mV]
 
-i_CaL = G_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
-    in [pA/pF]
-g_CaL = 0.000063
-    in [dm^3/F/ms]
+[ical]
+use membrane.V as V
+use ca_conc.E_Ca as E_Ca
+use membrane.Ca_subSL as Ca_subSL
+
+i_CaL = G_CaL * (V - E_Ca + v_offset)
+g_CaL = 0.5
+    in [mS/uF]
 G_CaL = g_CaL * d * f * fCa
-    in [dm^3/F/ms]
+    in [mS/uF]
+v_offset = 60
+    in [mV]
 
 dot(d) = (dss - d) / tau_d
     in [1]
@@ -71,27 +78,11 @@ c_af = 1125
 Vmax_f = -27
 sigma_f = 15
 
-
-dot(fCa) = k * (fCa_ss - fCa) / tau_fCa
+dot(fCa) = (fCass - fCa) / tau_fCa
     in [1]
-alpha_fCa = (1 + (Ca_subSL / r1) ^ 8) ^ (-1)
+fCass = (1 + (Ca_subSL / ca_dep_fCa)) ^ (-1)
     in [1]
-beta_fCa = r2 * (1 + exp((Ca_subSL - r3) / r4)) ^ (-1)
-    in [1]
-gamma_fCa = r5 * (1 + exp((Ca_subSL - r6) / r7)) ^ (-1)
-    in [1]
-fCa_ss = (alpha_fCa + beta_fCa + gamma_fCa + r8) / r9
-    in [1]
+ca_dep_fCa = 0.35
+    in [uM]
 tau_fCa = 10
     in [ms]
-k = piecewise(fCa_ss > fCa and V > -60, 0, 1)
-    in [1]
-r1 = 0.4875
-r2 = 0.1
-r3 = 0.5
-r4 = 0.1
-r5 = 0.2
-r6 = 0.75
-r7 = 0.8
-r8 = 0.23
-r9 = 1.46

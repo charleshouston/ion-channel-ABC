@@ -58,10 +58,10 @@ tau_m = c_bm + c_am * exp(-1 * (Vmax_m - V)^2 / (sigma_m^2))
     in [ms]
 Vhalf_m = -45
 k_m = 6.5
-c_bm = 1.0
-c_am = 1.0
-sigma_m = 2.0
-Vmax_m = -47.13
+c_bm = 0.02
+c_am = 0.12
+sigma_m = 25
+Vmax_m = -40
 
 dot(h) = (hss - h) / tau_h
     in [1]
@@ -71,10 +71,10 @@ tau_h = c_bh + c_ah * exp(-1 * (Vmax_h - V)^2 / (sigma_h^2))
     in [ms]
 Vhalf_h = -76.1
 k_h = -6.07
-c_bh = 1.0
-c_ah = 1.0
-Vmax_h = -80
-sigma_h = 2
+c_bh = 0.01
+c_ah = 30.0
+Vmax_h = -60
+sigma_h = 25
 
 dot(j) = (jss - j) / tau_j
     in [1]
@@ -82,7 +82,7 @@ jss = hss
     in [1]
 tau_j = c_bj + c_aj * exp(-1 * (Vmax_j - V)^2 / (sigma_j^2))
     in [ms]
-c_bj = 1.0
-c_aj = 1.0
-Vmax_j = -32
-sigma_j = 3.0
+c_bj = 5.0
+c_aj = 75.0
+Vmax_j = -60
+sigma_j = 25
