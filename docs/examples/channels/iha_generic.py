@@ -4,6 +4,7 @@ from ionchannelABC import (Experiment,
                            IonChannelModel)
 import data.iha.data_iha as data
 import numpy as np
+from scipy.optimize import OptimizeWarning
 
 
 modelfile = 'models/Generic_iha.mmt'
@@ -52,7 +53,7 @@ def fit_mono_exp(data):
     time = [(t - t0)/1000 for t in time] # Units in seconds.
 
     with warnings.catch_warnings():
-        warnings.simplefilter('error')
+        warnings.simplefilter('error', OptimizeWarning)
         try:
             def single_exp(t, I_max, I_diff, tau):
                 return I_max * np.exp(-t / tau) + I_diff
@@ -65,15 +66,17 @@ def fit_mono_exp(data):
 
 def takesecond(data, ind_var):
     return [d[1] for d in data], False
-def normalise(data, ind_var):
-    sim_results = [d[0] for d in data]
+def max_gha(data):
+    return max(data[0]['iha.G_ha'])
+def normalise(sim_results, ind_var):
+    #sim_results = [d[0] for d in data]
     m = max(sim_results, key=abs)
     sim_results = [result / m for result in sim_results]
     return sim_results, False
 
 act_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                   measure_index=1,
-                                  measure_fn=fit_mono_exp,
+                                  measure_fn=max_gha,
                                   post_fn=normalise)
 act_tau_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                       measure_index=1,
