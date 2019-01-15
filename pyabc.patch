@@ -1,18 +1,26 @@
+From bebe7ab97212bb3840f6bd445258f10298c3d2b1 Mon Sep 17 00:00:00 2001
+From: Charles Houston <cph211@ic.ac.uk>
+Date: Tue, 15 Jan 2019 11:04:14 +0000
+Subject: [PATCH 1/2] don't accept prior samples that return infinite error
+
+---
+ pyabc/smc.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
 diff --git a/pyabc/smc.py b/pyabc/smc.py
-index 6fe7a47..b3bfbb8 100644
+index e3188f0..3b9799e 100644
 --- a/pyabc/smc.py
 +++ b/pyabc/smc.py
-@@ -427,6 +427,9 @@ class ABCSMC:
-         the history of the distance function or the epsilon.
+@@ -438,6 +438,8 @@ class ABCSMC:
+         Similar to _create_simulate_function, apart here we sample from the
+         prior and accept always.
          """
- 
 +        def distance_to_ground_truth(x):
 +            return self.distance_function(t, x, self.x_0)
-+
-         # simulation function, simplifying some parts compared to later
-         def simulate_one():
-             m = int(self.model_prior.rvs())
-@@ -438,7 +441,10 @@ class ABCSMC:
+ 
+         model_prior = self.model_prior
+         parameter_priors = self.parameter_priors
+@@ -456,7 +458,10 @@ class ABCSMC:
              all_sum_stats.append(model_result.sum_stats)
              weight = 0
              accepted_distances = []
@@ -24,3 +32,32 @@ index 6fe7a47..b3bfbb8 100644
              # only the all_summary_statistics field will be read later
              return Particle(
                  m, theta, weight, accepted_distances,
+-- 
+2.11.0
+
+
+From 932287a1c3e28bc73e03aa07e1bc28584fc08a7d Mon Sep 17 00:00:00 2001
+From: Charles Houston <cph211@ic.ac.uk>
+Date: Tue, 15 Jan 2019 11:04:30 +0000
+Subject: [PATCH 2/2] catch additional error case when adapting population size
+
+---
+ pyabc/transition/predict_population_size.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pyabc/transition/predict_population_size.py b/pyabc/transition/predict_population_size.py
+index 9e28ab6..1eacf24 100644
+--- a/pyabc/transition/predict_population_size.py
++++ b/pyabc/transition/predict_population_size.py
+@@ -53,7 +53,7 @@ def predict_population_size(current_pop_size: int,
+         popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+         suggested_pop_size = finv(target_cv)
+         return CVEstimate(suggested_pop_size, n_samples_list, cvs, f, popt)
+-    except RuntimeError:
++    except (RuntimeError, ValueError):
+         logger.warning("Power law fit failed. "
+                        "Falling back to current nr particles {}"
+                        .format(current_pop_size))
+-- 
+2.11.0
+
