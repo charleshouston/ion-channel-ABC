@@ -6,7 +6,8 @@ desc: """
       """
 # Initial values
 membrane.V = -67
-ikr.x = 0.01
+ikr.xf = 0.01
+ikr.xs = 0.01
 ikr.r = 0.99
 
 [environment]
@@ -48,25 +49,37 @@ use k_conc.E_K as E_K
 
 g_Kr = 0.5228
     in [mS/uF]
-G_Kr = g_Kr * sqrt(K_o / 5400) * x * r
+G_Kr = g_Kr * sqrt(K_o / 5400) * x * r # * rslow
     in [mS/uF]
 
 i_Kr = G_Kr * (V - E_K)
     in [pA/pF]
 
-dot(x) = (xss - x) / tau_x
+x = A * xf + (1 - A) * xs
+    in [1]
+dot(xf) = (xss - xf) / tau_xf
+    in [1]
+dot(xs) = (xss - xs) / tau_xs
     in [1]
 xss = (1 + exp((Vhalf_x - V) / k_x)) ^ (-1)
-    in [mV]
-tau_x = c_bx + c_ax * exp(-1 * (Vmax_x - V)^2 / (sigma_x^2))
+    in [1]
+tau_xf = c_bxf + c_axf * exp(-1 * (Vmax_x - V)^2 / (sigma_x^2))
     in [ms]
+tau_xs = c_bxs + c_axs * exp(-1 * (Vmax_x - V)^2 / (sigma_x^2))
+    in [ms]
+A = (1 + exp((Vhalf_A - V) / k_A)) ^ (-1)
+    in [1]
     
 Vhalf_x = -12.5
 k_x = 10.0
-c_bx = 1.0
-c_ax = 1.5
-sigma_x = 2.8
-Vmax_x = -14.2
+c_bxf = 1
+c_axf = 80
+c_bxs = 50
+c_axs = 600
+Vmax_x = -40
+sigma_x = 30
+Vhalf_A = -25
+k_A = -10
 
 dot(r) = (rss - r) / tau_r
     in [1]
@@ -75,9 +88,9 @@ rss = (1 + exp((Vhalf_r - V) / k_r)) ^ (-1)
 tau_r = c_br + c_ar * exp(-1 * (Vmax_r - V)^2 / (sigma_r^2))
     in [ms]
 
-Vhalf_r = -9.0
-k_r = -22.4
-c_br = 1.0
-c_ar = 1.5
-sigma_r = 2.8
-Vmax_r = -9.2   
+Vhalf_r = -50.0
+k_r = -10.0
+c_br = 1
+c_ar = 20
+sigma_r = 20
+Vmax_r = -30  
