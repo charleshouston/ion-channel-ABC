@@ -6,6 +6,7 @@ import data.ikr.data_ikr as data
 import numpy as np
 from functools import partial
 from scipy.optimize import OptimizeWarning
+import myokit
 
 
 modelfile = 'models/Generic_iKr.mmt'
@@ -13,9 +14,9 @@ modelfile = 'models/Generic_iKr.mmt'
 ikr = IonChannelModel('ikr',
                       modelfile,
                       vvar='membrane.V',
-                      logvars=['environment.time',
-                               'ikr.i_Kr',
-                               'ikr.G_Kr'])
+                      logvars=myokit.LOG_ALL)#['environment.time',
+                               #'ikr.i_Kr',
+                               #'ikr.G_Kr'])
 
 ### Exp 1 - IV curve.
 iv_vsteps, iv_curr, iv_errs, iv_N = data.IV_Toyoda()
@@ -67,7 +68,7 @@ for i, interval in enumerate(intervals):
 def measure_maxes(data):
     maxes = []
     for d in data:
-        maxes.append(max(d['ikr.G_Kr']))
+        maxes.append(max(d['ikr.i_Kr'], key=abs))
     return maxes
 def fit_single_exp(data, xvar=intervals):
     import numpy as np
@@ -77,12 +78,17 @@ def fit_single_exp(data, xvar=intervals):
         warnings.simplefilter('error', OptimizeWarning)
         warnings.simplefilter('error', RuntimeWarning)
         try:
-            def single_exp(t, I_max, tau):
-                return I_max * (1 - np.exp(-t / tau))
-            [_, tau], _ = so.curve_fit(single_exp, xvar, data,
-                                       bounds=(0, np.inf))
+            def single_exp(t, Ass, A, tau):
+                return Ass + A * np.exp(-t / tau)
+            [_, _, tau], _ = so.curve_fit(single_exp, xvar, data,
+                                       bounds=([-50, -50, 0],
+                                               [50, 50, 5000]))
+
+            if np.isclose(tau, 5000):
+                raise Exception('Optimisation hit bounds')
+
             return tau
-        except (OptimizeWarning, RuntimeWarning):
+        except (Exception, OptimizeWarning, RuntimeWarning):
             return float("inf")
 def map_return(func, iterable, ind_var=None):
     out = []
@@ -116,42 +122,37 @@ def double_exp_decay_fit(data):
         warnings.simplefilter('error',RuntimeWarning)
         try:
             curr = data[0]['ikr.i_Kr']
-            curr_diff = np.diff(curr)
-            if curr_diff[0] > 0:
-                index = np.argwhere(curr_diff < 0)[0][0]
-            else:
-                index = np.argwhere(curr_diff > 0)[0][0]
+            time = data[0]['environment.time']
+
+            # Get peak current
+            index = np.argwhere(np.isclose(curr, max(curr, key=abs)))
+       
+            # Set time zero to peak current
+            index = index[0][0]
             curr = curr[index:]
-            i0 = curr[0]
-            curr = [i - i0 for i in curr]
-            # Get time and move to zero
-            time = data[0]['environment.time'][index:]
+
+            # Zero time from peak current time
+            time = time[index:]
             t0 = time[0]
             time = [t - t0 for t in time]
             if len(time) == 0 or len(curr) == 0:
-                #np.seterr(**old_settings)
-                return float("inf")
+                raise Exception('Could not find peak current')
 
-            def double_exp(t, I_maxf, I_maxs, tauf, taus):
-                return (I_maxf * (1 - np.exp(-t / tauf)) +
-                        I_maxs * (1 - np.exp(-t / taus)))
-            popt, _ = so.curve_fit(double_exp, time, curr,
-                                   bounds=([-np.inf, -np.inf, 10, 0],
-                                           [np.inf, np.inf, 1000, 100])
-                                  )
-            I_max = (popt[0], popt[1])
-            tau = (popt[2], popt[3])
-            tauf = max(tau)
-            taus = min(tau)
-            tauf_i = tau.index(max(tau))
-            taus_i = tau.index(min(tau))
-            I_maxf = abs(I_max[tauf_i])
-            I_maxs = abs(I_max[taus_i])
-            A_rel = I_maxf / (I_maxf + I_maxs)
+            def sum_of_exp(t, Ass, Af, tauf, As, taus):
+                return (Ass + Af * np.exp(-t / tauf) + As * np.exp(-t / taus))
+            popt, _ = so.curve_fit(sum_of_exp, time, curr,
+                                   p0=[1, 1, 5, 0.2, 70],
+                                   bounds=([-50, -50, 0, -50, 50], 
+                                           [50, 50, 100, 50, 2000]))
 
-            #np.seterr(**old_settings)
+            tauf = popt[2]
+            taus = popt[4]
+            Af = abs(popt[1])
+            As = abs(popt[3])
+            A_rel = Af / (Af + As)
+            
             return (tauf, taus, A_rel)
-        except (OptimizeWarning, RuntimeWarning):
+        except (Exception, RuntimeWarning, OptimizeWarning, RuntimeError):
             return (float("inf"), float("inf"), float("inf"))
 def takefirst(data, ind_var): return [d[0] for d in data], False
 def takesecond(data, ind_var): return [d[1] for d in data], False
@@ -184,31 +185,38 @@ def fit_exp_rising_phase(data):
     import numpy as np
     import scipy.optimize as so
     import warnings
-    # First subset so only rising phase of current
-    curr = data[0]['ikr.i_Kr']
-    curr_diff = np.diff(curr)
-    index = 0
-    if curr_diff[0] > 0:
-        index = np.argwhere(curr_diff < 0)[0][0]
-    else:
-        index = np.argwhere(curr_diff > 0)[0][0]
-    curr = curr[:index+1]
-    i0 = curr[0]
-    curr = [i - i0 for i in curr]
-    # Get time and move to zero
-    time = data[0]['environment.time'][:index+1]
-    t0 = time[0]
-    time = [t - t0 for t in time]
     with warnings.catch_warnings():
         warnings.simplefilter('error',OptimizeWarning)
         warnings.simplefilter('error',RuntimeWarning)
         try:
-            def single_exp(t, I_max, tau):
-                return I_max * (1 - np.exp(-t / tau))
-            [_, tau], _ = so.curve_fit(single_exp, time, curr)
-            #np.seterr(**old_settings)
+            curr = data[0]['ikr.i_Kr']
+            time = data[0]['environment.time']
+
+            # Get peak current
+            index = np.argwhere(np.isclose(curr, max(curr, key=abs)))
+
+            # Take subset up to peak current
+            index = index[0][0]
+            curr = curr[:index+1]
+
+            # Zero time
+            time = time[:index+1]
+            t0 = time[0]
+            time = [t - t0 for t in time]
+            if len(time) == 0 or len(curr) == 0:
+                raise Exception('Could not find a peak current')
+
+            def single_exp(t, Ass, A, tau):
+                return Ass + A * np.exp(-t / tau)
+            [_, _, tau], _ = so.curve_fit(single_exp, time, curr,
+                                       p0=[1, -1, 5],
+                                       bounds=([-50, -50, 0],
+                                               [50, 50, 100]))
+            if np.isclose(tau, 100):
+                raise Exception('Optimisation hit bounds')
+
             return tau
-        except (OptimizeWarning, RuntimeWarning):
+        except (Exception, OptimizeWarning, RuntimeWarning):
             return float("inf")
 inact_kin_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                         measure_index=2,
@@ -232,6 +240,6 @@ inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     post_fn=normalise)
 inact_exp = Experiment(inact_prot, inact_data, toyoda_conditions2)
 
-ikr.add_experiments([iv_exp, act_exp, akin_exp,
-                     #deact_f_exp, deact_s_exp, deact_amp_exp,
+ikr.add_experiments([iv_exp, act_exp, akin_exp, 
+                     deact_f_exp, deact_s_exp, deact_amp_exp,
                      inact_kin_exp, inact_exp])

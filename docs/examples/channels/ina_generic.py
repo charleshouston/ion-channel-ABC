@@ -52,7 +52,7 @@ inact_vsteps, inact_cond, inact_errs, inact_N = data.Inact_Nakajima()
 inact_data = ExperimentData(x=inact_vsteps, y=inact_cond, N=inact_N,
                             errs=inact_errs, err_type='SEM')
 stim_times = [500, 500, 20, 500]
-stim_levels = [-120, inact_vsteps, 20, -120]
+stim_levels = [-120, inact_vsteps, -20, -120]
 inact_prot = ExperimentStimProtocol(stim_times, stim_levels,
                                     measure_index=2, measure_fn=max_gna,
                                     post_fn=normalise)
