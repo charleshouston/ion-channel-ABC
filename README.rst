@@ -37,9 +37,11 @@ Installation
 Running
 -------
 
-Example Jupyter notebooks demonstrating use of library functions are available
-in (docs/examples) folder.
+Example Jupyter notebooks demonstrating use of key features are available in
+(docs/examples) folder. It is recommended to start with the
+getting_started.ipynb_ notebook.
 
 .. _myokit: http://myokit.org
 .. _pyabc: https://github.com/icb-dcm/pyabc
 .. _miniconda: https://conda.io/miniconda.html
+.. _getting_started.ipynb: docs/examples/getting_started.ipynb
