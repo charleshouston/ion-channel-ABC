@@ -13,14 +13,13 @@ Installation
    support to be able to run the example notebooks, e.g. ``conda create -n
    ionchannelABC python=3 jupyter``. Do not install the myokit or pyabc
    libraries at this stage.
-#. Make a local clone of the pyabc library. Use of this library has been tested
-   with version 0.9.2, at time of writing version is 0.9.4 with no breaking
-   changes but YMMV. Apply the patch in this repository (``pyabc.patch``) to
-   your local pyabc repository, e.g.
-   ``git apply pyabc.patch``. This patch changes the first step in the ABC
+#. Make a local clone of the pyabc library. Apply the patch in this repository
+   (``pyabc.patch``) to your local pyabc repository, e.g.  ``git apply
+   pyabc.patch``. This patch makes a couple small changes to the pyabc library
+   necessary for ionchannelABC to work (changes the first step in the ABC
    algorithm by rejecting initial prior samples with infinite distance, and
    provides a small fix to catch a possible error if using adaptive paticle
-   population sizes.
+   population sizes).
 #. Activate the previously created miniconda environment, e.g. ``conda activate
    ionchannelABC``.
 #. Install local patched version of pyabc by navigating to the repository and
