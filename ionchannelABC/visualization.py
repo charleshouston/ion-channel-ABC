@@ -1,7 +1,7 @@
 from .ion_channel_pyabc import (IonChannelModel,
                                 IonChannelDistance,
                                 ion_channel_sum_stats_calculator)
-from pyabc.visualization import kde_1d
+from pyabc.visualization.kde import kde_1d
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -109,7 +109,7 @@ def plot_distance_weights(
                         data=df, aspect=m,
                         kind='bar',
                         palette=pal)
-                        .set(xticklabels=[], 
+                        .set(xticklabels=[],
                              xticks=[]))
     for ax in grid.axes.flatten():
         ax.axhline(y=1, color='k', linestyle='--')

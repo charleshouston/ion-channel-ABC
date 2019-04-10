@@ -1,2 +1,5 @@
 pyabc
 myokit
+seaborn
+numpy
+scipy
