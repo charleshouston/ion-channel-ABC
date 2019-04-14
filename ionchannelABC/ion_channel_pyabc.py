@@ -176,7 +176,7 @@ class IonChannelModel(Model):
         if (exp_num is not None and
                 (exp_num < 0 or exp_num > len(self.experiments)-1)):
             raise ValueError("Experiment number is outside range.")
-       
+
 
         # Get original parameter values to reset later
         original_vals = self.get_parameter_vals(list(pars.keys()))
@@ -204,7 +204,7 @@ class IonChannelModel(Model):
                 all_results = results
             else:
                 all_results = all_results.append(results)
-    
+
         # Reset to original values
         self.set_parameters(**original_vals)
 
@@ -239,7 +239,7 @@ class IonChannelModel(Model):
         Return dict with value of variables or nan if variable does not exist.
         """
         m, _, _ = myokit.load(self.modelfile)
-        parameter_values = {} 
+        parameter_values = {}
         for p in parameters:
             if m.has_variable(p):
                 parameter_values[p] = m.get(p).value()
@@ -317,8 +317,8 @@ class IonChannelDistance(PNormDistance):
         Mapping from data point index to absolute error bars.
 
     err_th: float
-        Upper threshold of errors as percentage of experiment IQR to include 
-        in down-weighting, avoids overweighting of points with very low 
+        Upper threshold of errors as percentage of experiment IQR to include
+        in down-weighting, avoids overweighting of points with very low
         uncertainty. Defaults to 0.0, i.e. no threshold for the errors.
     """
 
@@ -342,7 +342,7 @@ class IonChannelDistance(PNormDistance):
                     err_bars, err_th, IQR_by_exp)
 
         # Create dictionary of weights
-        w = {} 
+        w = {}
         for ss, exp_num in self.exp_map.items():
             w[ss] = 1. / (err_by_pt[ss] * np.sqrt(N_by_exp[exp_num] *
                                                   IQR_by_exp[exp_num]))
@@ -364,6 +364,12 @@ class IonChannelDistance(PNormDistance):
         if (len(x) is 0 or
             any(np.isinf(xi) for xi in x.values())):
             return np.inf
+
+        # On continuing a previous run using pyabc's load function, the database
+        # stores our data index keys as strings. This doesn't play nice with
+        # initializing the epsilon.
+        if not isinstance(list(x.keys())[0], int):
+            x = {int(k): v for (k, v) in x.items()}
 
         # Catch possible runtime overflow warnings
         warnings.simplefilter('error', RuntimeWarning)
@@ -410,7 +416,7 @@ class IonChannelDistance(PNormDistance):
     def _calculate_err_by_pt(
             self,
             err_bars: Dict[int, float],
-            err_th: float, 
+            err_th: float,
             IQR_by_exp: Dict[int, float]) -> Dict[int, float]:
         """
         Calculates weighting due to error bars for each observed data point.
