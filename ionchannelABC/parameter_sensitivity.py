@@ -73,7 +73,7 @@ def calculate_parameter_sensitivity(
             model.get_experiment_data())
 
     # Initialize weights
-    _ = distance_fn(0, observations, observations)
+    _ = distance_fn(observations, observations, 0)
 
     p = distance_fn.p
     w = distance_fn.w[0]

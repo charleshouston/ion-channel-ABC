@@ -16,6 +16,7 @@ from typing import List, Dict, Union
 import logging
 import signal # for function timeouts
 from contextlib import contextmanager # for function timeouts
+import weakref # for cleaning up model
 
 abclogger = logging.getLogger('ABC')
 
@@ -107,6 +108,8 @@ class IonChannelModel(Model):
 
         self._sim = None
         self.experiments = []
+
+        self._finalizer = weakref.finalize(self, self._remove_simulation)
 
         super().__init__(name = channel+"_model")
 
@@ -262,6 +265,10 @@ class IonChannelModel(Model):
         v.set_rhs(0)
         v.set_binding(None)
         self._sim = myokit.Simulation(m)
+    
+    def _remove_simulation(self):
+        """Removes reference to simulation object"""
+        self._sim = None
 
     def add_experiments(self,
                         experiments: Union[Experiment, List[Experiment]]):
@@ -359,7 +366,8 @@ class IonChannelDistance(PNormDistance):
     def __call__(self,
                  x: dict,
                  y: dict,
-                 t: int) -> float:
+                 t: int,
+                 par: dict = None) -> float:
         # x is the simulated output
         if (len(x) is 0 or
             any(np.isinf(xi) for xi in x.values())):
@@ -374,7 +382,7 @@ class IonChannelDistance(PNormDistance):
         # Catch possible runtime overflow warnings
         warnings.simplefilter('error', RuntimeWarning)
         try:
-            distance = super().__call__(x, y, t)
+            distance = super().__call__(x, y, t, par)
             warnings.resetwarnings()
             return distance
         except RuntimeWarning:
