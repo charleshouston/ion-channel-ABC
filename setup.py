@@ -11,7 +11,7 @@ with open('LICENSE') as f:
 
 setup(
     name='ionchannelABC',
-    version='0.1.1',
+    version='0.1.2',
     description='Approximate Bayesian computation for ion channel models',
     long_description=readme,
     author='Charles Houston',

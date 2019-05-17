@@ -1,5 +1,5 @@
-from pyabc.distance_functions import PNormDistance
-from pyabc.acceptor import SimpleAcceptor, accept_use_complete_history
+from pyabc.distance import PNormDistance
+from pyabc.acceptor import SimpleFunctionAcceptor, accept_use_complete_history
 from pyabc.model import Model
 from pyabc.transition.multivariatenormal import MultivariateNormalTransition
 
@@ -283,9 +283,9 @@ class IonChannelModel(Model):
         return measurements
 
 
-class IonChannelAcceptor(SimpleAcceptor):
+class IonChannelAcceptor(SimpleFunctionAcceptor):
     """
-    Identical to SimpleAcceptor other than uses complete history.
+    Identical to SimpleFunctionAcceptor other than uses complete history.
     """
     def __init__(self):
         fun = accept_use_complete_history
@@ -300,7 +300,7 @@ class IonChannelDistance(PNormDistance):
     to number of data points, scale of experiment y-axis, and error bars
     in reported values.
 
-    Calling is identical to pyabc.distance_functions.PNormDistance, other than
+    Calling is identical to pyabc.distance.PNormDistance, other than
     it checks whether the simulated input is empty, in which case it returns
     np.inf.
 
@@ -357,9 +357,9 @@ class IonChannelDistance(PNormDistance):
         super().__init__(p=2, w={0: w})
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 y: dict) -> float:
+                 y: dict,
+                 t: int) -> float:
         # x is the simulated output
         if (len(x) is 0 or
             any(np.isinf(xi) for xi in x.values())):
@@ -374,7 +374,7 @@ class IonChannelDistance(PNormDistance):
         # Catch possible runtime overflow warnings
         warnings.simplefilter('error', RuntimeWarning)
         try:
-            distance = super().__call__(t, x, y)
+            distance = super().__call__(x, y, t)
             warnings.resetwarnings()
             return distance
         except RuntimeWarning:

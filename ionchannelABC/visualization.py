@@ -96,7 +96,7 @@ def plot_distance_weights(
             model.get_experiment_data())
 
     # Initialize weights
-    _ = distance_fn(0, observations, observations)
+    _ = distance_fn(observations, observations, 0)
 
     w = distance_fn.w[0]
     exp = distance_fn.exp_map
