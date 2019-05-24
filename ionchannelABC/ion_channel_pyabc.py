@@ -507,3 +507,21 @@ class IonChannelDistance(PNormDistance):
                     (err_by_pt[index] / sum(err_by_exp[exp_num]) *
                      len(err_by_exp[exp_num])))
         return err_by_pt
+
+
+def theoretical_population_size(sampling_density: int,
+                                n_parameters: int) -> int:
+    """Calculate theoretical minimum particule population size.
+    
+    Determines theoretical particle population size required to
+    sample hyperspace with sufficient fidelity.
+
+    Args:
+        sampling_density (int): Number of particles per dimension.
+        n_parameters (int): Number of parameters (= number of 
+            of the parameter hyperspace).
+
+    Returns:
+        Theoretical minimum particle population size.
+    """
+    return int((10**(np.log10(sampling_density)))**n_parameters)

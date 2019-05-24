@@ -2,7 +2,8 @@ from .ion_channel_pyabc import (ion_channel_sum_stats_calculator,
                                 EfficientMultivariateNormalTransition,
                                 IonChannelModel,
                                 IonChannelAcceptor,
-                                IonChannelDistance)
+                                IonChannelDistance,
+                                theoretical_population_size)
 
 from .experiment import (ExperimentData,
                          ExperimentStimProtocol,
