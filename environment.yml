@@ -1,0 +1,12 @@
+name: ionchannelABC
+dependencies:
+  - python==3.*
+  - ipython
+  - jupyter
+  - matplotlib
+  - seaborn
+  - numpy
+  - pandas
+  - pip:
+    - myokit==1.28.3
+    - pyabc==0.9.12
