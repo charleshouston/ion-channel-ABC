@@ -6,12 +6,12 @@ import data.icat.data_icat as data
 import numpy as np
 
 
-modelfile = 'models/Markov_iCaT.mmt'
+modelfile = 'models/icat_markov.mmt'
 
 icat = IonChannelModel('icat',
                        modelfile,
                        vvar='membrane.V',
-                       logvars=['environment.time', 
+                       logvars=['environment.time',
                                 'icat.i_CaT',
                                 'icat.G_CaT'])
 
