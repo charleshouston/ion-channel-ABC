@@ -43,9 +43,9 @@ use ca_conc.E_Ca as E_Ca
 
 g_CaT = 1.0
     in [mS/uF]
-G_CaT = g_CaT * a * r
-    in [mS/uF]
-i_CaT = G_CaT * (V - E_Ca)
+g = a * r
+    in [1]
+i_CaT = g_CaT * g * (V - E_Ca)
     in [pA/pF]
 
 dot(a) = (a_ss - a) / tau_a
