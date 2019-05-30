@@ -5,84 +5,52 @@ from typing import List, Union, Tuple, Callable, Dict
 
 
 class ExperimentData(object):
-    """
-    Organises raw digitised data extracted from publications.
+    """Organises raw digitised data extracted from publications.
 
-    Parameters
-    ----------
-
-    x: List[float]
-        X-axis data from extracted source.
-
-    y: List[float]
-        Y-axis data from extracted source.
-
-    N: int
-        Number of experimental repetitions.
-
-    errs: List[float]
-        Error bars points. NOT VALUE OF ERROR BARS RELATIVE TO Y POINTS - THIS
-        IS CALCULATED AT INITIALISATION.
-
-    err_type: str
-        Type of error given by error bars, e.g. `std` or `sem`.
+    Args: 
+        x (List[float]): Values for independent variable. 
+        y (List[float]): Values for dependent variable.
+        variances (List[float]): Variance at each data point (defaults
+            to None assuming no error bars were given).
     """
 
     def __init__(self,
                  x: List[float],
                  y: List[float],
-                 N: int=None,
-                 errs: List[float]=None,
-                 err_type: str=None):
+                 variances: List[float]=None):
 
-        if errs is not None:
-            errs = np.abs(np.asarray(errs) - np.asarray(y))
-        else:
-            errs = [np.nan]*len(x)
-        self.df = pd.DataFrame({'x': x, 'y': y, 'errs': errs})
-        self.N = N
-        self.err_type=err_type
+        if variances is None:
+            variances = [np.nan]*len(x)
+        self.df = pd.DataFrame({'x': x, 'y': y, 'variances': variances})
 
 
 class ExperimentStimProtocol(object):
     """
     Stimulation times and measurement points for simulations.
 
-    Parameters
-    ----------
-
-    stim_times: List[Union[float, List[float]]]
-        List of stimulation protocol time points from sim start. A nested
-        list indicates that the experiment is repeated for different
-        time intervals.
-
-    stim_levels: List[Union[float, List[float]]]
-        List of stimulation levels corresponding to `stim_times`. A nested
-        list indicates that the experiment is repeated for different
-        stimulation levels.
-
-    measure_index: int
-        Indices of stim_times of interest which data will be passed to
-        measure function.
-
-    measure_fn: Callable
-        Function that accepts Datalogs at times of measure index and
-        computes the experiment output from raw simulation data.
-
-    post_fn: Callable
-        Function that accepts results after all simulations have run
-        for any additional processing (e.g. normalising). Inputs to function
-        are list of results for each measure index and the independent variable.
-        Outputs are the processed data and a boolean flag for whether the keys
-        of the results should be used to fill up the results dataframe.
-
-    time_independent: bool
-        Whether the simulation needs to be solved or variables can be
-        extracted directly from the model at each time point (i.e. no
-        differential equations to solve).
-
-    ind_var: List[float]
-        Custom independent variable (x-axis) can be passed explicitly.
+    Args:
+        stim_times (List[Union[float, List[float]]]): List of simulation    
+            protocol time points from sim start. A nested list indicates that
+            the experiment is repeated for different time intervals.
+        stim_levels (List[Union[float, List[float]]]): List of stimulation
+            levels corresponding to `stim_times`. A nested list indicates that
+            the experiment is repeated for different stimulation levels.
+        measure_index (int): Indices of stim_times of interest which data will
+            be passed to measure function.
+        measure_fn (Callable): Function that accepts Datalogs at times of
+            measure index and computes the experiment output from raw
+            simulation data.
+        post_fn (Callable): Function that accepts results after all steps
+            have run for any additional processing (e.g. normalising). Inputs
+            to function are list of results for each measure index and the
+            independent variable. Outputs are the processed data and a boolean
+            flag for whether the keys of the results should be used to fill up
+            the results dataframe.
+        time_independent (bool): Whether the simulation needs to be solved or
+            variables can be extracted directly from the model at each time
+            point (i.e. no differential equations to solve).
+        ind_var (List[float]): Custom independent variable for higher resolution
+            step protocols. Overrides experimental data independent variable.
     """
 
     def __init__(self,
@@ -98,6 +66,7 @@ class ExperimentStimProtocol(object):
             raise ValueError('`stim_times` and `stim_levels` must',
                              'be same size')
 
+        # Check how many steps we have (either voltage or time).
         self.n_runs = None
         self.ind_var = None
         for time, level in zip(stim_times, stim_levels):
@@ -130,6 +99,7 @@ class ExperimentStimProtocol(object):
         if self.n_runs is None: 
             self.n_runs = 1
 
+        # If ind_var was passed explicitly
         if self.ind_var is None:
             self.ind_var = ind_var
 
@@ -138,27 +108,18 @@ class ExperimentStimProtocol(object):
                  vvar: str,
                  logvars: List[str],
                  n_x: int=None) -> pd.DataFrame:
+        """Runs the protocol in Myokit using the passed simulation model.
+
+        Args: 
+            sim (myokit.Simulation): Myokit simulation object.
+            vvar (str): Name of voltage variable in simulation.
+            logvars (List[str]): Name of logging variables.
+            n_x (int): Override for defined x resolution.
+
+        Returns:
+            Pandas dataframe containing changing variable and results.
         """
-        Runs the protocol in Myokit using the passed simulation model.
 
-        Parameters
-        ----------
-        sim: myokit.Simulation
-            Myokit simulation object to run.
-
-        vvar: str
-            Name of voltage variable in simulation.
-
-        logvars: List[str]
-            Name of variables to log in simulation.
-
-        n_x: int
-            Override for defined x resolution.
-
-        Returns
-        -------
-        Pandas dataframe containing changing variable and results.
-        """
         # Setup if x resolution is being overridden.
         if n_x is not None:
             (n_runs, times, levels, ind_var) = self._calculate_custom_res(n_x)
@@ -168,7 +129,7 @@ class ExperimentStimProtocol(object):
             levels = self.stim_levels
             ind_var = self.ind_var
 
-        # If no measure_index specified, record all
+        # If no measure_index specified, measure all
         if self.measure_index is None:
             measure_index = range(len(zip(times, levels)))
         else:
@@ -243,6 +204,15 @@ class ExperimentStimProtocol(object):
                                                  List[Union[float,
                                                       List[float]]],
                                                  List[float]]:
+        """Calculates protocol for custom number of steps.
+
+        Args:
+            n_x (int): Custom number of steps.
+
+        Returns:
+            Tuple of (number of steps, list of times, list of voltage levels,
+            independent variable list).
+        """
         n_runs = None
         times = []
         levels = []
@@ -280,21 +250,13 @@ class ExperimentStimProtocol(object):
 
 
 class Experiment(object):
-    """
-    Protocol and observed data for a single experiment.
+    """Protocol and observed data for a single experiment.
 
-    Parameters
-    ----------
-
-    protocol: ExperimentStimProtocol
-        Defined protocol to run simulation.
-
-    data: ExperimentData
-        Observed data to compare to.
-
-    conditions: Dict[str, float]
-        Experimental conditions, usually ion concentrations and
-        temperature.
+    Args:
+        protocol (ExperimentStimProtocol): Defined protocol to run simulation.
+        data (ExperimentData): Observed data to compare to.
+        conditions (Dict[str, float]): Experimental conditions, usually ion 
+            concentrations and temperature.
     """
 
     def __init__(self,
