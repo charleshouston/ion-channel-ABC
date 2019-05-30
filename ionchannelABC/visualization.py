@@ -1,6 +1,6 @@
 from .ion_channel_pyabc import (IonChannelModel,
-                                IonChannelDistance,
                                 ion_channel_sum_stats_calculator)
+from .distance import IonChannelDistance
 from pyabc.visualization.kde import kde_1d
 import numpy as np
 import pandas as pd

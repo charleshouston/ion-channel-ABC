@@ -7,8 +7,8 @@ import seaborn as sns
 from typing import List, Dict, Tuple
 
 from .ion_channel_pyabc import (IonChannelModel,
-                                IonChannelDistance,
                                 ion_channel_sum_stats_calculator)
+from .distance import IonChannelDistance
 
 
 def calculate_parameter_sensitivity(
