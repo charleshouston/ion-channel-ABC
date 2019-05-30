@@ -24,19 +24,20 @@ class IonChannelDistance(PNormDistance):
             data point value.
         exp_map (Dict[int, int]): Mapping from data point index to experiment
             number.
-        err_bars (Dict[int, float]): Optional mapping from data point index to
+        variance (Dict[int, float]): Optional mapping from data point index to
             reported experimental error.
-        err_th (float): Upper threshold for error weighting as percentrage of
+        min_var (float): Minimum variance as percentage of
             the interquartile range of the experimental data points. This
-            avoids overweighting points which have very low uncertainty.
+            avoids overweighting points which have very low, or zero
+            reported, variance.
             Defaults to 0.0, i.e. no threshold for errors.
     """
 
     def __init__(self,
                  obs: Dict[int, float],
                  exp_map: Dict[int, int],
-                 err_bars: Dict[int, float]=None,
-                 err_th: float=0.0):
+                 variance: Dict[int, float]=None,
+                 min_var: float=0.0):
 
         self.exp_map = exp_map
         data_by_exp = self._group_data_by_exp(obs)
@@ -45,16 +46,16 @@ class IonChannelDistance(PNormDistance):
         iqr_by_exp = self._calculate_experiment_IQR(data_by_exp)
 
         # Optionally include error bars
-        if err_bars is None:
-            err_by_pt = [1.0] * len(obs)
+        if variance is None:
+            var_by_pt = [1.0] * len(obs)
         else:
-            err_by_pt = self._calculate_err_by_pt(
-                    err_bars, err_th, iqr_by_exp)
+            var_by_pt = self._calculate_var_by_pt(
+                    variance, var_by_pt, iqr_by_exp)
 
         # Create dictionary of weights
         w = {}
         for ss, exp_num in self.exp_map.items():
-            w[ss] = 1. / (err_by_pt[ss] * np.sqrt(N_by_exp[exp_num] *
+            w[ss] = 1. / (var_by_pt[ss] * np.sqrt(N_by_exp[exp_num] *
                                                   iqr_by_exp[exp_num]))
 
         mean_weight = np.mean(list(w.values()))
@@ -149,53 +150,56 @@ class IonChannelDistance(PNormDistance):
             iqr_by_exp[exp_num] = weight
         return iqr_by_exp
 
-    def _calculate_err_by_pt(
+    def _calculate_var_by_pt(
             self,
-            err_bars: Dict[int, float],
-            err_th: float,
+            variance: Dict[int, float],
+            min_var: float,
             iqr_by_exp: Dict[int, float]) -> Dict[int, float]:
         """Calculates weighting due to reported error in each point.
 
         Args:
-            err_bars (Dict[int, float]): Mapping from data point index
-                to size of reported error.
-            err_th (float): Threshold for limiting how much weight can
+            variance (Dict[int, float]): Mapping from data point index
+                to data points variance.
+            min_var (float): Threshold for limiting how much weight can
                 be applied.
             iqr_by_exp (Dict[int, float]): Mapping from experiment num
                 to interquartile range for experiment.
 
         Returns:
-            Dict[int, float]: Error weighting for each data point.
+            Dict[int, float]: Weighting for each data point due to experimental
+                variance.
         """
-        err_by_pt = {}
-        err_by_exp = {}
-        for index, err in err_bars.items():
+        var_by_pt = {}
+        var_by_exp = {}
+        for index, ptvar in variance.items():
             exp_num = self.exp_map[index]
 
-            if exp_num not in err_by_exp:
-                err_by_exp[exp_num] = []
+            if exp_num not in var_by_pt:
+                var_by_exp[exp_num] = []
 
-            if np.isnan(err):
+            if np.isnan(ptvar):
                 # If no reported error value supplied
                 weight = 1.0
             else:
-                weight = err
-                if err_th > 0.0:
+                weight = ptvar
+                if min_var > 0.0:
                     iqr = iqr_by_exp[exp_num]
-                    # Error threshold given as % of experiment IQR
-                    th = err_th * iqr
+                    # Minimum variance given as % of experiment IQR
+                    th = min_var * iqr
                     weight /= th
                     # If weight is below the threshold, no downweighting
                     if weight < 1.0:
                         weight = 1.0
-            err_by_pt[index] = weight
-            err_by_exp[exp_num].append(weight)
+
+            var_by_pt[index] = weight
+            var_by_exp[exp_num].append(weight)
 
         # Normalise between all points in a given experiment
-        for index, weight in err_by_pt.items():
+        for index, weight in var_by_pt.items():
             exp_num = self.exp_map[index]
-            if len(err_by_exp[exp_num]) > 1:
-                err_by_pt[index] = (
-                    (err_by_pt[index] / sum(err_by_exp[exp_num]) *
-                     len(err_by_exp[exp_num])))
-        return err_by_pt
+            if len(var_by_pt[exp_num]) > 1:
+                var_by_pt[index] = (
+                    (var_by_pt[index] / sum(var_by_pt[exp_num]) *
+                     len(var_by_exp[exp_num])))
+
+        return var_by_pt
