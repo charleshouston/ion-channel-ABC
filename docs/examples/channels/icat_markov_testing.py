@@ -140,8 +140,8 @@ def summary_statistics(data):
         endtime = d['environment.time'][-1]
         pulse2 = d.trim(endtime-300, endtime, adjust=True)['icat.i_CaT']
 
-        max1 = np.max(pulse1, key=abs)
-        max2 = np.max(pulse2, key=abs)
+        max1 = np.max(np.abs(pulse1))
+        max2 = np.max(np.abs(pulse2))
 
         ss[str(cnt)] = max2/max1
         cnt += 1
