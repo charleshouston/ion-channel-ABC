@@ -35,16 +35,16 @@ deng_conditions = {'membrane.Ca_o': 5000,
 conditions.append(deng_conditions)
 
 # Current trace
-protocols.append(
-    myokit.pacing.steptrain([-20], -80, 5000, 300)
-)
-conditions.append(deng_conditions)
+#protocols.append(
+#    myokit.pacing.steptrain([-20], -80, 5000, 300)
+#)
+#conditions.append(deng_conditions)
 
 # Steps from -40, icat current by definition should not activate
-protocols.append(
-    myokit.pacing.steptrain_linear(-80, 50, 10, -40, 5000, 300)
-)
-conditions.append(deng_conditions)
+#protocols.append(
+#    myokit.pacing.steptrain_linear(-80, 50, 10, -40, 5000, 300)
+#)
+#conditions.append(deng_conditions)
 
 # Grab all observational data
 datasets = []
@@ -56,12 +56,12 @@ datasets.append([vsteps, peaks, variances])
 datasets.append(data.Act_Nguyen())
 datasets.append(data.Inact_Nguyen())
 datasets.append(data.Rec_Deng())
-trace_time, trace_curr, _ = data.CurrTrace_Deng()
-max_observed_curr_trace = np.max(np.abs(trace_curr))
-trace_curr = [c / max_observed_curr_trace for c in trace_curr]
-datasets.append([trace_time, trace_curr, [0.,]*len(trace_time)])
-vsteps, _, _ = data.IV_Deng()
-datasets.append([vsteps, [0.,]*len(vsteps), [0.,]*len(vsteps)])
+#trace_time, trace_curr, _ = data.CurrTrace_Deng()
+#max_observed_curr_trace = np.max(np.abs(trace_curr))
+#trace_curr = [c / max_observed_curr_trace for c in trace_curr]
+#datasets.append([trace_time, trace_curr, [0.,]*len(trace_time)])
+#vsteps, _, _ = data.IV_Deng()
+#datasets.append([vsteps, [0.,]*len(vsteps), [0.,]*len(vsteps)])
 
 observations = pd.DataFrame(columns=['x','y','variance','exp_id'])
 for id, data in enumerate(datasets):
@@ -136,36 +136,36 @@ def summary_statistics(data):
         d2_ = split_data[1]
     for d in d2:
         # Interested in two 300ms pulses
-        pulse1 = d.trim_left(300, adjust=True)['icat.g']
+        pulse1 = d.trim_left(300, adjust=True)['icat.i_CaT']
         endtime = d['environment.time'][-1]
-        pulse2 = d.trim(endtime-300, endtime, adjust=True)['icat.g']
+        pulse2 = d.trim(endtime-300, endtime, adjust=True)['icat.i_CaT']
 
-        max1 = np.max(pulse1)
-        max2 = np.max(pulse2)
+        max1 = np.max(pulse1, key=abs)
+        max2 = np.max(pulse2, key=abs)
 
         ss[str(cnt)] = max2/max1
         cnt += 1
 
     # Current trace
-    def interpolate_align(data, time):
-        simtime = data['environment.time']
-        simtime_min = min(simtime)
-        simtime = [t - simtime_min for t in simtime]
-        curr = data['icat.i_CaT']
-        #max_curr = abs(max(curr, key=abs))
-        curr = [c / max_observed_curr_trace for c in curr]
-        return np.interp(time, simtime, curr)
-    for curr in interpolate_align(data[3], trace_time):
-        ss[str(cnt)] = curr
-        cnt += 1
+    #def interpolate_align(data, time):
+    #    simtime = data['environment.time']
+    #    simtime_min = min(simtime)
+    #    simtime = [t - simtime_min for t in simtime]
+    #    curr = data['icat.i_CaT']
+    #    #max_curr = abs(max(curr, key=abs))
+    #    curr = [c / max_observed_curr_trace for c in curr]
+    #    return np.interp(time, simtime, curr)
+    #for curr in interpolate_align(data[3], trace_time):
+    #    ss[str(cnt)] = curr
+    #    cnt += 1
 
-    # I-V curve
-    d4 = data[4].split_periodic(5300)
-    for d in d4:
-        d = d.trim_left(5000, adjust=True)
-        current = d['icat.i_CaT']
-        index = np.argmax(np.abs(current))
-        ss[str(cnt)] = current[index]
-        cnt += 1
+    ## I-V curve
+    #d4 = data[4].split_periodic(5300)
+    #for d in d4:
+    #    d = d.trim_left(5000, adjust=True)
+    #    current = d['icat.i_CaT']
+    #    index = np.argmax(np.abs(current))
+    #    ss[str(cnt)] = current[index]
+    #    cnt += 1
 
     return ss
