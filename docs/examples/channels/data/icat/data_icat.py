@@ -47,7 +47,7 @@ def IV_Deng():
 def IV_Nguyen():
     """Data points for IV curve in i_CaT.
 
-    Extracted from figure 5B in Nguyen 2013. Reported as mean \pm SEM
+    Extracted from figure 5B in Nguyen 2013. Reported as mean \pm SD
     for 9 cells.
     """
     x = [-75, -70, -65, -60, -55, -50, -45, -40, -35, -30, -25, -20,
@@ -76,7 +76,7 @@ def IV_Nguyen():
                     -0.6139315230224316,
                     -0.07083825265643462])
     N = 9
-    sem = np.asarray([0.21251475796930386,
+    sd = np.asarray([0.21251475796930386,
                       0.11806375442739103,
                       0.14167650531286924,
                       0.11806375442739103,
@@ -99,9 +99,8 @@ def IV_Nguyen():
                       -1.9598583234946867,
                       -1.109799291617473,
                       -0.6139315230224316])
-    sem = np.abs(y-sem)
-    variances = np.sqrt(N) * sem
-    variances = variances**2
+    sd = np.abs(y-sd)
+    variances = sd**2
 
     return x, y.tolist(), variances.tolist()
 
@@ -142,7 +141,7 @@ def Act_Deng():
 def Act_Nguyen():
     """Data points for normalised activation curve for i_CaT.
 
-    Data extracted from figure 5C in Nguyen 2013. Reported as mean \pm SEM
+    Data extracted from figure 5C in Nguyen 2013. Reported as mean \pm SD
     for 9 cells.
     """
     x = [-75, -70, -65, -60, -55, -50, -45, -40, -35, -30, -25, -20,
@@ -165,7 +164,7 @@ def Act_Nguyen():
                     1.0044444444444443,
                     1.0029629629629628])
     N = 9
-    sem = np.asarray([0.0251851851851852,
+    sd = np.asarray([0.0251851851851852,
                       0.02370370370370356,
                       0.020740740740740726,
                       0.01185185185185178,
@@ -182,9 +181,8 @@ def Act_Nguyen():
                       1.0014814814814814,
                       1.0103703703703704,
                       1.0162962962962963])
-    sem = np.abs(y-sem)
-    variances = np.sqrt(N) * sem
-    variances = variances**2
+    sd = np.abs(y-sd)
+    variances = sd**2
 
     return x, y.tolist(), variances.tolist()
 
@@ -244,7 +242,7 @@ def Inact_Nguyen():
                     0.02276843858852029,
                     0.02546721187339096])
     N = 7
-    sem = np.asarray([0.9943646827199758,
+    sd = np.asarray([0.9943646827199758,
                       0.9942465545963957,
                       0.9856792367105861,
                       0.9714766015447525,
@@ -256,9 +254,9 @@ def Inact_Nguyen():
                       0.05387096774193556,
                       0.029810692109647263,
                       0.012791155535362808])
-    sem = np.abs(y-sem)
-    variances = np.sqrt(N) * sem
-    variances = variances**2
+    sd = np.abs(y-sd)
+    variances = sd**2
+    
     return x, y.tolist(), variances.tolist()
 
 
