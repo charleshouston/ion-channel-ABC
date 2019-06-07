@@ -18,7 +18,7 @@ dot(V) = -icat.i_CaT
     in [mV]
 Ca_o = 5000
     in [uM]
-Ca_subSL = 0.15001
+Ca_i = 0.15001
     in [uM]
 F = 96.5
     in [C/mmol]
@@ -32,9 +32,9 @@ FoRT = F / (R * T)
 [ca_conc]
 use membrane.FoRT as FoRT
 use membrane.Ca_o as Ca_o
-use membrane.Ca_subSL as Ca_subSL
+use membrane.Ca_i as Ca_i
     
-E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_subSL)
+E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_i)
     in [mV]
 
 [icat]
@@ -43,9 +43,11 @@ use ca_conc.E_Ca as E_Ca
 
 g_CaT = 1.0
     in [mS/uF]
+E_Ca_offset = 40.0
+    in [mV]
 g = a * r
     in [1]
-i_CaT = g_CaT * g * (V - E_Ca)
+i_CaT = g_CaT * g * (V - E_Ca + E_Ca_offset)
     in [pA/pF]
 
 dot(a) = (a_ss - a) / tau_a

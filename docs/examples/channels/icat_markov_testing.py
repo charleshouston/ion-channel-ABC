@@ -14,7 +14,7 @@ protocols.append(
     myokit.pacing.steptrain_linear(-75, 40, 5, -75, 5000, 300)
 )
 nguyen_conditions = {'membrane.Ca_o': 5000,
-                     'membrane.Ca_subSL': 318, # determined from RP=+35mV
+                     'membrane.Ca_i': 0.1, # estimated typical
                      'membrane.T': 295}
 conditions.append(nguyen_conditions)
 
@@ -30,7 +30,7 @@ protocols.append(
     recovery(twait, -80, -20, -20, 5000, 300, 300)
 )
 deng_conditions = {'membrane.Ca_o': 5000,
-                   'membrane.Ca_subSL': 318,
+                   'membrane.Ca_i': 0.1, # estimated typical
                    'membrane.T': 298}
 conditions.append(deng_conditions)
 
@@ -48,14 +48,24 @@ conditions.append(deng_conditions)
 
 # Grab all observational data
 datasets = []
-vsteps, peaks, variances = data.IV_Nguyen()
+vsteps, peaks, sd = data.IV_Nguyen()
 max_observed_peak = np.max(np.abs(peaks)) # for later normalising
 peaks = [p / max_observed_peak for p in peaks]
-variances = [v / max_observed_peak for v in variances]
+variances = [(sd / max_observed_peak)**2 for sd in sd]
 datasets.append([vsteps, peaks, variances])
-datasets.append(data.Act_Nguyen())
-datasets.append(data.Inact_Nguyen())
-datasets.append(data.Rec_Deng())
+
+vsteps_act, act, sd_act = data.Act_Nguyen()
+variances_act = [sd**2 for sd in sd_act]
+datasets.append([vsteps_act, act, variances_act])
+
+vsteps_inact, inact, sd_inact = data.Inact_Nguyen()
+variances_inact = [sd**2 for sd in sd_inact]
+datasets.append([vsteps_inact, inact, variances_inact])
+
+tsteps_rec, rec, sd_rec = data.Rec_Deng()
+variances_rec = [sd**2 for sd in sd_rec]
+datasets.append([tsteps_rec, rec, variances_rec])
+
 #trace_time, trace_curr, _ = data.CurrTrace_Deng()
 #max_observed_curr_trace = np.max(np.abs(trace_curr))
 #trace_curr = [c / max_observed_curr_trace for c in trace_curr]
@@ -132,20 +142,22 @@ def summary_statistics(data):
         split_times[i+1] += split_times[i]
     for time in split_times:
         split_data = d2_.split(time)
-        d2.append(split_data[0].trim_left(5000, adjust=True))
+        d2.append(
+            split_data[0].trim_left(split_data[0]['environment.time'][0]+5000, adjust=True)
+        )
         d2_ = split_data[1]
     for d in d2:
         # Interested in two 300ms pulses
-        pulse1 = d.trim_left(300, adjust=True)['icat.i_CaT']
+        pulse1 = d.trim_right(300)['icat.i_CaT']
         endtime = d['environment.time'][-1]
-        pulse2 = d.trim(endtime-300, endtime, adjust=True)['icat.i_CaT']
+        pulse2 = d.trim_left(endtime-300, adjust=True)['icat.i_CaT']
 
         max1 = np.max(np.abs(pulse1))
         max2 = np.max(np.abs(pulse2))
 
         ss[str(cnt)] = max2/max1
         cnt += 1
-
+    
     # Current trace
     #def interpolate_align(data, time):
     #    simtime = data['environment.time']

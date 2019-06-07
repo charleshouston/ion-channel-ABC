@@ -100,9 +100,9 @@ def IV_Nguyen():
                       -1.109799291617473,
                       -0.6139315230224316])
     sd = np.abs(y-sd)
-    variances = sd**2
+    #variances = sd**2
 
-    return x, y.tolist(), variances.tolist()
+    return x, y.tolist(), sd.tolist()
 
 
 # Activation curves.
@@ -182,9 +182,9 @@ def Act_Nguyen():
                       1.0103703703703704,
                       1.0162962962962963])
     sd = np.abs(y-sd)
-    variances = sd**2
+    #variances = sd**2
 
-    return x, y.tolist(), variances.tolist()
+    return x, y.tolist(), sd.tolist()
 
 
 # Inactivation curves.
@@ -255,9 +255,9 @@ def Inact_Nguyen():
                       0.029810692109647263,
                       0.012791155535362808])
     sd = np.abs(y-sd)
-    variances = sd**2
+    #variances = sd**2
     
-    return x, y.tolist(), variances.tolist()
+    return x, y.tolist(), sd.tolist()
 
 
 # Recovery curves.
@@ -268,8 +268,9 @@ def Rec_Deng():
     Extracted from figure 4B in Deng 2009. Data reported as mean \pm SEM
     for 19 cells.
     """
-    x = [32, 64, 96, 128, 160, 192, 224, 256, 288, 320]
-    y = np.asarray([0.24120603015075381,
+    x = [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320]
+    y = np.asarray([0.0,
+                    0.24120603015075381,
                     0.44472361809045224,
                     0.5787269681742044,
                     0.6582914572864322,
@@ -280,7 +281,8 @@ def Rec_Deng():
                     0.9706867671691792,
                     0.9807370184254607])
     N = 19
-    sem = np.asarray([0.24036850921273034,
+    sem = np.asarray([0.0,
+                      0.24036850921273034,
                       0.4061976549413736,
                       0.5326633165829147,
                       0.6072026800670017,
@@ -291,10 +293,10 @@ def Rec_Deng():
                       0.9405360134003351,
                       0.9514237855946399])
     sem = np.abs(y-sem)
-    variances = np.sqrt(N) * sem
-    variances = variances**2
+    sd = np.sqrt(N) * sem
+    #variances = variances**2
 
-    return x, y.tolist(), variances.tolist()
+    return x, y.tolist(), sd.tolist()
 
 # Current trace
 
