@@ -1,11 +1,11 @@
-from .ion_channel_pyabc import (IonChannelModel,
-                                ion_channel_sum_stats_calculator)
 from .distance import IonChannelDistance
 from pyabc.visualization.kde import kde_1d
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from typing import Callable
+
 
 def normalise(df, limits=None):
     result = df.copy()
@@ -22,51 +22,33 @@ def normalise(df, limits=None):
 
 
 def plot_sim_results(samples: pd.DataFrame,
-                     obs: pd.DataFrame=None):
+                     obs: pd.DataFrame=None) -> sns.FacetGrid:
+    """Plot model summary statistics output from samples with observations.
+
+    Args:
+        samples (pd.DataFrame): Samples with columns `x`, `y` and `exp_id`.
+        obs (pd.DataFrame): Data used to calibrate with columns `x`, `y`,
+            `exp_id` and `variance`.
+
+    Returns:
+        sns.FacetGrid: Multi-grid plot for each experiment separately showing 
+            mean line and standard deviation shading, optionally with fitting
+            data points and standard deviation error bars.
     """
-    Plot model summary statistics output from posterior parameters.
-
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Dataframe of posterior output from pyabc.History data store.
-
-    w: np.ndarray
-        Corresponding weight array for posterior output.
-
-    model: IonChannelModel
-        Model to produce output from parameter samples.
-
-    n_samples: int
-        Number of samples taken to approximate the distribution. Defaults to
-        length of `df`.
-
-    obs: pd.DataFrame
-        Measurements dataframe to also plot fitting data.
-
-    n_x: int
-        Custom x resolution on plots.
-
-    Returns
-    -------
-    Seaborn relplot of each experiment separately showing mean and standard
-    deviation, optionally with fitting data points.
-    """
-
     def measured_plot(**kwargs):
         measurements = kwargs.pop('measurements')
         ax = plt.gca()
         data = kwargs.pop('data')
         exp = data['exp'].unique()[0]
-        plt.errorbar(measurements.loc[measurements['exp']==exp]['x'],
-                     measurements.loc[measurements['exp']==exp]['y'],
-                     yerr=measurements.loc[measurements['exp']==exp]['errs'],
+        plt.errorbar(measurements.loc[measurements['exp_id']==exp]['x'],
+                     measurements.loc[measurements['exp_id']==exp]['y'],
+                     yerr=np.sqrt(measurements.loc[measurements['exp_id']==exp]['variance']),
                      label='obs',
                      ls='None', marker='x', c='k')
 
     with sns.color_palette("gray"):
         grid = sns.relplot(x='x', y='y',
-                           col='exp', kind='line',
+                           col='exp_id', kind='line',
                            data=samples,
                            ci='sd',
                            facet_kws={'sharex': 'col',
@@ -86,20 +68,26 @@ def plot_sim_results(samples: pd.DataFrame,
 
 
 def plot_distance_weights(
-        model: IonChannelModel,
-        distance_fn: IonChannelDistance) -> sns.FacetGrid:
-    """
-    Plots weighting of each sampling statistic by distance function.
-    """
-    m = len(model.experiments)
-    observations = ion_channel_sum_stats_calculator(
-            model.get_experiment_data())
+        observations: pd.DataFrame,
+        distance_fn: IonChannelDistance,
+        sum_stats_fn: Callable) -> sns.FacetGrid:
+    """Plots weights of each sampling statistic in distance function.
 
+    Args:
+        observations (pd.DataFrame): Observation results.
+        distance_fn (IonChannelDistance): ABC distance function.
+        sum_stats_fn (Callable): ABC summary statistics calculator.
+
+    Returns:
+        sns.FacetGrid: Bar graph showing relative weights for each
+            data point in distance function.
+    """
     # Initialize weights
     _ = distance_fn(observations, observations, 0)
 
     w = distance_fn.w[0]
     exp = distance_fn.exp_map
+    m = np.max(exp)
 
     df = pd.DataFrame({'data_point': list(w.keys()),
                        'weights': list(w.values())})
@@ -117,7 +105,11 @@ def plot_distance_weights(
 
 
 def plot_parameters_kde(df, w, limits, aspect=None, height=None):
-    """Plot grid of parameter KDE density estimates."""
+    """Plot grid of parameter KDE density estimates.
+    
+    EXPERIMENTAL: probably better off using functions from `pyabc` 
+    library to plot KDEs.
+    """
 
     if aspect is None:
         aspect=5
