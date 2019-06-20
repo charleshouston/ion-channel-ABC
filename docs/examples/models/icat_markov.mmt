@@ -64,28 +64,28 @@ tau_r = 1 / (k_3 + k_4)
 r_ss = k_4 * tau_r
     in [1]
 
-k_1 = exp(p_1) * exp(p_2 * V)
+k_1 = p_1*exp(p_2 * V)
     in [1/ms]
-k_2 = exp(p_3) * exp(-p_4 * V)
+k_2 = p_3*exp(-p_4 * V)
     in [1/ms]
-k_3 = exp(p_5) * exp(p_6 * V)
+k_3 = p_5*exp(p_6 * V)
     in [1/ms]
-k_4 = exp(p_7) * exp(-p_8 * V)
+k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-p_1 = -9
+p_1 = 1e-4
     in [1/ms]
 p_2 = 0.1 
     in [1/mV]
-p_3 = -10
+p_3 = 4e-5
     in [1/ms]
 p_4 = 0.05
     in [1/mV]
-p_5 = -3
+p_5 = 5e-2
     in [1/ms]
 p_6 = 0.01
     in [1/mV]
-p_7 = -5
+p_7 = 6e-3
     in [1/ms]
 p_8 = 0.05
     in [1/mV]

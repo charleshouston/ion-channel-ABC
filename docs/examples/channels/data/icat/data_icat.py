@@ -39,9 +39,8 @@ def IV_Deng():
                       -0.8325404376784014,
                       0.0951474785918176])
     sem = np.abs(y-sem)
-    variances = np.sqrt(N) * sem
-    variances = variances**2
-    return x, y.tolist(), variances.tolist()
+    sd = np.sqrt(N) * sem
+    return x, y.tolist(), sd.tolist()
 
 
 def IV_Nguyen():
@@ -100,8 +99,6 @@ def IV_Nguyen():
                       -1.109799291617473,
                       -0.6139315230224316])
     sd = np.abs(y-sd)
-    #variances = sd**2
-
     return x, y.tolist(), sd.tolist()
 
 
@@ -132,10 +129,9 @@ def Act_Deng():
             0.8634397528321318,
             1.0018537590113286])
     sem = np.abs(y-sem)
-    variances = np.sqrt(N) * sem
-    variances = variances**2
+    sd = np.sqrt(N) * sem
 
-    return x, y.tolist(), variances.tolist()
+    return x, y.tolist(), sd.tolist()
 
 
 def Act_Nguyen():
@@ -182,8 +178,6 @@ def Act_Nguyen():
                       1.0103703703703704,
                       1.0162962962962963])
     sd = np.abs(y-sd)
-    #variances = sd**2
-
     return x, y.tolist(), sd.tolist()
 
 
@@ -216,10 +210,9 @@ def Inact_Deng():
                       0.01139817291377998,
                       0.013731548232063018])
     sem = np.abs(y-sem)
-    variances = np.sqrt(N) * sem
-    variances = variances**2
+    sd = np.sqrt(N) * sem
 
-    return x, y.tolist(), variances.tolist()
+    return x, y.tolist(), sd.tolist()
 
 
 def Inact_Nguyen():
@@ -255,8 +248,6 @@ def Inact_Nguyen():
                       0.029810692109647263,
                       0.012791155535362808])
     sd = np.abs(y-sd)
-    #variances = sd**2
-    
     return x, y.tolist(), sd.tolist()
 
 
@@ -294,8 +285,6 @@ def Rec_Deng():
                       0.9514237855946399])
     sem = np.abs(y-sem)
     sd = np.sqrt(N) * sem
-    #variances = variances**2
-
     return x, y.tolist(), sd.tolist()
 
 # Current trace
