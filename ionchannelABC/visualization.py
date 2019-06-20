@@ -22,18 +22,19 @@ def normalise(df, limits=None):
 
 
 def plot_sim_results(samples: pd.DataFrame,
-                     obs: pd.DataFrame=None) -> sns.FacetGrid:
-    """Plot model summary statistics output from samples with observations.
+                     obs: pd.DataFrame=None,
+                     original: pd.DataFrame=None) -> sns.FacetGrid:
+    """Plot output of ABC against experimental and/or original output.
 
     Args:
         samples (pd.DataFrame): Samples with columns `x`, `y` and `exp_id`.
         obs (pd.DataFrame): Data used to calibrate with columns `x`, `y`,
             `exp_id` and `variance`.
+        original (pd.DataFrame): Data from original model with columns `x`
+            `y` and `exp_id`.
 
-    Returns:
-        sns.FacetGrid: Multi-grid plot for each experiment separately showing 
-            mean line and standard deviation shading, optionally with fitting
-            data points and standard deviation error bars.
+    Returns
+        sns.FacetGrid: Plots of measured output.
     """
     def measured_plot(**kwargs):
         measurements = kwargs.pop('measurements')
@@ -46,6 +47,16 @@ def plot_sim_results(samples: pd.DataFrame,
                      label='obs',
                      ls='None', marker='x', c='k')
 
+    def original_plot(**kwargs):
+        original = kwargs.pop('original')
+        ax = plt.gca()
+        data = kwargs.pop('data')
+        exp = data['exp'].unique()[0]
+        plt.plot(original.loc[original['exp']==exp]['x'],
+                 original.loc[original['exp']==exp]['y'],
+                 label='original',
+                 ls='--', marker=None, c='k')
+
     with sns.color_palette("gray"):
         grid = sns.relplot(x='x', y='y',
                            col='exp_id', kind='line',
@@ -57,13 +68,13 @@ def plot_sim_results(samples: pd.DataFrame,
     # Format lines in all plots
     for ax in grid.axes.flatten():
         for l in ax.lines:
-            l.set_linestyle('--')
+            l.set_linestyle('-')
 
     if obs is not None:
-        grid = (grid.map_dataframe(measured_plot, measurements=obs)
-                .add_legend())
-    else:
-        grid = grid.add_legend()
+        grid = grid.map_dataframe(measured_plot, measurements=obs)
+    if original is not None:
+        grid = grid.map_dataframe(original_plot, original=original)
+    grid = grid.add_legend()
     return grid
 
 
@@ -106,8 +117,8 @@ def plot_distance_weights(
 
 def plot_parameters_kde(df, w, limits, aspect=None, height=None):
     """Plot grid of parameter KDE density estimates.
-    
-    EXPERIMENTAL: probably better off using functions from `pyabc` 
+
+    EXPERIMENTAL: probably better off using functions from `pyabc`
     library to plot KDEs.
     """
 
