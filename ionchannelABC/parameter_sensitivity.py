@@ -4,82 +4,55 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Callable
 
-from .ion_channel_pyabc import (IonChannelModel,
-                                ion_channel_sum_stats_calculator)
 from .distance import IonChannelDistance
 
 
 def calculate_parameter_sensitivity(
-        model: IonChannelModel,
-        parameters: List[str],
+        model: Callable,
+        summary_statistics: Callable,
+        exp_map: List[int],
+        parameters: Dict[str, float],
         distance_fn: IonChannelDistance,
         sigma: float=0.1,
-        n_samples: int=500,
-        log_transform_x: bool=False,
-        log_transform_y: bool=False) -> Tuple[pd.DataFrame, pd.DataFrame, List[float]]:
-    """
-    Plots estimate of sensitivity to parameter variation and regression fit.
+        n_samples: int=500) -> Tuple[pd.DataFrame, pd.DataFrame, List[float]]:
+    """Estimate of sensitivity to parameter variation and regression fit.
 
     Based on work of:
     Sobie EA. Parameter sensitivity analysis in electrophysiological models
     using multivariable regression. Biophys J. 2009 Feb 18;96(4):1264-74.
 
-    Parameters
-    ----------
+    Args:
+        model (Callable): Model to interrogate.
+        summary_statistics (Callable): Summary statistics function
+        exp_map (List[int]): List of experiment number for each data point.
+        parameters (Dict[str, float]): Parameters and base values to perturb from.
+        distance_fn (IonChannelDistance): ABC distance function.
+        sigma (float): Standard deviation of normalised log-normal distribution.
+        n_samples (int): Number of parameter samples for training data.
 
-    model: IonChannelModel
-        Model to interrogate.
-
-    parameters: List[str]
-        List of parameter names in model.
-
-    distance_fn: IonChannelDistance
-        Distance function to measure between simulation and observations.
-
-    sigma: float
-        Parameter lognormal distribution which moves parameters from original
-        values.
-
-    n_samples: int
-        Number of parameter samples to make to fit model.
-
-    plot_cutoff: float
-        Plot dotted line on graphs to indicate cutoff for non-sensitive
-        parameters.
-
-    log_transform_x: bool
-        Whether to log transform the X variable (parameter values).
-
-    log_transform_y: bool
-        Whether to log transform the Y variable (distance results).
-
-    Returns
-    -------
-    Dataframes of sensitivty of each parameter and goodness of regression fit.
-    List of r2 scores for regression fits.
-    All outputs are used in subsequent functions to produce plots.
+    Returns:
+        Dataframes of sensitivty of each parameter and goodness of regression fit.
+        List of r2 scores for regression fits.
+        All outputs are used in subsequent functions to produce plots.
     """
 
     # Generate lognormal distribution for parameters
     scale_dist_ln = np.random.lognormal(mean=0.0, sigma=sigma,
-                                        size=(n_samples, len(parameters)))
+                                        size=(n_samples, len(parameters.keys())))
 
     # Get original parameter values
-    original = model.get_parameter_vals(parameters)
-    original_vals = np.asarray(list(original.values()))
-    observations = ion_channel_sum_stats_calculator(
-            model.get_experiment_data())
+    observations = summary_statistics(model(parameters))
+    original_vals = np.asarray(list(parameters.values()))
 
     # Initialize weights
     _ = distance_fn(observations, observations, 0)
 
     p = distance_fn.p
     w = distance_fn.w[0]
-    exp_map = distance_fn.exp_map
 
-    m = max(exp_map.values())+1
+    m = max(exp_map)+1
     X = np.empty((n_samples, len(original_vals)))
     Y = np.empty((n_samples, m))
     def dist(x, y):
@@ -101,20 +74,18 @@ def calculate_parameter_sensitivity(
     i = 0
     while i < n_samples:
         X[i, :] = np.multiply(original_vals, scale_dist_ln[i, :])
-        results = ion_channel_sum_stats_calculator(
-                model.sample(dict(zip(parameters, X[i, :]))))
+        results = summary_statistics(
+                model(dict(zip(parameters.keys(), X[i, :]))))
         if not np.all(np.isfinite(list(results.values()))):
             # Change scale multiplier for this sample
             scale_dist_ln[i, :] = np.random.lognormal(mean=0.0, sigma=sigma,
-                                        size=(1, len(parameters)))
+                                        size=(1, len(parameters.keys())))
             continue
         # Otherwise continue and add to results
         Y[i, :] = dist(results, observations)
         i = i + 1
 
     # Mean center and normalise
-    if log_transform_x: X = np.log(X)
-    if log_transform_y: Y = np.log(Y)
     X = np.divide(X - np.mean(X, axis=0), np.std(X, axis=0))
     Y = np.divide(Y - np.nanmean(Y, axis=0), np.nanstd(Y, axis=0))
 
@@ -127,8 +98,7 @@ def calculate_parameter_sensitivity(
     Ypred = np.dot(X, beta.transpose())
 
     # Create dataframe for plotting
-    parameter_names = parameters
-    #parameter_names = [p.split('.')[-1] for p in parameters]
+    parameter_names = [p.split('.')[-1] for p in parameters.keys()]
     exp = [0,]*len(parameter_names)
     for i in range(1, m):
         exp += [i,]*len(parameter_names)
@@ -160,7 +130,7 @@ def plot_parameter_sensitivity(
 
     parameter_names = fitted.param.unique()
     m = len(fitted[fitted.param==parameter_names[0]])
-    
+
     # Setup seaborn
     pal = sns.cubehelix_palette(len(parameter_names), rot=-.25, light=.7)
 
