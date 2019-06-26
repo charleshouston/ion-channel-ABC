@@ -40,7 +40,7 @@ def plot_sim_results(samples: pd.DataFrame,
         measurements = kwargs.pop('measurements')
         ax = plt.gca()
         data = kwargs.pop('data')
-        exp = data['exp'].unique()[0]
+        exp = data['exp_id'].unique()[0]
         plt.errorbar(measurements.loc[measurements['exp_id']==exp]['x'],
                      measurements.loc[measurements['exp_id']==exp]['y'],
                      yerr=np.sqrt(measurements.loc[measurements['exp_id']==exp]['variance']),
@@ -51,9 +51,9 @@ def plot_sim_results(samples: pd.DataFrame,
         original = kwargs.pop('original')
         ax = plt.gca()
         data = kwargs.pop('data')
-        exp = data['exp'].unique()[0]
-        plt.plot(original.loc[original['exp']==exp]['x'],
-                 original.loc[original['exp']==exp]['y'],
+        exp = data['exp_id'].unique()[0]
+        plt.plot(original.loc[original['exp_id']==exp]['x'],
+                 original.loc[original['exp_id']==exp]['y'],
                  label='original',
                  ls='--', marker=None, c='k')
 
