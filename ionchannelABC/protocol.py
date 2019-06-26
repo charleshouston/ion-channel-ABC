@@ -47,9 +47,7 @@ def recovery(twait: List[float],
     return p
 
 
-def availability(vstart: float,
-                 vend: float,
-                 dv: float,
+def availability(vsteps: List[float],
                  vhold: float,
                  vtest: float,
                  tpre: float,
@@ -58,6 +56,51 @@ def availability(vstart: float,
                  ttest: float,
                  tpost: float=0.) -> myokit.Protocol:
     """Standard availability (inactivation) protocol."""
+    # Check time arguments
+    if tpre < 0:
+        raise ValueError('Time tpre can not be negative.')
+    if tstep < 0:
+        raise ValueError('Time tstep can not be negative.')
+    if twait < 0:
+        raise ValueError('Time tstep can not be negative.')
+    if ttest < 0:
+        raise ValueError('Time tpost can not be negative.')
+    if tpost < 0:
+        raise ValueError('Time tpost can not be negative.')
+
+    # Create protocol
+    p = myokit.Protocol()
+    time = 0.
+    for vstep in vsteps:
+        if tpre > 0:
+            p.schedule(vhold, time, tpre)
+            time += tpre
+        if tstep > 0:
+            p.schedule(vstep, time, tstep)
+            time += tstep
+        if twait > 0:
+            p.schedule(vhold, time, twait)
+            time += twait
+        if ttest > 0:
+            p.schedule(vtest, time, ttest)
+            time += ttest
+        if tpost > 0:
+            p.schedule(vhold, time, tpost)
+            time += tpost
+    return p
+
+
+def availability_linear(vstart: float,
+                        vend: float,
+                        dv: float,
+                        vhold: float,
+                        vtest: float,
+                        tpre: float,
+                        tstep: float,
+                        twait: float,
+                        ttest: float,
+                        tpost: float=0.) -> myokit.Protocol:
+    """Standard availability (inactivation) protocol with linear steps."""
 
     # Check v arguments
     if vend > vstart:
