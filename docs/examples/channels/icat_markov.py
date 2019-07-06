@@ -1,9 +1,14 @@
-from ionchannelABC.protocol import recovery
+from ionchannelABC.protocol import recovery, availability_linear
 import data.icat.data_icat as data
 import numpy as np
 import pandas as pd
 import myokit
 
+def temp_correct(R0, T0, T1, Q10=3.):
+    return R0*Q10**((T1-T0)/10)
+
+def temp_correct_tau(R0, T0, T1, Q10=3.):
+    return R0*Q10**((T0-T1)/10)
 
 modelfile = 'models/icat_markov.mmt'
 
@@ -14,13 +19,14 @@ protocols.append(
     myokit.pacing.steptrain_linear(-75, 40, 5, -75, 5000, 300)
 )
 nguyen_conditions = {'membrane.Ca_o': 5000,
-                     'membrane.Ca_i': 0.1, # estimated typical
-                     'membrane.T': 295}
+                     'membrane.Ca_i': 0.2} # estimated typical (LR1994)
+                     #'membrane.T': 295}
 conditions.append(nguyen_conditions)
 
 # Inactivation curve protocol
 protocols.append(
-    myokit.pacing.steptrain_linear(-80, -20, 5, -10, 1000, 1000, 500)
+    availability_linear(-80, -20, 5, -90, -10, 5000, 1000, 0, 150)
+    #myokit.pacing.steptrain_linear(-80, -20, 5, -10, 1000, 1000, 500)
 )
 conditions.append(nguyen_conditions)
 
@@ -30,21 +36,26 @@ protocols.append(
     recovery(twait, -80, -20, -20, 5000, 300, 300)
 )
 deng_conditions = {'membrane.Ca_o': 5000,
-                   'membrane.Ca_i': 0.1, # estimated typical
-                   'membrane.T': 298}
+                   'membrane.Ca_i': 0.2} # estimated typical
+                   #'membrane.T': 298}
 conditions.append(deng_conditions)
 
 # Current trace
-#protocols.append(
-#    myokit.pacing.steptrain([-20], -80, 5000, 300)
-#)
-#conditions.append(deng_conditions)
+'''
+protocols.append(
+    myokit.pacing.steptrain([-20], -80, 5000, 300)
+)
+conditions.append(deng_conditions)
+'''
 
 # Steps from -40, icat current by definition should not activate
-#protocols.append(
-#    myokit.pacing.steptrain_linear(-80, 50, 10, -40, 5000, 300)
-#)
-#conditions.append(deng_conditions)
+# Note: artificial dataset
+'''
+protocols.append(
+    myokit.pacing.steptrain_linear(-80, 50, 10, -40, 5000, 300)
+)
+conditions.append(deng_conditions)
+'''
 
 # Grab all observational data
 datasets = []
@@ -54,9 +65,11 @@ peaks = [p / max_observed_peak for p in peaks]
 variances = [(sd / max_observed_peak)**2 for sd in sd]
 datasets.append([vsteps, peaks, variances])
 
+'''
 vsteps_act, act, sd_act = data.Act_Nguyen()
 variances_act = [sd**2 for sd in sd_act]
 datasets.append([vsteps_act, act, variances_act])
+'''
 
 vsteps_inact, inact, sd_inact = data.Inact_Nguyen()
 variances_inact = [sd**2 for sd in sd_inact]
@@ -66,12 +79,15 @@ tsteps_rec, rec, sd_rec = data.Rec_Deng()
 variances_rec = [sd**2 for sd in sd_rec]
 datasets.append([tsteps_rec, rec, variances_rec])
 
-#trace_time, trace_curr, _ = data.CurrTrace_Deng()
-#max_observed_curr_trace = np.max(np.abs(trace_curr))
-#trace_curr = [c / max_observed_curr_trace for c in trace_curr]
-#datasets.append([trace_time, trace_curr, [0.,]*len(trace_time)])
-#vsteps, _, _ = data.IV_Deng()
-#datasets.append([vsteps, [0.,]*len(vsteps), [0.,]*len(vsteps)])
+'''
+trace_time, trace_curr, _ = data.CurrTrace_Deng()
+max_observed_curr_trace = np.max(np.abs(trace_curr))
+trace_curr = [c / max_observed_curr_trace for c in trace_curr]
+datasets.append([trace_time, trace_curr, [0.,]*len(trace_time)])
+
+vsteps, _, _ = data.IV_Deng()
+datasets.append([vsteps, [0.,]*len(vsteps), [0.,]*len(vsteps)])
+'''
 
 observations = pd.DataFrame(columns=['x','y','variance','exp_id'])
 for id, data in enumerate(datasets):
@@ -99,40 +115,48 @@ for p, c in zip(protocols, conditions):
 
 def summary_statistics(data):
     """Converts raw simulation output to sensible results"""
-    
+
     # Check for error
     if data is None:
         return {}
-    
+
     # Process sensible results
     ss = {}
     cnt = 0
-    
+
     # I-V curve (normalised)
-    d0 = data[0].split_periodic(5300)
+    d0 = data[0].split_periodic(5300, adjust=True)
     for d in d0:
-        d = d.trim_left(5000, adjust=True)
+        d = d.trim(5000, 5300, adjust=True)
         current = d['icat.i_CaT']
         index = np.argmax(np.abs(current))
         ss[str(cnt)] = current[index] / max_observed_peak
         cnt += 1
-    
+
     # Activation data
     # Same data as IV less final 6 steps
+    '''
     for d in d0[:-6]:
         gate = d['icat.g']
         index = np.argmax(np.abs(gate))
         ss[str(cnt)] = np.abs(gate[index])
         cnt += 1
+    '''
 
     # Inactivation data
-    d1 = data[1].split_periodic(2500)
+    d1 = data[1].split_periodic(6150, adjust=True)
+    cnt_normalise = cnt
     for d in d1:
-        d.trim_left(2000, adjust=True)
-        gate = d['icat.g']
-        index = np.argmax(np.abs(gate))
-        ss[str(cnt)] = np.abs(gate[index])
+        d = d.trim(6000, 6150, adjust=True)
+        current = d['icat.i_CaT']
+        ss[str(cnt)] = max(current, key=abs)
+        #gate = d['icat.g']
+        #index = np.argmax(np.abs(gate))
+        #ss[str(cnt)] = np.abs(gate[index])
         cnt += 1
+    for i in range(1, len(d1)):
+        ss[str(cnt_normalise+i)] = ss[str(cnt_normalise+i)]/ss[str(cnt_normalise)]
+    ss[str(cnt_normalise)] = 1.
 
     # Recovery data
     d2_ = data[2]
@@ -140,44 +164,49 @@ def summary_statistics(data):
     split_times = [5600+tw for tw in twait]
     for i, time in enumerate(split_times[:-1]):
         split_times[i+1] += split_times[i]
-    for time in split_times:
+    for i, time in enumerate(split_times):
         split_data = d2_.split(time)
         d2.append(
-            split_data[0].trim_left(split_data[0]['environment.time'][0]+5000, adjust=True)
+            split_data[0].trim(split_data[0]['environment.time'][0]+5000,
+                               split_data[0]['environment.time'][0]+5600+twait[i],
+                               adjust=True)
         )
         d2_ = split_data[1]
     for d in d2:
         # Interested in two 300ms pulses
-        pulse1 = d.trim_right(300)['icat.i_CaT']
+        pulse1 = d.trim(0, 300, adjust=True)['icat.i_CaT']
         endtime = d['environment.time'][-1]
-        pulse2 = d.trim_left(endtime-300, adjust=True)['icat.i_CaT']
+        pulse2 = d.trim(endtime-300, endtime, adjust=True)['icat.i_CaT']
 
         max1 = np.max(np.abs(pulse1))
         max2 = np.max(np.abs(pulse2))
 
         ss[str(cnt)] = max2/max1
         cnt += 1
-    
-    # Current trace
-    #def interpolate_align(data, time):
-    #    simtime = data['environment.time']
-    #    simtime_min = min(simtime)
-    #    simtime = [t - simtime_min for t in simtime]
-    #    curr = data['icat.i_CaT']
-    #    #max_curr = abs(max(curr, key=abs))
-    #    curr = [c / max_observed_curr_trace for c in curr]
-    #    return np.interp(time, simtime, curr)
-    #for curr in interpolate_align(data[3], trace_time):
-    #    ss[str(cnt)] = curr
-    #    cnt += 1
 
-    ## I-V curve
-    #d4 = data[4].split_periodic(5300)
-    #for d in d4:
-    #    d = d.trim_left(5000, adjust=True)
-    #    current = d['icat.i_CaT']
-    #    index = np.argmax(np.abs(current))
-    #    ss[str(cnt)] = current[index]
-    #    cnt += 1
+    # Current trace
+    '''
+    d3 = data[3].trim_left(5000, adjust=True)
+    def interpolate_align(data, time):
+        simtime = data['environment.time']
+        curr = data['icat.i_CaT']
+        max_curr = max(curr, key=abs)
+        curr = [c / abs(max_curr) for c in curr]
+        return np.interp(time, simtime, curr)
+    for curr in interpolate_align(d, trace_time):
+        ss[str(cnt)] = curr
+        cnt += 1
+    '''
+
+    # I-V curve
+    '''
+    d4 = data[4].split_periodic(5300, adjust=True)
+    for d in d4:
+        d = d.trim_left(5000, adjust=True)
+        current = d['icat.i_CaT']
+        index = np.argmax(np.abs(current))
+        ss[str(cnt)] = current[index] / max_observed_peak
+        cnt += 1
+    '''
 
     return ss
