@@ -48,11 +48,11 @@ use na_conc.E_Na as E_Na
 # Channel constants
 
 g_Na = 7.8
-    in [nS/pF]
+    in [S/F]
 g = m^3 * h * j
     in [1]
 i_Na = g_Na * g * (V - E_Na)
-    in [nA/pF]
+    in [A/F]
 
 # Gating constants for m
 a1_m = 47.13
@@ -60,6 +60,8 @@ a1_m = 47.13
 a2_m = 0.32
     in [1]
 a3_m = 0.1
+    in [1]
+a4_m = 3.2
     in [1]
 b1_m = 0.08
     in [1]
@@ -73,8 +75,12 @@ a1_h = 0.135
     in [1]
 a2_h = 6.8
     in [1]
+a3_h = 80
+    in [mV]
 b1_h = 0.13
     in [1]
+#eq_amp = ((b4_h*exp(b5_h*(-c1_h)) + b6_h*exp(b7_h*(-c1_h))) * (1 + exp(((-c1_h) + b2_h) / -b3_h)))^-1
+#     in [1]
 b2_h = 10.66
     in [1]
 b3_h = 11.1
@@ -130,7 +136,7 @@ m_inf = alpha_m / (alpha_m + beta_m)
 tau_m = 1 / (alpha_m + beta_m)
     in [ms]
 alpha_m = piecewise(
-    V == -a1_m, 10 * a2_m,
+    V == -a1_m, a4_m,
     (a2_m * (V + a1_m)) / (1 - exp(-a3_m * (V + a1_m)))
     )
     in [1/ms]
@@ -146,7 +152,7 @@ tau_h = 1 / (alpha_h + beta_h)
     in [ms]
 alpha_h = piecewise(
     V >= -c1_h, 0,
-    a1_h * exp((V + 2 * c1_h) / -a2_h)
+    a1_h * exp((V + a3_h) / -a2_h)
     )
     in [1/ms]
 beta_h = piecewise(
