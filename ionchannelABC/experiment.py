@@ -1,281 +1,142 @@
+from .utils import log_transform, combine_sum_stats
 import numpy as np
 import myokit
 import pandas as pd
-from typing import List, Union, Tuple, Callable, Dict
+from typing import List, Callable, Dict, Union, Tuple
+import warnings
 
 
-class ExperimentData(object):
-    """Organises raw digitised data extracted from publications.
-
-    Args: 
-        x (List[float]): Values for independent variable. 
-        y (List[float]): Values for dependent variable.
-        variances (List[float]): Variance at each data point (defaults
-            to None assuming no error bars were given).
-    """
-
+class Experiment:
+    """Contains related information from patch clamp experiment."""
     def __init__(self,
-                 x: List[float],
-                 y: List[float],
-                 variances: List[float]=None):
-
-        if variances is None:
-            variances = [np.nan]*len(x)
-        self.df = pd.DataFrame({'x': x, 'y': y, 'variances': variances})
-
-
-class ExperimentStimProtocol(object):
-    """
-    Stimulation times and measurement points for simulations.
-
-    Args:
-        stim_times (List[Union[float, List[float]]]): List of simulation    
-            protocol time points from sim start. A nested list indicates that
-            the experiment is repeated for different time intervals.
-        stim_levels (List[Union[float, List[float]]]): List of stimulation
-            levels corresponding to `stim_times`. A nested list indicates that
-            the experiment is repeated for different stimulation levels.
-        measure_index (int): Indices of stim_times of interest which data will
-            be passed to measure function.
-        measure_fn (Callable): Function that accepts Datalogs at times of
-            measure index and computes the experiment output from raw
-            simulation data.
-        post_fn (Callable): Function that accepts results after all steps
-            have run for any additional processing (e.g. normalising). Inputs
-            to function are list of results for each measure index and the
-            independent variable. Outputs are the processed data and a boolean
-            flag for whether the keys of the results should be used to fill up
-            the results dataframe.
-        time_independent (bool): Whether the simulation needs to be solved or
-            variables can be extracted directly from the model at each time
-            point (i.e. no differential equations to solve).
-        ind_var (List[float]): Custom independent variable for higher resolution
-            step protocols. Overrides experimental data independent variable.
-    """
-
-    def __init__(self,
-                 stim_times: List[Union[float, List[float]]],
-                 stim_levels: List[Union[float, List[float]]],
-                 measure_index: Union[int, Tuple[int]]=None,
-                 measure_fn: Callable=None,
-                 post_fn: Callable=None,
-                 time_independent: bool=False,
-                 ind_var: List[float]=None):
-
-        if len(stim_times) != len(stim_levels):
-            raise ValueError('`stim_times` and `stim_levels` must',
-                             'be same size')
-
-        # Check how many steps we have (either voltage or time).
-        self.n_runs = None
-        self.ind_var = None
-        for time, level in zip(stim_times, stim_levels):
-            if isinstance(time, list):
-                if self.n_runs is None:
-                    # Take first nested list as number of runs.
-                    self.n_runs = len(time)
-                    self.ind_var = time
-                else:
-                    assert len(time) == self.n_runs, (
-                            'Inconsistent number of experiment runs.')
-            if isinstance(level, list):
-                if self.n_runs is None:
-                    self.n_runs = len(level)
-                    self.ind_var = level
-                else:
-                    assert len(level) == self.n_runs, (
-                            'Inconsistent number of experiment runs.')
-        self.stim_times = stim_times
-        self.stim_levels = stim_levels
-
-        if isinstance(measure_index, int):
-            self.measure_index = (measure_index,)
-        else:
-            self.measure_index = measure_index
-        self.measure_fn = measure_fn
-        self.post_fn = post_fn
-        self.time_independent = time_independent
-        # TODO: check this is an appropriate default
-        if self.n_runs is None: 
-            self.n_runs = 1
-
-        # If ind_var was passed explicitly
-        if self.ind_var is None:
-            self.ind_var = ind_var
-
-    def __call__(self,
-                 sim: myokit.Simulation,
-                 vvar: str,
-                 logvars: List[str],
-                 n_x: int=None) -> pd.DataFrame:
-        """Runs the protocol in Myokit using the passed simulation model.
-
-        Args: 
-            sim (myokit.Simulation): Myokit simulation object.
-            vvar (str): Name of voltage variable in simulation.
-            logvars (List[str]): Name of logging variables.
-            n_x (int): Override for defined x resolution.
-
-        Returns:
-            Pandas dataframe containing changing variable and results.
-        """
-
-        # Setup if x resolution is being overridden.
-        if n_x is not None:
-            (n_runs, times, levels, ind_var) = self._calculate_custom_res(n_x)
-        else:
-            n_runs = self.n_runs
-            times = self.stim_times
-            levels = self.stim_levels
-            ind_var = self.ind_var
-
-        # If no measure_index specified, measure all
-        if self.measure_index is None:
-            measure_index = range(len(zip(times, levels)))
-        else:
-            measure_index = self.measure_index
-
-        # Run simulations
-        full_results = []
-        for run in range(n_runs):
-            data = []
-            sim.reset()
-            for i, (time, level) in enumerate(zip(times, levels)):
-                if isinstance(time, list):
-                    t = time[run]
-                else:
-                    t = time
-                if isinstance(level, list):
-                    l = level[run]
-                else:
-                    l = level
-                sim.set_constant(vvar, l)
-
-                # Store data values if it is a measurment region of interest
-                # or if we are simply spitting out the raw sim output.
-                if i in measure_index:
-                    # Query values if simulation does not depend
-                    # on time (and thus running would error).
-                    if self.time_independent:
-                        d = myokit.DataLog()
-                        # Record everything is unspecified
-                        if logvars is None or logvars is myokit.LOG_ALL:
-                            logvars = sim._model.variables()
-                        for logi in logvars:
-                            d[logi] = sim._model.get(logi).value()
-                        data.append(d)
-                    # Otherwise run simulation and store output.
-                    else:
-                        data.append(sim.run(t, log=logvars))
-                else:
-                    # Run unless doing so would error
-                    if not self.time_independent:
-                        d = sim.run(t)
-
-            if self.measure_fn is not None:
-                data = self.measure_fn(data)
-            else:
-                # Combine by default
-                d0 = data[0]
-                for d in data[1:]:
-                    d0 = d0.extend(d)
-                data = d0
-                data['run'] = run
-            full_results.append(data)
-
-        # Apply any post-processing function
-        output = pd.DataFrame({})
-        use_result_keys = False
-        if self.post_fn is not None:
-            full_results, use_result_keys = self.post_fn(full_results, ind_var)
-        if not use_result_keys:
-            output = output.append(pd.DataFrame({'x': ind_var, 'y': full_results}),
-                                   ignore_index=True)
-        else:
-            output = output.append(pd.DataFrame({'x': list(full_results.keys()),
-                                                 'y': list(full_results.values())}),
-                                   ignore_index=True)
-        return output
-
-    def _calculate_custom_res(self,
-                              n_x: int) -> Tuple[int,
-                                                 List[Union[float,
-                                                      List[float]]],
-                                                 List[Union[float,
-                                                      List[float]]],
-                                                 List[float]]:
-        """Calculates protocol for custom number of steps.
+                 dataset: List[List[float]],
+                 protocol: myokit.Protocol,
+                 conditions: Dict[str, float],
+                 sum_stats: Union[Callable, List[Callable]],
+                 description: str=""):
+        """Initialisation.
 
         Args:
-            n_x (int): Custom number of steps.
-
-        Returns:
-            Tuple of (number of steps, list of times, list of voltage levels,
-            independent variable list).
+            dataset (pd.DataFrame): Experimental data in format (X, Y, variance)
+            protocol (myokit.Protocol): Voltage step protocol from experiment.
+            conditions (Dict[str, float]): Reported experimental conditions.
+            sum_stats (Union[Callable, List[Callable]]): Summary statistics
+                function(s) which may be list of functions as more than one
+                measurement could be made from one protocol. Note than a single
+                function passed here is converted to a list of length 1 during
+                initilisation.
+            description (str): Optional descriptor.
         """
-        n_runs = None
-        times = []
-        levels = []
-        for time, level in zip(self.stim_times,
-                               self.stim_levels):
-            if isinstance(time, list):
-                times.append(
-                             [float(min(time)) +
-                              x*(float(max(time))-float(min(time))) /
-                              (n_x-1) for x in range(n_x)]
-                            )
-                n_runs = len(times[-1])
-                ind_var = times[-1]
-            else:
-                times.append(time)
 
-            if isinstance(level, list):
-                levels.append(
-                              [float(min(level)) +
-                               x*(float(max(level))-float(min(level))) /
-                               (n_x-1) for x in range(n_x)]
-                             )
-                n_runs = len(levels[-1])
-                ind_var = levels[-1]
-            else:
-                levels.append(level)
+        self._dataset = dataset
+        self._protocol = protocol
+        self._conditions = conditions
+        # sum_stats function should be stored as a list as we may
+        # measure more than aspect of a single protocol
+        if isinstance(sum_stats, list):
+            self._sum_stats = sum_stats
+        else:
+            self._sum_stats = [sum_stats]
+        self._description = description
 
-            if n_runs is None:
-                n_runs = 1
-                ind_var = [min(self.ind_var) +
-                           x*(max(self.ind_var)-min(self.ind_var)) / (n_x-1)
-                           for x in range(n_x)]
+    def __call__(self) -> None:
+        """Print descriptor"""
+        print(self._description)
 
-        return (n_runs, times, levels, ind_var)
+    @property
+    def dataset(self) -> np.ndarray:
+        return self._dataset
+
+    @property
+    def protocol(self) -> myokit.Protocol:
+        return self._protocol
+
+    @property
+    def conditions(self) -> Dict:
+        return self._conditions
+
+    @property
+    def sum_stats(self) -> Callable:
+        return self._sum_stats
 
 
-class Experiment(object):
-    """Protocol and observed data for a single experiment.
-
+def setup(modelfile: str,
+          *experiments: Experiment,
+          vvar: str='membrane.V',
+          logvars: List[str]=myokit.LOG_ALL
+          ) -> Tuple[pd.DataFrame, Callable, Callable]:
+    """Combine chosen experiments into inputs for ABC.
+    
     Args:
-        protocol (ExperimentStimProtocol): Defined protocol to run simulation.
-        data (ExperimentData): Observed data to compare to.
-        conditions (Dict[str, float]): Experimental conditions, usually ion 
-            concentrations and temperature.
+        modelfile (str): Path to Myokit MMT file.
+        *experiments (Experiment): Any number of experiments to run in ABC.
+        vvar (str): Optionally specify name of membrane voltage in modelfile.
+        logvars (str): Optionally specify variables to log in simulations.
+
+    Returns:
+        Tuple[pd.DataFrame, Callable, Callable]:
+            Observations combined from experiments.
+            Model function to run combined protocols from experiments.
+            Summary statistics function to convert 'raw' simulation output.
     """
 
-    def __init__(self,
-                 protocol: ExperimentStimProtocol,
-                 data: ExperimentData,
-                 conditions: Dict[str, float]):
-        self.protocol = protocol
-        self.data = data
-        self.conditions = conditions
+    # Create Myokit model instance
+    m = myokit.load_model(modelfile)
+    v = m.get(vvar)
+    v.demote()
+    v.set_rhs(0)
+    v.set_binding('pace')
 
-    def run(self,
-            sim: myokit.Simulation,
-            vvar: str,
-            logvars: List[str],
-            n_x: int=None):
-        for c_name, c_val in self.conditions.items():
+    # Initialise combined variables
+    cols = ['x', 'y', 'variance', 'exp_id']
+    observations = pd.DataFrame(columns=cols)
+    simulations, times = [], []
+
+    for i, exp in enumerate(list(experiments)):
+        # Combine datasets
+        dataset = np.asarray(exp.dataset).T.tolist()
+        dataset = [d+[str(i),] for d in dataset]
+        observations = observations.append(
+            pd.DataFrame(dataset, columns=cols),
+            ignore_index=True
+        )
+
+        # Combine protocols into Myokit simulations
+        s = myokit.Simulation(m, exp.protocol)
+        for ci, vi in exp.conditions.items():
+            s.set_constant(ci, vi)
+        simulations.append(s)
+        times.append(exp.protocol.characteristic_time())
+        
+    # Create model function
+    def simulate_model(**pars):
+        sim_output = []
+        for sim, time in zip(simulations, times):
+            for p, v in pars.items():
+                try:
+                    sim.set_constant(p, v)
+                except:
+                    warnings.warn("Could not set value of {}"
+                                  .format(p))
+                    return None
+            sim.reset()
             try:
-                sim.set_constant('membrane.'+c_name, c_val)
+                sim_output.append(sim.run(time, log=logvars))
             except:
-                raise ValueError('Could not set condition {1} to {2}'
-                                 .format(c_name, c_val))
-        return self.protocol(sim, vvar, logvars, n_x)
+                del(sim_output)
+                return None
+        return sim_output
+    def model(x):
+        return log_transform(simulate_model)(**x)
+
+    # Combine summary statistic functions
+    sum_stats_combined = combine_sum_stats(
+        *[e.sum_stats for e in list(experiments)]
+    )
+    def summary_statistics(data):
+        if data is None:
+            return {}
+        return {i: val 
+                for i, val in enumerate(sum_stats_combined(data))}
+
+    return observations, model, summary_statistics

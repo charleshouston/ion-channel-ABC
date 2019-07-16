@@ -5,9 +5,8 @@ from .utils import (ion_channel_sum_stats_calculator,
 
 from .distance import IonChannelDistance
 
-#from .experiment import (ExperimentData,
-#                         ExperimentStimProtocol,
-#                         Experiment)
+from .experiment import (Experiment,
+                         setup)
 
 from .visualization import (plot_sim_results,
                             plot_distance_weights,
