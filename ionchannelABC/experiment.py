@@ -152,7 +152,7 @@ def setup(modelfile: str,
     def summary_statistics(data):
         if data is None:
             return {}
-        return {i: val 
+        return {str(i): val 
                 for i, val in enumerate(sum_stats_combined(data))}
 
     return observations, model, summary_statistics
