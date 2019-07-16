@@ -1,0 +1,101 @@
+[[model]]
+name: Fast Na+ channel model
+author: Charles Houston
+desc: """
+      Markov-derived model with one activation and 
+      two inactivation gates.
+      """
+# Initial values
+membrane.V = -67
+ina.m = 0.01
+ina.h = 0.99
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ina.i_Na
+    in [mV]
+Na_o = 5000
+    in [uM]
+Na_i = 5000 
+    in [uM]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 305
+    in [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[na_conc]
+use membrane.FoRT as FoRT
+use membrane.Na_o as Na_o
+use membrane.Na_i as Na_i
+    
+E_Na = 1 / FoRT * log(Na_o / Na_i)
+    in [mV]
+
+[ina]
+use membrane.V as V
+use na_conc.E_Na as E_Na
+
+g_Na = 1.0
+    in [mS/uF]
+E_Na_offset = 0.0
+    in [mV]
+g = m^3 * h
+    in [1]
+i_Na = g_Na * g * (V - E_Na + E_Na_offset)
+    in [A/F]
+
+dot(m) = (m_ss - m) / tau_m
+    in [1]
+tau_m = 1 / (k_1 + k_2)
+    in [ms]
+m_ss = k_1 * tau_m
+    in [1]
+
+dot(h) = (h_ss - h) / tau_h
+    in [1]
+tau_h = 1 / (k_3 + k_4)
+    in [ms]
+h_ss = k_4 * tau_h
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+p_5 = 5e-2
+    in [1/ms]
+p_6 = 0.01
+    in [1/mV]
+p_7 = 6e-3
+    in [1/ms]
+p_8 = 0.05
+    in [1/mV]
+
+#p_9 = 5e-2
+#    in [1/ms]
+#p_10 = 0.01
+#    in [1/mV]
+#p_11 = p_7*p_9/p_5      # from equal steady-state recovery gate
+#    in [1/ms]           # log(p_7)-log(p_5)==log(p_11)-log(p_9)==-h_r*s_r
+#p_12 = p_6 + p_8 - p_10 # from equal steady-state recovery gate
+#    in [1/mV]           # p_6+p_8==p_10+p_12==-s_r
