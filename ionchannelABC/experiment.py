@@ -1,9 +1,29 @@
-from .utils import log_transform, combine_sum_stats
+from functools import wraps, reduce
 import numpy as np
 import myokit
 import pandas as pd
 from typing import List, Callable, Dict, Union, Tuple
 import warnings
+
+
+def log_transform(f):
+    @wraps(f)
+    def log_transformed(**log_kwargs):
+        kwargs = dict([(key[4:], 10**value) if key.startswith("log")
+                       else (key, value)
+                       for key, value in log_kwargs.items()])
+        return f(**kwargs)
+    return log_transformed
+
+
+def combine_sum_stats(*functions):
+    def sum_stats_fn(x):
+        sum_stats = []
+        for i, flist in enumerate(functions):
+            for f in flist:
+                sum_stats = sum_stats+f(x[i])
+        return sum_stats
+    return lambda x: sum_stats_fn(x)
 
 
 class Experiment:
@@ -22,17 +42,13 @@ class Experiment:
             conditions (Dict[str, float]): Reported experimental conditions.
             sum_stats (Union[Callable, List[Callable]]): Summary statistics
                 function(s) which may be list of functions as more than one
-                measurement could be made from one protocol. Note than a single
-                function passed here is converted to a list of length 1 during
-                initilisation.
+                measurement could be made from one protocol.
             description (str): Optional descriptor.
         """
 
         self._dataset = dataset
         self._protocol = protocol
         self._conditions = conditions
-        # sum_stats function should be stored as a list as we may
-        # measure more than aspect of a single protocol
         if isinstance(sum_stats, list):
             self._sum_stats = sum_stats
         else:

@@ -1,4 +1,3 @@
-from functools import wraps, reduce
 import pandas as pd
 import numpy as np
 from pyabc.acceptor import SimpleFunctionAcceptor, accept_use_complete_history
@@ -7,26 +6,6 @@ from pyabc.transition.multivariatenormal import MultivariateNormalTransition
 """
 This module contains utility classes/functions for use with pyabc.
 """
-
-def log_transform(f):
-    @wraps(f)
-    def log_transformed(**log_kwargs):
-        kwargs = dict([(key[4:], 10**value) if key.startswith("log")
-                       else (key, value)
-                       for key, value in log_kwargs.items()])
-        return f(**kwargs)
-    return log_transformed
-
-
-def combine_sum_stats(*functions):
-    def sum_stats_fn(x):
-        sum_stats = []
-        for i, flist in enumerate(functions):
-            for f in flist:
-                sum_stats = sum_stats+f(x[i])
-        return sum_stats
-    return lambda x: sum_stats_fn(x)
-
 
 def ion_channel_sum_stats_calculator(model_output: pd.DataFrame) -> dict:
     """Converts myokit simulation wrapper output into ABC-readable output.
