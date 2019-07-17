@@ -1,0 +1,126 @@
+[[model]]
+name: Delayed rectifier K (iKr) channel model
+author: Charles Houston
+desc: """
+      Simple model for iKr.
+      """
+# Initial values
+membrane.V = -67
+ikr.xf = 0.01
+ikr.xs = 0.01
+ikr.r = 0.99
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikr.i_Kr
+    in [mV]
+K_o = 5400
+    in [uM]
+K_i = 143000
+    in [uM]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+T = 295
+    in [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[k_conc]
+use membrane.FoRT as FoRT
+use membrane.K_o as K_o
+use membrane.K_i as K_i
+    
+E_K = 1 / FoRT * log(K_o / K_i)
+    in [mV]
+
+[ikr]
+use membrane.V as V
+use k_conc.E_K as E_K
+use membrane.K_o as K_o
+
+g_Kr = 0.5
+    in [mS/uF]
+x = Arel * xf + (1-Arel) * xs
+    in [1]
+g = sqrt(K_o/5400) * x * r
+    in [1]
+i_Kr = g_Kr * g * (V - E_K)
+    in [pA/pF]
+
+dot(xf) = (xf_ss - xf) / tau_xf
+    in [1]
+tau_xf = 1 / (k_1 + k_2)
+    in [ms]
+xf_ss = k_1 * tau_xf
+    in [1]
+
+dot(xs) = (xs_ss - xs) / tau_xs
+    in [1]
+tau_xs = 1 / (k_3 + k_4)
+    in [ms]
+xs_ss = k_3 * tau_xs
+    in [1]
+
+dot(r) = (r_ss - r) / tau_r
+    in [1]
+tau_r = 1 / (k_5 + k_6)
+    in [ms]
+r_ss = k_6 * tau_r
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+k_5 = p_9*exp(p_10 * V)
+    in [1/ms]
+k_6 = p_11*exp(-p_12 * V)
+    in [1/ms]
+
+# Model relative amplitude of fast and slow time constant
+# using Boltzmann curve
+Arel = (1 + exp(s_A*(h_A+V)))^(-1)
+    in [1]
+s_A = 0.2
+    in [1]
+h_A = -20
+    in [mV]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+p_5 = 1e-4
+    in [1/ms]
+p_6 = 0.1 
+    in [1/mV]
+# from equal steady-state activation gate
+# p_2+p_4==p_6+p_8
+# log(p_1)+log(p_3)==log(p_5)+log(p_7)
+p_7 = p_3*p_5/p_1     # from equal steady-state activation
+    in [1/ms]
+p_8 = p_2+p_4-p_6     # from equal steady-state activation
+    in [1/mV]
+
+p_9 = 5e-2
+    in [1/ms]
+p_10 = 0.01
+    in [1/mV]
+p_11 = 6e-3
+    in [1/ms]
+p_12 = 0.05
+    in [1/mV]
