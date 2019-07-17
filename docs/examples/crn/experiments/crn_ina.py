@@ -35,6 +35,7 @@ sd = [(cm_sd/cm_mean)*p for p in peaks]
 schneider_iv_max_peak = np.max(np.abs(peaks)) # normalising
 peaks = [p / schneider_iv_max_peak for p in peaks]
 variances = [(sd_ / schneider_iv_max_peak)**2 for sd_ in sd]
+schneider_iv_dataset = np.asarray([vsteps, peaks, variances])
 
 schneider_iv_protocol = myokit.pacing.steptrain_linear(
     -85, 65, 10, -135, 500, 12
@@ -53,7 +54,7 @@ def schneider_iv_sum_stats(data):
     return output
 
 schneider_iv = Experiment(
-    dataset=[vsteps, peaks, variances],
+    dataset=schneider_iv_dataset,
     protocol=schneider_iv_protocol,
     conditions=crn_conditions,
     sum_stats=schneider_iv_sum_stats,
@@ -78,6 +79,7 @@ sd = [(cm_sd/cm_mean)*p for p in peaks]
 sakakibara_iv_max_peak = np.max(np.abs(peaks)) # normalising
 peaks = [p / sakakibara_iv_max_peak for p in peaks]
 variances = [(sd_ / sakakibara_iv_max_peak)**2 for sd_ in sd]
+sakakibara_iv_dataset = np.asarray([vsteps, peaks, variances])
 
 sakakibara_act_protocol = myokit.pacing.steptrain_linear(
     -100, 30, 10, -140, 9900, 100
@@ -96,7 +98,7 @@ def sakakibara_iv_sum_stats(data):
     return output
 
 sakakibara_iv = Experiment(
-    dataset=[vsteps, peaks, variances],
+    dataset=sakakibara_iv_dataset,
     protocol=sakakibara_act_protocol,
     conditions=crn_conditions,
     sum_stats=sakakibara_iv_sum_stats,
@@ -111,19 +113,20 @@ Note: Curve is voltage shifted +20mV as in Courtemanche 1998."""
 vsteps_act, act, sd_act = data.Act_Sakakibara()
 vsteps_act = [v_+20 for v_ in vsteps_act]
 variances_act = [sd**2 for sd in sd_act]
+sakakibara_act_dataset = np.asarray([vsteps_act, act, variances_act])
 
 def sakakibara_act_sum_stats(data):
-    output = []    
+    output = []
     for d in data.split_periodic(10000, adjust=True):
         d = d.trim(9900, 10000, adjust=True)
         gate = d['ina.g']
         output = output + [max(gate)]
     for i in range(len(output)):
-        output[i] = output[i] / output[-1] 
+        output[i] = output[i] / output[-1]
     return output
 
 sakakibara_act = Experiment(
-    dataset=[vsteps_act, act, variances_act],
+    dataset=sakakibara_act_dataset,
     protocol=sakakibara_act_protocol,
     conditions=crn_conditions,
     sum_stats=sakakibara_act_sum_stats,
@@ -137,6 +140,7 @@ Voltage shifted +20mV as in Courtemanche 1998."""
 vsteps_inact, inact, sd_inact = data.Inact_Sakakibara()
 vsteps_inact = [v_+20 for v_ in vsteps_inact]
 variances_inact = [sd**2 for sd in sd_inact]
+sakakibara_inact_dataset = np.asarray([vsteps_inact, inact, variances_inact])
 
 sakakibara_inact_protocol = availability_linear(
    -120, -10, 10, -140, -20, 10000, 1000, 0, 30
@@ -154,7 +158,7 @@ def sakakibara_inact_sum_stats(data):
     return output
 
 sakakibara_inact = Experiment(
-    dataset=[vsteps_inact, inact, variances_inact],
+    dataset=sakakibara_inact_dataset,
     protocol=sakakibara_inact_protocol,
     conditions=crn_conditions,
     sum_stats=sakakibara_inact_sum_stats,
@@ -171,13 +175,14 @@ tm = [temperature_adjust(tm_, 297, 310, Q10) for tm_ in tm]
 max_tm = np.max(np.abs(tm)) # normalising
 tm = [tm_ / max_tm for tm_ in tm]
 variances_tm = [(sd_/max_tm)**2 for sd_ in sd_tm]
+schneider_taum_dataset = np.asarray([vsteps_tm, tm, variances_tm])
 
 schneider_taum_protocol = myokit.pacing.steptrain_linear(
     -65, 25, 10, -135, 500, 100
 )
 
 def schneider_taum_sum_stats(data):
-    output = []     
+    output = []
     for d in data.split_periodic(600, adjust=True):
         d = d.trim(500, 600, adjust=True)
         current = d['ina.i_Na']
@@ -208,7 +213,7 @@ def schneider_taum_sum_stats(data):
     return output
 
 schneider_taum = Experiment(
-    dataset=[vsteps_tm, tm, variances_tm],
+    dataset=schneider_taum_dataset,
     protocol=schneider_taum_protocol,
     conditions=crn_conditions,
     sum_stats=schneider_taum_sum_stats,
@@ -226,13 +231,14 @@ th = [temperature_adjust(th_, 290, 310, Q10) for th_ in th]
 max_th = np.max(np.abs(th)) # normalising
 th = [th_ / max_th for th_ in th]
 variances_th = [(sd_/max_th)**2 for sd_ in sd_th]
+sakakibara_tauh_dataset = np.asarray([vsteps_th, th, variances_th])
 
 sakakibara_tauh_protocol = myokit.pacing.steptrain_linear(
    -30, 10, 10, -140, 1000, 100
 )
 
 def sakakibara_tauh_sum_stats(data):
-    output = [] 
+    output = []
     def simple_exp(t, tauh):
         return np.exp(-t/tauh)
 
@@ -271,7 +277,7 @@ def sakakibara_tauh_sum_stats(data):
     return output
 
 sakakibara_tauh = Experiment(
-    dataset=[vsteps_th, th, variances_th],
+    dataset=sakakibara_tauh_dataset,
     protocol=sakakibara_tauh_protocol,
     conditions=crn_conditions,
     sum_stats=sakakibara_tauh_sum_stats,
@@ -290,6 +296,7 @@ th_depol = [temperature_adjust(th_, 290, 310, Q10) for th_ in th_depol]
 max_th_depol = np.max(np.abs(th_depol))
 th_depol = [th_ / max_th_depol for th_ in th_depol]
 variances_th_depol = [0.]*len(th_depol)
+sakakibara_tauh_depol_dataset = np.asarray([vsteps_th_depol, th_depol, variances_th_depol])
 
 # Protocol creation a little more complicated as multiple recovery protocols
 # need to be combined. We therefore create the protocols for each depolarisation
@@ -332,7 +339,7 @@ def sakakibara_tauh_depol_sum_stats(data):
                     trim1 += twaits[i]+3000
                     trim2 += twaits[i]+3000
                     trim3 += twaits[i]+3000
-   
+
                 # Fit double exponential to recovery curve
                 popt, _ = so.curve_fit(simple_exp, twaits, 1.-np.asarray(rec),
                                        p0=[1],
@@ -344,7 +351,7 @@ def sakakibara_tauh_depol_sum_stats(data):
     return output
 
 sakakibara_tauh_depol = Experiment(
-    dataset=[vsteps_th_depol, th_depol, variances_th_depol],
+    dataset=sakakibara_tauh_depol_dataset,
     protocol=sakakibara_tauh_depol_protocol,
     conditions=crn_conditions,
     sum_stats=sakakibara_tauh_depol_sum_stats,

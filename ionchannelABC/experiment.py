@@ -29,7 +29,7 @@ def combine_sum_stats(*functions):
 class Experiment:
     """Contains related information from patch clamp experiment."""
     def __init__(self,
-                 dataset: List[List[float]],
+                 dataset: Union[np.ndarray, List[np.ndarray]],
                  protocol: myokit.Protocol,
                  conditions: Dict[str, float],
                  sum_stats: Union[Callable, List[Callable]],
@@ -37,7 +37,11 @@ class Experiment:
         """Initialisation.
 
         Args:
-            dataset (pd.DataFrame): Experimental data in format (X, Y, variance)
+            dataset (Union[np.ndarray, List[np.ndarray]]):
+                Experimental data in format (x, y, variance). More than one
+                dataset can be supplied in a list and will be assigned
+                separate exp_id. Care must be taken in this case that sum stats
+                function produces appropriate output.
             protocol (myokit.Protocol): Voltage step protocol from experiment.
             conditions (Dict[str, float]): Reported experimental conditions.
             sum_stats (Union[Callable, List[Callable]]): Summary statistics
@@ -45,8 +49,10 @@ class Experiment:
                 measurement could be made from one protocol.
             description (str): Optional descriptor.
         """
-
-        self._dataset = dataset
+        if isinstance(dataset, list):
+            self._dataset = dataset
+        else:
+            self._dataset = [dataset]
         self._protocol = protocol
         self._conditions = conditions
         if isinstance(sum_stats, list):
@@ -108,14 +114,17 @@ def setup(modelfile: str,
     observations = pd.DataFrame(columns=cols)
     simulations, times = [], []
 
-    for i, exp in enumerate(list(experiments)):
+    cnt = 0
+    for exp in list(experiments):
         # Combine datasets
-        dataset = np.asarray(exp.dataset).T.tolist()
-        dataset = [d+[str(i),] for d in dataset]
-        observations = observations.append(
-            pd.DataFrame(dataset, columns=cols),
-            ignore_index=True
-        )
+        for d in exp.dataset:
+            dataset = d.T.tolist()
+            dataset = [d_+[str(cnt),] for d_ in dataset]
+            observations = observations.append(
+                pd.DataFrame(dataset, columns=cols),
+                ignore_index=True
+            )
+            cnt += 1
 
         # Combine protocols into Myokit simulations
         s = myokit.Simulation(m, exp.protocol)
