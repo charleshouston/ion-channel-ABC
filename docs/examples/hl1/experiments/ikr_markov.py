@@ -8,6 +8,7 @@ from ionchannelABC.experiment import Experiment
 from ionchannelABC.protocol import varying_test_duration
 
 
+room_temp = 295
 Q10_cond = 1.5 # Correa 1991
 Q10_tau = 2.79 # ten Tusscher 2004
 
@@ -22,12 +23,12 @@ def temperature_adjust_tau(R0, T0, T1, Q10):
 toyoda_iv_desc = """IV curve from Figure 1E of Toyoda 2005.
 Current measured just before the end of the 1s pulse.
 
-Data recorded at 308K and adjusted to 295K using Q10 factor of 1.5
+Data recorded at 308K and adjusted to room_temp using Q10 factor of 1.5
 (Correa 1991)."""
 
 vsteps_iv, peaks, sd_iv = data.IV_Toyoda()
-peaks = [temperature_adjust_cond(pk, 308, 295, Q10_cond) for pk in peaks]
-sd_iv = [temperature_adjust_cond(sd, 308, 295, Q10_cond) for sd in sd_iv]
+peaks = [temperature_adjust_cond(pk, 308, room_temp, Q10_cond) for pk in peaks]
+sd_iv = [temperature_adjust_cond(sd, 308, room_temp, Q10_cond) for sd in sd_iv]
 max_observed_peak_iv = np.max(np.abs(peaks))
 peaks = [p / max_observed_peak_iv for p in peaks]
 variances_iv = [(sd / max_observed_peak_iv)**2 for sd in sd_iv]
@@ -68,8 +69,8 @@ factor of 2.79 (ten Tusscher 2004).
 """
 
 vsteps_taua, taua, sd_taua = data.ActKin_Toyoda()
-taua = [temperature_adjust_tau(ta, 308, 295, Q10_tau) for ta in taua]
-sd_taua = [temperature_adjust_tau(sd, 308, 295, Q10_tau) for sd in sd_taua]
+taua = [temperature_adjust_tau(ta, 308, room_temp, Q10_tau) for ta in taua]
+sd_taua = [temperature_adjust_tau(sd, 308, room_temp, Q10_tau) for sd in sd_taua]
 max_ta = np.max(np.abs(taua))
 taua = [ta / max_ta for ta in taua]
 variances_ta = [(sd/max_ta)**2 for sd in sd_taua]
@@ -140,16 +141,16 @@ Adjusted to 295K from 308K using Q10 factor 2.79 (ten Tusscher 2004).
 
 # Multiple datasets for fast, slow tau and relative amplitude
 vsteps_taui, taui_f, sd_taui_f = data.DeactKinFast_Toyoda()
-taui_f = [temperature_adjust_tau(ti, 308, 295, Q10_tau) for ti in taui_f]
+taui_f = [temperature_adjust_tau(ti, 308, room_temp, Q10_tau) for ti in taui_f]
 max_tf = np.max(np.abs(taui_f))
-sd_taui_f = [temperature_adjust_tau(sd, 308, 295, Q10_tau) for sd in sd_taui_f]
+sd_taui_f = [temperature_adjust_tau(sd, 308, room_temp, Q10_tau) for sd in sd_taui_f]
 taui_f = [ti_/max_tf for ti_ in taui_f]
 variances_taui_f = [(sd_/max_tf)**2 for sd_ in sd_taui_f]
 
 _, taui_s, sd_taui_s = data.DeactKinSlow_Toyoda()
-taui_s = [temperature_adjust_tau(ti, 308, 295, Q10_tau) for ti in taui_s]
+taui_s = [temperature_adjust_tau(ti, 308, room_temp, Q10_tau) for ti in taui_s]
 max_ts = np.max(np.abs(taui_s))
-sd_taui_s = [temperature_adjust_tau(sd, 308, 295, Q10_tau) for sd in sd_taui_s]
+sd_taui_s = [temperature_adjust_tau(sd, 308, room_temp, Q10_tau) for sd in sd_taui_s]
 taui_s = [ti_/max_ts for ti_ in taui_f]
 variances_taui_s = [(sd_/max_ts)**2 for sd_ in sd_taui_s]
 
