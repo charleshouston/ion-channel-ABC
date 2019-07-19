@@ -2,8 +2,7 @@
 name: Fast Na+ channel model
 author: Charles Houston
 desc: """
-      Markov-derived model with one activation and 
-      two inactivation gates.
+      Simple model for ina channel.
       """
 # Initial values
 membrane.V = -67
@@ -17,9 +16,13 @@ time = 0 bind time
 [membrane]
 dot(V) = -ina.i_Na
     in [mV]
-Na_o = 5000
+Na_o = 140000
     in [uM]
 Na_i = 5000 
+    in [uM]
+K_o = 4000
+    in [uM]
+K_i = 140000
     in [uM]
 F = 96.5
     in [C/mmol]
@@ -30,26 +33,27 @@ T = 305
 FoRT = F / (R * T)
     in [1/mV]
 
-[na_conc]
-use membrane.FoRT as FoRT
-use membrane.Na_o as Na_o
-use membrane.Na_i as Na_i
-    
-E_Na = 1 / FoRT * log(Na_o / Na_i)
-    in [mV]
-
 [ina]
 use membrane.V as V
-use na_conc.E_Na as E_Na
+use membrane.Na_o as Na_o
+use membrane.Na_i as Na_i
+use membrane.K_o as K_o
+use membrane.K_i as K_i
+use membrane.FoRT as FoRT
 
 g_Na = 1.0
     in [mS/uF]
-E_Na_offset = 0.0
-    in [mV]
 g = m^3 * h
     in [1]
-i_Na = g_Na * g * (V - E_Na + E_Na_offset)
-    in [A/F]
+i_Na = g_Na * g * (V - Erev)
+    in [pA/pF]
+
+P_Na = 0.9
+    in [1]
+P_K = 1 - P_Na
+    in [1]
+Erev = 1/FoRT * log((P_Na*Na_o + P_K*K_o)/(P_Na*Na_i + P_K*K_i))
+    in [mV]
 
 dot(m) = (m_ss - m) / tau_m
     in [1]

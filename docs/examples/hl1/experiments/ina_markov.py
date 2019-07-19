@@ -22,7 +22,9 @@ dias_iv_dataset = np.asarray([vsteps, peaks, variances])
 dias_iv_protocol = myokit.pacing.steptrain_linear(-100, 50, 10, -80, 5000, 100)
 dias_conditions = {'membrane.Na_o': 140e3,
                    'membrane.Na_i': 10e3,
-                   'membrane.T': 298}
+                   'membrane.K_o': 4000,
+                   'membrane.K_i': 130e3,
+                   'membrane.T': room_temp}
 
 def dias_iv_sum_stats(data):
     output = []
@@ -53,6 +55,8 @@ nakajima_inact_protocol = availability_linear(
 )
 nakajima_conditions = {'membrane.Na_o': 145e3,
                        'membrane.Na_i': 10e3,
+                       'membrane.K_o': 0., # Cs used to avoid contamination
+                       'membrane.K_i': 0.,
                        'membrane.T': room_temp}
 
 def nakajima_inact_sum_stats(data):
@@ -87,6 +91,8 @@ zhang_rec_protocol = recovery(
 )
 zhang_conditions = {'membrane.Na_o': 136e3,
                     'membrane.Na_i': 10e3,
+                    'membrane.K_o': 0., # Cs used to avoid contamination
+                    'membrane.K_i': 0.,
                     'membrane.T': room_temp}
 
 split_times = [3040+tw for tw in tsteps_rec]
@@ -123,5 +129,5 @@ zhang_recovery = Experiment(
     protocol=zhang_rec_protocol,
     conditions=zhang_conditions,
     sum_stats=zhang_rec_sum_stats,
-    description=zhang_desc
+    description=zhang_rec_desc
 )
