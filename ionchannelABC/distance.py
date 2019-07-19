@@ -37,9 +37,8 @@ class IonChannelDistance(PNormDistance):
                  delta: float=0.001):
 
         # Calculate weighting due to number of data points.
-        w_iexp = np.asarray([len(exp_id)-sum(1. for id_ in exp_id if id_ == id)
+        w_iexp = np.asarray([1./(sum(1. for id_ in exp_id if id_ == id))
                              for id in exp_id])
-        w_iexp = w_iexp/len(exp_id)
 
         # Calculate weighting due to variance in experiment data points.
         w_ivar = np.asarray([max(delta, np.sqrt(var)) for var in variance])
