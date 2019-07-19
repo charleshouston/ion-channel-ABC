@@ -1,0 +1,70 @@
+[[model]]
+name: Simple model for inward rectifier ik1 current
+author: Charles Houston
+desc: """
+      Simple model for ik1.
+      """
+# Initial values
+membrane.V = -67
+ik1.x = 0.01
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ik1.i_k1
+    in [mV]
+T = 295
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+FoRT = F / (R * T)
+    in [1/mV]
+K_o = 25000
+    in [uM]
+K_i = 120000
+    in [uM]
+
+[k_conc]
+use membrane.K_o as K_o
+use membrane.K_i as K_i
+use membrane.FoRT as FoRT
+
+E_K = (1 / FoRT) * log(K_o / K_i)
+    in [mV]
+
+[ik1]
+use membrane.V as V
+use k_conc.E_K as E_K
+use membrane.K_o as K_o
+
+g_k1 = 0.021
+    in [mS/uF]
+g = g_k1 * x
+    in [mS/uF]
+i_k1 = g * sqrt(K_o/5400) * (V - E_K)
+    in [pA/pF]
+
+dot(x) = (x_ss - x) / tau_x
+    in [1]
+tau_x = 1 / (k_1 + k_2)
+    in [ms]
+x_ss = k_1 * tau_x
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]

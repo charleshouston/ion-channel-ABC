@@ -1,3 +1,4 @@
+import numpy as np
 ### Digitised data for HL-1 i_K1 channel.
 
 
@@ -21,5 +22,4 @@ def IV_Goldoni():
     peak_out_curr = y[0]
     y = [yi * -42.4 / peak_out_curr for yi in y]
     N = 10
-    errs = None
-    return x, y, errs, N
+    return x, y, None
