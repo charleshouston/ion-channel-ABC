@@ -96,7 +96,7 @@ variances_act = [sd**2 for sd in sd_act]
 _, tau_a, sd_tau_a = data.ActTau_Sartiani()
 max_taua = np.max(tau_a)*1000. # convert to ms
 tau_a = [ta*1000./max_taua for ta in tau_a]
-variances_ta = [(sd/max_taua)**2 for sd in sd_tau_a]
+variances_ta = [(sd*1000./max_taua)**2 for sd in sd_tau_a]
 sartiani_act_dataset = [np.asarray([vsteps_act, act, variances_act]),
                         np.asarray([vsteps_act, tau_a, variances_ta])]
 
