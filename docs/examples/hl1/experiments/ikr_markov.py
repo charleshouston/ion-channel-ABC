@@ -151,7 +151,7 @@ _, taui_s, sd_taui_s = data.DeactKinSlow_Toyoda()
 taui_s = [temperature_adjust_tau(ti, 308, room_temp, Q10_tau) for ti in taui_s]
 max_ts = np.max(np.abs(taui_s))
 sd_taui_s = [temperature_adjust_tau(sd, 308, room_temp, Q10_tau) for sd in sd_taui_s]
-taui_s = [ti_/max_ts for ti_ in taui_f]
+taui_s = [ti_/max_ts for ti_ in taui_s]
 variances_taui_s = [(sd_/max_ts)**2 for sd_ in sd_taui_s]
 
 _, taui_relamp, sd_taui_relamp = data.DeactKinRelAmp_Toyoda()
