@@ -23,3 +23,17 @@ def IV_Goldoni():
     y = [yi * -42.4 / peak_out_curr for yi in y]
     N = 10
     return x, y, None
+
+def Ko_Goldoni():
+    """Ko dependence of ik1 in HL-1 cell.
+
+    Data reported as single points at -150mV from figure 2 in Goldoni 2010
+    and normalised to maximum value at 100mM external Ko. This was done as
+    values are given in nA, but model output is pA/pF."""
+    x = [100, 40, 20]
+    y = np.asarray([-2.86764705882353,
+                    -0.41911764705882293,
+                    -0.1544117647058818])
+    y = y / y[0]
+    return x, y.tolist(), None
+
