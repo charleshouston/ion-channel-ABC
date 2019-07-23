@@ -51,30 +51,9 @@ sartiani_conditions = {'membrane.K_o': 25e3,
 
 def sartiani_iv_sum_stats(data):
     output = []
-    def simple_exp(t, tau, A):
-        return A*(np.exp(-t/tau)-1)
     for d in data.split_periodic(7500, adjust=True):
         d = d.trim(6500, 7500, adjust=True)
-        curr = d['iha.i_ha']
-        time = d['environment.time']
-
-        c0 = curr[0]
-        curr = [c_-c0 for c_ in curr]
-
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', RuntimeWarning)
-            warnings.simplefilter('error', so.OptimizeWarning)
-            try:
-                popt, _ = so.curve_fit(simple_exp,
-                                       time,
-                                       curr,
-                                       p0 = [100., 1.],
-                                       bounds=([0., -np.inf],
-                                              [10e3, np.inf]))
-                amp = popt[1]
-                output = output + [amp/max_iv_peak]
-            except:
-                output = output + [float('inf')]
+        output = output + [max(d['iha.i_ha'], key=abs)]
     return output
 
 sartiani_iv = Experiment(
