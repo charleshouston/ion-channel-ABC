@@ -3,6 +3,7 @@ import numpy as np
 from ionchannelABC.experiment import Experiment
 import myokit
 import warnings
+import scipy.optimize as so
 
 
 room_temp = 295
@@ -53,8 +54,8 @@ def yang_iv_sum_stats(data):
     out_ss = []
     out_taui = []
     def single_exp(t, tau, A):
-        return A*exp(-t/tau)
-    for i, d in data.split_periodic(5450, adjust=True):
+        return A*np.exp(-t/tau)
+    for i, d in enumerate(data.split_periodic(5450, adjust=True)):
         d = d.trim(5000, 5450, adjust=True)
         peak_curr = np.max(d['ito.i_to'])
         ss_curr = d['ito.i_to'][-1]
@@ -63,7 +64,7 @@ def yang_iv_sum_stats(data):
 
         # Only time constants for higher voltage steps
         if i >= len(vsteps_iv)-5:
-            t = d['environment.time']
+            time = d['environment.time']
             curr = d['ito.i_to']
 
             # Set time zero to peak current
@@ -79,7 +80,7 @@ def yang_iv_sum_stats(data):
                 try:
                     imax = max(curr, key=abs)
                     curr = [c_/imax for c_ in curr]
-                    if len(time)<=1 or len(current)<=1:
+                    if len(time)<=1 or len(curr)<=1:
                         raise Exception('failed simulation')
                     popt, _ = so.curve_fit(single_exp, time, curr,
                                            p0=[10, 1],
