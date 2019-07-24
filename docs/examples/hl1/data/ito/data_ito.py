@@ -72,6 +72,17 @@ def SS_Yang():
     return x, y.tolist(), sd.tolist()
 
 
+def TauInact_Yang():
+    """Time constants for inactivation of iTo in HL1 from Yang 2005.
+
+    Time constants obtained from single exponential fit to normalised
+    current traces in Figure 8A.
+    """
+    x = [20, 30, 40, 50, 60]
+    y = [11.5099, 12.1994, 14.1953, 16.8687, 16.4331]
+    return x, y, None
+
+
 def IV_Kao():
     """Data points in IV curve for i_to in HL-1.
 
