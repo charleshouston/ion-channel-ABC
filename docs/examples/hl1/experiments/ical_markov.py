@@ -124,9 +124,9 @@ def rao_rec_sum_stats(data):
                     adjust=True)
         )
     output = []
-    for d in pulse_traces:
+    for i,d in enumerate(pulse_traces):
         pulse1 = d.trim(0, 400, adjust=True)['ical.i_CaL']
-        endtime = d['environment.time'][-1]
+        endtime = 800+times_rec[i]
         pulse2 = d.trim(endtime-400, endtime, adjust=True)['ical.i_CaL']
 
         max1 = np.max(np.abs(pulse1))
