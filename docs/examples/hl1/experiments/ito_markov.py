@@ -20,7 +20,7 @@ def temperature_adjust_tau(R0, T0, T1, Q10):
 
 ### Lu 2016 IV curve
 lu_iv_desc = """Current density of ito in HL-1 from Lu 2016 Figure 3A.
-Measurements taken at 35C (318K) and adjusted for room temperature.
+Measurements taken at 35C (308K) and adjusted for room temperature.
 """
 
 vsteps_iv, peaks, sd_iv = data.IV_Lu()
@@ -29,7 +29,6 @@ peaks = [temperature_adjust_cond(pk, 308, room_temp, Q10_cond)
 max_peak = np.max(peaks)
 peaks = [pk/max_peak for pk in peaks]
 variances_iv = [(sd_/max_peak)**2 for sd_ in sd_iv]
-
 lu_iv_dataset = np.asarray([vsteps_iv, peaks, variances_iv])
 
 lu_iv_protocol = myokit.Protocol()
@@ -114,7 +113,7 @@ def xu_ta_sum_stats(data):
                 imax = max(curr, key=abs)
                 curr = [c_/imax for c_ in curr]
                 popt, _ = so.curve_fit(single_exp, time, curr,
-                                       p0=[50., 1.],
+                                       p0=[10., 1.],
                                        bounds=([0., -np.inf],
                                                [1000., np.inf]))
                 taua = popt[0]

@@ -1,0 +1,67 @@
+[[model]]
+name: Simple model of steady-state non-inactivating K current
+author: Charles Houston
+
+# Initial values
+membrane.V = -67.0
+ikss.a = 0.01
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ikss.i_Kss
+    in [mV]
+T = 295
+    in [K]
+F = 96.5
+    in [C/mmol]
+R = 8.314
+    in [J/mol/K]
+FoRT = F / (R * T)
+    in [1/mV]
+K_o = 5400
+    in [uM]
+K_i = 143720
+    in [uM]
+
+[k_conc]
+use membrane.FoRT as FoRT
+use membrane.K_o as K_o
+use membrane.K_i as K_i
+
+E_K = (1 / FoRT) * log(K_o / K_i)
+    in [mV]
+
+[ikss]
+use membrane.V as V
+use k_conc.E_K as E_K
+
+g_Kss = 0.12375
+     in [nS/pF]
+g = g_Kss * a
+    in [nS/pF]
+i_Kss = g * (V - E_K)
+    in [pA/pF]
+
+dot(a) = (a_ss - a) / tau_a
+    in [1]
+tau_a = 1 / (k_1 + k_2)
+    in [ms]
+a_ss = k_1 * tau_a
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
