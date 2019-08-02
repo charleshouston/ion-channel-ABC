@@ -5,6 +5,7 @@ from .experiment import (Experiment,
 from pyabc.visualization.kde import kde_1d
 import numpy as np
 import pandas as pd
+import warnings
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Callable
@@ -24,53 +25,51 @@ def normalise(df, limits=None):
     return result
 
 
-def plot_sim_results(df: pd.DataFrame,
-                     w: np.ndarray,
-                     model: Callable,
-                     *experiment: Experiment,
+def plot_sim_results(model: Callable,
+                     *experiments: Experiment,
+                     df: pd.DataFrame=None,
+                     w: np.ndarray=None,
+                     model_temperature: float=None,
                      n_samples: int=100) -> sns.FacetGrid:
     """Plot output of ABC against experimental and/or original output.
 
     Args:
-        df (pd.DataFrame): Dataframe of parameters (see pyabc.History).
-        w (np.ndarray): The corresponding weights (see pyabc.History).
         model (Callable): Model function input to pyABC.
         *experiment (Experiment): Experiments used in pyABC.
+        df (pd.DataFrame): Dataframe of parameters (see pyabc.History).
+            If `None` runs model with current parameter settings.
+        w (np.ndarray): The corresponding weights (see pyabc.History).
+        model_temperature (float): Default temperature for model.
         n_samples (int): Number of ABC posterior samples used to
             generate summary output.
 
     Returns
         sns.FacetGrid: Plots of measured output.
     """
-    # For temperature-adjusting observations
-    model_temperature = model.get('membrane.T')
+    if model_temperature is None:
+        warnings.warn('No model temperature provided, adjustments will not be made')
 
     # Get non-normalised observations
     observations = get_observations_df(list(experiments),
                                        normalise=False,
-                                       temperature_adjust=True,
+                                       temp_adjust=True,
                                        model_temperature=model_temperature)
 
-    # Get normalising factors to 'un-normalise' model_samples
-    normalising_factors = {}
-    cnt = 0
-    for eid in observations.exp_id:
-        normalising_factors[cnt] = np.max(np.abs(
-            observations[observations.exp_id==eid].y
-        ))
-        cnt = cnt + 1
-
-    # Generate model samples from ABC approximate posterior
+    # Generate model samples from ABC approximate posterior or create default
+    # samples if posterior was not provided as input.
     model_samples = pd.DataFrame({})
-    posterior_samples = (df.sample(n=n_samples, weights=w, replace=True)
-                           .to_dict(orient='records'))
-    summary_statistics = combine_sum_stats(
+    if df is not None:
+        posterior_samples = (df.sample(n=n_samples, weights=w, replace=True)
+                               .to_dict(orient='records'))
+    else:
+        posterior_samples = [{}]
+
+    sum_stats_combined = combine_sum_stats(
         *[e.sum_stats for e in list(experiments)]
     )
+
     for i, th in enumerate(posterior_samples):
-        raw_results = summary_statistics(model(th))
-        results = [y*n for y,n in zip(list(raw_results.values()),
-                                      list(normalising_factors.values())]
+        results = sum_stats_combined(model(th))
         output = pd.DataFrame({'x': observations.x,
                                'y': results,
                                'exp_id': observations.exp_id})
