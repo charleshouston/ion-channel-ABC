@@ -1,7 +1,6 @@
 from .distance import IonChannelDistance
 from .experiment import (Experiment,
-                         combine_sum_stats,
-                         get_observations_df)
+                         setup)
 from pyabc.visualization.kde import kde_1d
 import numpy as np
 import pandas as pd
@@ -25,35 +24,29 @@ def normalise(df, limits=None):
     return result
 
 
-def plot_sim_results(model: Callable,
+def plot_sim_results(modelfile: str,
                      *experiments: Experiment,
                      df: pd.DataFrame=None,
                      w: np.ndarray=None,
-                     model_temperature: float=None,
                      n_samples: int=100) -> sns.FacetGrid:
     """Plot output of ABC against experimental and/or original output.
 
     Args:
-        model (Callable): Model function input to pyABC.
-        *experiment (Experiment): Experiments used in pyABC.
+        modelfile (str): Path to Myokit MMT file.
+        *experiments (Experiment): Experiments to plot.
         df (pd.DataFrame): Dataframe of parameters (see pyabc.History).
             If `None` runs model with current parameter settings.
         w (np.ndarray): The corresponding weights (see pyabc.History).
-        model_temperature (float): Default temperature for model.
         n_samples (int): Number of ABC posterior samples used to
             generate summary output.
 
     Returns
         sns.FacetGrid: Plots of measured output.
     """
-    if model_temperature is None:
-        warnings.warn('No model temperature provided, adjustments will not be made')
 
-    # Get non-normalised observations
-    observations = get_observations_df(list(experiments),
-                                       normalise=False,
-                                       temp_adjust=True,
-                                       model_temperature=model_temperature)
+    observations, model, summary_statistics = setup(modelfile,
+                                                    *experiments,
+                                                    normalise=False)
 
     # Generate model samples from ABC approximate posterior or create default
     # samples if posterior was not provided as input.
@@ -64,14 +57,10 @@ def plot_sim_results(model: Callable,
     else:
         posterior_samples = [{}]
 
-    sum_stats_combined = combine_sum_stats(
-        *[e.sum_stats for e in list(experiments)]
-    )
-
     for i, th in enumerate(posterior_samples):
-        results = sum_stats_combined(model(th))
+        results = summary_statistics(model(th))
         output = pd.DataFrame({'x': observations.x,
-                               'y': results,
+                               'y': list(results.values()),
                                'exp_id': observations.exp_id})
         output['sample'] = i
         model_samples = model_samples.append(output, ignore_index=True)

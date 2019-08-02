@@ -118,7 +118,8 @@ def setup(modelfile: str,
           *experiments: Experiment,
           vvar: str='membrane.V',
           tvar: str='membrane.T',
-          logvars: List[str]=myokit.LOG_ALL
+          logvars: List[str]=myokit.LOG_ALL,
+          normalise: bool=True,
           ) -> Tuple[pd.DataFrame, Callable, Callable]:
     """Combine chosen experiments into inputs for ABC.
 
@@ -146,7 +147,7 @@ def setup(modelfile: str,
 
     # Initialise combined variables
     observations = get_observations_df(list(experiments),
-                                       normalise=True,
+                                       normalise=normalise,
                                        temp_adjust=True,
                                        model_temperature=model_temperature)
 
