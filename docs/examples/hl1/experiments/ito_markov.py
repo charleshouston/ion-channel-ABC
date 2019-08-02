@@ -46,7 +46,7 @@ for v in vsteps_iv:
     lu_iv_protocol.schedule(v, time_, tstep)
     time_ += tstep
 
-lu_conditions = {'membrane.K_o': 2.68e3, # normal Tyrode's
+lu_conditions = {'membrane.K_o': 4e3, # normal Tyrode's
                  'membrane.K_i': 130e3,
                  'membrane.T': room_temp}
 
