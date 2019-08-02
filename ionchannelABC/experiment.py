@@ -33,6 +33,9 @@ class Experiment:
                  protocol: myokit.Protocol,
                  conditions: Dict[str, float],
                  sum_stats: Union[Callable, List[Callable]],
+                 temperature: float=None,
+                 Q10: float=None,
+                 Q10_factor: int=0,
                  description: str=""):
         """Initialisation.
 
@@ -47,6 +50,18 @@ class Experiment:
             sum_stats (Union[Callable, List[Callable]]): Summary statistics
                 function(s) which may be list of functions as more than one
                 measurement could be made from one protocol.
+            temperature (float): Optional temperature (in K) at which experiment
+                was carried out. Defaults to `None` which will do no
+                temperature adjustment.
+            Q10 (float): Optional Q10 value to be used to adjust any
+                values to temperature of model.
+            Q10_factor (int): Optional factor for Q10 temperature
+                conversion. The factor is used when adjusting values
+                using the Q10 equation to differentiate between
+                different types of data.
+                Defaults to zero which will give no adjustment.
+                Set to 1 for IV datasets, 0 for steady-state datasets and
+                -1 for rate constant datasets.
             description (str): Optional descriptor.
         """
         if isinstance(dataset, list):
@@ -59,6 +74,9 @@ class Experiment:
             self._sum_stats = sum_stats
         else:
             self._sum_stats = [sum_stats]
+        self._temperature = temperature
+        self._Q10 = Q10
+        self._Q10_factor = Q10_factor
         self._description = description
 
     def __call__(self) -> None:
@@ -81,18 +99,32 @@ class Experiment:
     def sum_stats(self) -> Callable:
         return self._sum_stats
 
+    @property
+    def temperature(self) -> float:
+        return self._temperature
+
+    @property
+    def Q10(self) -> float:
+        return self._Q10
+
+    @property
+    def Q10_factor(self) -> int:
+        return self._Q10_factor
+
 
 def setup(modelfile: str,
           *experiments: Experiment,
           vvar: str='membrane.V',
+          tvar: str='membrane.T',
           logvars: List[str]=myokit.LOG_ALL
           ) -> Tuple[pd.DataFrame, Callable, Callable]:
     """Combine chosen experiments into inputs for ABC.
-    
+
     Args:
         modelfile (str): Path to Myokit MMT file.
         *experiments (Experiment): Any number of experiments to run in ABC.
         vvar (str): Optionally specify name of membrane voltage in modelfile.
+        tvar (str): Optionally specify name of temperature in modelfile.
         logvars (str): Optionally specify variables to log in simulations.
 
     Returns:
@@ -108,31 +140,26 @@ def setup(modelfile: str,
     v.demote()
     v.set_rhs(0)
     v.set_binding('pace')
+    model_temperature = m.get(tvar)
 
     # Initialise combined variables
     cols = ['x', 'y', 'variance', 'exp_id']
     observations = pd.DataFrame(columns=cols)
     simulations, times = [], []
 
-    cnt = 0
-    for exp in list(experiments):
-        # Combine datasets
-        for d in exp.dataset:
-            dataset = d.T.tolist()
-            dataset = [d_+[str(cnt),] for d_ in dataset]
-            observations = observations.append(
-                pd.DataFrame(dataset, columns=cols),
-                ignore_index=True
-            )
-            cnt += 1
+    observations = get_observations_df(list(experiments),
+                                       normalise=True,
+                                       adjust_for_temperature=True,
+                                       model_temperature=model_temperature)
 
-        # Combine protocols into Myokit simulations
+    # Combine protocols into Myokit simulations
+    for exp in list(experiments):
         s = myokit.Simulation(m, exp.protocol)
         for ci, vi in exp.conditions.items():
             s.set_constant(ci, vi)
         simulations.append(s)
         times.append(exp.protocol.characteristic_time())
-        
+
     # Create model function
     def simulate_model(**pars):
         sim_output = []
@@ -161,7 +188,92 @@ def setup(modelfile: str,
     def summary_statistics(data):
         if data is None:
             return {}
-        return {str(i): val 
+        return {str(i): val
                 for i, val in enumerate(sum_stats_combined(data))}
 
     return observations, model, summary_statistics
+
+
+def get_observations_df(experiments: List[Experiment],
+                        normalise: bool=True,
+                        temperature_adjust: bool=False,
+                        model_temperature: float=None) --> pd.DataFrame:
+    """Returns observations dataframe with combined datasets.
+
+    Args:
+        *experiments (Experiment): Any number of experiments to run in ABC.
+        normalise (bool): Whether to normalise dependent variable and
+            variance in output dataframe. Defaults to True.
+        temperature_adjust (bool): Whether to adjust to temperature in
+            modelfile. Defaults to False.
+        model_temperature (float): Temperature to adjust values to. Must
+            be supplied if `temperature_adjust=True`.
+
+    Returns:
+        pd.DataFrame: Combined datasets in dataframe with columns
+            `x`, `y`, `variance` and `exp_id`.
+    """
+
+    if temperature_adjust:
+        assert (model_temperature is not None,
+                "To adjust to temperature, model temperature is required")
+
+    cols = ['x', 'y', 'variance', 'exp_id']
+    observations = pd.DataFrame(columns=cols)
+    simulations, times = [], []
+
+    exp_id = 0
+    for exp in list(experiments):
+        # Combine datasets
+        for d in exp.dataset:
+            dataset = np.copy(d)
+
+            if temperature_adjust:
+                dataset = adjust_for_temperature(dataset,
+                                                 exp.temperature,
+                                                 model_temperature,
+                                                 exp.Q10,
+                                                 exp.Q10_factor)
+
+            if normalise:
+                dataset = normalise_dataset(dataset)
+
+            dataset = dataset.T.tolist()
+            dataset = [d_+[str(exp_id),] for d_ in dataset]
+            observations = observations.append(
+                pd.DataFrame(dataset, columns=cols),
+                ignore_index=True
+            )
+            exp_id += 1
+    return observations
+
+
+def normalise_dataset(dataset: np.ndarray) -> np.ndarray:
+    """Normalise the dependent variable and variance."""
+    # Dependent variable
+    y = dataset[1]
+    max_y = np.max(np.abs(y))
+    y = [y_/max_y for y_ in y]
+
+    # Variance (convert back to SD to normalise)
+    variance = dataset[2]
+    variance = (np.sqrt(variance)/max_y)**2
+
+    return np.array([dataset[0], y, variance])
+
+
+def adjust_for_temperature(dataset: List[float],
+                           exp_temperature: float,
+                           model_temperature: float,
+                           Q10: float,
+                           Q10_factor: int) -> List[float]:
+    """Adjusts dependent variable and variance for temperature."""
+    A = Q10**(Q10_factor*(model_temperature-exp_temperature)/10)
+
+    # Dependent variable
+    y = A*dataset[1]
+
+    # Variance (convert back to SD to adjust)
+    variance = (A*np.sqrt(dataset[2]))**2
+
+    return np.array([dataset[0], y, variance])
