@@ -1,30 +1,40 @@
 [[model]]
 author: Charles Houston
 desc: """
-    Computer model of action potential of HL-1 myocytes.
+    Computer model of action potential of HL1-6 myocytes.
     """
 name: hl1
 
+# Functions
+j(i, r_SR, dr) = (r_SR + (i-0.5)*dr)/dr
+beta(c, Buf_tot, Km_Buf) = (1 + (Buf_tot*Km_Buf)/((c + Km_Buf)^2))^(-1)
+cdot(cp, c, cn, j, dr, Buf_tot, Km_Buf) = beta(c, Buf_tot, Km_Buf) * ((D_Ca/j*dr^2) * ((j+1)*cn - 2*j*c + (j-1)*cp))
+
 # Initial values
 membrane.V = -67.0
+
 ina.m = 0.01
 ina.h = 0.99
-ina.j = 0.99
+
+ical.d = 0.01
+ical.f = 0.99
+ical.fCa = 0.99
+
+icat.a = 0.01
+icat.r = 0.99
+
 ikr.xf = 0.01
 ikr.xs = 0.01
 ikr.r = 0.99
-ikur.a = 0.001
-ikur.i = 0.999
-ito.x = 0.01
-ito.y = 0.99
-iha.y = 0.01
-icat.b = 0.01
-icat.g = 0.99
-ical.d   = 0.01
-ical.f   = 0.99
-ical.fCa = 0.99
 
-ryanodine_receptors.P_open = 0.012001999999999999
+ito.a = 0.01
+ito.r = 0.99
+
+ikss.a = 0.01
+
+iha.x = 0.01
+
+ryr.P_open = 0.012001999999999999
 ca_conc_sr.Ca_SRuptake = 787.180644
 ca_conc_sr.Ca_SRrelease = 776.6058415
 ca_conc.Ca_i = 0.215237
@@ -44,7 +54,7 @@ K_o = 4e3
     in [uM]
 Na_o = 1.4e5
      in [uM]
-Cm = 1
+Cm = 1.0   #13.7
     in [uF/cm^2]
 F = 96.5
     in [C/mmol]
@@ -55,7 +65,7 @@ T = 305
 FoRT = F / (R * T)
     in [1/mV]
 
-dot(V) = -(ical.i_CaL + incx.i_NCX + icab.i_Cab + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kur + ikr.i_Kr + icat.i_CaT + iha.i_ha - i_stim) / Cm
+dot(V) = -(ical.i_CaL + incx.i_NCX + icab.i_Cab + ipca.i_pCa + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kss + ikr.i_Kr + icat.i_CaT + iha.i_ha - i_stim) / Cm
     in [mV]
 i_stim = 0.0
     in [pA/pF]
@@ -105,199 +115,376 @@ E_K = 1 / FoRT * log(K_o / K_i)
 # Fast sodium current
 [ina]
 use membrane.V as V
-use na_conc.E_Na as E_Na
+use membrane.Na_o as Na_o
+use na_conc.Na_i as Na_i
+use membrane.K_o as K_o
+use k_conc.K_i as K_i
+use membrane.FoRT as FoRT
 
-g_Na = 35
+g_Na = 1.0
     in [mS/uF]
-G_Na = g_Na * m ^ 3 * h * j
-    in [mS/uF]
-i_Na = G_Na * (V - E_Na)
+g = m^3 * h
+    in [1]
+i_Na = g_Na * g * (V - Erev)
     in [pA/pF]
 
-dot(m) = (mss - m) / tau_m
+P_Na = 0.9
     in [1]
-mss = (1 + exp((Vhalf_m - V) / k_m)) ^ (-1)
+P_K = 1 - P_Na
     in [1]
-tau_m = c_bm + c_am * exp(-1 * (Vmax_m - V)^2 / (sigma_m^2))
+Erev = 1/FoRT * log((P_Na*Na_o + P_K*K_o)/(P_Na*Na_i + P_K*K_i))
+    in [mV]
+
+dot(m) = (m_ss - m) / tau_m
+    in [1]
+tau_m = 1 / (k_1 + k_2)
     in [ms]
-Vhalf_m = -45
-k_m = 6.5
-c_bm = 0.02
-c_am = 0.12
-sigma_m = 25
-Vmax_m = -40
+m_ss = k_1 * tau_m
+    in [1]
 
-dot(h) = (hss - h) / tau_h
+dot(h) = (h_ss - h) / tau_h
     in [1]
-hss = (1 + exp((Vhalf_h - V) / k_h)) ^ (-1)
-    in [1]
-tau_h = c_bh + c_ah * exp(-1 * (Vmax_h - V)^2 / (sigma_h^2))
+tau_h = 1 / (k_3 + k_4)
     in [ms]
-Vhalf_h = -76.1
-k_h = -6.07
-c_bh = 0.01
-c_ah = 30.0
-Vmax_h = -60
-sigma_h = 25
+h_ss = k_4 * tau_h
+    in [1]
 
-dot(j) = (jss - j) / tau_j
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+p_5 = 5e-2
+    in [1/ms]
+p_6 = 0.01
+    in [1/mV]
+p_7 = 6e-3
+    in [1/ms]
+p_8 = 0.05
+    in [1/mV]
+
+
+# L-type Calcium current
+[ical]
+use membrane.V as V
+use membrane.Ca_o as Ca_o
+use ca_conc.Ca_i as Ca_i
+use membrane.FoRT as FoRT
+use membrane.F as F
+
+P_CaL = 1e-3
+    in [m/s]
+g = d * f * fCa
     in [1]
-jss = hss
+driving = if(V != 0,
+    4*V*FoRT*F*(Ca_i-gamma_Ca_o*Ca_o*exp(-2*V*FoRT))/(1-exp(-2*V*FoRT)),
+    2*F*(Ca_i-gamma_Ca_o*Ca_o))
+    in [pA/pF]
+i_CaL = P_CaL * g * driving
+    in [pA/pF]
+gamma_Ca_o = 1.0
     in [1]
-tau_j = c_bj + c_aj * exp(-1 * (Vmax_j - V)^2 / (sigma_j^2))
+
+dot(d) = (d_ss - d) / tau_d
+    in [1]
+tau_d = 1 / (k_1 + k_2)
     in [ms]
-c_bj = 5.0
-c_aj = 75.0
-Vmax_j = -60
-sigma_j = 25
+d_ss = k_1 * tau_d
+    in [1]
+
+dot(f) = (f_ss - f) / tau_f
+    in [1]
+tau_f = 1 / (k_3 + k_4)
+    in [ms]
+f_ss = k_4 * tau_f
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+p_5 = 5e-2
+    in [1/ms]
+p_6 = 0.01
+    in [1/mV]
+p_7 = 6e-3
+    in [1/ms]
+p_8 = 0.05
+    in [1/mV]
+
+dot(fCa) = k*((fCass - fCa)/tau_fCa)
+    in [1]
+k = if(fCa > f, if(V > -60, 0, 1), 1)
+    in [1]
+alphafCa = (1 + (Ca_i/0.325)^8)^(-1)
+    in [1]
+betafCa = 0.1 * (1 + exp((Ca_i-0.5)/0.1))^(-1)
+    in [1]
+gammafCa = 0.2 * (1 + exp((Ca_i-0.75)/0.8))^(-1)
+    in [1]
+fCass = (alphafCa+betafCa+gammafCa+0.23)/1.46
+    in [1]
+tau_fCa = 2
+    in [ms]
 
 
-# Rapid delayed rectifier potassium current
+# T-type Calcium current
+[icat]
+use membrane.V as V
+use ca_conc.E_Ca as E_Ca
+
+g_CaT = 1.0
+    in [mS/uF]
+E_Ca_offset = 40.0
+    in [mV]
+g = a * r
+    in [1]
+i_CaT = g_CaT * g * (V - E_Ca + E_Ca_offset)
+    in [pA/pF]
+
+dot(a) = (a_ss - a) / tau_a
+    in [1]
+tau_a = 1 / (k_1 + k_2)
+    in [ms]
+a_ss = k_1 * tau_a
+    in [1]
+
+dot(r) = (r_ss - r) / tau_r
+    in [1]
+tau_r = 1 / (k_3 + k_4)
+    in [ms]
+r_ss = k_4 * tau_r
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+p_5 = 5e-2
+    in [1/ms]
+p_6 = 0.01
+    in [1/mV]
+p_7 = 6e-3
+    in [1/ms]
+p_8 = 0.05
+    in [1/mV]
+
+
+# Rapidly-activating delayed rectifier Potassium current
 [ikr]
 use membrane.V as V
+use k_conc.E_K as E_K
 use membrane.K_o as K_o
-use k_conc.E_K as E_K
 
-g_Kr = 0.5228
+g_Kr = 0.5
     in [mS/uF]
-G_Kr = g_Kr * sqrt(K_o / 5400) * x * r # * rslow
-    in [mS/uF]
-
-i_Kr = G_Kr * (V - E_K)
+x = Arel * xf + (1-Arel) * xs
+    in [1]
+g = sqrt(K_o/5400) * x * r
+    in [1]
+i_Kr = g_Kr * g * (V - E_K)
     in [pA/pF]
 
-x = A * xf + (1 - A) * xs
+dot(xf) = (xf_ss - xf) / tau_xf
     in [1]
-dot(xf) = (xss - xf) / tau_xf
-    in [1]
-dot(xs) = (xss - xs) / tau_xs
-    in [1]
-xss = (1 + exp((Vhalf_x - V) / k_x)) ^ (-1)
-    in [1]
-tau_xf = c_bxf + c_axf * exp(-1 * (Vmax_x - V)^2 / (sigma_x^2))
+tau_xf = 1 / (k_1 + k_2)
     in [ms]
-tau_xs = c_bxs + c_axs * exp(-1 * (Vmax_x - V)^2 / (sigma_x^2))
-    in [ms]
-A = (1 + exp((Vhalf_A - V) / k_A)) ^ (-1)
+xf_ss = k_1 * tau_xf
     in [1]
-    
-Vhalf_x = -12.5
-k_x = 10.0
-c_bxf = 1
-c_axf = 80
-c_bxs = 50
-c_axs = 600
-sigma_x = 30
-Vmax_x = -40
-Vhalf_A = -25
-k_A = -5
 
-dot(r) = (rss - r) / tau_r
+dot(xs) = (xs_ss - xs) / tau_xs
     in [1]
-#r = rss
-#    in [1]
-rss = (1 + exp((Vhalf_r - V) / k_r)) ^ (-1)
+tau_xs = 1 / (k_3 + k_4)
+    in [ms]
+xs_ss = k_3 * tau_xs
+    in [1]
+
+dot(r) = (r_ss - r) / tau_r
+    in [1]
+tau_r = 1 / (k_5 + k_6)
+    in [ms]
+r_ss = k_6 * tau_r
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+k_5 = p_9*exp(p_10 * V)
+    in [1/ms]
+k_6 = p_11*exp(-p_12 * V)
+    in [1/ms]
+
+# Model relative amplitude of fast and slow time constant
+# using Boltzmann curve
+Arel = (1 + exp(s_A*(h_A+V)))^(-1)
+    in [1]
+s_A = 0.2
+    in [1]
+h_A = -20
     in [mV]
-tau_r = c_br + c_ar * exp(-1 * (Vmax_r - V)^2 / (sigma_r^2))
-    in [ms]
 
-#dot(rslow) = (rss - rslow) / tau_rslow
-#    in [1]
-#tau_rslow = c_brslow + c_arslow * exp(-1 * (Vmax_r - V)^2 / (sigma_r^2))
-#    in [ms]
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+p_5 = 1e-4
+    in [1/ms]
+p_6 = 0.1 
+    in [1/mV]
+# from equal steady-state activation gate
+# p_2+p_4==p_6+p_8
+# log(p_1)+log(p_3)==log(p_5)+log(p_7)
+p_7 = p_3*p_5/p_1     # from equal steady-state activation
+    in [1/ms]
+p_8 = p_2+p_4-p_6     # from equal steady-state activation
+    in [1/mV]
 
-Vhalf_r = -50.0
-k_r = -10.0
-c_br = 1
-c_ar = 20
-sigma_r = 20
-Vmax_r = -30  
-
-#c_brslow = 50
-#c_arslow = 550
-
-
-# Ultra-rapidly activating delayed rectifier potassium current
-[ikur]
-use membrane.V as V
-use k_conc.E_K as E_K
-    
-g_Kur = 0.0975
-    in [mS/uF]
-G_Kur = g_Kur * a * i
-    in [mS/uF]
-i_Kur = G_Kur * (V - E_K)
-    in [pA/pF]
-
-dot(a) = (ass - a) / tau_a
-    in [1]
-ass = (1 + exp((Vhalf_a - V) / k_a)) ^ (-1)
-    in [mV]
-tau_a = c_ba + c_aa * exp(-1 * (Vmax_a - V)^2 / (sigma_a^2))
-    in [ms]
-
-Vhalf_a = -20
-k_a = 7.7
-c_ba = 2.058
-c_aa = 0.493
-sigma_a = 4
-Vmax_a = -80
-
-dot(i) = (iss - i) / tau_i
-    in [1]
-iss = (1 + exp((Vhalf_i - V) / k_i)) ^ (-1)
-    in [mV]
-tau_i = c_bi + c_ai * exp(-1 * (Vmax_i - V)^2 / (sigma_i^2))
-    in [ms]
-
-Vhalf_i = -45.2
-k_i = -5.7
-c_bi = 1200
-c_ai = 1700
-sigma_i = 5
-Vmax_i = 20
+p_9 = 5e-2
+    in [1/ms]
+p_10 = 0.01
+    in [1/mV]
+p_11 = 6e-3
+    in [1/ms]
+p_12 = 0.05
+    in [1/mV]
 
 
-# Transient outward potassium current
+# Transient-outward Potassium current
 [ito]
 use membrane.V as V
 use k_conc.E_K as E_K
 
 g_to = 0.12375
      in [nS/pF]
-G_to = g_to * x * y
+g = g_to * a * r
     in [nS/pF]
-i_to = G_to * (V - E_K)
+i_to = g * (V - E_K)
     in [pA/pF]
 
-dot(x) = (xss - x) / tau_x
+dot(a) = (a_ss - a) / tau_a
     in [1]
-xss = (1 + exp((Vhalf_x - V) / k_x)) ^ (-1)
-    in [1]
-tau_x = c_bx + c_ax * exp(-1 * (Vmax_x - V)^2 / (sigma_x^2))
+tau_a = 1 / (k_1 + k_2)
     in [ms]
-Vhalf_x = -30
-k_x = 11
-c_bx = 1.5
-c_ax = 3.5
-Vmax_x = -10
-sigma_x = 5.5
+a_ss = k_1 * tau_a
+    in [1]
 
-dot(y) = (yss - y) / tau_y
+dot(r) = (r_ss - r) / tau_r
     in [1]
-yss = (1 + exp((Vhalf_y - V) / k_y)) ^ (-1)
-    in [1]
-tau_y = c_by + c_ay * exp(-1 * (Vmax_y - V)^2 / (sigma_y^2))
+tau_r = 1 / (k_3 + k_4)
     in [ms]
-Vhalf_y = -40.5
-k_y = -11.5
-c_by = 21.21
-c_ay = 38.4525
-sigma_y = 4
-Vmax_y = -52
+r_ss = k_4 * tau_r
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+p_5 = 5e-2
+    in [1/ms]
+p_6 = 0.01
+    in [1/mV]
+p_7 = 6e-3
+    in [1/ms]
+p_8 = 0.05
+    in [1/mV]
 
 
-# Hyperpolarisation activated nonselective cation current
+# Steady-state non-inactivating Potassium current
+[ikss]
+use membrane.V as V
+use k_conc.E_K as E_K
+
+g_Kss = 0.12375
+     in [nS/pF]
+g = g_Kss * a
+    in [nS/pF]
+i_Kss = g * (V - E_K)
+    in [pA/pF]
+
+dot(a) = (a_ss - a) / tau_a
+    in [1]
+tau_a = 1 / (k_1 + k_2)
+    in [ms]
+a_ss = k_1 * tau_a
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
+
+
+# Hyperpolarisation-activated non-selective cation current (`funny')
 [iha]
 use membrane.V as V
 use na_conc.E_Na as E_Na
@@ -305,147 +492,69 @@ use k_conc.E_K as E_K
 
 g_ha = 0.021
     in [mS/uF]
-G_ha = g_ha * y
+g = g_ha * x
     in [mS/uF]
-i_haNa = G_ha * k_i_haNa * (V - E_Na)
+i_haNa = g * k_haNa * (V - E_Na)
     in [pA/pF]
-i_haK = G_ha * (1-k_i_haNa) * (V - E_K)
+i_haK = g * (1-k_haNa) * (V - E_K)
     in [pA/pF]
 i_ha = i_haNa + i_haK
     in [pA/pF]
 
-k_i_haNa = 0.2
+k_haNa = 0.2
     in [1]
 
-dot(y) = (yss - y) / tau_y
+dot(x) = (x_ss - x) / tau_x
     in [1]
-yss = (1 + exp((Vhalf_y - V) / k_y)) ^ (-1)
-    in [1]
-tau_y = c_by + c_ay * exp(-1 * (Vmax_y - V)^2 / (sigma_y^2))
+tau_x = 1 / (k_1 + k_2)
     in [ms]
-Vhalf_y = -78.65
-k_y = -6.33
-c_by = 1.0
-c_ay = 5000
-sigma_y = 50
-Vmax_y = 30
-
-
-# T-type calcium current
-[icat]
-use membrane.V as V
-use ca_conc.E_Ca as E_Ca
-
-g_CaT = 0.2
-    in [mS/uF]
-E_CaT = 33
-    in [mV]
-v_offset = 100.0
-    in [mV]
-G_CaT = g_CaT * b * g
-    in [mS/uF]
-i_CaT = G_CaT * (V - E_Ca + v_offset)
-    in [pA/pF]
-
-dot(b) = (bss - b) / tau_b
+x_ss = k_2 * tau_x
     in [1]
-bss = (1 + exp((Vhalf_b - V) / k_b)) ^ (-1)
-    in [mV]
-tau_b = c_bb + c_ab * exp(-1 * (Vmax_b - V)^2 / (sigma_b^2))
-    in [ms]
 
-Vhalf_b = -40 
-k_b = 5.40634
-c_bb = 5
-c_ab = 5.4
-sigma_b = 15
-Vmax_b = 50
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
 
-dot(g) = (gss - g) / tau_g
-    in [1]
-gss = (1 + exp((Vhalf_g - V) / k_g)) ^ (-1)
-    in [mV]
-tau_g = c_bg + c_ag * exp(-1 * (Vmax_g - V)^2 / (sigma_g^2))
-    in [ms]
-
-Vhalf_g = -60
-k_g = -2
-c_bg = 10
-c_ag = 100
-sigma_g = 10
-Vmax_g = -70
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
 
 
-# L-type calcium current
-[ical]
-use membrane.V as V
-use ca_conc.E_Ca as E_Ca
-use ca_conc.Ca_subSL as Ca_subSL
-
-i_CaL = G_CaL * (V - E_Ca + v_offset)
-    in [pA/pF]
-g_CaL = 0.5
-    in [mS/uF]
-G_CaL = g_CaL * d * f * fCa
-    in [mS/uF]
-v_offset = 60
-    in [mV]
-
-dot(d) = (dss - d) / tau_d
-    in [1]
-dss = (1 + exp((Vhalf_d - V) / k_d)) ^ (-1)
-    in [1]
-tau_d = c_bd + c_ad * exp(-1 * (Vmax_d - V)^2 / (sigma_d^2))
-    in [ms]
-Vhalf_d = -11.1
-k_d = 7.2
-c_bd = 0.25
-c_ad = 1.4
-sigma_d = 2
-Vmax_d = -35
-
-dot(f) = (fss - f) / tau_f
-    in [1]
-fss = (1 + exp((Vhalf_f - V) / k_f)) ^ (-1)
-    in [1]
-tau_f = c_bf + c_af * exp(-1 * (Vmax_d - V)^2 / (sigma_f^2))
-    in [ms]
-Vhalf_f = -23.3
-k_f = -5.4
-c_bf = 120
-c_af = 1125
-Vmax_f = -27
-sigma_f = 15
-
-dot(fCa) = (fCass - fCa) / tau_fCa
-    in [1]
-fCass = (1 + (Ca_subSL / ca_dep_fCa)) ^ (-1)
-    in [1]
-ca_dep_fCa = 0.35
-    in [uM]
-tau_fCa = 10
-    in [ms]
-
-
-# Inward rectifying potassium current
+# Inward rectifying Potassium current
 [ik1]
 use membrane.V as V
 use k_conc.E_K as E_K
 use membrane.K_o as K_o
 
-i_K1 = G_K1 * (K_o / (K_o + Km)) * (V - E_K) 
-G_K1 = g_K1 * xss
+g_k1 = 0.021
     in [mS/uF]
-g_K1 = 0.0515 [mS/uF]
+g = g_k1 * x_ss
     in [mS/uF]
+i_k1 = g * sqrt(K_o/5400) * (V - E_K)
+    in [pA/pF]
 
-xss = (1 + exp((Vhalf_x - V) / k_x)) ^ (-1)
+x_ss = k_2 / (k_1 + k_2) #k_2 * tau_x
     in [1]
 
-Km = 210
-    in [mM]
-Vhalf_x = -80
-k_x = 30
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+
+p_1 = 1e-4
+    in [1/ms]
+p_2 = 0.1 
+    in [1/mV]
+p_3 = 4e-5
+    in [1/ms]
+p_4 = 0.05
+    in [1/mV]
 
 
 # Na+/Ca2+ exchanger current - Korhonen et al. (2009)
@@ -492,6 +601,15 @@ i_NaK = i_NaK_max * f_NaK * (1 + (Km_Nai / Na_i) ^ n_NaK) ^ (-1) * (1 + (Km_Ko /
     in [pA/pF]
 
 
+# Calcium SL pump current
+[ipca]
+use ca_conc.Ca_i as Ca_i
+
+g_pCa = 0.025 [nS/pF]
+Km_pCa = 0.5 [uM]
+i_pCa = g_pCa * Ca_i / (Km_pCa + Ca_i)
+
+
 # Calcium background current
 [icab]
 use membrane.V as V
@@ -501,6 +619,7 @@ g_Cab = 0.0008
   in [mS/uF]
 i_Cab = g_Cab * (V - E_Ca)
   in [pA/pF]
+
 
 # Background sodium current
 [inab]
@@ -513,8 +632,8 @@ i_Nab = g_Nab * (V - E_Na)
     in [pA/pF]
 
 
-# Sarcoplasmic reticulum - Korhonen et al. (2009)
-[ryanodine_receptors]
+# Calcium handling processes Korhonen et al (2009)
+[ryr]
 k_RyR = 0.01        # scaling factor for J_RyR
     in [1/ms]
 k_open = 1          # rate constant for RyR opening
@@ -532,8 +651,6 @@ j_4 = 0.25
 
 J_RyR = k_RyR * P_open * (ca_conc_sr.Ca_SRrelease - ca_conc.Ca_subSR)
     in [uM/ms]
-J_RyRCaffeine = 5.5e-4 * (ca_conc_sr.Ca_SRrelease - ca_conc.Ca_subSR)
-    in [uM/ms]
 K_mRyR = j_1 * (1 + exp((ca_conc_sr.Ca_SRrelease - j_2) / j_3)) ^ (-1) + j_4
     in [uM]
 P_closed = 1 - P_open
@@ -541,6 +658,7 @@ P_closed = 1 - P_open
 
 dot(P_open) = P_closed * k_open * ca_conc.Ca_subSR ^ 4 / (K_mRyR ^ 4 + ca_conc.Ca_subSR ^ 4) - k_close * P_open
     in [1]
+
 
 [serca]
 V_max = 0.9996      # maximum SERCA calcium_fluxes
@@ -555,43 +673,44 @@ H = 2               # hill coefficient for SERCA
 J_SERCA = (V_max * (ca_conc.Ca_subSR / K_mf) ^ H - V_max * (ca_conc_sr.Ca_SRuptake / K_mr) ^ H) / (1 + (ca_conc.Ca_subSR / K_mf) ^ H + (ca_conc_sr.Ca_SRuptake / K_mr) ^ H)
     in [uM/ms]
 
-[leak_flux]
+
+[jleak]
 k_leak = 5e-6       # SR leak rate constant
     in [1/ms]
 
 J_leak = k_leak * (ca_conc_sr.Ca_SRuptake - ca_conc.Ca_subSR)
     in [uM/ms]
 
-[ca_diffusion]
+
+[ca_diff]
 tau_tr = 100        # time constant for J_tr
     in [ms]
 
 J_tr = (ca_conc_sr.Ca_SRuptake - ca_conc_sr.Ca_SRrelease) / tau_tr
     in [uM/ms]
 
+
 [ca_conc_sr]
-CSQN_tot = 24750        # total calsequestrin concentration
+Buf_tot = 24750        # total SR Ca2+ buffer concentration
     in [uM]
-K_mCSQN = 800           # half-saturation for calsequestrin
+Km_Buf = 800           # half-saturation for SR Ca2+ buffer
     in [uM]
-V_SRuptake = 0.08127    # volume of SRuptake compartment
+V_SR = 0.0903          # volume of SR
     in [pL]
-V_SRrelease = 0.009030  # volume of SRrelease compartment
+V_SRuptake = 0.9*V_SR  # volume of SRuptake compartment
+    in [pL]
+V_SRrelease = 0.1*V_SR # volume of SRrelease compartment
     in [pL]
 
-beta_SRrelease = (1 + CSQN_tot * K_mCSQN / ((Ca_SRrelease + K_mCSQN) ^ 2)) ^ (-1)
-
-dot(Ca_SRuptake) = (serca.J_SERCA - leak_flux.J_leak - ca_diffusion.J_tr) / V_SRuptake
+dot(Ca_SRuptake) = (serca.J_SERCA - jleak.J_leak - ca_diff.J_tr) / V_SRuptake
     in [uM]
-dot(Ca_SRrelease) = beta_SRrelease * (-ryanodine_receptors.J_RyR + ca_diffusion.J_tr) / V_SRrelease
+dot(Ca_SRrelease) = beta(Ca_SRrelease, Buf_tot, Km_Buf) * (-ryanodine_receptors.J_RyR + ca_diff.J_tr) / V_SRrelease
     in [uM]
 
 Ca_SR = (Ca_SRuptake * V_SRuptake + Ca_SRrelease * V_SRrelease) / (V_SRuptake + V_SRrelease)
     in [uM]
 
 
-# Intracellular calcium handling
-# Simplified from Korhonen et al (2009)
 [ca_conc]
 use membrane.pi as pi
 use membrane.FoRT as FoRT
@@ -603,28 +722,138 @@ use membrane.V_myo as V_myo
 use membrane.r_SR as r_SR
 use membrane.r_SL as r_SL
 
-K_mTRPN = 0.5   # half-saturation for troponin
+# Simplified cytosolic buffering
+Buf_tot = 85    # cytosolic buffer concentration
     in [uM]
-TRPN_tot = 35   # total troponin concentration
-    in [uM]
-K_mCMDN = 2.38  # half-saturation for calmodulin
-    in [uM]
-CMDN_tot = 50   # total calmodulin concentration
+Km_Buf = 1.5    # cytosolic buffer half-saturation constant
     in [uM]
 
-J_CaSR = ryanodine_receptors.J_RyR - serca.J_SERCA + leak_flux.J_leak
+# Korhonen buffer settings below
+#K_mTRPN = 0.5   # half-saturation for troponin
+#    in [uM]
+#TRPN_tot = 35   # total troponin concentration
+#    in [uM]
+#K_mCMDN = 2.38  # half-saturation for calmodulin
+#    in [uM]
+#CMDN_tot = 50   # total calmodulin concentration
+#    in [uM]
+
+D_Ca = 7        # calcium diffusion coefficient 
+    in [um^2/ms]
+
+J_CaSR = ryanodine_receptors.J_RyR - serca.J_SERCA + jleak.J_leak
     in [uM/ms]
 J_CaSL = (2 * incx.i_NCX - ical.i_CaL - icat.i_CaT - icab.i_Cab) * Acap * Cm / (2 * F * 1e-6)
     in [uM/ms]
 
-beta = (1 + TRPN_tot * K_mTRPN / ((Ca_i + K_mTRPN) ^ 2) + CMDN_tot * K_mCMDN / ((Ca_i + K_mCMDN) ^ 2)) ^ (-1)
-    in [1]
-dot(Ca_i) = beta * (J_CaSR + J_CaSL) / V_myo
-    in [uM]
+# Spatial coordinates for Ca2+ diffusion from SR -> SL (a = 45)
+# PDE solves as system of ODEs
+dr = 0.1 [um]
 
-Ca_subSR = Ca_i
+V_subSR = 4/3*pi*((r_SR+dr)^3 - r_SR^3) * 1e-3 [pl/fl]
+V_subSL = 4/3*pi*(r_SL^3 - (r_SL-dr)^3) * 1e-3 [pl/fl]
+
+# n = 1
+j1 = j(1, r_SR, dr) [1]
+dot(c1) = beta(c1, Buf_tot, Km_Buf) * ((D_Ca/j1*dr^2) * ((j1+1)*c2 - 2*j1*c1 + (j1-1)*c1) + J_CaSR/V_subSR)
+
+# n = 2,3,4,...,a-1(=44)
+j2 = j(2, r_SR, dr) [1]
+dot(c2) = cdot(c1, c2, c3, j2, dr, Buf_tot, Km_Buf, D_Ca)
+j3 = j(3, r_SR, dr) [1]
+dot(c3) = cdot(c2, c3, c4, j3, dr, Buf_tot, Km_Buf, D_Ca)
+j4 = j(4, r_SR, dr) [1]
+dot(c4) = cdot(c3, c4, c5, j4, dr, Buf_tot, Km_Buf, D_Ca)
+j5 = j(5, r_SR, dr) [1]
+dot(c5) = cdot(c4, c5, c6, j5, dr, Buf_tot, Km_Buf, D_Ca)
+j6 = j(6, r_SR, dr) [1]
+dot(c6) = cdot(c5, c6, c7, j6, dr, Buf_tot, Km_Buf, D_Ca)
+j7 = j(7, r_SR, dr) [1]
+dot(c7) = cdot(c6, c7, c8, j7, dr, Buf_tot, Km_Buf, D_Ca)
+j8 = j(8, r_SR, dr) [1]
+dot(c8) = cdot(c7, c8, c9, j8, dr, Buf_tot, Km_Buf, D_Ca)
+j9 = j(9, r_SR, dr) [1]
+dot(c9) = cdot(c8, c9, c10, j9, dr, Buf_tot, Km_Buf, D_Ca)
+j10 = j(10, r_SR, dr) [1]
+dot(c10) = cdot(c9, c10, c11, j10, dr, Buf_tot, Km_Buf, D_Ca)
+j11 = j(11, r_SR, dr) [1]
+dot(c11) = cdot(c10, c11, c12, j11, dr, Buf_tot, Km_Buf, D_Ca)
+j12 = j(12, r_SR, dr) [1]
+dot(c12) = cdot(c11, c12, c13, j12, dr, Buf_tot, Km_Buf, D_Ca)
+j13 = j(13, r_SR, dr) [1]
+dot(c13) = cdot(c12, c13, c14, j13, dr, Buf_tot, Km_Buf, D_Ca)
+j14 = j(14, r_SR, dr) [1]
+dot(c14) = cdot(c13, c14, c15, j14, dr, Buf_tot, Km_Buf, D_Ca)
+j15 = j(15, r_SR, dr) [1]
+dot(c15) = cdot(c14, c15, c16, j15, dr, Buf_tot, Km_Buf, D_Ca)
+j16 = j(16, r_SR, dr) [1]
+dot(c16) = cdot(c15, c16, c17, j16, dr, Buf_tot, Km_Buf, D_Ca)
+j17 = j(17, r_SR, dr) [1]
+dot(c17) = cdot(c16, c17, c18, j17, dr, Buf_tot, Km_Buf, D_Ca)
+j18 = j(18, r_SR, dr) [1]
+dot(c18) = cdot(c17, c18, c19, j18, dr, Buf_tot, Km_Buf, D_Ca)
+j19 = j(19, r_SR, dr) [1]
+dot(c19) = cdot(c18, c19, c20, j19, dr, Buf_tot, Km_Buf, D_Ca)
+j20 = j(20, r_SR, dr) [1]
+dot(c20) = cdot(c19, c20, c21, j20, dr, Buf_tot, Km_Buf, D_Ca)
+j21 = j(21, r_SR, dr) [1]
+dot(c21) = cdot(c20, c21, c22, j21, dr, Buf_tot, Km_Buf, D_Ca)
+j22 = j(22, r_SR, dr) [1]
+dot(c22) = cdot(c21, c22, c23, j22, dr, Buf_tot, Km_Buf, D_Ca)
+j23 = j(23, r_SR, dr) [1]
+dot(c23) = cdot(c22, c23, c24, j23, dr, Buf_tot, Km_Buf, D_Ca)
+j24 = j(24, r_SR, dr) [1]
+dot(c24) = cdot(c23, c24, c25, j24, dr, Buf_tot, Km_Buf, D_Ca)
+j25 = j(25, r_SR, dr) [1]
+dot(c25) = cdot(c24, c25, c26, j25, dr, Buf_tot, Km_Buf, D_Ca)
+j26 = j(26, r_SR, dr) [1]
+dot(c26) = cdot(c25, c26, c27, j26, dr, Buf_tot, Km_Buf, D_Ca)
+j27 = j(27, r_SR, dr) [1]
+dot(c27) = cdot(c26, c27, c28, j27, dr, Buf_tot, Km_Buf, D_Ca)
+j28 = j(28, r_SR, dr) [1]
+dot(c28) = cdot(c27, c28, c29, j28, dr, Buf_tot, Km_Buf, D_Ca)
+j29 = j(29, r_SR, dr) [1]
+dot(c29) = cdot(c28, c29, c30, j29, dr, Buf_tot, Km_Buf, D_Ca)
+j30 = j(30, r_SR, dr) [1]
+dot(c30) = cdot(c29, c30, c31, j30, dr, Buf_tot, Km_Buf, D_Ca)
+j31 = j(31, r_SR, dr) [1]
+dot(c31) = cdot(c30, c31, c32, j31, dr, Buf_tot, Km_Buf, D_Ca)
+j32 = j(32, r_SR, dr) [1]
+dot(c32) = cdot(c31, c32, c33, j32, dr, Buf_tot, Km_Buf, D_Ca)
+j33 = j(33, r_SR, dr) [1]
+dot(c33) = cdot(c32, c33, c34, j33, dr, Buf_tot, Km_Buf, D_Ca)
+j34 = j(34, r_SR, dr) [1]
+dot(c34) = cdot(c33, c34, c35, j34, dr, Buf_tot, Km_Buf, D_Ca)
+j35 = j(35, r_SR, dr) [1]
+dot(c35) = cdot(c34, c35, c36, j35, dr, Buf_tot, Km_Buf, D_Ca)
+j36 = j(36, r_SR, dr) [1]
+dot(c36) = cdot(c35, c36, c37, j36, dr, Buf_tot, Km_Buf, D_Ca)
+j37 = j(37, r_SR, dr) [1]
+dot(c37) = cdot(c36, c37, c38, j37, dr, Buf_tot, Km_Buf, D_Ca)
+j38 = j(38, r_SR, dr) [1]
+dot(c38) = cdot(c37, c38, c39, j38, dr, Buf_tot, Km_Buf, D_Ca)
+j39 = j(39, r_SR, dr) [1]
+dot(c39) = cdot(c38, c39, c40, j39, dr, Buf_tot, Km_Buf, D_Ca)
+j40 = j(40, r_SR, dr) [1]
+dot(c40) = cdot(c39, c40, c41, j40, dr, Buf_tot, Km_Buf, D_Ca)
+j41 = j(41, r_SR, dr) [1]
+dot(c41) = cdot(c40, c41, c42, j41, dr, Buf_tot, Km_Buf, D_Ca)
+j42 = j(42, r_SR, dr) [1]
+dot(c42) = cdot(c41, c42, c43, j42, dr, Buf_tot, Km_Buf, D_Ca)
+j43 = j(43, r_SR, dr) [1]
+dot(c43) = cdot(c42, c43, c44, j43, dr, Buf_tot, Km_Buf, D_Ca)
+j44 = j(44, r_SR, dr) [1]
+dot(c44) = cdot(c43, c44, c45, j44, dr, Buf_tot, Km_Buf, D_Ca)
+
+# n = a(=45)
+j45 = j(45, r_SR, dr) [1]
+dot(c45) = beta(c45, Buf_tot, Km_Buf) * ((D_Ca/j45*dr^2) * ((j45+1)*c45 - 2*j45*c45 + (j45-1)*c44) + J_CaSL/V_subSL)
+
+Ca_subSR = c1
     in [uM]
-Ca_subSL = Ca_i
+Ca_subSL = c45
+    in [uM]
+Ca_i = Ca_subSL
     in [uM]
 E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_i)
     in [mV]
