@@ -4,6 +4,7 @@ import myokit
 import pandas as pd
 from typing import List, Callable, Dict, Union, Tuple
 import warnings
+from pyabc import History
 
 
 def log_transform(f):
@@ -84,16 +85,21 @@ class Experiment:
 
 def setup(modelfile: str,
           *experiments: Experiment,
-          vvar: str='membrane.V',
-          logvars: List[str]=myokit.LOG_ALL
+          pacevar: str='membrane.V',
+          logvars: List[str]=myokit.LOG_ALL,
+          prev_runs: List[str]=[],
           ) -> Tuple[pd.DataFrame, Callable, Callable]:
     """Combine chosen experiments into inputs for ABC.
-    
+
     Args:
         modelfile (str): Path to Myokit MMT file.
         *experiments (Experiment): Any number of experiments to run in ABC.
-        vvar (str): Optionally specify name of membrane voltage in modelfile.
-        logvars (str): Optionally specify variables to log in simulations.
+        pacevar (str): Optionally specify name of pacing variable in modelfile.
+            Defaults to `membrane.V` assuming voltage clamp protocol but could
+            also be set to stimulating current.
+        logvars (List[str]): Optionally specify variables to log in simulations.
+        prev_runs (List[str]): Path to previous pyABC runs containing samples
+            to randomly sample outside of ABC algorithm.
 
     Returns:
         Tuple[pd.DataFrame, Callable, Callable]:
@@ -104,10 +110,14 @@ def setup(modelfile: str,
 
     # Create Myokit model instance
     m = myokit.load_model(modelfile)
-    v = m.get(vvar)
-    v.demote()
-    v.set_rhs(0)
-    v.set_binding('pace')
+
+    # Set pacing variable
+    pace = m.get(pacevar)
+    if pace.binding() != 'pace':
+        if pace.is_state():
+            pace.demote()
+        pace.set_rhs(0)
+        pace.set_binding('pace')
 
     # Initialise combined variables
     cols = ['x', 'y', 'variance', 'exp_id']
@@ -132,10 +142,25 @@ def setup(modelfile: str,
             s.set_constant(ci, vi)
         simulations.append(s)
         times.append(exp.protocol.characteristic_time())
-        
+
+    # Get previous pyABC runs
+    # Note: defaults to latest run in database file
+    sample_df, sample_w = [], []
+    for run in prev_runs:
+        h = History(run)
+        df, w = h.get_distribution()
+        sample_df.append(df)
+        sample_w.append(w)
+
     # Create model function
     def simulate_model(**pars):
         sim_output = []
+        # Pre-optimised parameters
+        for df, w in zip(sample_df, sample_w):
+            pars = dict([(key[4:], 10**value) if key.startswith("log")
+                         else (key, value)
+                         for key, value in df.sample(weights=w, replace=True).items()],
+                        **pars)
         for sim, time in zip(simulations, times):
             for p, v in pars.items():
                 try:
@@ -161,7 +186,7 @@ def setup(modelfile: str,
     def summary_statistics(data):
         if data is None:
             return {}
-        return {str(i): val 
+        return {str(i): val
                 for i, val in enumerate(sum_stats_combined(data))}
 
     return observations, model, summary_statistics
