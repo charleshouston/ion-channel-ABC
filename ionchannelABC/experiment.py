@@ -33,7 +33,7 @@ class Experiment:
                  protocol: myokit.Protocol,
                  conditions: Dict[str, float],
                  sum_stats: Union[Callable, List[Callable]],
-                 tvar: str='membrane.T',
+                 tvar: str='phys.T',
                  Q10: float=None,
                  Q10_factor: int=0,
                  description: str=""):
@@ -117,7 +117,7 @@ class Experiment:
 def setup(modelfile: str,
           *experiments: Experiment,
           vvar: str='membrane.V',
-          tvar: str='membrane.T',
+          tvar: str='phys.T',
           logvars: List[str]=myokit.LOG_ALL,
           normalise: bool=True,
           ) -> Tuple[pd.DataFrame, Callable, Callable]:
@@ -127,7 +127,9 @@ def setup(modelfile: str,
         modelfile (str): Path to Myokit MMT file.
         *experiments (Experiment): Any number of experiments to run in ABC.
         vvar (str): Optionally specify name of membrane voltage in modelfile.
+            Defaults to `membrane.V`.
         tvar (str): Optionally specify name of temperature in modelfile.
+            Defaults to `phys.T`.
         logvars (str): Optionally specify variables to log in simulations.
 
     Returns:
