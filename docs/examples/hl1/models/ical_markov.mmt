@@ -91,18 +91,20 @@ p_7 = 6e-3
 p_8 = 0.05
     in [1/mV]
 
-# Calcium-dependent inactivation from ten Tusscher 2004
+# Calcium-dependent inactivation from Korhonen 2009
 dot(fCa) = k*((fCass - fCa)/tau_fCa)
     in [1]
-k = if(fCa > f, if(V > -60, 0, 1), 1)
+k = if(fCass > fCa, if(V > -60, 0, 1), 1)
     in [1]
-alphafCa = (1 + (Ca_i/0.325)^8)^(-1)
+alphafCa = (1 + (Ca_i/0.4875)^8)^(-1)
     in [1]
 betafCa = 0.1 * (1 + exp((Ca_i-0.5)/0.1))^(-1)
     in [1]
 gammafCa = 0.2 * (1 + exp((Ca_i-0.75)/0.8))^(-1)
     in [1]
-fCass = (alphafCa+betafCa+gammafCa+0.23)/1.46
+fCass = (alphafCa+betafCa+gammafCa+0.23)/k_fCass
+    in [1]
+k_fCass = 1.46
     in [1]
 tau_fCa = 2
     in [ms]
