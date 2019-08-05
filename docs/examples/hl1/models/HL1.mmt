@@ -10,7 +10,7 @@ author: Charles Houston
 #
 j(i, r_SR, dr) = (r_SR + (i-0.5)*dr)/dr
 beta(c, Buf_tot, Km_Buf) = (1 + (Buf_tot*Km_Buf)/((c + Km_Buf)^2))^(-1)
-cdot(cp, c, cn, j, dr, Buf_tot, Km_Buf) = beta(c, Buf_tot, Km_Buf) * ((D_Ca/j*dr^2) * ((j+1)*cn - 2*j*c + (j-1)*cp))
+cdot(cp, c, cn, j, dr, Buf_tot, Km_Buf, D_Ca) = beta(c, Buf_tot, Km_Buf) * ((D_Ca/j*dr^2) * ((j+1)*cn - 2*j*c + (j-1)*cp))
 
 #
 # Initial values
@@ -30,12 +30,56 @@ ito.a = 0.01
 ito.r = 0.99
 ikss.a = 0.01
 iha.x = 0.01
-ryr.P_open = 0.012001999999999999
-calcium_sr.Ca_SRuptake = 787.180644
-calcium_sr.Ca_SRrelease = 776.6058415
-calcium.Ca_i = 0.215237
-sodium.Na_i = 15558.639856999998
-potassium.K_i = 120499.57624000001
+ryr.P_open = 0.01
+calcium_sr.Ca_SRuptake = 800
+calcium_sr.Ca_SRrelease = 800
+sodium.Na_i = 15e3
+potassium.K_i = 120e3
+calcium.c1 = 0.2
+calcium.c2 = 0.2
+calcium.c3 = 0.2
+calcium.c4 = 0.2
+calcium.c5 = 0.2
+calcium.c6 = 0.2
+calcium.c7 = 0.2
+calcium.c8 = 0.2
+calcium.c9 = 0.2
+calcium.c10 = 0.2
+calcium.c11 = 0.2
+calcium.c12 = 0.2
+calcium.c13 = 0.2
+calcium.c14 = 0.2
+calcium.c15 = 0.2
+calcium.c16 = 0.2
+calcium.c17 = 0.2
+calcium.c18 = 0.2
+calcium.c19 = 0.2
+calcium.c20 = 0.2
+calcium.c21 = 0.2
+calcium.c22 = 0.2
+calcium.c23 = 0.2
+calcium.c24 = 0.2
+calcium.c25 = 0.2
+calcium.c26 = 0.2
+calcium.c27 = 0.2
+calcium.c28 = 0.2
+calcium.c29 = 0.2
+calcium.c30 = 0.2
+calcium.c31 = 0.2
+calcium.c32 = 0.2
+calcium.c33 = 0.2
+calcium.c34 = 0.2
+calcium.c35 = 0.2
+calcium.c36 = 0.2
+calcium.c37 = 0.2
+calcium.c38 = 0.2
+calcium.c39 = 0.2
+calcium.c40 = 0.2
+calcium.c41 = 0.2
+calcium.c42 = 0.2
+calcium.c43 = 0.2
+calcium.c44 = 0.2
+calcium.c45 = 0.2
 
 #
 # Simulation engine variables
@@ -62,7 +106,7 @@ Cm = 1.0 [uF/cm^2] # TODO convert currents to use 13.7 uF/cm^2
 dot(V) = -1/Cm * (i_ion + i_stim)
     in [mV]
 stim_amplitude = -80 [pA/pF]
-i_ion = ical.i_CaL + incx.i_NCX + icab.i_Cab + ipca.i_pCa + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_K1 + ikur.i_Kss + ikr.i_Kr + icat.i_CaT + iha.i_ha)
+i_ion = ical.i_CaL + incx.i_NCX + icab.i_Cab + ipca.i_pCa + ina.i_Na + inab.i_Nab + inak.i_NaK + ito.i_to + ik1.i_k1 + ikss.i_Kss + ikr.i_Kr + icat.i_CaT + iha.i_ha
     in [pA/pF]
 i_stim = engine.pace * stim_amplitude
     in [pA/pF]
@@ -71,6 +115,7 @@ i_stim = engine.pace * stim_amplitude
 # Cell geometry
 #
 [cell]
+use phys.pi as pi
 Acap = 1.38544e-5
     in [cm^2]
 r_SR = 6        # radius of SR
@@ -115,7 +160,7 @@ use phys.F as F
 use phys.FoRT as FoRT
 use extra.K_o as K_o
 
-dot(K_i) = -(iha.i_haK + ito.i_to + ikss.i_Kss + ik1.i_K1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * Acap * Cm / (V_myo * F * 1e-6)
+dot(K_i) = -(iha.i_haK + ito.i_to + ikss.i_Kss + ik1.i_k1 + ikr.i_Kr - 2 * inak.i_NaK + membrane.i_stim) * Acap * Cm / (V_myo * F * 1e-6)
     in [uM]
 E_K = 1 / FoRT * log(K_o / K_i)
     in [mV]
@@ -556,7 +601,7 @@ g = g_k1 * x_ss
 i_k1 = g * sqrt(K_o/5400) * (V - E_K)
     in [pA/pF]
 
-x_ss = k_2 / (k_1 + k_2) #k_2 * tau_x
+x_ss = k_2 / (k_1 + k_2)
     in [1]
 
 k_1 = p_1*exp(p_2 * V)
@@ -743,7 +788,7 @@ V_SRrelease = 0.1*V_SR # volume of SRrelease compartment
 
 dot(Ca_SRuptake) = (serca.J_SERCA - jleak.J_leak - ca_diff.J_tr) / V_SRuptake
     in [uM]
-dot(Ca_SRrelease) = beta(Ca_SRrelease, Buf_tot, Km_Buf) * (-ryanodine_receptors.J_RyR + ca_diff.J_tr) / V_SRrelease
+dot(Ca_SRrelease) = beta(Ca_SRrelease, Buf_tot, Km_Buf) * (-ryr.J_RyR + ca_diff.J_tr) / V_SRrelease
     in [uM]
 
 Ca_SR = (Ca_SRuptake * V_SRuptake + Ca_SRrelease * V_SRrelease) / (V_SRuptake + V_SRrelease)
@@ -783,7 +828,7 @@ Km_Buf = 1.5    # cytosolic buffer half-saturation constant
 D_Ca = 7        # calcium diffusion coefficient 
     in [um^2/ms]
 
-J_CaSR = ryanodine_receptors.J_RyR - serca.J_SERCA + jleak.J_leak
+J_CaSR = ryr.J_RyR - serca.J_SERCA + jleak.J_leak
     in [uM/ms]
 J_CaSL = (2 * incx.i_NCX - ical.i_CaL - icat.i_CaT - icab.i_Cab) * Acap * Cm / (2 * F * 1e-6)
     in [uM/ms]
@@ -792,103 +837,103 @@ J_CaSL = (2 * incx.i_NCX - ical.i_CaL - icat.i_CaT - icab.i_Cab) * Acap * Cm / (
 # PDE solves as system of ODEs
 dr = 0.1 [um]
 
-V_subSR = 4/3*pi*((r_SR+dr)^3 - r_SR^3) * 1e-3 [pl/fl]
-V_subSL = 4/3*pi*(r_SL^3 - (r_SL-dr)^3) * 1e-3 [pl/fl]
+V_subSR = 4/3*pi*((r_SR+dr)^3 - r_SR^3) * 1e-3 [pL]
+V_subSL = 4/3*pi*(r_SL^3 - (r_SL-dr)^3) * 1e-3 [pL]
 
 # n = 1
-j1 = j(1, r_SR, dr) [1]
+j1 = j(1, r_SR, dr)
 dot(c1) = beta(c1, Buf_tot, Km_Buf) * ((D_Ca/j1*dr^2) * ((j1+1)*c2 - 2*j1*c1 + (j1-1)*c1) + J_CaSR/V_subSR)
 
 # n = 2,3,4,...,a-1(=44)
-j2 = j(2, r_SR, dr) [1]
+j2 = j(2, r_SR, dr)
 dot(c2) = cdot(c1, c2, c3, j2, dr, Buf_tot, Km_Buf, D_Ca)
-j3 = j(3, r_SR, dr) [1]
+j3 = j(3, r_SR, dr)
 dot(c3) = cdot(c2, c3, c4, j3, dr, Buf_tot, Km_Buf, D_Ca)
-j4 = j(4, r_SR, dr) [1]
+j4 = j(4, r_SR, dr)
 dot(c4) = cdot(c3, c4, c5, j4, dr, Buf_tot, Km_Buf, D_Ca)
-j5 = j(5, r_SR, dr) [1]
+j5 = j(5, r_SR, dr)
 dot(c5) = cdot(c4, c5, c6, j5, dr, Buf_tot, Km_Buf, D_Ca)
-j6 = j(6, r_SR, dr) [1]
+j6 = j(6, r_SR, dr)
 dot(c6) = cdot(c5, c6, c7, j6, dr, Buf_tot, Km_Buf, D_Ca)
-j7 = j(7, r_SR, dr) [1]
+j7 = j(7, r_SR, dr)
 dot(c7) = cdot(c6, c7, c8, j7, dr, Buf_tot, Km_Buf, D_Ca)
-j8 = j(8, r_SR, dr) [1]
+j8 = j(8, r_SR, dr)
 dot(c8) = cdot(c7, c8, c9, j8, dr, Buf_tot, Km_Buf, D_Ca)
-j9 = j(9, r_SR, dr) [1]
+j9 = j(9, r_SR, dr)
 dot(c9) = cdot(c8, c9, c10, j9, dr, Buf_tot, Km_Buf, D_Ca)
-j10 = j(10, r_SR, dr) [1]
+j10 = j(10, r_SR, dr)
 dot(c10) = cdot(c9, c10, c11, j10, dr, Buf_tot, Km_Buf, D_Ca)
-j11 = j(11, r_SR, dr) [1]
+j11 = j(11, r_SR, dr)
 dot(c11) = cdot(c10, c11, c12, j11, dr, Buf_tot, Km_Buf, D_Ca)
-j12 = j(12, r_SR, dr) [1]
+j12 = j(12, r_SR, dr)
 dot(c12) = cdot(c11, c12, c13, j12, dr, Buf_tot, Km_Buf, D_Ca)
-j13 = j(13, r_SR, dr) [1]
+j13 = j(13, r_SR, dr)
 dot(c13) = cdot(c12, c13, c14, j13, dr, Buf_tot, Km_Buf, D_Ca)
-j14 = j(14, r_SR, dr) [1]
+j14 = j(14, r_SR, dr)
 dot(c14) = cdot(c13, c14, c15, j14, dr, Buf_tot, Km_Buf, D_Ca)
-j15 = j(15, r_SR, dr) [1]
+j15 = j(15, r_SR, dr)
 dot(c15) = cdot(c14, c15, c16, j15, dr, Buf_tot, Km_Buf, D_Ca)
-j16 = j(16, r_SR, dr) [1]
+j16 = j(16, r_SR, dr)
 dot(c16) = cdot(c15, c16, c17, j16, dr, Buf_tot, Km_Buf, D_Ca)
-j17 = j(17, r_SR, dr) [1]
+j17 = j(17, r_SR, dr)
 dot(c17) = cdot(c16, c17, c18, j17, dr, Buf_tot, Km_Buf, D_Ca)
-j18 = j(18, r_SR, dr) [1]
+j18 = j(18, r_SR, dr)
 dot(c18) = cdot(c17, c18, c19, j18, dr, Buf_tot, Km_Buf, D_Ca)
-j19 = j(19, r_SR, dr) [1]
+j19 = j(19, r_SR, dr)
 dot(c19) = cdot(c18, c19, c20, j19, dr, Buf_tot, Km_Buf, D_Ca)
-j20 = j(20, r_SR, dr) [1]
+j20 = j(20, r_SR, dr)
 dot(c20) = cdot(c19, c20, c21, j20, dr, Buf_tot, Km_Buf, D_Ca)
-j21 = j(21, r_SR, dr) [1]
+j21 = j(21, r_SR, dr)
 dot(c21) = cdot(c20, c21, c22, j21, dr, Buf_tot, Km_Buf, D_Ca)
-j22 = j(22, r_SR, dr) [1]
+j22 = j(22, r_SR, dr)
 dot(c22) = cdot(c21, c22, c23, j22, dr, Buf_tot, Km_Buf, D_Ca)
-j23 = j(23, r_SR, dr) [1]
+j23 = j(23, r_SR, dr)
 dot(c23) = cdot(c22, c23, c24, j23, dr, Buf_tot, Km_Buf, D_Ca)
-j24 = j(24, r_SR, dr) [1]
+j24 = j(24, r_SR, dr)
 dot(c24) = cdot(c23, c24, c25, j24, dr, Buf_tot, Km_Buf, D_Ca)
-j25 = j(25, r_SR, dr) [1]
+j25 = j(25, r_SR, dr)
 dot(c25) = cdot(c24, c25, c26, j25, dr, Buf_tot, Km_Buf, D_Ca)
-j26 = j(26, r_SR, dr) [1]
+j26 = j(26, r_SR, dr)
 dot(c26) = cdot(c25, c26, c27, j26, dr, Buf_tot, Km_Buf, D_Ca)
-j27 = j(27, r_SR, dr) [1]
+j27 = j(27, r_SR, dr)
 dot(c27) = cdot(c26, c27, c28, j27, dr, Buf_tot, Km_Buf, D_Ca)
-j28 = j(28, r_SR, dr) [1]
+j28 = j(28, r_SR, dr)
 dot(c28) = cdot(c27, c28, c29, j28, dr, Buf_tot, Km_Buf, D_Ca)
-j29 = j(29, r_SR, dr) [1]
+j29 = j(29, r_SR, dr)
 dot(c29) = cdot(c28, c29, c30, j29, dr, Buf_tot, Km_Buf, D_Ca)
-j30 = j(30, r_SR, dr) [1]
+j30 = j(30, r_SR, dr)
 dot(c30) = cdot(c29, c30, c31, j30, dr, Buf_tot, Km_Buf, D_Ca)
-j31 = j(31, r_SR, dr) [1]
+j31 = j(31, r_SR, dr)
 dot(c31) = cdot(c30, c31, c32, j31, dr, Buf_tot, Km_Buf, D_Ca)
-j32 = j(32, r_SR, dr) [1]
+j32 = j(32, r_SR, dr)
 dot(c32) = cdot(c31, c32, c33, j32, dr, Buf_tot, Km_Buf, D_Ca)
-j33 = j(33, r_SR, dr) [1]
+j33 = j(33, r_SR, dr)
 dot(c33) = cdot(c32, c33, c34, j33, dr, Buf_tot, Km_Buf, D_Ca)
-j34 = j(34, r_SR, dr) [1]
+j34 = j(34, r_SR, dr)
 dot(c34) = cdot(c33, c34, c35, j34, dr, Buf_tot, Km_Buf, D_Ca)
-j35 = j(35, r_SR, dr) [1]
+j35 = j(35, r_SR, dr)
 dot(c35) = cdot(c34, c35, c36, j35, dr, Buf_tot, Km_Buf, D_Ca)
-j36 = j(36, r_SR, dr) [1]
+j36 = j(36, r_SR, dr)
 dot(c36) = cdot(c35, c36, c37, j36, dr, Buf_tot, Km_Buf, D_Ca)
-j37 = j(37, r_SR, dr) [1]
+j37 = j(37, r_SR, dr)
 dot(c37) = cdot(c36, c37, c38, j37, dr, Buf_tot, Km_Buf, D_Ca)
-j38 = j(38, r_SR, dr) [1]
+j38 = j(38, r_SR, dr)
 dot(c38) = cdot(c37, c38, c39, j38, dr, Buf_tot, Km_Buf, D_Ca)
-j39 = j(39, r_SR, dr) [1]
+j39 = j(39, r_SR, dr)
 dot(c39) = cdot(c38, c39, c40, j39, dr, Buf_tot, Km_Buf, D_Ca)
-j40 = j(40, r_SR, dr) [1]
+j40 = j(40, r_SR, dr)
 dot(c40) = cdot(c39, c40, c41, j40, dr, Buf_tot, Km_Buf, D_Ca)
-j41 = j(41, r_SR, dr) [1]
+j41 = j(41, r_SR, dr)
 dot(c41) = cdot(c40, c41, c42, j41, dr, Buf_tot, Km_Buf, D_Ca)
-j42 = j(42, r_SR, dr) [1]
+j42 = j(42, r_SR, dr)
 dot(c42) = cdot(c41, c42, c43, j42, dr, Buf_tot, Km_Buf, D_Ca)
-j43 = j(43, r_SR, dr) [1]
+j43 = j(43, r_SR, dr)
 dot(c43) = cdot(c42, c43, c44, j43, dr, Buf_tot, Km_Buf, D_Ca)
-j44 = j(44, r_SR, dr) [1]
+j44 = j(44, r_SR, dr)
 dot(c44) = cdot(c43, c44, c45, j44, dr, Buf_tot, Km_Buf, D_Ca)
 
 # n = a(=45)
-j45 = j(45, r_SR, dr) [1]
+j45 = j(45, r_SR, dr)
 dot(c45) = beta(c45, Buf_tot, Km_Buf) * ((D_Ca/j45*dr^2) * ((j45+1)*c45 - 2*j45*c45 + (j45-1)*c44) + J_CaSL/V_subSL)
 
 Ca_subSR = c1
