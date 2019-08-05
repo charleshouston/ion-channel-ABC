@@ -31,9 +31,9 @@ ito.r = 0.99
 ikss.a = 0.01
 iha.x = 0.01
 ryr.P_open = 0.012001999999999999
-ca_conc_sr.Ca_SRuptake = 787.180644
-ca_conc_sr.Ca_SRrelease = 776.6058415
-ca_conc.Ca_i = 0.215237
+calcium_sr.Ca_SRuptake = 787.180644
+calcium_sr.Ca_SRrelease = 776.6058415
+calcium.Ca_i = 0.215237
 sodium.Na_i = 15558.639856999998
 potassium.K_i = 120499.57624000001
 
@@ -191,7 +191,7 @@ p_8 = 0.05
 [ical]
 use membrane.V as V
 use extra.Ca_o as Ca_o
-use ca_conc.Ca_i as Ca_i
+use calcium.Ca_i as Ca_i
 use phys.FoRT as FoRT
 use phys.F as F
 
@@ -268,7 +268,7 @@ tau_fCa = 2
 #
 [icat]
 use membrane.V as V
-use ca_conc.E_Ca as E_Ca
+use calcium.E_Ca as E_Ca
 
 g_CaT = 1.0
     in [mS/uF]
@@ -580,7 +580,7 @@ p_4 = 0.05
 [incx]
 use extra.Na_o as Na_o
 use extra.Ca_o as Ca_o
-use ca_conc.Ca_subSL as Ca_subSL
+use calcium.Ca_subSL as Ca_subSL
 use membrane.V as V
 use sodium.Na_i as Na_i
 
@@ -626,7 +626,7 @@ i_NaK = i_NaK_max * f_NaK * (1 + (Km_Nai / Na_i) ^ n_NaK) ^ (-1) * (1 + (Km_Ko /
 # [tenTusscher2004]
 #
 [ipca]
-use ca_conc.Ca_i as Ca_i
+use calcium.Ca_i as Ca_i
 
 g_pCa = 0.025 [nS/pF]
 Km_pCa = 0.5 [uM]
@@ -637,7 +637,7 @@ i_pCa = g_pCa * Ca_i / (Km_pCa + Ca_i)
 #
 [icab]
 use membrane.V as V
-use ca_conc.E_Ca as E_Ca
+use calcium.E_Ca as E_Ca
 
 g_Cab = 0.0008
   in [mS/uF]
@@ -676,14 +676,14 @@ j_3 = 200
 j_4 = 0.25
     in [1]
 
-J_RyR = k_RyR * P_open * (ca_conc_sr.Ca_SRrelease - ca_conc.Ca_subSR)
+J_RyR = k_RyR * P_open * (calcium_sr.Ca_SRrelease - calcium.Ca_subSR)
     in [uM/ms]
-K_mRyR = j_1 * (1 + exp((ca_conc_sr.Ca_SRrelease - j_2) / j_3)) ^ (-1) + j_4
+K_mRyR = j_1 * (1 + exp((calcium_sr.Ca_SRrelease - j_2) / j_3)) ^ (-1) + j_4
     in [uM]
 P_closed = 1 - P_open
     in [1]
 
-dot(P_open) = P_closed * k_open * ca_conc.Ca_subSR ^ 4 / (K_mRyR ^ 4 + ca_conc.Ca_subSR ^ 4) - k_close * P_open
+dot(P_open) = P_closed * k_open * calcium.Ca_subSR ^ 4 / (K_mRyR ^ 4 + calcium.Ca_subSR ^ 4) - k_close * P_open
     in [1]
 
 #
@@ -700,7 +700,7 @@ K_mr = 7000 * K_mf  # half-saturation for reverse SERCA
 H = 2               # hill coefficient for SERCA
     in [1]
 
-J_SERCA = (V_max * (ca_conc.Ca_subSR / K_mf) ^ H - V_max * (ca_conc_sr.Ca_SRuptake / K_mr) ^ H) / (1 + (ca_conc.Ca_subSR / K_mf) ^ H + (ca_conc_sr.Ca_SRuptake / K_mr) ^ H)
+J_SERCA = (V_max * (calcium.Ca_subSR / K_mf) ^ H - V_max * (calcium_sr.Ca_SRuptake / K_mr) ^ H) / (1 + (calcium.Ca_subSR / K_mf) ^ H + (calcium_sr.Ca_SRuptake / K_mr) ^ H)
     in [uM/ms]
 
 #
@@ -711,7 +711,7 @@ J_SERCA = (V_max * (ca_conc.Ca_subSR / K_mf) ^ H - V_max * (ca_conc_sr.Ca_SRupta
 k_leak = 5e-6       # SR leak rate constant
     in [1/ms]
 
-J_leak = k_leak * (ca_conc_sr.Ca_SRuptake - ca_conc.Ca_subSR)
+J_leak = k_leak * (calcium_sr.Ca_SRuptake - calcium.Ca_subSR)
     in [uM/ms]
 
 #
@@ -722,14 +722,14 @@ J_leak = k_leak * (ca_conc_sr.Ca_SRuptake - ca_conc.Ca_subSR)
 tau_tr = 100        # time constant for J_tr
     in [ms]
 
-J_tr = (ca_conc_sr.Ca_SRuptake - ca_conc_sr.Ca_SRrelease) / tau_tr
+J_tr = (calcium_sr.Ca_SRuptake - calcium_sr.Ca_SRrelease) / tau_tr
     in [uM/ms]
 
 #
 # Calcium concentration in SR
 # ref: [Korhonen2009]
 #
-[ca_conc_sr]
+[calcium_sr]
 Buf_tot = 24750        # total SR Ca2+ buffer concentration
     in [uM]
 Km_Buf = 800           # half-saturation for SR Ca2+ buffer
@@ -753,7 +753,7 @@ Ca_SR = (Ca_SRuptake * V_SRuptake + Ca_SRrelease * V_SRrelease) / (V_SRuptake + 
 # Intracellular calcium concentration
 # ref: [Korhonen2009]
 #
-[ca_conc]
+[calcium]
 use phys.pi as pi
 use phys.FoRT as FoRT
 use extra.Ca_o as Ca_o
