@@ -43,6 +43,7 @@ def IV_Sakakibara_fig3A_2():
     """
     IV curve (nA) data from Figure 3A in Sakakibara 1992 with [Na+]o = 2mM
     No error reported    
+    Already converted to pA/pF ( cell capacitance = 0.1161 nF)
     digitilized the 04/07/19 by Benjamin Marchand    
     """
     x = [-100.05277,-90.02083,-80.25387,-70.022995,-60.125435,
@@ -52,6 +53,9 @@ def IV_Sakakibara_fig3A_2():
     y = [-0.040171184,-0.04726624,-0.03767147,-0.05315843,-0.093163274,
         -0.32303375,-0.3630386,-0.36178875,0.13461158,0.5980551,
         1.2345805,1.8543221,2.4905655,3.5560458,4.423269]
+    
+    y = np.asarray(y)/0.1161 # converting to pA/pF
+    y = y.tolist()
 
     return x , y , None
 
@@ -59,6 +63,7 @@ def IV_Sakakibara_fig3A_5():
     """
     IV curve (nA) data from Figure 3A in Sakakibara 1992 with [Na+]o = 5mM
     No error reported 
+    Already converted to pA/pF ( cell capacitance = 0.1161 nF)
     digitilized the 04/07/19 by Benjamin Marchand    
     """
     x = [-100.11921,-90.087265,-80.18857,-70.35669,-60.14095,
@@ -69,12 +74,16 @@ def IV_Sakakibara_fig3A_5():
         -1.0409596,-1.5346723,-1.6242298,-1.3174602,-0.67277783,
         0.178319,1.0539337,1.9625992,3.0115776,3.944714]
 
+    y = np.asarray(y)/0.1161 # converting to pA/pF
+    y = y.tolist()
+
     return x , y , None
 
 def IV_Sakakibara_fig3A_20():
     """
     IV curve (nA) data from Figure 3A in Sakakibara 1992 with [Na+]o = 20mM
     No error reported 
+    Already converted to pA/pF ( cell capacitance = 0.1161 nF)
     digitilized the 04/07/19 by Benjamin Marchand    
     """
     x = [-100.11921,-90.087265,-80.3222,-70.1657,-60.301064,
@@ -84,6 +93,9 @@ def IV_Sakakibara_fig3A_20():
     y = [-0.040124197,-0.047219254,-0.078879185,-0.26758894,-1.0254257,
         -3.4996932,-5.80866,-6.236365,-5.830725,-4.8229074,
         -3.9883125,-2.774456,-1.2138723,0.099089295,1.2717849]
+
+    y = np.asarray(y)/0.1161 # converting to pA/pF
+    y = y.tolist()
 
     return x , y , None
 

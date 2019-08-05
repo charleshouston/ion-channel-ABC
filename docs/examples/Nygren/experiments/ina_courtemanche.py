@@ -667,18 +667,18 @@ tpreMeasuring2_recov_kin = tperiod_recov_kin - tstep2
 Vstep1 = -20
 Vstep2 = -20  
 
-twaitList = [2,5,10,15,20,25,30,35,40,45,50,75,100,200,300,400,500,600,700,800,900,1000]
-Split_list_recov_kin = [len(twaitList)]
+twaitList_recov_kin = [2,5,10,15,20,25,30,35,40,45,50,75,100,200,300,400,500,600,700,800,900,1000]
+Split_list_recov_kin = [len(twaitList_recov_kin)]
 
 for Vhold in [-140, -120, -110, -100, -90]:
 
     tpreList = []
-    for twait in twaitList:
+    for twait in twaitList_recov_kin:
         tpre = tperiod_recov_kin - tstep1 - twait - tstep2
         tpreList.append(tpre)
         tpreMeasuringList1_recov_kin.append(tpre)
 
-    protocol = recovery_tpreList(twaitList,Vhold,Vstep1, Vstep2,tpreList,tstep1,tstep2)
+    protocol = recovery_tpreList(twaitList_recov_kin,Vhold,Vstep1, Vstep2,tpreList,tstep1,tstep2)
     
     tmp_protocol.append(protocol)
 
@@ -713,7 +713,7 @@ def sakakibara_recov_kin_sum_stats(data):
     for dOneProtocol in dProtocols:
         rec = []
 
-        d_split = dOneProtocol.split_periodic(tperiod_recov, adjust = True)
+        d_split = dOneProtocol.split_periodic(tperiod_recov_kin, adjust = True)
 
         d_split = d_split[loop*Split_list_recov_kin[0]:]    # specific to split_periodic function 
         #( if the time begins at t0 >0 it will create empty arrays from 0 to t0 : here we are getting rid of them)
@@ -740,7 +740,7 @@ def sakakibara_recov_kin_sum_stats(data):
             warnings.simplefilter('error', RuntimeWarning)
             try:
                 # Fit simple exponential to recovery curve
-                popt, _ = so.curve_fit(simple_exp, twaitList, 1.-np.asarray(rec),p0=[5], bounds=([0.1], [50.0]))
+                popt, _ = so.curve_fit(simple_exp, twaitList_recov_kin, 1.-np.asarray(rec),p0=[5], bounds=([0.1], [50.0]))
                 tauh = popt[0]
 
                 output = output + [tauh/max_th_depol]

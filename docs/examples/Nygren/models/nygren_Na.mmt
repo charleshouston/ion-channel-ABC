@@ -12,7 +12,7 @@ ina.m                             = 0.0032017
 ina.h1                           = 0.8814
 ina.h2                           = 0.8742
 #ina.Na_i               = 8.5547
-#ina.Na_c                = 130.011
+#ina.Na_o                = 130.011
 
 
 
@@ -52,14 +52,11 @@ stim_period = 1
 stim_start = 0
     in [s]
 
-
-[ina]
-
 Na_b = 130
     in [mM]
-#dot(Na_c) = 0*( ((Na_b - Na_c) / tau_Na) + (i_Na) / (Vol_c * membrane.F) )
+#dot(Na_o) = 0*( ((Na_b - Na_o) / tau_Na) + (ina.i_Na) / (Vol_c * F) )
 #    in [mM]
-Na_c = 130.011
+Na_o = 130.011
      in [mM]
 
 Vol_c = 0.136 * Vol_i
@@ -67,7 +64,7 @@ Vol_c = 0.136 * Vol_i
 tau_Na = 14.3
     in [s]
 
-#dot(Na_i) = 0* -(i_Na ) / (Vol_i * membrane.F)
+#dot(Na_i) = 0* -(ina.i_Na ) / (Vol_i * F)
 #    in [mM]
 Na_i = 8.5547
      in [mM]
@@ -75,11 +72,19 @@ Na_i = 8.5547
 Vol_i = 0.005884
     in [nL]
 
-E_Na = membrane.R * membrane.T / membrane.F * log(Na_c / Na_i)
+
+[ina]
+use membrane.Na_o as Na_o
+use membrane.Na_i as Na_i
+
+E_Na = membrane.R * membrane.T / membrane.F * log(Na_o / Na_i)
     in [mV]
 
-i_Na = (P_Na*0.001/membrane.Cm) * m ^ 3 * (0.9 * h1 + 0.1 * h2) * Na_c * membrane.V * membrane.F ^ 2 / (membrane.R * membrane.T) * (exp((membrane.V - E_Na) * membrane.F / (membrane.R * membrane.T)) - 1) / (exp(membrane.V * membrane.F / (membrane.R * membrane.T)) - 1)
+i_Na = (P_Na*0.001/membrane.Cm) * m ^ 3 * (0.9 * h1 + 0.1 * h2) * Na_o * membrane.V * membrane.F ^ 2 / (membrane.R * membrane.T) * (exp((membrane.V - E_Na) * membrane.F / (membrane.R * membrane.T)) - 1) / (exp(membrane.V * membrane.F / (membrane.R * membrane.T)) - 1)
     in [nA/nF]
+
+G_Na_norm  = m ^ 3 * (s1 * h1 + (1-s1) * h2)
+s1 = 0.9
 
 P_Na = 0.005
     in [m^3/s (1e-12)]
