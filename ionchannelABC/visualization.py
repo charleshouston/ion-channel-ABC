@@ -1,7 +1,10 @@
 from .distance import IonChannelDistance
+from .experiment import (Experiment,
+                         setup)
 from pyabc.visualization.kde import kde_1d
 import numpy as np
 import pandas as pd
+import warnings
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Callable
@@ -21,21 +24,48 @@ def normalise(df, limits=None):
     return result
 
 
-def plot_sim_results(samples: pd.DataFrame,
-                     obs: pd.DataFrame=None,
-                     original: pd.DataFrame=None) -> sns.FacetGrid:
+def plot_sim_results(modelfile: str,
+                     *experiments: Experiment,
+                     df: pd.DataFrame=None,
+                     w: np.ndarray=None,
+                     n_samples: int=100) -> sns.FacetGrid:
     """Plot output of ABC against experimental and/or original output.
 
     Args:
-        samples (pd.DataFrame): Samples with columns `x`, `y` and `exp_id`.
-        obs (pd.DataFrame): Data used to calibrate with columns `x`, `y`,
-            `exp_id` and `variance`.
-        original (pd.DataFrame): Data from original model with columns `x`
-            `y` and `exp_id`.
+        modelfile (str): Path to Myokit MMT file.
+        *experiments (Experiment): Experiments to plot.
+        df (pd.DataFrame): Dataframe of parameters (see pyabc.History).
+            If `None` runs model with current parameter settings.
+        w (np.ndarray): The corresponding weights (see pyabc.History).
+        n_samples (int): Number of ABC posterior samples used to
+            generate summary output.
 
     Returns
         sns.FacetGrid: Plots of measured output.
     """
+
+    observations, model, summary_statistics = setup(modelfile,
+                                                    *experiments,
+                                                    normalise=False)
+
+    # Generate model samples from ABC approximate posterior or create default
+    # samples if posterior was not provided as input.
+    model_samples = pd.DataFrame({})
+    if df is not None:
+        posterior_samples = (df.sample(n=n_samples, weights=w, replace=True)
+                               .to_dict(orient='records'))
+    else:
+        posterior_samples = [{}]
+
+    for i, th in enumerate(posterior_samples):
+        results = summary_statistics(model(th))
+        output = pd.DataFrame({'x': observations.x,
+                               'y': list(results.values()),
+                               'exp_id': observations.exp_id})
+        output['sample'] = i
+        model_samples = model_samples.append(output, ignore_index=True)
+
+    # Function for mapping observations onto plot later
     def measured_plot(**kwargs):
         measurements = kwargs.pop('measurements')
         ax = plt.gca()
@@ -47,20 +77,11 @@ def plot_sim_results(samples: pd.DataFrame,
                      label='obs',
                      ls='None', marker='x', c='k')
 
-    def original_plot(**kwargs):
-        original = kwargs.pop('original')
-        ax = plt.gca()
-        data = kwargs.pop('data')
-        exp = data['exp_id'].unique()[0]
-        plt.plot(original.loc[original['exp_id']==exp]['x'],
-                 original.loc[original['exp_id']==exp]['y'],
-                 label='original',
-                 ls='--', marker=None, c='k')
-
+    # Actually make the plot
     with sns.color_palette("gray"):
         grid = sns.relplot(x='x', y='y',
                            col='exp_id', kind='line',
-                           data=samples,
+                           data=model_samples,
                            ci='sd',
                            facet_kws={'sharex': 'col',
                                       'sharey': 'col'})
@@ -70,11 +91,9 @@ def plot_sim_results(samples: pd.DataFrame,
         for l in ax.lines:
             l.set_linestyle('-')
 
-    if obs is not None:
-        grid = grid.map_dataframe(measured_plot, measurements=obs)
-    if original is not None:
-        grid = grid.map_dataframe(original_plot, original=original)
+    grid = grid.map_dataframe(measured_plot, measurements=observations)
     grid = grid.add_legend()
+
     return grid
 
 
