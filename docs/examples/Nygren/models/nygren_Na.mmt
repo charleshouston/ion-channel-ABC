@@ -80,7 +80,7 @@ use membrane.Na_i as Na_i
 E_Na = membrane.R * membrane.T / membrane.F * log(Na_o / Na_i)
     in [mV]
 
-i_Na = (P_Na*0.001/membrane.Cm) * m ^ 3 * (0.9 * h1 + 0.1 * h2) * Na_o * membrane.V * membrane.F ^ 2 / (membrane.R * membrane.T) * (exp((membrane.V - E_Na) * membrane.F / (membrane.R * membrane.T)) - 1) / (exp(membrane.V * membrane.F / (membrane.R * membrane.T)) - 1)
+i_Na = (P_Na*0.001/membrane.Cm) * m ^ 3 * (s1 * h1 + (1-s1) * h2) * Na_o * membrane.V * membrane.F ^ 2 / (membrane.R * membrane.T) * (exp((membrane.V - E_Na) * membrane.F / (membrane.R * membrane.T)) - 1) / (exp(membrane.V * membrane.F / (membrane.R * membrane.T)) - 1)
     in [nA/nF]
 
 G_Na_norm  = m ^ 3 * (s1 * h1 + (1-s1) * h2)

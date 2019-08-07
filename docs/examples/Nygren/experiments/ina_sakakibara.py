@@ -20,10 +20,6 @@ import scipy.optimize as so
 
 
 
-def temperature_adjust(R0, T0, T1, Q10):
-    return R0*Q10**((T0-T1)/10)
-
-
 # All experiments use conditions as defined in the
 # Sakakibara and Schneider paper. Data is adjusted to these conditions.
 # Experimental conditions are included in experiment setup below
@@ -45,10 +41,6 @@ sakakibara_iv_desc ="""
 # DATA
 # already converted in pA/pF
 vsteps, peaks, _ = dataSaka.IV_Sakakibara()
-peaks = [temperature_adjust(p,290.15,306.15,Q10_cond) for p in peaks]
-sakakibara_iv_max_peak = np.max(np.abs(peaks)) # for later normalising
-peaks = [p / sakakibara_iv_max_peak for p in peaks]
-
 variances = [0 for p in peaks] # no error reported
 sakakibara_iv_dataset = np.asarray([vsteps, peaks, variances])
 
@@ -77,7 +69,7 @@ def sakakibara_iv_sum_stats(data):
         d = d.trim_left(tpreMeasuring_iv_saka, adjust=True)
         current = d['ina.i_Na'][:-1] # the last value is sometimes a nan 
         # (because V =0 at the end of the simulation and that I in nygren model is not defined for V = 0)
-        output = output+[max(current, key = abs)/sakakibara_iv_max_peak]
+        output = output+[max(current, key = abs)]
     return output
 
 # Experiment
@@ -86,7 +78,9 @@ sakakibara_iv = Experiment(
     protocol=sakakibara_iv_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_iv_sum_stats,
-    description=sakakibara_iv_desc)
+    description=sakakibara_iv_desc,
+    Q10 = Q10_cond,
+    Q10_factor = 1)
 
 
 #######################################################################################################################
@@ -170,7 +164,7 @@ tstep = 1000 # ms (not precised in the paper, 1s seems enough to mesure the peak
 twait = 2 
 ttest = 30
 tpre = tperiod_inact_saka - tstep - twait - ttest
-tpreMeasuring_inact_saka = tperiod_inact_saka - tstep - twait - ttest # tperiod - ttest
+tpreMeasuring_inact_saka = tperiod_inact_saka - ttest # tperiod - ttest
 tMeasuring_inact_saka = ttest 
 
 Vhold = -140 # mV
@@ -191,7 +185,7 @@ sakakibara_conditions = {'membrane.Na_o': 5,
 def sakakibara_inact_sum_stats(data):
     output = []
     for d in data.split_periodic(tperiod_inact_saka, adjust=True):
-        d = d.trim(tpreMeasuring_inact_saka,tpreMeasuring_inact_saka  + tMeasuring_inact_saka, adjust = True)
+        d = d.trim_left(tpreMeasuring_inact_saka, adjust = True)
         inact_gate = d['ina.G_Na_norm']
         index = np.argmax(np.abs(inact_gate))
         output = output+[np.abs(inact_gate[index])]
@@ -205,81 +199,6 @@ sakakibara_inact = Experiment(
     sum_stats=sakakibara_inact_sum_stats,
     description=sakakibara_inact_desc)
 
-#######################################################################################################################
-### IV curve : potential reversal as function of Na_c - Sakakibara 1992
-##### NOT USED SO FAR
-#sakakibara_rever_desc ="""
-#    describes the protocol used to measure the reversal potential curve in the Sakakibara Paper (figure 3B)
-#
-#    page 5 of the paper :
-#
-#    The reversal potential was determined by the intersecting point on the current-voltage relation curve
-#
-#    the IV curve was plotted every 1mV and the protocol used for the IV curve is the same than the fig 1B
-#    (single pulse protocol with a frequence of 0.1Hz)
-#       
-#    """
-#
-## DATA
-#Na_c, rever, sd_rever = dataSaka.Reversal_potential_Sakakibara()
-#max_rever = np.max(np.abs(rever)) # normalising
-#rever = [rever_ / max_rever for rever_ in rever]
-#variances_rever = [(sd_/max_rever)**2 for sd_ in sd_rever]
-#sakakibara_rever_dataset = np.asarray([Na_c, rever, variances_rever])
-#
-## PROTOCOL
-#conditions_list, tmp_protocol = [], []
-#tpreMeasuring_list, tMeasuring_list = [], []
-#
-#tperiod_rever = 3000 # ms
-#tstep = 500 # ms (not precised in the paper, 1s seems enough to mesure the peak current)
-#tpre = tperiod_rever - tstep # before the first pulse occurs
-#tpreMeasuring_rever = tperiod_rever - tstep # before the measurement
-#
-#Vhold = -140 # mV
-#Vlower = -100.001 # modified to not go through V = 0 that makes the nygren model crash ( expression of I_na)
-#Vupper = 40
-#dV = 1 # needs to be small to ensure a smooth curve for the detection of V such that Ina(V) = 0
-#
-#protocol = myokit.pacing.steptrain_linear(Vlower,Vupper + dV, dV, Vhold, tpre, tstep) 
-#
-#for Na_c in [2,5,10,20]:
-#    sakakibara_conditions = {'membrane.Na_o': Na_c,
-#                            'membrane.Na_i': 5,
-#                            'membrane.T': 290.15}
-#
-#    tmp_protocol.append(protocol)
-#    conditions_list.append(sakakibara_conditions)
-#    tpreMeasuring_list.append(tpreMeasuring_rever)
-#
-#sakakibara_rever_protocol = myokit.pacing.steptrain_linear(Vlower,Vupper, dV, Vhold, tpre, tstep) 
-#
-## SUMMARY STATISTICS
-#def sakakibara_rever_sum_stats(data):
-#    output = []
-#    for i in range(4):
-#        nomalized_peak = []
-#        for d in data[i].split_periodic(tperiod_rever, adjust = True):
-#
-#            d = d.trim_left(tpreMeasuring_rever, adjust = True)
-#            current = d['ina.i_Na']
-#            current = current[:-1]           
-#            index = np.argmax(np.abs(current))
-#            nomalized_peak.append(current[index])
-#        nomalized_peak_cut_50 = nomalized_peak[50:] 
-#        # the reversal potential is after -50 mV and since the protocol starts at -100mV with dV = 1mV
-#        # the cut was choosen to be at index 50
-#        index = np.argmin(np.abs(nomalized_peak_cut_50))
-#        output = output+ [(index - 50)/ max_rever] # shifting back the index
-#    return output
-#
-## Experiment
-#sakakibara_rever = Experiment(
-#    dataset=sakakibara_rever_dataset,
-#    protocol=sakakibara_rever_protocol,
-#    conditions=sakakibara_conditions,
-#    sum_stats=sakakibara_rever_sum_stats,
-#    description=sakakibara_rever_desc)
 
 #######################################################################################################################
 ### IV curves as function of Na_o = 2mM - Sakakibara 1992
@@ -298,10 +217,6 @@ sakakibara_iv_Nao2_dataset = []
 # already converted in pA/pF
 Na_o = 2
 vsteps, peaks, _ = dataSaka.IV_Sakakibara_fig3A_all(Na_o)
-peaks = [temperature_adjust(p,290.15,306.15,Q10_cond) for p in peaks]
-sakakibara_iv_max_peak_Na_o = np.max(np.abs(peaks)) # for later normalising
-peaks = [p / sakakibara_iv_max_peak_Na_o for p in peaks]
-
 variances_iv_curves = [0 for p in peaks] # no error reported
 sakakibara_iv_Nao2_dataset.append(np.asarray([vsteps, peaks, variances_iv_curves]))
 
@@ -331,7 +246,7 @@ def sakakibara_iv_Nao2_sum_stats(data):
         d = d.trim_left(tpreMeasuring_iv_Nao2_saka, adjust=True)
         current = d['ina.i_Na'][:-1] # the last value is sometimes a nan 
         # (because V =0 at the end of the simulation and that I in nygren model is not defined for V = 0)
-        output = output+[max(current, key = abs)/sakakibara_iv_max_peak]
+        output = output+[max(current, key = abs)]
     return output
 
 # Experiment
@@ -340,7 +255,9 @@ sakakibara_iv_Nao2 = Experiment(
     protocol=sakakibara_iv_Nao2_protocol,
     conditions=sakakibara_iv_Nao2_conditions,
     sum_stats=sakakibara_iv_Nao2_sum_stats,
-    description=sakakibara_iv_Nao2_desc)
+    description=sakakibara_iv_Nao2_desc,
+    Q10 = Q10_cond,
+    Q10_factor = 1)
 
 #######################################################################################################################
 ### IV curves as function of Na_o = 5mM - Sakakibara 1992
@@ -359,10 +276,6 @@ sakakibara_iv_Nao5_dataset = []
 # already converted in pA/pF
 Na_o = 5
 vsteps, peaks, _ = dataSaka.IV_Sakakibara_fig3A_all(Na_o)
-peaks = [temperature_adjust(p,290.15,306.15,Q10_cond) for p in peaks]
-sakakibara_iv_max_peak_Na_o = np.max(np.abs(peaks)) # for later normalising
-peaks = [p / sakakibara_iv_max_peak_Na_o for p in peaks]
-
 variances_iv_curves = [0 for p in peaks] # no error reported
 sakakibara_iv_Nao5_dataset.append(np.asarray([vsteps, peaks, variances_iv_curves]))
 
@@ -392,7 +305,7 @@ def sakakibara_iv_Nao5_sum_stats(data):
         d = d.trim_left(tpreMeasuring_iv_Nao5_saka, adjust=True)
         current = d['ina.i_Na'][:-1] # the last value is sometimes a nan 
         # (because V =0 at the end of the simulation and that I in nygren model is not defined for V = 0)
-        output = output+[max(current, key = abs)/sakakibara_iv_max_peak]
+        output = output+[max(current, key = abs)]
     return output
 
 # Experiment
@@ -401,7 +314,9 @@ sakakibara_iv_Nao5 = Experiment(
     protocol=sakakibara_iv_Nao5_protocol,
     conditions=sakakibara_iv_Nao5_conditions,
     sum_stats=sakakibara_iv_Nao5_sum_stats,
-    description=sakakibara_iv_Nao5_desc)
+    description=sakakibara_iv_Nao5_desc,
+    Q10 = Q10_cond,
+    Q10_factor = 1)
 
 #######################################################################################################################
 ### IV curves as function of Na_o = 20mM - Sakakibara 1992
@@ -420,12 +335,8 @@ sakakibara_iv_Nao20_dataset = []
 # already converted in pA/pF
 Na_o = 20
 vsteps, peaks, _ = dataSaka.IV_Sakakibara_fig3A_all(Na_o)
-peaks = [temperature_adjust(p,290.15,306.15,Q10_cond) for p in peaks]
-sakakibara_iv_max_peak_Na_o = np.max(np.abs(peaks)) # for later normalising
-peaks = [p / sakakibara_iv_max_peak_Na_o for p in peaks]
-
 variances_iv_curves = [0 for p in peaks] # no error reported
-sakakibara_iv_Nao2_dataset.append(np.asarray([vsteps, peaks, variances_iv_curves]))
+sakakibara_iv_Nao20_dataset.append(np.asarray([vsteps, peaks, variances_iv_curves]))
 
 
 # PROTOCOL
@@ -453,7 +364,7 @@ def sakakibara_iv_Nao20_sum_stats(data):
         d = d.trim_left(tpreMeasuring_iv_Nao20_saka, adjust=True)
         current = d['ina.i_Na'][:-1] # the last value is sometimes a nan 
         # (because V =0 at the end of the simulation and that I in nygren model is not defined for V = 0)
-        output = output+[max(current, key = abs)/sakakibara_iv_max_peak]
+        output = output+[max(current, key = abs)]
     return output
 
 # Experiment
@@ -462,7 +373,9 @@ sakakibara_iv_Nao20 = Experiment(
     protocol=sakakibara_iv_Nao20_protocol,
     conditions=sakakibara_iv_Nao20_conditions,
     sum_stats=sakakibara_iv_Nao20_sum_stats,
-    description=sakakibara_iv_Nao20_desc)
+    description=sakakibara_iv_Nao20_desc,
+    Q10 = Q10_cond,
+    Q10_factor = 1)
 
 #######################################################################################################################
 ###  Inactivation kinetics part 1 - Sakakibara 1992
@@ -483,18 +396,12 @@ sakakibara_inact_kin_1_desc =   """
 tmp_dataset = []
 # 5 : Fast inactivation kinetics : tau h1
 vsteps_th1, th1, sd_th1 = dataSaka.TauF_Inactivation_Sakakibara()
-th1 = [temperature_adjust(th1_,290.15,306.15,Q10_tau) for th1_ in th1]
-max_th1 = np.max(np.abs(th1)) # normalising
-th1 = [th1_ / max_th1 for th1_ in th1]
-variances_th1 = [(sd_/max_th1)**2 for sd_ in sd_th1]
+variances_th1 = [(sd_)**2 for sd_ in sd_th1]
 dataset1 = np.asarray([vsteps_th1, th1, variances_th1])
 
 # 5bis : slow inactivation kinetics : tau h2
 vsteps_th2, th2, sd_th2 = dataSaka.TauS_Inactivation_Sakakibara()
-th2 = [temperature_adjust(th2_,290.15,306.15,Q10_tau) for th2_ in th2]
-max_th2 = np.max(np.abs(th2)) # normalising
-th2 = [th2_ / max_th2 for th2_ in th2]
-variances_th2 = [(sd_/max_th2)**2 for sd_ in sd_th2]
+variances_th2 = [(sd_)**2 for sd_ in sd_th2]
 dataset2 = np.asarray([vsteps_th2, th2, variances_th2])
 
 sakakibara_inact_kin_1_dataset = [dataset1,dataset2]
@@ -554,8 +461,8 @@ def sakakibara_inact_kin_1_sum_stats(data):
 
                 tauh = min(popt[0],popt[1])
                 taus = max(popt[0],popt[1])
-                output = output+[tauh/max_th1]
-                ss_list = ss_list + [taus/max_th2]
+                output = output+[tauh]
+                ss_list = ss_list + [taus]
             except:
                 output = output+[float('inf')]
                 ss_list = ss_list+[float('inf')]
@@ -569,7 +476,9 @@ sakakibara_inact_kin_1 = Experiment(
     protocol=sakakibara_inact_kin_1_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_inact_kin_1_sum_stats,
-    description=sakakibara_inact_kin_1_desc)
+    description=sakakibara_inact_kin_1_desc,
+    Q10 = Q10_tau,
+    Q10_factor = -1)
 
 #######################################################################################################################
 ###  Inactivation kinetics part 2 - Sakakibara 1992
@@ -685,7 +594,7 @@ def sakakibara_inact_kin_2_sum_stats(data):
 
                 index = np.argmax(np.abs(current))
                 try :
-                    output = output+ [current[index] / normalizing_peak]
+                    output = output+ [current[index] / normalizing_peak] #should I still normalize since it's in the protocol itself ?
                 except : 
                     output = output+ [float('inf')]
         loop += 1
@@ -697,7 +606,9 @@ sakakibara_inact_kin_2 = Experiment(
     protocol=sakakibara_inact_kin_2_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_inact_kin_2_sum_stats,
-    description=sakakibara_inact_kin_2_desc)
+    description=sakakibara_inact_kin_2_desc,
+    Q10 = Q10_tau,
+    Q10_factor = -1)
 
 #######################################################################################################################
 ###  recovery curves - Sakakibara 1992
@@ -799,7 +710,7 @@ def sakakibara_recov_sum_stats(data):
             index_cond = np.argmax(np.abs(current_cond))
             index_test = np.argmax(np.abs(current_test))
             try :
-                output = output + [current_test[index_test] / current_cond[index_cond]]  
+                output = output + [current_test[index_test] / current_cond[index_cond]]  # should I still normalize ?
                 sub_loop += 1
             except :
                 output = output + [float('inf')]  
@@ -829,11 +740,8 @@ sakakibara_recov_kin_desc = """
 
 # DATA
 vsteps_th_depol, th_depol, _ = dataSaka.TauF_Inactivation_Sakakibara_Depol()
-th_depol = [temperature_adjust(th_, 290.15, 306.15, Q10_tau) for th_ in th_depol]
-max_th_depol = np.max(np.abs(th_depol))
-th_depol = [th_ / max_th_depol for th_ in th_depol]
-variances = [0.]*len(th_depol)
-sakakibara_recov_kin_dataset = np.asarray([vsteps_th_depol, th_depol, variances])
+variances_depol = [0.]*len(th_depol)
+sakakibara_recov_kin_dataset = np.asarray([vsteps_th_depol, th_depol, variances_depol])
 
 
 # PROTOCOL
@@ -925,7 +833,7 @@ def sakakibara_recov_kin_sum_stats(data):
                 popt, _ = so.curve_fit(simple_exp, twaitList_recov_kin, 1.-np.asarray(rec),p0=[5], bounds=([0.1], [50.0]))
                 tauh = popt[0]
                 
-                output = output + [tauh/max_th_depol]
+                output = output + [tauh]
             except:
                 output = output + [float('inf')]
         loop += 1
@@ -938,4 +846,6 @@ sakakibara_recov_kin = Experiment(
     protocol=sakakibara_recov_kin_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_recov_kin_sum_stats,
-    description=sakakibara_recov_kin_desc)
+    description=sakakibara_recov_kin_desc,
+     Q10 = Q10_tau,
+    Q10_factor = -1)
