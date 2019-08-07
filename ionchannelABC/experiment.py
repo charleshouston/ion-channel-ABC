@@ -65,8 +65,13 @@ class Experiment:
         """
         if isinstance(dataset, list):
             self._dataset = dataset
+            if isinstance(Q10_factor, int):
+                self._Q10_factor = [Q10_factor,]*len(dataset)
+            else:
+                self._Q10_factor = Q10_factor
         else:
             self._dataset = [dataset]
+            self._Q10_factor = [Q10_factor]
 
         self._protocol = protocol
 
@@ -79,7 +84,6 @@ class Experiment:
         self._temperature = conditions_exp.pop(tvar, None)
         self._conditions = conditions_exp
         self._Q10 = Q10
-        self._Q10_factor = Q10_factor
         self._description = description
 
     def __call__(self) -> None:
@@ -111,7 +115,7 @@ class Experiment:
         return self._Q10
 
     @property
-    def Q10_factor(self) -> int:
+    def Q10_factor(self) -> List[int]:
         return self._Q10_factor
 
 
@@ -252,7 +256,7 @@ def get_observations_df(experiments: List[Experiment],
             warnings.warn('No experimental temperature provided so data not adjusted')
 
         # Combine datasets
-        for d in exp.dataset:
+        for i,d in enumerate(exp.dataset):
             dataset = np.copy(d)
 
             if (temp_adjust and
@@ -260,12 +264,12 @@ def get_observations_df(experiments: List[Experiment],
                 model_temperature is not None and
                 model_temperature != exp.temperature and
                 exp.Q10 is not None and
-                exp.Q10_factor is not None):
+                exp.Q10_factor[i] is not None):
                 dataset = adjust_for_temperature(dataset,
                                                  exp.temperature,
                                                  model_temperature,
                                                  exp.Q10,
-                                                 exp.Q10_factor)
+                                                 exp.Q10_factor[i])
 
             if normalise:
                 normalise_factor, dataset = normalise_dataset(dataset)
