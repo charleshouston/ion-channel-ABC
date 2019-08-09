@@ -7,7 +7,7 @@ import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import Callable
+from typing import Callable, List
 
 
 def normalise(df, limits=None):
@@ -26,6 +26,9 @@ def normalise(df, limits=None):
 
 def plot_sim_results(modelfile: str,
                      *experiments: Experiment,
+                     pacevar: str='membrane.V',
+                     tvar: str='phys.T',
+                     prev_runs: List[str]=[],
                      df: pd.DataFrame=None,
                      w: np.ndarray=None,
                      n_samples: int=100) -> sns.FacetGrid:
@@ -46,6 +49,9 @@ def plot_sim_results(modelfile: str,
 
     observations, model, summary_statistics = setup(modelfile,
                                                     *experiments,
+                                                    pacevar=pacevar,
+                                                    tvar=tvar,
+                                                    prev_runs=prev_runs,
                                                     normalise=False)
 
     # Generate model samples from ABC approximate posterior or create default
