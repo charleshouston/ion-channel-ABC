@@ -11,37 +11,37 @@ ikr.C_K2 = 0.01
 ikr.O_K = 0.01
 ikr.I_K = 0.01
 
-[environment]
+[engine]
 time = 0 bind time
     in [ms]
+
+[extra]
+K_o = 5.4e3 [uM]
+Na_o = 140e3 [uM]
+
+[potassium]
+K_i = 143720 [uM]
+
+[sodium]
+Na_i = 14237.1 [uM]
 
 [membrane]
 dot(V) = -ikr.i_Kr
     in [mV]
-K_o = 5400
-    in [uM]
-K_i = 143720
-    in [uM]
-Na_o = 140000
-    in [uM]
-Na_i = 14237.1
-    in [uM]
-F = 96.5
-    in [C/mmol]
-R = 8.314
-    in [J/mol/K]
-T = 305
-    in [K]
+
+[phys]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+T = 305 [K]
 FoRT = F / (R * T)
-    in [1/mV]
 
 [ikr]
 use membrane.V as V
-use membrane.FoRT as FoRT
-use membrane.K_o as K_o
-use membrane.K_i as K_i
-use membrane.Na_o as Na_o
-use membrane.Na_i as Na_i
+use phys.FoRT as FoRT
+use extra.K_o as K_o
+use potassium.K_i as K_i
+use extra.Na_o as Na_o
+use sodium.Na_i as Na_i
 
 g_Kr = 0.06
     in [mS/uF]
