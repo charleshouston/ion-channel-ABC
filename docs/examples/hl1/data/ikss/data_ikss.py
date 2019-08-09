@@ -4,6 +4,41 @@ import numpy as np
 
 # IV curve
 
+def SS_Yang():
+    """Data points for steady-state outward rapidly-inactivating
+    4-AP sensitive current in HL-1 cells.
+
+    Figure 8C from 9 cells as mean \pm SEM in Yang 2005.
+    """
+    x = [-60, -40, -20, -10, 0, 10, 20, 30, 40, 50, 60]
+    y = np.asarray([0.1769911504424755,
+                    1.327433628318584,
+                    2.8318584070796433,
+                    4.86725663716814,
+                    6.814159292035395,
+                    8.141592920353983,
+                    9.292035398230084,
+                    10.265486725663717,
+                    11.150442477876103,
+                    12.920353982300883,
+                    15.221238938053094])
+    sem = np.asarray([-0.3539823008849545,
+                      0.7964601769911468,
+                      2.389380530973451,
+                      4.424778761061948,
+                      6.194690265486724,
+                      6.902654867256636,
+                      7.610619469026549,
+                      8.23008849557522,
+                      9.02654867256637,
+                      10.442477876106192,
+                      12.212389380530972])
+    sem = np.abs(y-sem)
+    N = 9
+    sd = np.sqrt(N)*sem
+    return x, y.tolist(), sd.tolist()
+
+
 def IV_Lu():
     """IV curve for i_ss in HL-1 cells in Lu 2016.
 

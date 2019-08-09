@@ -6,43 +6,40 @@ author: Charles Houston
 membrane.V = -67.0
 ikss.a = 0.01
 
-[environment]
+[engine]
 time = 0 bind time
     in [ms]
 
 [membrane]
 dot(V) = -ikss.i_Kss
     in [mV]
-T = 295
-    in [K]
-F = 96.5
-    in [C/mmol]
-R = 8.314
-    in [J/mol/K]
-FoRT = F / (R * T)
+
+[phys]
+T = 296 [K]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+FoRT = F/(R*T)
     in [1/mV]
-K_o = 5400
-    in [uM]
-K_i = 143720
-    in [uM]
 
-[k_conc]
-use membrane.FoRT as FoRT
-use membrane.K_o as K_o
-use membrane.K_i as K_i
+[extra]
+K_o = 5400 [uM]
 
-E_K = (1 / FoRT) * log(K_o / K_i)
+[potassium]
+use phys.FoRT as FoRT
+use extra.K_o as K_o
+
+K_i = 143720 [uM]
+E_K = 1/FoRT * log(K_o/K_i)
     in [mV]
 
 [ikss]
 use membrane.V as V
-use k_conc.E_K as E_K
+use potassium.E_K as E_K
 
-g_Kss = 0.12375
-     in [nS/pF]
-g = g_Kss * a
-    in [nS/pF]
-i_Kss = g * (V - E_K)
+g_Kss = 0.12375 [nS/pF]
+g = a
+    in [1]
+i_Kss = g_Kss * g * (V - E_K)
     in [pA/pF]
 
 dot(a) = (a_ss - a) / tau_a
@@ -57,11 +54,7 @@ k_1 = p_1*exp(p_2 * V)
 k_2 = p_3*exp(-p_4 * V)
     in [1/ms]
 
-p_1 = 1e-4
-    in [1/ms]
-p_2 = 0.1 
-    in [1/mV]
-p_3 = 4e-5
-    in [1/ms]
-p_4 = 0.05
-    in [1/mV]
+p_1 = 1e-4 [1/ms]
+p_2 = 0.1 [1/mV]
+p_3 = 4e-5 [1/ms]
+p_4 = 0.05 [1/mV]

@@ -45,7 +45,7 @@ def yang_iv_sum_stats(data):
     for i, d in enumerate(data.split_periodic(5450, adjust=True)):
         d = d.trim(5000, 5450, adjust=True)
         peak_curr = np.max(d['ito.i_to'])
-        out_pk = out_pk + [peak_curr] #/max_peak]
+        out_pk = out_pk + [peak_curr]
     return out_pk
 
 yang_iv = Experiment(
