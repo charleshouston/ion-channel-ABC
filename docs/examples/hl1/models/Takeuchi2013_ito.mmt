@@ -7,35 +7,45 @@ membrane.V = -67.0
 ito.xto = 4.05157399999999963e-3
 ito.yto = 0.9945511
 
-[environment]
+[engine]
 time = 0 bind time
     in [ms]
 
 [membrane]
 dot(V) = -ito.i_to
     in [mV]
-T = 310
-    in [K]
-F = 96.5
-    in [C/mmol]
-R = 8.314
-    in [J/mol/K]
-Ko = 5400
-    in [uM]
-Ki = 143720
-    in [uM]
+
+[phys]
+T = 310 [K]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+FoRT = F/(R*T)
+
+[extra]
+K_o = 5.4e3 [uM]
+
+[potassium]
+use phys.FoRT as FoRT
+use extra.K_o as K_o
+
+K_i = 143720 [uM]
+E_K = 1/FoRT * log(K_o/K_i)
+    in [mV]
 
 [ito]
+use membrane.V as V
+use potassium.E_K as E_K
+
 g_to = 0.12375 [nS/pF]
      in [nS/pF]
 
-xto_ss = 1 / (1 + exp(-(membrane.V - k_xss1) / k_xss2))
+xto_ss = 1 / (1 + exp(-(V - k_xss1) / k_xss2))
     in [1]
-tau_xto = k_xtau1 + k_xtau2 * exp(-((membrane.V) / k_xtau3) ^ 2)
+tau_xto = k_xtau1 + k_xtau2 * exp(-((V) / k_xtau3) ^ 2)
     in [ms]
-yto_ss = 1 / (1 + exp((membrane.V + k_yss1) / k_yss2))
+yto_ss = 1 / (1 + exp((V + k_yss1) / k_yss2))
     in [1]
-tau_yto = k_ytau1 + k_ytau2 * exp(-((membrane.V + k_ytau3) / k_ytau4) ^ 2)
+tau_yto = k_ytau1 + k_ytau2 * exp(-((V + k_ytau3) / k_ytau4) ^ 2)
     in [ms]
 dot(xto) = (xto_ss - xto) / tau_xto
     in [1]
@@ -64,9 +74,7 @@ k_ytau3 = 52.45 [mV]
 k_ytau4 = 15.8827 [mV]
     in [mV]
 
-E_K = membrane.R * membrane.T / membrane.F * log(membrane.Ko / membrane.Ki)
-    in [mV]
 G_to = g_to * xto * yto
     in [nS/pF]
-i_to = G_to * (membrane.V - E_K)
+i_to = G_to * (V - E_K)
     in [pA/pF]
