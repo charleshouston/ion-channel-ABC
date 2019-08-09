@@ -142,35 +142,3 @@ def availability_linear(vstart: float,
             p.schedule(vhold, time, tpost)
             time += tpost
     return p
-
-
-def varying_test_duration(tstep: List[float],
-                          vhold: float,
-                          vstep: float,
-                          tpre: float,
-                          tpost: float=0.) -> myokit.Protocol:
-    """Varying duration of test pulses to same potential."""
-
-    # Check time arguments
-    if tpre < 0:
-        raise ValueError('Time tpre can not be negative.')
-    for ts in tstep:
-        if ts < 0:
-            raise ValueError('Time tstep can not be negative.')
-    if tpost < 0:
-        raise ValueError('Time tpost can not be negative.')
-
-    # Create protocol
-    p = myokit.Protocol()
-    time = 0.
-    for i in range(len(tstep)):
-        if tpre > 0:
-            p.schedule(vhold, time, tpre)
-            time += tpre
-        if tstep[i] > 0:
-            p.schedule(vstep, time, tstep[i])
-            time += tstep[i]
-        if tpost > 0:
-            p.schedule(vhold, time, tpost)
-            time += tpost
-    return p

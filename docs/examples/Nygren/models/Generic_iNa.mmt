@@ -26,17 +26,17 @@ R = 8.314
     in [J/mol/K]
 FoRT = F / (R * T)
     in [1/mV]
-Nao = 145000
-    in [uM]
-Nai = 10000
-    in [uM]
+Na_o = 145
+    in [mM]
+Na_i = 10
+    in [mM]
 
 [na_conc]
-use membrane.Nao as Nao
-use membrane.Nai as Nai
+use membrane.Na_o as Na_o
+use membrane.Na_i as Na_i
 use membrane.FoRT as FoRT
 
-E_Na = (1 / FoRT) * log(Nao / Nai)
+E_Na = (1 / FoRT) * log(Na_o / Na_i)
     in [mV]
 
 [ina]

@@ -142,7 +142,7 @@ def plot_parameter_sensitivity(
                         sharey=False,
                         palette=pal)
                         .despine(left=True, bottom=True))
-    for i, ax in enumerate(grid.axes.flatten()):
+    for ax in grid.axes.flatten():
         ax.axhline(y=plot_cutoff, linewidth=1, color='k', linestyle='--')
         ax.axhline(y=-1*plot_cutoff, linewidth=1, color='k', linestyle='--')
 
