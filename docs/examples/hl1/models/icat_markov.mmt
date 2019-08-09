@@ -2,52 +2,46 @@
 name: T-type Ca2+ channel model
 author: Charles Houston
 desc: """
-      Markov model for the T-type calcium channel.
+      Simple model for ICaT.
       """
 # Initial values
 membrane.V = -67
-icat.a = 0.01
-icat.r = 0.99
+icat.a = 0.0
+icat.r = 1.0
 
-[environment]
+[engine]
 time = 0 bind time
     in [ms]
 
 [membrane]
 dot(V) = -icat.i_CaT
     in [mV]
-Ca_o = 1800
-    in [uM]
-Ca_i = 0.2
-    in [uM]
-F = 96.5
-    in [C/mmol]
-R = 8.314
-    in [J/mol/K]
-T = 295
-    in [K]
-FoRT = F / (R * T)
-    in [1/mV]
 
-[ca_conc]
-use membrane.FoRT as FoRT
-use membrane.Ca_o as Ca_o
-use membrane.Ca_i as Ca_i
+[extra]
+Ca_o = 1.8e3 [uM]
+
+[phys]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+T = 296 [K]
+FoRT = F / (R * T)
+
+[calcium]
+use phys.FoRT as FoRT
+use extra.Ca_o as Ca_o
     
+Ca_i = 0.2 [uM]
 E_Ca = 1 / (2 * FoRT) * log(Ca_o / Ca_i)
     in [mV]
 
 [icat]
 use membrane.V as V
-use ca_conc.E_Ca as E_Ca
 
-g_CaT = 1.0
-    in [mS/uF]
-E_Ca_offset = 40.0
-    in [mV]
+g_CaT = 1.0 [mS/uF]
+E_CaT = 45 [mV]
 g = a * r
     in [1]
-i_CaT = g_CaT * g * (V - E_Ca + E_Ca_offset)
+i_CaT = g_CaT * g * (V - E_CaT)
     in [pA/pF]
 
 dot(a) = (a_ss - a) / tau_a

@@ -81,7 +81,10 @@ nakajima_inactivation = Experiment(
 
 
 ### Recovery Zhang 2013
-zhang_rec_desc = """Recovery curve for iNa in Zhang 2013."""
+zhang_rec_desc = """Recovery curve for iNa in Zhang 2013.
+
+Experiments conducted at room temperature.
+"""
 
 tsteps_rec, rec, _ = data.Recovery_Zhang()
 zhang_rec_dataset = np.asarray([tsteps_rec, rec, [0.]*len(rec)])

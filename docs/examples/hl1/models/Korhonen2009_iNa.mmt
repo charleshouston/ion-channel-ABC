@@ -4,45 +4,45 @@ author: Charles Houston
 desc: """
       The Korhonen 2009 model for the fast sodium current.
       """
-ref: """
-     T Korhonen et al. (2009) Model of Excitation-Contraction Coupling of Rat
-     Neonatal Ventricular Myocytes.
-     """
 # Initial values
 membrane.V = -67.0
-ina.m                         = 1.40562700000000000e-3
-ina.h                         = 0.9867005
-ina.j                         = 0.991562
+ina.m = 1.40562700000000000e-3
+ina.h = 0.9867005
+ina.j = 0.991562
 
-[environment]
+[engine]
 time = 0 bind time
     in [ms]
 
 [membrane]
 dot(V) = -ina.i_Na
     in [mV]
-T = 310
-    in [K]
-F = 96.5
-    in [C/mmol]
-R = 8.314
-    in [J/mol/K]
-Nao = 145000
-    in [uM]
-Nai = 10000
-    in [uM]
 
+[phys]
+T = 310 [K]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+FoRT = F/(R*T)
+
+[extra]
+Na_o = 145000 [uM]
+
+[sodium]
+use phys.FoRT as FoRT
+use extra.Na_o as Na_o
+
+Na_i = 10000 [uM]
+E_Na = 1/FoRT * log(Na_o/Na_i)
+    in [mV]
 
 [ina]
 use membrane.V as V
 
 g_Na = 35
     in [mS/uF]
-E_Na = membrane.R * membrane.T / membrane.F * log(membrane.Nao / membrane.Nai)
-    in [mV]
-G_Na = g_Na * m ^ 3 * h * j
-    in [mS/uF]
-i_Na = G_Na * (V - E_Na)
+g = m ^ 3 * h * j
+    in [1]
+i_Na = g_Na * g * (V - E_Na)
     in [pA/pF]
 
 dot(m) = (m_ss - m) / tau_m

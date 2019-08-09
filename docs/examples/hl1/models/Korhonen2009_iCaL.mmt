@@ -14,13 +14,15 @@ ical.d = 1.40562700000000000e-3
 ical.f = 0.99
 ical.fCa = 0.99
 
-[environment]
+[engine]
 time = 0 bind time
     in [ms]
 
 [membrane]
 dot(V) = -ical.i_CaL
     in [mV]
+
+[phys]
 T = 296
     in [K]
 F = 96.5
@@ -28,19 +30,23 @@ F = 96.5
 R = 8.314
     in [J/mol/K]
 FoRT = F / (R * T)
+
+[extra]
 Ca_o = 1800
     in [uM]
-Ca_subSL = 0.115001
+
+[calcium]
+Ca_i = 0.115001
     in [uM]
 
 [ical]
 use membrane.V as V
-use membrane.FoRT as FoRT
-use membrane.F as F
-use membrane.Ca_o as Ca_o
-use membrane.Ca_subSL as Ca_subSL
+use phys.FoRT as FoRT
+use phys.F as F
+use extra.Ca_o as Ca_o
+use calcium.Ca_i as Ca_i
 
-i_CaL = G_CaL * 4 * V * F * FoRT * (Ca_subSL * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
+i_CaL = G_CaL * 4 * V * F * FoRT * (Ca_i * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
     in [pA/pF]
 g_CaL = 0.000063
     in [dm^3/F/ms]
@@ -89,11 +95,11 @@ q9 = 120
 
 dot(fCa) = k * (fCa_ss - fCa) / tau_fCa
     in [1]
-alpha_fCa = (1 + (Ca_subSL / r1) ^ 8) ^ (-1)
+alpha_fCa = (1 + (Ca_i / r1) ^ 8) ^ (-1)
     in [1]
-beta_fCa = r2 * (1 + exp((Ca_subSL - r3) / r4)) ^ (-1)
+beta_fCa = r2 * (1 + exp((Ca_i - r3) / r4)) ^ (-1)
     in [1]
-gamma_fCa = r5 * (1 + exp((Ca_subSL - r6) / r7)) ^ (-1)
+gamma_fCa = r5 * (1 + exp((Ca_i - r6) / r7)) ^ (-1)
     in [1]
 fCa_ss = (alpha_fCa + beta_fCa + gamma_fCa + r8) / r9
     in [1]

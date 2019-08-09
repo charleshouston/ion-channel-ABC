@@ -4,43 +4,39 @@ author: Charles Houston
 
 # Initial values
 membrane.V = -67.0
-ito.a = 0.01
-ito.r = 0.99
+ito.a = 0.0
+ito.r = 1.0
 
-[environment]
+[engine]
 time = 0 bind time
     in [ms]
 
 [membrane]
 dot(V) = -ito.i_to
     in [mV]
-T = 295
-    in [K]
-F = 96.5
-    in [C/mmol]
-R = 8.314
-    in [J/mol/K]
+
+[phys]
+T = 296 [K]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
 FoRT = F / (R * T)
-    in [1/mV]
-K_o = 5400
-    in [uM]
-K_i = 143720
-    in [uM]
 
-[k_conc]
-use membrane.FoRT as FoRT
-use membrane.K_o as K_o
-use membrane.K_i as K_i
+[extra]
+K_o = 5.4e3 [uM]
 
+[potassium]
+use phys.FoRT as FoRT
+use extra.K_o as K_o
+
+K_i = 143720 [uM]
 E_K = (1 / FoRT) * log(K_o / K_i)
     in [mV]
 
 [ito]
 use membrane.V as V
-use k_conc.E_K as E_K
+use potassium.E_K as E_K
 
-g_to = 0.12375
-     in [nS/pF]
+g_to = 0.12375 [nS/pF]
 g = g_to * a * r
     in [nS/pF]
 i_to = g * (V - E_K)
@@ -69,19 +65,11 @@ k_3 = p_5*exp(p_6 * V)
 k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-p_1 = 1e-4
-    in [1/ms]
-p_2 = 0.1 
-    in [1/mV]
-p_3 = 4e-5
-    in [1/ms]
-p_4 = 0.05
-    in [1/mV]
-p_5 = 5e-2
-    in [1/ms]
-p_6 = 0.01
-    in [1/mV]
-p_7 = 6e-3
-    in [1/ms]
-p_8 = 0.05
-    in [1/mV]
+p_1 = 1e-4 [1/ms]
+p_2 = 0.1 [1/mV]
+p_3 = 4e-5 [1/ms]
+p_4 = 0.05 [1/mV]
+p_5 = 5e-2 [1/ms]
+p_6 = 0.01 [1/mV]
+p_7 = 6e-3 [1/ms]
+p_8 = 0.05 [1/mV]

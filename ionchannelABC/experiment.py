@@ -4,6 +4,7 @@ import myokit
 import pandas as pd
 from typing import List, Callable, Dict, Union, Tuple
 import warnings
+from pyabc import History
 
 
 def log_transform(f):
@@ -64,8 +65,13 @@ class Experiment:
         """
         if isinstance(dataset, list):
             self._dataset = dataset
+            if isinstance(Q10_factor, int):
+                self._Q10_factor = [Q10_factor,]*len(dataset)
+            else:
+                self._Q10_factor = Q10_factor
         else:
             self._dataset = [dataset]
+            self._Q10_factor = [Q10_factor]
 
         self._protocol = protocol
 
@@ -78,7 +84,6 @@ class Experiment:
         self._temperature = conditions_exp.pop(tvar, None)
         self._conditions = conditions_exp
         self._Q10 = Q10
-        self._Q10_factor = Q10_factor
         self._description = description
 
     def __call__(self) -> None:
@@ -110,27 +115,31 @@ class Experiment:
         return self._Q10
 
     @property
-    def Q10_factor(self) -> int:
+    def Q10_factor(self) -> List[int]:
         return self._Q10_factor
 
 
 def setup(modelfile: str,
           *experiments: Experiment,
-          vvar: str='membrane.V',
+          pacevar: str='membrane.V',
           tvar: str='phys.T',
+          prev_runs: List[str]=[],
           logvars: List[str]=myokit.LOG_ALL,
-          normalise: bool=True,
+          normalise: bool=True
           ) -> Tuple[pd.DataFrame, Callable, Callable]:
     """Combine chosen experiments into inputs for ABC.
 
     Args:
         modelfile (str): Path to Myokit MMT file.
         *experiments (Experiment): Any number of experiments to run in ABC.
-        vvar (str): Optionally specify name of membrane voltage in modelfile.
-            Defaults to `membrane.V`.
+        pacevar (str): Optionally specify name of pacing variable in modelfile.
+            Defaults to `membrane.V` assuming voltage clamp protocol but could
+            also be set to stimulating current.
         tvar (str): Optionally specify name of temperature in modelfile.
             Defaults to `phys.T`.
-        logvars (str): Optionally specify variables to log in simulations.
+        prev_runs (List[str]): Path to previous pyABC runs containing samples
+            to randomly sample outside of ABC algorithm.
+        logvars (List[str]): Optionally specify variables to log in simulations.
 
     Returns:
         Tuple[pd.DataFrame, Callable, Callable]:
@@ -141,10 +150,14 @@ def setup(modelfile: str,
 
     # Create Myokit model instance
     m = myokit.load_model(modelfile)
-    v = m.get(vvar)
-    v.demote()
-    v.set_rhs(0)
-    v.set_binding('pace')
+
+    # Set pacing variable
+    pace = m.get(pacevar)
+    if pace.binding() != 'pace':
+        if pace.is_state():
+            pace.demote()
+        pace.set_rhs(0)
+        pace.set_binding('pace')
     model_temperature = m.get(tvar).value()
 
     # Initialise combined variables
@@ -162,9 +175,24 @@ def setup(modelfile: str,
         simulations.append(s)
         times.append(exp.protocol.characteristic_time())
 
+    # Get previous pyABC runs
+    # Note: defaults to latest run in database file
+    sample_df, sample_w = [], []
+    for run in prev_runs:
+        h = History(run)
+        df, w = h.get_distribution()
+        sample_df.append(df)
+        sample_w.append(w)
+
     # Create model function
     def simulate_model(**pars):
         sim_output = []
+        # Pre-optimised parameters
+        for df, w in zip(sample_df, sample_w):
+            pars = dict([(key[4:], 10**value) if key.startswith("log")
+                         else (key, value)
+                         for key, value in df.sample(weights=w, replace=True).items()],
+                        **pars)
         for sim, time in zip(simulations, times):
             for p, v in pars.items():
                 try:
@@ -228,7 +256,7 @@ def get_observations_df(experiments: List[Experiment],
             warnings.warn('No experimental temperature provided so data not adjusted')
 
         # Combine datasets
-        for d in exp.dataset:
+        for i,d in enumerate(exp.dataset):
             dataset = np.copy(d)
 
             if (temp_adjust and
@@ -236,12 +264,12 @@ def get_observations_df(experiments: List[Experiment],
                 model_temperature is not None and
                 model_temperature != exp.temperature and
                 exp.Q10 is not None and
-                exp.Q10_factor is not None):
+                exp.Q10_factor[i] is not None):
                 dataset = adjust_for_temperature(dataset,
                                                  exp.temperature,
                                                  model_temperature,
                                                  exp.Q10,
-                                                 exp.Q10_factor)
+                                                 exp.Q10_factor[i])
 
             if normalise:
                 normalise_factor, dataset = normalise_dataset(dataset)
