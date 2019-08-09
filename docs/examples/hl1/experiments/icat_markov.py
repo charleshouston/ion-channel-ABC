@@ -6,33 +6,29 @@ import myokit
 from ionchannelABC.experiment import Experiment
 
 
-room_temp = 295
-Q10_cond = 1.5
-Q10_tau = 2.79
-
-def temperature_adjust_cond(R0, T0, T1, Q10):
-    return R0*Q10**((T1-T0)/10)
-
-def temperature_adjust_tau(R0, T0, T1, Q10):
-    return R0*Q10**((T0-T1)/10)
+room_temp = 296
+# Q10 values for iCaL MAY NOT BE VALID for iCaT
+Q10_cond = 2.3 # [Kiyosue1993]
+Q10_tau = 2.1 # [tenTusscher2004]
 
 
-### IV curve Nguyen 2013
+#
+# IV curve [Nguyen2013]
+#
 nguyen_iv_desc = """IV curve from Nguyen 2013 Fig 5B.
-Measurements at room temperature so no temperature adjustment."""
+Measurements at room temperature.
+"""
 
 vsteps, peaks, sd = data.IV_Nguyen()
-max_iv_peak = np.max(np.abs(peaks)) # for later normalising
-peaks = [p / max_iv_peak for p in peaks]
-variances = [(sd / max_iv_peak)**2 for sd in sd]
+variances = [sd**2 for sd in sd]
 nguyen_iv_dataset = np.asarray([vsteps, peaks, variances])
 
 nguyen_iv_protocol = myokit.pacing.steptrain_linear(
     -75, 40, 5, -75, 5000, 300
 )
-nguyen_conditions = {'membrane.Ca_o': 5000,
-                     'membrane.Ca_i': 0.2,
-                     'membrane.T': room_temp} # estimated typical (LR1994)
+nguyen_conditions = {'extra.Ca_o': 5000,
+                     'calcium.Ca_i': 0.2, # estimated [LR1994]
+                     'phys.T': room_temp}
 
 def nguyen_iv_sum_stats(data):
     output = []
@@ -48,13 +44,18 @@ nguyen_iv = Experiment(
     protocol=nguyen_iv_protocol,
     conditions=nguyen_conditions,
     sum_stats=nguyen_iv_sum_stats,
-    description=nguyen_iv_desc
+    description=nguyen_iv_desc,
+    Q10=Q10_cond,
+    Q10_factor=1
 )
 
 
-### Inactivation curve Nguyen 2013
+#
+# Steady-state inactivation [Nguyen2013]
+#
 nguyen_inact_desc = """Inactivation curve for icat from Nguyen 2013 Fig 5E.
-Recordings at room temperature."""
+Recordings at room temperature.
+"""
 
 vsteps_inact, inact, sd_inact = data.Inact_Nguyen()
 variances_inact = [sd**2 for sd in sd_inact]
@@ -80,13 +81,18 @@ nguyen_inact = Experiment(
     protocol=nguyen_inact_protocol,
     conditions=nguyen_conditions,
     sum_stats=nguyen_inact_sum_stats,
-    description=nguyen_inact_desc
+    description=nguyen_inact_desc,
+    Q10=None,
+    Q10_factor=0
 )
 
 
-### Recovery curve Deng 2009
+#
+# Recovery kinetics [Deng2009]
+#
 deng_rec_desc = """Recovery curve in HL-1 from Deng 2009 Fig 4B.
-Measurements taken at room temperature so no temp adjustment."""
+Measurements taken at room temperature so no temp adjustment.
+"""
 
 tsteps_rec, rec, sd_rec = data.Rec_Deng()
 variances_rec = [sd**2 for sd in sd_rec]
@@ -95,9 +101,9 @@ deng_rec_dataset = np.asarray([tsteps_rec, rec, variances_rec])
 deng_rec_protocol = recovery(
     tsteps_rec, -80, -20, -20, 5000, 300, 300
 )
-deng_conditions = {'membrane.Ca_o': 5000,
-                   'membrane.Ca_i': 0.2, # estimated LR1994
-                   'membrane.T': room_temp}
+deng_conditions = {'extra.Ca_o': 5000,
+                   'calcium.Ca_i': 0.2, # estimated LR1994
+                   'phys.T': room_temp}
 
 split_times = [5600+tw for tw in tsteps_rec]
 for i, time in enumerate(split_times[:-1]):
@@ -108,15 +114,15 @@ def deng_rec_sum_stats(data):
     for i, time in enumerate(split_times):
         d_, data = data.split(time)
         pulse_traces.append(
-            d_.trim(d_['environment.time'][0]+5000,
-                    d_['environment.time'][0]+5600+tsteps_rec[i],
+            d_.trim(d_['engine.time'][0]+5000,
+                    d_['engine.time'][0]+5600+tsteps_rec[i],
                     adjust=True)
         )
     output = []
     for d in pulse_traces:
         # Interested in two 300ms pulses
         pulse1 = d.trim(0, 300, adjust=True)['icat.i_CaT']
-        endtime = d['environment.time'][-1]
+        endtime = d['engine.time'][-1]
         pulse2 = d.trim(endtime-300, endtime, adjust=True)['icat.i_CaT']
 
         max1 = np.max(np.abs(pulse1))
@@ -130,5 +136,7 @@ deng_rec = Experiment(
     protocol=deng_rec_protocol,
     conditions=deng_conditions,
     sum_stats=deng_rec_sum_stats,
-    description=deng_rec_desc
+    description=deng_rec_desc,
+    Q10=None,
+    Q10_factor=0
 )
