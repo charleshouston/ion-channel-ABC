@@ -24,13 +24,13 @@ CaTR50, CaTR50_sem, CaTR50_n = 157, 6, 6
 CaTR50_sd = np.sqrt(CaTR50_n)*CaTR50_sem
 CaTR90, CaTR90_sem, CaTR90_n = 397, 14, 6
 CaTR90_sd = np.sqrt(CaTR90_n)*CaTR90_sem
-ap_dataset = [np.asarray([['MDP'], [mdp], [mdp_sd**2]]),
-              np.asarray([['dV/dt_max'], [dvdt_max], [dvdt_max_sd**2]]),
-              np.asarray([['Amp'], [amp], [amp_sd**2]]),
-              np.asarray([['APD90'], [apd90], [apd90_sd**2]]),
-              np.asarray([['CaT_T2P'], [t2p], [t2p_sd**2]]),
-              np.asarray([['CaT_R50'], [CaTR50], [CaTR50_sd**2]]),
-              np.asarray([['CaT_R90'], [CaTR90], [CaTR90_sd**2]])]
+ap_dataset = [np.asarray([[0], [mdp], [mdp_sd**2]]),
+              np.asarray([[0], [dvdt_max], [dvdt_max_sd**2]]),
+              np.asarray([[0], [amp], [amp_sd**2]]),
+              np.asarray([[0], [apd90], [apd90_sd**2]]),
+              np.asarray([[0], [t2p], [t2p_sd**2]]),
+              np.asarray([[0], [CaTR50], [CaTR50_sd**2]]),
+              np.asarray([[0], [CaTR90], [CaTR90_sd**2]])]
 
 ap_protocol = myokit.pacing.blocktrain(
     period=1000, duration=0.5, limit=101, offset=2
@@ -99,5 +99,7 @@ ap = Experiment(
     protocol=ap_protocol,
     conditions=ap_conditions,
     sum_stats=ap_sum_stats,
-    description=ap_desc
+    description=ap_desc,
+    Q10=None,
+    Q10_factor=0.
 )
