@@ -233,7 +233,7 @@ p_8 = 0.05 [1/mV]
 [ical]
 use membrane.V as V
 use extra.Ca_o as Ca_o
-use calcium.Ca_subSL as Ca_subSL
+use calcium.Ca_sub as Ca_sub
 
 g_CaL = 0.4 [mS/uF]
 g = d*f*fCa
@@ -278,7 +278,7 @@ dot(fCa) = (fCass - fCa)/tau_fCa
 Km_fCa = 0.35 [uM]    : ICaL calcium dissociation constant
 a_fCa = 0.035 [ms^-1] : ICaL calcium dissociation rate 
 
-fCass = Km_fCa / (Km_fCa + calcium.Ca_subSL)
+fCass = Km_fCa / (Km_fCa + Ca_sub)
 tau_fCa = fCass/a_fCa
 
 
