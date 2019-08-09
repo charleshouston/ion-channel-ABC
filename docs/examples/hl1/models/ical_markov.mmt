@@ -41,19 +41,6 @@ g = d*f*fCa
 E_CaL = 45 [mV]
 i_CaL = g_CaL * g * (V - E_CaL)
 
-#P_CaL = 1e-3
-#    in [m/s]
-#g = d * f * fCa
-#    in [1]
-#driving = if(V != 0,
-#    4*V*FoRT*F*(Ca_i-gamma_Ca_o*Ca_o*exp(-2*V*FoRT))/(1-exp(-2*V*FoRT)),
-#    2*F*(Ca_i-gamma_Ca_o*Ca_o))
-#    in [pA/pF]
-#i_CaL = P_CaL * g * driving
-#    in [pA/pF]
-#gamma_Ca_o = 1.0
-#    in [1]
-
 dot(d) = (d_ss - d) / tau_d
     in [1]
 tau_d = 1 / (k_1 + k_2)
@@ -77,45 +64,20 @@ k_3 = p_5*exp(p_6 * V)
 k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-p_1 = 1e-4
-    in [1/ms]
-p_2 = 0.1 
-    in [1/mV]
-p_3 = 4e-5
-    in [1/ms]
-p_4 = 0.05
-    in [1/mV]
-p_5 = 5e-2
-    in [1/ms]
-p_6 = 0.01
-    in [1/mV]
-p_7 = 6e-3
-    in [1/ms]
-p_8 = 0.05
-    in [1/mV]
+p_1 = 1e-4 [1/ms]
+p_2 = 0.1 [1/mV]
+p_3 = 4e-5 [1/ms]
+p_4 = 0.05 [1/mV]
+p_5 = 5e-2 [1/ms]
+p_6 = 0.01 [1/mV]
+p_7 = 6e-3 [1/ms]
+p_8 = 0.05 [1/mV]
 
 # Calcium-dependent inactivation [Kurata2002]
 dot(fCa) = (fCass - fCa)/tau_fCa
     in [1]
 Km_fCa = 0.35 [uM]    : ICaL calcium dissociation constant
-a_fCa = 0.021 [ms^-1] : ICaL calcium dissociation rate 
+a_fCa = 0.035 [ms^-1] : ICaL calcium dissociation rate 
 
 fCass = Km_fCa / (Km_fCa + calcium.Ca_subSL)
 tau_fCa = fCass/a_fCa
-
-#dot(fCa) = k*((fCass - fCa)/tau_fCa)
-#    in [1]
-#k = if(fCass > fCa, if(V > -60, 0, 1), 1)
-#    in [1]
-#alphafCa = (1 + (Ca_i/0.4875)^8)^(-1)
-#    in [1]
-#betafCa = 0.1 * (1 + exp((Ca_i-0.5)/0.1))^(-1)
-#    in [1]
-#gammafCa = 0.2 * (1 + exp((Ca_i-0.75)/0.8))^(-1)
-#    in [1]
-#fCass = (alphafCa+betafCa+gammafCa+0.23)/k_fCass
-#    in [1]
-#k_fCass = 1.46
-#    in [1]
-#tau_fCa = 2
-#    in [ms]

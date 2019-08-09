@@ -17,9 +17,6 @@ Experiments carried out at room temperature so no adjustment.
 """
 
 vsteps_iv, peaks, sd_iv = data.IV_Dias()
-#max_iv_peak = np.max(np.abs(peaks))
-#peaks = [p/max_iv_peak for p in peaks]
-#variances_iv = [(sd/max_iv_peak)**2 for sd in sd_iv]
 variances_iv = [sd**2 for sd in sd_iv]
 dias_iv_dataset = np.asarray([vsteps_iv, peaks, variances_iv])
 
@@ -46,7 +43,7 @@ def dias_iv_sum_stats(data):
     output = []
     for d in data.split_periodic(5450, adjust=True):
         d = d.trim(5200, 5450, adjust=True)
-        output = output + [max(d['ical.i_CaL'], key=abs)]#/max_iv_peak]
+        output = output + [max(d['ical.i_CaL'], key=abs)]
     return output
 
 dias_iv = Experiment(
@@ -55,8 +52,8 @@ dias_iv = Experiment(
     conditions=dias_conditions,
     sum_stats=dias_iv_sum_stats,
     description=dias_iv_desc,
-    Q10=Q10_cond,
-    Q10_factor=1
+    Q10=None,
+    Q10_factor=0
 )
 
 
@@ -125,8 +122,8 @@ def rao_rec_sum_stats(data):
     for i, time in enumerate(split_times):
         d_, data = data.split(time)
         pulse_traces.append(
-            d_.trim(d_['environment.time'][0]+5000,
-                    d_['environment.time'][0]+5800+times_rec[i],
+            d_.trim(d_['engine.time'][0]+5000,
+                    d_['engine.time'][0]+5800+times_rec[i],
                     adjust=True)
         )
     output = []
