@@ -84,13 +84,13 @@ def plot_sim_results(modelfile: str,
                      ls='None', marker='x', c='k')
 
     # Actually make the plot
-    grid = sns.relplot(x='x', y='y',
-                       col='exp_id', kind='line',
-                       data=model_samples,
-                       ci='sd',
-                       palette='gray',
-                       facet_kws={'sharex': 'col',
-                                  'sharey': 'col'})
+    with sns.color_palette('gray'):
+        grid = sns.relplot(x='x', y='y',
+                           col='exp_id', kind='line',
+                           data=model_samples,
+                           ci='sd',
+                           facet_kws={'sharex': 'col',
+                                      'sharey': 'col'})
 
     # Format lines in all plots
     for ax in grid.axes.flatten():
