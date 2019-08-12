@@ -133,8 +133,8 @@ xu_conditions = {'extra.K_o': 4e3,
 
 def xu_ta_sum_stats(data):
     output = []
-    def single_exp(t, tau, A):
-        return A*(1-np.exp(-t/tau))
+    def single_exp(t, tau, A, A0):
+        return A*(1-np.exp(-t/tau))+A0
     for d in data.split_periodic(19500, adjust=True):
         d = d.trim(15000, 19500, adjust=True)
         curr = d['ikss.i_Kss']
@@ -150,12 +150,11 @@ def xu_ta_sum_stats(data):
             try:
                 if len(time) <= 1 or len(curr) <= 1:
                     raise Exception('failed simulation')
-                imax = max(curr, key=abs)
-                curr = [c_/imax for c_ in curr]
                 popt, _ = so.curve_fit(single_exp, time, curr,
-                                       p0=[50., 1.],
-                                       bounds=([0., -np.inf],
-                                               [10000., np.inf]))
+                                       p0=[50., 1., 0.],
+                                       bounds=([0., -np.inf, -np.inf],
+                                               [10000., np.inf, np.inf]))
+                fit = [single_exp(t, popt[0], popt[1], popt[2]) for t in time]
                 taua = popt[0]
                 output = output + [taua]
             except:
