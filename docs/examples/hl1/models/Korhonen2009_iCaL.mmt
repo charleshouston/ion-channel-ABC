@@ -46,14 +46,12 @@ use phys.F as F
 use extra.Ca_o as Ca_o
 use calcium.Ca_i as Ca_i
 
-i_CaL = G_CaL * 4 * V * F * FoRT * (Ca_i * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
+i_CaL = g_CaL * g * 4 * V * F * FoRT * (Ca_i * exp(2 * V * FoRT) - 0.341 * Ca_o) / (exp(2 * V * FoRT) - 1)
     in [pA/pF]
 g_CaL = 0.000063
     in [dm^3/F/ms]
-open = d * f * fCa
+g = d * f * fCa
     in [1]
-G_CaL = g_CaL * open
-    in [dm^3/F/ms]
 
 dot(d) = (d_ss - d) / tau_d
     in [1]

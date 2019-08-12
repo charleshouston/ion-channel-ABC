@@ -43,7 +43,13 @@ def dias_iv_sum_stats(data):
     output = []
     for d in data.split_periodic(5450, adjust=True):
         d = d.trim(5200, 5450, adjust=True)
-        output = output + [max(d['ical.i_CaL'], key=abs)]
+        # ical should peak within the 250ms step
+        curr = d['ical.i_CaL']
+        index = np.argmax(np.abs(curr))
+        if index == len(curr):
+            output = output + [float('inf')]
+        else:
+            output = output + [curr[index]]
     return output
 
 dias_iv = Experiment(
