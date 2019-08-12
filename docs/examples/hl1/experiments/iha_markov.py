@@ -113,7 +113,7 @@ def sartiani_act_sum_stats(data):
                 tau_a = popt[0]
                 max_cond = popt[1]
                 out_ss = out_ss + [max_cond]
-                out_tau = out_tau + [tau_a/]
+                out_tau = out_tau + [tau_a]
             except:
                 out_ss = out_ss + [float('inf')]
                 out_tau = out_tau + [float('inf')]
