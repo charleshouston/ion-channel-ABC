@@ -84,13 +84,13 @@ def plot_sim_results(modelfile: str,
                      ls='None', marker='x', c='k')
 
     # Actually make the plot
-    with sns.color_palette("gray"):
-        grid = sns.relplot(x='x', y='y',
-                           col='exp_id', kind='line',
-                           data=model_samples,
-                           ci='sd',
-                           facet_kws={'sharex': 'col',
-                                      'sharey': 'col'})
+    grid = sns.relplot(x='x', y='y',
+                       col='exp_id', kind='line',
+                       data=model_samples,
+                       ci='sd',
+                       palette='gray',
+                       facet_kws={'sharex': 'col',
+                                  'sharey': 'col'})
 
     # Format lines in all plots
     for ax in grid.axes.flatten():
@@ -102,6 +102,65 @@ def plot_sim_results(modelfile: str,
 
     return grid
 
+
+def plot_experiment_traces(modelfile: str,
+                           currvar: str,
+                           split_data_fns: List[Callable],
+                           *experiments: Experiment,
+                           df: pd.DataFrame=None,
+                           w: np.ndarray=None,
+                           pacevar: str='membrane.V',
+                           timevar: str='engine.time',
+                           log_interval: float=None,
+                           n_samples: int=100,
+                           ) -> sns.FacetGrid:
+
+    _, model, _ = setup(modelfile,
+                        *experiments,
+                        log_interval=log_interval,
+                        pacevar=pacevar,
+                        normalise=False)
+
+    model_samples = pd.DataFrame({})
+    if df is not None:
+        posterior_samples = (df.sample(n=n_samples, weights=w, replace=True)
+                               .to_dict(orient='records'))
+    else:
+        posterior_samples = [{}]
+
+    for i, th in enumerate(posterior_samples):
+        data = model(th)
+        output = pd.DataFrame({})
+        for j, d in enumerate(data):
+            split_f = split_data_fns[j]
+            data_exp = split_f(data[j])
+            for k, step in enumerate(data_exp):
+                output_exp = pd.DataFrame({'time': step[timevar],
+                                           'y': step[pacevar],
+                                           'measure': 'voltage',
+                                           'step': k,
+                                           'exp_id': j})
+                output = output.append(output_exp, ignore_index=True)
+                output_exp = pd.DataFrame({'time': step[timevar],
+                                           'y': step[currvar],
+                                           'measure': 'current',
+                                           'step': k,
+                                           'exp_id': j})
+                output = output.append(output_exp, ignore_index=True)
+
+        output['sample'] = i
+        model_samples = model_samples.append(output, ignore_index=True)
+
+    grid = sns.relplot(x='time', y='y',
+                       hue='step',
+                       col='exp_id', row='measure',
+                       palette='viridis',
+                       data=model_samples,
+                       kind='line',
+                       ci='sd',
+                       facet_kws={'sharex': 'col',
+                                  'sharey': 'row'})
+    return grid
 
 def plot_distance_weights(
         observations: pd.DataFrame,
