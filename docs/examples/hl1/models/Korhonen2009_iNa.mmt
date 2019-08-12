@@ -26,6 +26,7 @@ FoRT = F/(R*T)
 
 [extra]
 Na_o = 145000 [uM]
+K_o = 4000 [uM]
 
 [sodium]
 use phys.FoRT as FoRT
@@ -35,8 +36,12 @@ Na_i = 10000 [uM]
 E_Na = 1/FoRT * log(Na_o/Na_i)
     in [mV]
 
+[potassium]
+K_i = 140e3 [uM]
+
 [ina]
 use membrane.V as V
+use sodium.E_Na as E_Na
 
 g_Na = 35
     in [mS/uF]

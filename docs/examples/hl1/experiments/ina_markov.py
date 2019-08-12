@@ -37,7 +37,7 @@ def dias_iv_sum_stats(data):
         output = output+[current[index]]
     return output
 
-dias2014_iv = Experiment(
+dias_iv = Experiment(
     dataset=dias_iv_dataset,
     protocol=dias_iv_protocol,
     conditions=dias_conditions,
