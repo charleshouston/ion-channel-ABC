@@ -8,28 +8,21 @@ Created on Thu Aug  1 15:38:28 2019
 
 from ionchannelABC.experiment import Experiment
 import data.ina.Schneider1994.data_Schneider1994 as dataSch
-from ionchannelABC.protocol import recovery_tpreList ,manual_steptrain_linear, availability_linear,varying_test_duration_double_pulse,availability
+from ionchannelABC.protocol import  availability
+from custom_protocols import recovery_tpreList, varying_test_duration_double_pulse,manual_steptrain_linear
 import numpy as np
-import pandas as pd
 import myokit
-import matplotlib.pyplot as plt
 import warnings
-from scipy.optimize import OptimizeWarning
 import scipy.optimize as so
 
 
-
-def temperature_adjust(R0, T0, T1, Q10):
-    return R0*Q10**((T0-T1)/10)
-
-
 # All experiments use conditions as defined in the
-# Sakakibara and Schneider paper. Data is adjusted to these conditions.
+# Schneider paper. Data is adjusted to these conditions.
 # Experimental conditions are included in experiment setup below
 # for reference.
     
 Q10_tau = 2.79 # Ten Tusscher paper, 2004
-Q_10_cond = 1.5 # Correa paper, 1991 : To adjust the datas to 37°
+Q10_cond = 1.5 # Correa paper, 1991 : To adjust the datas to 37°
 
 
 #######################################################################################################################
@@ -53,9 +46,7 @@ cm_sd = 26.7
 peaks = np.array(peaks)
 peaks = peaks*1000/cm_mean
 sd = [(cm_sd/cm_mean)*p for p in peaks]
-schneider_iv_max_peak = np.max(np.abs(peaks)) # normalising
-peaks = [p / schneider_iv_max_peak for p in peaks]
-variances = [(sd_ / schneider_iv_max_peak)**2 for sd_ in sd]
+variances = [(sd_)**2 for sd_ in sd]
 schneider_iv_dataset = np.asarray([vsteps, peaks, variances])
 
 # PROTOCOL
@@ -80,10 +71,9 @@ schneider_conditions = {'membrane.Na_o': 120,
 def schneider_iv_sum_stats(data):
     output = []
     for d in data.split_periodic(tperiod_iv_sch, adjust=True):
-        d = d.trim_left(tperiod_iv_sch, adjust=True)
-        current = d['ina.i_Na']
-        index = np.argmax(np.abs(current))
-        output = output+[current[index]/schneider_iv_max_peak]
+        d = d.trim_left(tpreMeasuring_iv_sch, adjust=True)
+        current = d['ina.i_Na'][:-1]
+        output = output+[max(current, key = abs)]
     return output
 
 schneider_iv = Experiment(
@@ -91,8 +81,9 @@ schneider_iv = Experiment(
     protocol=schneider_iv_protocol,
     conditions=schneider_conditions,
     sum_stats=schneider_iv_sum_stats,
-    description=schneider_iv_desc
-)
+    description=schneider_iv_desc,
+    Q10 = Q10_cond,
+    Q10_factor = 1)
 
 
 
@@ -108,10 +99,7 @@ schneider_taum_desc =     """
 
 # DATA
 vsteps_tm, tm, sd_tm = dataSch.TauM_Activation_Schneider()
-tm = [temperature_adjust(tm_, 297, 310, Q10_tau) for tm_ in tm]
-max_tm = np.max(np.abs(tm)) # normalising
-tm = [tm_ / max_tm for tm_ in tm]
-variances_tm = [(sd_/max_tm)**2 for sd_ in sd_tm]
+variances_tm = [(sd_)**2 for sd_ in sd_tm]
 schneider_taum_dataset = np.asarray([vsteps_tm, tm, variances_tm])
 
 # PROTOCOL
@@ -137,8 +125,8 @@ def schneider_taum_sum_stats(data):
     output = []
     for d in data.split_periodic(tperiod_act_kin_sch, adjust=True):
         d = d.trim_left(tpreMeasuring_act_kin_sch, adjust=True)
-        current = d['ina.i_Na']
-        time = d['environment.time']
+        current = d['ina.i_Na'][:-1]
+        time = d['environment.time'][:-1]
 
         # Remove constant
         c0 = d['ina.i_Na'][0]
@@ -157,7 +145,9 @@ def schneider_taum_sum_stats(data):
                                        p0=[0.5, 1.],
                                        bounds=([0., 0.],
                                                [1., 100.]))
-                output = output+[popt[0]/max_tm]
+                output = output+[popt[0]]
+            #plt.plot(time,current,time,sum_of_exp(np.asarray(time),popt[0],popt[1]))
+            #plt.show()
             except:
                 output = output+[float('inf')]
     return output
@@ -167,8 +157,9 @@ schneider_taum = Experiment(
     protocol=schneider_taum_protocol,
     conditions=schneider_conditions,
     sum_stats=schneider_taum_sum_stats,
-    description=schneider_taum_desc
-)
+    description=schneider_taum_desc,
+    Q10 = Q10_tau,
+    Q10_factor = -1)
 
 #######################################################################################################################
 ### Fast Inactivation kinetics Schneider 1994
@@ -182,10 +173,7 @@ schneider_tauf_desc =     """
 
 # DATA
 vsteps_tf, tf, sd_tf = dataSch.TauF_Inactivation_Schneider()
-tf = [temperature_adjust(tf_, 297, 310, Q10_tau) for tf_ in tf]
-max_tf = np.max(np.abs(tf)) # normalising
-tf = [tf_ / max_tf for tf_ in tf]
-variances_tf = [(sd_/max_tf)**2 for sd_ in sd_tf]
+variances_tf = [(sd_)**2 for sd_ in sd_tf]
 schneider_tauf_dataset = np.asarray([vsteps_tf, tf, variances_tf])
 
 # PROTOCOL
@@ -212,8 +200,8 @@ def schneider_tauf_sum_stats(data):
     output = []
     for d in data.split_periodic(tperiod_inact_kin_sch, adjust=True):
         d = d.trim_left(tpreMeasuring_inact_kin_sch, adjust=True)
-        current = d['ina.i_Na']
-        time = d['environment.time']
+        current = d['ina.i_Na'][:-1]
+        time = d['environment.time'][:-1]
 
         # Remove constant
         c0 = d['ina.i_Na'][0]
@@ -231,7 +219,7 @@ def schneider_tauf_sum_stats(data):
                                        p0=[0.5, 1.],
                                        bounds=([0., 0.],
                                                [1., 100.]))
-                output = output+[popt[1]/max_tf]
+                output = output+[popt[1]]
             except:
                 output = output+[float('inf')]
     return output
@@ -241,8 +229,9 @@ schneider_tauf = Experiment(
     protocol=schneider_tauf_protocol,
     conditions=schneider_conditions,
     sum_stats=schneider_tauf_sum_stats,
-    description=schneider_tauf_desc
-)
+    description=schneider_tauf_desc,
+    Q10 = Q10_tau,
+    Q10_factor = -1)
     
 
 #######################################################################################################################
@@ -264,10 +253,7 @@ schneider_taus_desc =     """
 
 # DATA
 vsteps_ts, ts, sd_ts = dataSch.TauS_Inactivation_Schneider()
-ts = [temperature_adjust(ts_, 297, 310, Q10_tau) for ts_ in ts]
-max_ts = np.max(np.abs(ts)) # normalising
-ts = [ts_ / max_ts for ts_ in ts]
-variances_ts = [(sd_/max_ts)**2 for sd_ in sd_ts]
+variances_ts = [(sd_)**2 for sd_ in sd_ts]
 schneider_taus_dataset = np.asarray([vsteps_ts, ts, variances_ts])
 
 # PROTOCOL
@@ -294,8 +280,8 @@ def schneider_taus_sum_stats(data):
     output = []
     for d in data.split_periodic(tperiod_inact_kin_slow_sch, adjust=True):
         d = d.trim_left(tpreMeasuring_inact_kin_slow_sch, adjust=True)
-        current = d['ina.i_Na']
-        time = d['environment.time']
+        current = d['ina.i_Na'][:-1]
+        time = d['environment.time'][:-1]
 
         # Remove constant
         c0 = d['ina.i_Na'][0]
@@ -314,7 +300,7 @@ def schneider_taus_sum_stats(data):
                                        p0=[0.5, 1.],
                                        bounds=([0., 0.],
                                                [1., 100.]))
-                output = output+[popt[1]/max_ts]
+                output = output+[popt[1]]
             except:
                 output = output+[float('inf')]
     return output
@@ -324,8 +310,9 @@ schneider_taus = Experiment(
     protocol=schneider_taus_protocol,
     conditions=schneider_conditions,
     sum_stats=schneider_taus_sum_stats,
-    description=schneider_taus_desc
-)
+    description=schneider_taus_desc,
+    Q10 = Q10_tau,
+    Q10_factor = -1)
 
 #######################################################################################################################
 ### Inactivation Schneider 1994
@@ -349,31 +336,29 @@ schneider_inact_desc = """
 
 # DATA
 schneider_inact_dataset = []
-for tprepulse in [32,64,128,256,512]:
-    t_prepulse,inact,_ = dataSch.Inact_Schneider_all(tprepulse)
-    variances_inact = [0 for t in t_prepulse]
-    schneider_inact_dataset.append(np.asarray([t_prepulse,inact, variances_inact]))
+for tstep in [32,64,128,256,512]:
+    vsteps_inact,inact,_ = dataSch.Inact_Schneider_all(tstep)
+    variances_inact = [0 for t in vsteps_inact]
+    schneider_inact_dataset.append(np.asarray([vsteps_inact,inact, variances_inact]))
 
 # PROTOCOL
 tmp_protocol = []
     
 tperiod_inact_sch = 3000 # ms
-tstep = 500 # ms (not precised in the paper, 0.5s seems enough to mesure the peak current)
 twait = 2 
 ttest = 30
-tpreMeasuring_inact_sch = tperiod_inact_sch - ttest -twait -tstep
+tpreMeasuring_inact_sch = tperiod_inact_sch - ttest 
 tMeasuring_inact_sch = tstep
 
 Vhold = -135 # mV
 Vtest = -20
-Vlower = -135.001 
-Vupper = 5
-dV = 10
+
 
 for tstep in [32,64,128,256,512]:
-
+    
+    vsteps_inact,_,_ = dataSch.Inact_Schneider_all(tstep)
     tpre = tperiod_inact_sch - tstep - twait - ttest
-    protocol = availability_linear(Vlower,Vupper, dV,Vhold, Vtest, tpre, tstep, twait, ttest)
+    protocol = availability(vsteps_inact,Vhold, Vtest, tpre, tstep, twait, ttest)
 
     tmp_protocol.append(protocol)
 
@@ -395,7 +380,7 @@ def schneider_inact_sum_stats(data):
     output = []
     for d in data.split_periodic(tperiod_inact_sch, adjust=True):
         d = d.trim(tpreMeasuring_inact_sch,tpreMeasuring_inact_sch  + tMeasuring_inact_sch, adjust = True)
-        inact_gate = d['ina.h_infinity']
+        inact_gate = d['ina.G_Na_norm']
         index = np.argmax(np.abs(inact_gate))
         output = output+[np.abs(inact_gate[index])]
     return output
@@ -435,9 +420,11 @@ tmp_protocol = []
 
 ## This part is for initializing the protocol : to determine the max I_Na when there is no conditionning pulse
 tperiod_reduc_sch = 3000 # ms seems enough for a double pulse protocol
+Split_list_reduc = [] # for the sum statistics function
+tpreMeasuringReducList = []
 twait = 0
 tstep = 0
-ttest = 30
+ttest = 12
 tpre = tperiod_reduc_sch - twait - ttest - tstep
 
 tpreMeasuring_reduc_sch = tperiod_reduc_sch - ttest
@@ -449,10 +436,11 @@ Vtest = -20
 protocol = availability([Vhold],Vhold, Vtest, tpre, tstep, twait, ttest)
 tmp_protocol.append(protocol)
 
+
 ## This part is the main protocol
 twait = 2 
 tstep = 1000
-ttest = 30
+ttest = 12
 
 for Vinact in [-105,-95,-85,-75,-65]:
     tstepList,_,_ = dataSch.Reduction_Schneider_all(Vinact)
@@ -461,9 +449,12 @@ for Vinact in [-105,-95,-85,-75,-65]:
     for tstep in tstepList :
         tpre = tperiod_reduc_sch - tstep - twait - ttest
         tpreList.append(tpre)
-                      
+        tpreMeasuringReducList.append(tpre)
+        Split_list_reduc.append(len(tstepList))
+
     protocol = varying_test_duration_double_pulse(Vinact,Vhold, Vtest, tpreList, tstepList, twait, ttest)
     tmp_protocol.append(protocol)
+
 
 # Fuse all the protocols into one
 schneider_reduc_protocol = tmp_protocol[0]
@@ -479,24 +470,47 @@ schneider_conditions = {'membrane.Na_o': 120,
 # SUMMARY STATISTICS
 def schneider_reduc_sum_stats(data):
 
-    output = []
-    d_split,d_init = data.split(tperiod_reduc_sch)
+    output = []    
+    loop = 0    
+    
+    # spliting back the 5 protocols and the initialisation
+    cumulated_shift = 1
+    dProtocolInit,dProtocolOnefive = data.split(tperiod_reduc_sch*cumulated_shift)
+    cumulated_shift += Split_list_reduc[0] 
+    dProtocolOne,dProtocoltwofive = dProtocolOnefive.split(tperiod_reduc_sch*cumulated_shift)
+    cumulated_shift += Split_list_reduc[1]
+    dProtocolTwo,dProtocolThreefive  = dProtocoltwofive.split(tperiod_reduc_sch*cumulated_shift)
+    cumulated_shift += Split_list_reduc[2]
+    dProtocolThree,dProtocolfourfive = dProtocolThreefive.split(tperiod_reduc_sch*cumulated_shift)
+    cumulated_shift += Split_list_reduc[3]
+    dProtocolFour,dProtocolFive  = dProtocolfourfive.split(tperiod_reduc_sch*cumulated_shift)
+    dProtocols = [dProtocolOne,dProtocolTwo,dProtocolThree,dProtocolFour,dProtocolFive]
+    
 
-    d_init = d_init.trim_left(tpreMeasuring_reduc_sch, adjust = True)
-    current = d_init['ina.i_Na']
+
+    dProtocolInit = dProtocolInit.trim_left(tpreMeasuring_reduc_sch, adjust = True)
+    current = dProtocolInit['ina.i_Na']
 
     current = current[:-1]
     index = np.argmax(np.abs(current))
-    normalizing_peak = current[index] 
+    normalizing_peak = current[index]
+   
+    cumulated_shift = 1
+    for dOneProtocol in dProtocols:
+        d_split = dOneProtocol.split_periodic(tperiod_reduc_sch, adjust = True)           
+        if loop > 0:
+            cumulated_shift += Split_list_reduc[loop-1]
+        d_split = d_split[cumulated_shift:]    # specific to split_periodic function 
+        #( if the time begins at t0 >0 it will create empty arrays from 0 to t0 : here we are getting rid of them)
 
-    for d in d_split.split_periodic(tperiod_reduc_sch, adjust=True):
-        d = d.trim(tpreMeasuring_reduc_sch,tpreMeasuring_inact_sch  + tMeasuring_reduc_sch, adjust = True)
-        current = d['ina.i_Na'][:-1]
-        index = np.argmax(np.abs(current))
-        try :
-            output = output+[np.abs(current[index])/normalizing_peak]
-        except :
-            output = output + [float('inf')]
+        for d in d_split:
+            d = d.trim(tpreMeasuring_reduc_sch,tpreMeasuring_reduc_sch  + tMeasuring_reduc_sch, adjust = True)
+            index = np.argmax(np.abs(current))
+            try :
+                output = output+[np.abs(current[index])/normalizing_peak]
+            except :
+                output = output + [float('inf')]
+        loop += 1
     return output
 
 schneider_reduc = Experiment(
@@ -584,31 +598,34 @@ def schneider_recov_sum_stats(data):
 
     # spliting back the protocols
     Cumulated_len = Split_list_recov_sch[0]
-    dProtocolOne,dProtocoltwoseven = data.split(tperiod_recov*Cumulated_len)
+    dProtocolOne,dProtocoltwoseven = data.split(tperiod_recov_sch*Cumulated_len)
     Cumulated_len += Split_list_recov_sch[1]
-    dProtocolTwo,dProtocolThreeseven  = dProtocoltwoseven.split(tperiod_recov*Cumulated_len)
+    dProtocolTwo,dProtocolThreeseven  = dProtocoltwoseven.split(tperiod_recov_sch*Cumulated_len)
     Cumulated_len += Split_list_recov_sch[2]
-    dProtocolThree,dProtocolfourseven = dProtocolThreeseven.split(tperiod_recov*Cumulated_len)
+    dProtocolThree,dProtocolfourseven = dProtocolThreeseven.split(tperiod_recov_sch*Cumulated_len)
     Cumulated_len += Split_list_recov_sch[3]
-    dProtocolFour,dProtocolfiveseven  = dProtocolfourseven.split(tperiod_recov*Cumulated_len)
+    dProtocolFour,dProtocolfiveseven  = dProtocolfourseven.split(tperiod_recov_sch*Cumulated_len)
     Cumulated_len += Split_list_recov_sch[4]
-    dProtocolFive,dProtocolsixseven = dProtocolfiveseven.split(tperiod_recov*Cumulated_len)
+    dProtocolFive,dProtocolsixseven = dProtocolfiveseven.split(tperiod_recov_sch*Cumulated_len)
     Cumulated_len += Split_list_recov_sch[5]
-    dProtocolSix,dProtocolSeven  = dProtocolsixseven.split(tperiod_recov*Cumulated_len)
+    dProtocolSix,dProtocolSeven  = dProtocolsixseven.split(tperiod_recov_sch*Cumulated_len)
 
     dProtocols = [dProtocolOne,dProtocolTwo,dProtocolThree,dProtocolFour,dProtocolFive,dProtocolSix,dProtocolSeven]
     Cumulated_len = 0
     for dOneProtocol in dProtocols:
-        d_split = dOneProtocol.split_periodic(tperiod_recov, adjust = True)
-
+        d_split = dOneProtocol.split_periodic(tperiod_recov_sch, adjust = True)         
         if loop > 0 :
             Cumulated_len += Split_list_recov_sch[loop-1]
 
-        d_split = d_split[Cumulated_len:]  
-
+        d_split = d_split[Cumulated_len:] 
+        if loop == 6:
+            d_split = d_split[:-1]
 
         for d in d_split:
-
+#            print(sub_loop)
+#            
+#            plt.plot(d['environment.time'],d['membrane.V'])
+#            plt.show()
             dcond = d.trim(tpreMeasuringList1_recov_sch[sub_loop],
              tpreMeasuringList1_recov_sch[sub_loop]+tMeasuring1_recov_sch, adjust = True)
             dtest = d.trim_left(tpreMeasuring2_recov_sch, adjust = True)
@@ -616,16 +633,13 @@ def schneider_recov_sum_stats(data):
             current_cond = dcond['ina.i_Na'][:-1]
             current_test = dtest['ina.i_Na'][:-1]
 
-
-
             index_cond = np.argmax(np.abs(current_cond))
             index_test = np.argmax(np.abs(current_test))
             try :
                 output = output + [current_test[index_test] / current_cond[index_cond]]  
-                sub_loop += 1
             except :
                 output = output + [float('inf')]  
-                sub_loop += 1
+            sub_loop += 1
         loop += 1
     return output
 

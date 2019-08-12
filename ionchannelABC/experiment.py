@@ -34,7 +34,7 @@ class Experiment:
                  protocol: myokit.Protocol,
                  conditions: Dict[str, float],
                  sum_stats: Union[Callable, List[Callable]],
-                 tvar: str='phys.T',
+                 tvar: str='membrane.T',
                  Q10: float=None,
                  Q10_factor: Union[int, List[int]]=0,
                  description: str=""):
@@ -124,7 +124,7 @@ class Experiment:
 def setup(modelfile: str,
           *experiments: Experiment,
           pacevar: str='membrane.V',
-          tvar: str='phys.T',
+          tvar: str='membrane.T',
           prev_runs: List[str]=[],
           logvars: List[str]=myokit.LOG_ALL,
           normalise: bool=True
@@ -138,7 +138,7 @@ def setup(modelfile: str,
             Defaults to `membrane.V` assuming voltage clamp protocol but could
             also be set to stimulating current.
         tvar (str): Optionally specify name of temperature in modelfile.
-            Defaults to `phys.T`.
+            Defaults to `membrane.T`.
         prev_runs (List[str]): Path to previous pyABC runs containing samples
             to randomly sample outside of ABC algorithm.
         logvars (List[str]): Optionally specify variables to log in simulations.

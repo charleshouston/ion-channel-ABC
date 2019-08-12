@@ -27,7 +27,7 @@ def normalise(df, limits=None):
 def plot_sim_results(modelfile: str,
                      *experiments: Experiment,
                      pacevar: str='membrane.V',
-                     tvar: str='phys.T',
+                     tvar: str='membrane.T',
                      prev_runs: List[str]=[],
                      df: pd.DataFrame=None,
                      w: np.ndarray=None,

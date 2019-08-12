@@ -9,11 +9,10 @@ Created on Thu Aug  1 15:38:28 2019
 from ionchannelABC.experiment import Experiment
 
 import data.ina.Sakakibara1992.data_Sakakibara1992 as dataSaka
-from ionchannelABC.protocol import recovery_tpreList ,manual_steptrain_linear, availability_linear,varying_test_duration_double_pulse,availability
+from ionchannelABC.protocol import availability_linear,availability
+from custom_protocols import recovery_tpreList, varying_test_duration_double_pulse
 import numpy as np
-import pandas as pd
 import myokit
-import matplotlib.pyplot as plt
 import warnings
 from scipy.optimize import OptimizeWarning
 import scipy.optimize as so
@@ -146,8 +145,6 @@ sakakibara_inact_desc = """
     The voltage dependence of h, was studied using a double-pulse protocol consisting of a
     1-second conditioning pulse from holding a potential of-140 mV 0.1 Hz (inset at lower left).
     Current amplitude elicited during the test pulse was normalized to that in absence of a conditioning pulse.
-
-    TODO : The corresponding block in summary statistics function need to be changed to normalize the conditionning pulse
 
     The protocol is a double pulse protocol at the frequency of 0.1Hz
     
