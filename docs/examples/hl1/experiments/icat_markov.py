@@ -36,7 +36,7 @@ def nguyen_iv_sum_stats(data):
         d = d.trim(5000, 5300, adjust=True)
         current = d['icat.i_CaT']
         index = np.argmax(np.abs(current))
-        output = output + [current[index]/max_iv_peak]
+        output = output + [current[index]]
     return output
 
 nguyen_iv = Experiment(
