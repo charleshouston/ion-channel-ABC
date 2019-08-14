@@ -80,17 +80,16 @@ def plot_sim_results(modelfile: str,
         plt.errorbar(measurements.loc[measurements['exp_id']==exp]['x'],
                      measurements.loc[measurements['exp_id']==exp]['y'],
                      yerr=np.sqrt(measurements.loc[measurements['exp_id']==exp]['variance']),
-                     label='obs',
+                     #label='obs',
                      ls='None', marker='x', c='k')
 
     # Actually make the plot
-    with sns.color_palette('gray'):
-        grid = sns.relplot(x='x', y='y',
-                           col='exp_id', kind='line',
-                           data=model_samples,
-                           ci='sd',
-                           facet_kws={'sharex': 'col',
-                                      'sharey': 'col'})
+    grid = sns.relplot(x='x', y='y',
+                       col='exp_id', kind='line',
+                       data=model_samples,
+                       ci='sd',
+                       facet_kws={'sharex': 'col',
+                                  'sharey': 'col'})
 
     # Format lines in all plots
     for ax in grid.axes.flatten():
@@ -98,7 +97,7 @@ def plot_sim_results(modelfile: str,
             l.set_linestyle('-')
 
     grid = grid.map_dataframe(measured_plot, measurements=observations)
-    grid = grid.add_legend()
+    #grid = grid.add_legend()
 
     return grid
 
@@ -155,6 +154,7 @@ def plot_experiment_traces(modelfile: str,
                        hue='step',
                        col='exp_id', row='measure',
                        palette='viridis',
+                       legend=False,
                        data=model_samples,
                        kind='line',
                        ci='sd',
