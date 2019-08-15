@@ -20,7 +20,7 @@ import scipy.optimize as so
 
 
 # All experiments use conditions as defined in the
-# Sakakibara and Schneider paper. Data is adjusted to these conditions.
+# Sakakibara paper. Data is adjusted to these conditions.
 # Experimental conditions are included in experiment setup below
 # for reference.
     
@@ -158,7 +158,7 @@ sakakibara_inact_dataset = np.asarray([vsteps_inact, inact, variances_inact])
 # PROTOCOL
 tperiod_inact_saka = 10000 # ms
 tstep = 1000 # ms (not precised in the paper, 1s seems enough to mesure the peak current)
-twait = 2 
+twait = 0 # modified compared to experiment (should be 2)
 ttest = 30
 tpre = tperiod_inact_saka - tstep - twait - ttest
 tpreMeasuring_inact_saka = tperiod_inact_saka - ttest # tperiod - ttest
