@@ -28,6 +28,7 @@ Q10_tau = 2.79 # Ten Tusscher paper, 2004
 Q10_cond = 1.5 # Correa paper, 1991 : To adjust the datas to 37°
 #######################################################################################################################
 ### IV curve - Sakakibara 1992
+sakakibara_iv_name = "IV"
 sakakibara_iv_desc ="""
     describes the protocol used to measure the IV peak-current curve in the Sakakibara Paper figure 1B
 
@@ -73,6 +74,7 @@ def sakakibara_iv_sum_stats(data):
 
 # Experiment
 sakakibara_iv = Experiment(
+    name = sakakibara_iv_name,
     dataset=sakakibara_iv_dataset,
     protocol=sakakibara_iv_protocol,
     conditions=sakakibara_conditions,
@@ -84,6 +86,7 @@ sakakibara_iv = Experiment(
 
 #######################################################################################################################
 ### activation curve - Sakakibara 1992
+sakakibara_act_name = "activation"
 sakakibara_act_desc = """
     describes the protocol used to measure the activation curve in the Sakakibara Paper (figure 2)
     
@@ -130,6 +133,7 @@ def sakakibara_act_sum_stats(data):
 
 # Experiment
 sakakibara_act = Experiment(
+    name = sakakibara_act_name,
     dataset=sakakibara_act_dataset,
     protocol=sakakibara_act_protocol,
     conditions=sakakibara_conditions,
@@ -138,6 +142,7 @@ sakakibara_act = Experiment(
 
 #######################################################################################################################
 ### Inactivation curve - Sakakibara 1992
+sakakibara_inact_name = "inactivation"
 sakakibara_inact_desc = """
     describes the protocol used to measure the activation curve in the Sakakibara Paper (figure 2)
     
@@ -186,10 +191,14 @@ def sakakibara_inact_sum_stats(data):
         inact_gate = d['ina.G_Na_norm']
         index = np.argmax(np.abs(inact_gate))
         output = output+[np.abs(inact_gate[index])]
+    Norm = output[0]
+    for i in range(len(output)):
+        output[i] /= Norm
     return output
-
+# TODO : normalize by the first point !!
 # Experiment
 sakakibara_inact = Experiment(
+    name = sakakibara_inact_name,
     dataset=sakakibara_inact_dataset,
     protocol=sakakibara_inact_protocol,
     conditions=sakakibara_conditions,
@@ -199,6 +208,7 @@ sakakibara_inact = Experiment(
 
 #######################################################################################################################
 ### IV curves as function of Na_o = 2mM - Sakakibara 1992
+sakakibara_iv_Nao2_name = "IV  [Nao] = 2mM"
 sakakibara_iv_Nao2_desc ="""
     describes the protocol used to measure the differents IV-curves in the Sakakibara Paper (figure 3A)
     this protocol is for measuring the curve with Nao = 2mM
@@ -248,6 +258,7 @@ def sakakibara_iv_Nao2_sum_stats(data):
 
 # Experiment
 sakakibara_iv_Nao2 = Experiment(
+    name = sakakibara_iv_Nao2_name,
     dataset=sakakibara_iv_Nao2_dataset,
     protocol=sakakibara_iv_Nao2_protocol,
     conditions=sakakibara_iv_Nao2_conditions,
@@ -258,6 +269,7 @@ sakakibara_iv_Nao2 = Experiment(
 
 #######################################################################################################################
 ### IV curves as function of Na_o = 5mM - Sakakibara 1992
+sakakibara_iv_Nao5_name = "IV  [Nao] = 5mM"
 sakakibara_iv_Nao5_desc ="""
     describes the protocol used to measure the differents IV-curves in the Sakakibara Paper (figure 3A)
     this protocol is for measuring the curve with Nao = 5mM
@@ -307,6 +319,7 @@ def sakakibara_iv_Nao5_sum_stats(data):
 
 # Experiment
 sakakibara_iv_Nao5 = Experiment(
+    name = sakakibara_iv_Nao5_name,
     dataset=sakakibara_iv_Nao5_dataset,
     protocol=sakakibara_iv_Nao5_protocol,
     conditions=sakakibara_iv_Nao5_conditions,
@@ -317,6 +330,7 @@ sakakibara_iv_Nao5 = Experiment(
 
 #######################################################################################################################
 ### IV curves as function of Na_o = 20mM - Sakakibara 1992
+sakakibara_iv_Nao20_name = "IV  [Nao] = 20mM"
 sakakibara_iv_Nao20_desc ="""
     describes the protocol used to measure the differents IV-curves in the Sakakibara Paper (figure 3A)
     this protocol is for measuring the curve with Nao = 20mM
@@ -366,6 +380,7 @@ def sakakibara_iv_Nao20_sum_stats(data):
 
 # Experiment
 sakakibara_iv_Nao20 = Experiment(
+    name = sakakibara_iv_Nao20_name,
     dataset=sakakibara_iv_Nao20_dataset,
     protocol=sakakibara_iv_Nao20_protocol,
     conditions=sakakibara_iv_Nao20_conditions,
@@ -376,6 +391,7 @@ sakakibara_iv_Nao20 = Experiment(
 
 #######################################################################################################################
 ###  Inactivation kinetics part 1 - Sakakibara 1992
+sakakibara_inact_kin_1_name = "Inactivation Kinetics"
 sakakibara_inact_kin_1_desc =   """
     describes the protocol used to measure the inactivation kinetics (tau_f and tau_s) in the Sakakibara Paper (figure 5B)
     
@@ -469,6 +485,7 @@ def sakakibara_inact_kin_1_sum_stats(data):
 
 # Experiment
 sakakibara_inact_kin_1 = Experiment(
+    name = sakakibara_inact_kin_1_name,
     dataset=sakakibara_inact_kin_1_dataset,
     protocol=sakakibara_inact_kin_1_protocol,
     conditions=sakakibara_conditions,
@@ -479,6 +496,7 @@ sakakibara_inact_kin_1 = Experiment(
 
 #######################################################################################################################
 ###  Inactivation kinetics part 2 - Sakakibara 1992
+sakakibara_inact_kin_2_name = "Inactivation Kinetics w/ availability protocol"
 sakakibara_inact_kin_2_desc = """
     describes the protocol used to measure the inactivation kinetics in the Sakakibara Paper (figure 6)
     
@@ -599,6 +617,7 @@ def sakakibara_inact_kin_2_sum_stats(data):
 
 # Experiment
 sakakibara_inact_kin_2 = Experiment(
+    name = sakakibara_inact_kin_2_name,
     dataset=sakakibara_inact_kin_2_dataset,
     protocol=sakakibara_inact_kin_2_protocol,
     conditions=sakakibara_conditions,
@@ -607,8 +626,142 @@ sakakibara_inact_kin_2 = Experiment(
     Q10 = Q10_tau,
     Q10_factor = -1)
 
+
+#######################################################################################################################
+###  Inactivation kinetics part 2 - Sakakibara 1992
+sakakibara_inact_kin_80_name = "Inactivation Kinetics w/ availability protocol : HP = -80mV"
+sakakibara_inact_kin_80_desc = """
+    describes the protocol used to measure the inactivation kinetics in the Sakakibara Paper (figure 6)
+    
+    the Voltage used here is -80mV
+    
+    page 7 of the paper : 
+    Inactivation was induced by increasing
+    the conditioning pulse duration. Conditioning
+    pulses were applied to -80 and -100 mV Pulse
+    frequency was 0.1 Hz. Current magnitude during
+    the test pulse was normalized to levels obtained in
+    the absence of a conditioning pulse.
+
+    The protocol is a double pulse protocol at the frequency of 0.1Hz
+    
+    """
+
+# DATA
+sakakibara_inact_kin_80_dataset = []
+Vcond = -80
+timecourse, inact_timecourse,_ = dataSaka.Time_course_Inactivation_Sakakibara_all(Vcond)
+variances_inact_timecourse = [0 for x in inact_timecourse]
+sakakibara_inact_kin_80_dataset.append(np.asarray([timecourse, inact_timecourse, variances_inact_timecourse]))
+
+
+
+# PROTOCOL
+conditions_list, tmp_protocol = [], []
+tpreMeasuring_list, tMeasuring_list = [], []
+
+
+
+# This is the main part of the protocol
+
+tperiod_kin_80_saka = 10000 # ms
+spliting_list_inact_kin_80 = []
+
+tstepList,_,_ = dataSaka.Time_course_Inactivation_Sakakibara_all(Vcond)
+spliting_list_inact_kin_80.append(len(tstepList))
+twait = 2 
+ttest = 30
+
+tpreList = []
+for tstep in tstepList :
+    tpre = tperiod_kin_80_saka - tstep - twait - ttest
+    tpreList.append(tpre)
+
+Vhold = -140 # mV
+Vtest = -20        
+    
+protocol = varying_test_duration_double_pulse(Vcond,Vhold, Vtest, tpreList, tstepList, twait, ttest)
+
+tmp_protocol.append(protocol)
+
+## This part is for initializing the protocol : to determine the max I_Na when there is no conditionning pulse
+
+twait = 0
+tstep = 0
+ttest = 30 
+tpre = tperiod_kin_80_saka - twait - ttest - tstep
+
+tpreMeasuring_kin_80_saka = tperiod_kin_80_saka - ttest
+
+Vhold = -140 # mV
+Vtest = -20        
+protocol = availability([Vhold],Vhold, Vtest, tpre, tstep, twait, ttest)
+
+tmp_protocol.append(protocol)
+
+# Fuse all the protocols into one
+sakakibara_inact_kin_80_protocol = tmp_protocol[0]
+for p in tmp_protocol[1:]:
+    for e in p.events():
+        sakakibara_inact_kin_80_protocol.add_step(e.level(), e.duration())
+
+# CONDITIONS
+sakakibara_conditions = {'membrane.Na_o': 5,
+                        'membrane.Na_i': 5,
+                        'membrane.T': 290.15}
+
+# SUMMARY STATISTICS
+def sakakibara_inact_kin_80_sum_stats(data):
+    output = []
+
+    cumulated_len = spliting_list_inact_kin_80[0]
+
+    # retrieving the current max in absence of conditionning pulse
+    dProtocol,d_split_init_kin_80 = data.split(tperiod_kin_80_saka*cumulated_len)
+
+    d_init_kin_80 = d_split_init_kin_80.split_periodic(tperiod_kin_80_saka, adjust = True)
+
+    d_init = d_init_kin_80[cumulated_len].trim_left(tpreMeasuring_kin_80_saka, adjust = True)
+    current = d_init['ina.i_Na']
+
+    current = current[:-1]
+    index = np.argmax(np.abs(current))
+    normalizing_peak_inact_kin_80 = current[index] 
+
+    # 6 : Fast inactivation kinetics : tau h1 part 2 
+
+
+    D_split = dProtocol.split_periodic(tperiod_kin_80_saka, adjust = True)
+
+    for d in D_split:
+
+        d = d.trim_left(tpreMeasuring_kin_80_saka, adjust = True)
+    
+        current = d['ina.i_Na']
+        current = current[:-1]
+
+        index = np.argmax(np.abs(current))
+        try :
+            output = output+ [current[index] / normalizing_peak_inact_kin_80] #should I still normalize since it's in the protocol itself ?
+        except : 
+            output = output+ [float('inf')]
+
+    return output
+
+# Experiment
+sakakibara_inact_kin_80 = Experiment(
+    name = sakakibara_inact_kin_80_name,
+    dataset=sakakibara_inact_kin_80_dataset,
+    protocol=sakakibara_inact_kin_80_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_80_sum_stats,
+    description=sakakibara_inact_kin_80_desc,
+    Q10 = Q10_tau,
+    Q10_factor = -1)
+
 #######################################################################################################################
 ###  recovery curves - Sakakibara 1992
+sakakibara_recov_name = "recovery (3 Holding Potentials)"
 sakakibara_recov_desc =    """
     describes the protocol used to measure the Recovery of I_na in the Sakakibara Paper (figure 8A)
     
@@ -717,14 +870,114 @@ def sakakibara_recov_sum_stats(data):
 
 # Experiment
 sakakibara_recov = Experiment(
+    name = sakakibara_recov_name,
     dataset=sakakibara_recov_dataset,
     protocol=sakakibara_recov_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_recov_sum_stats,
     description=sakakibara_recov_desc)
 
+
+#######################################################################################################################
+###  recovery curves - Sakakibara 1992
+sakakibara_recov_100_name = "recovery with HP = -100mV"
+sakakibara_recov_100_desc =   """
+    describes the protocol used to measure the Recovery of I_na in the Sakakibara Paper (figure 8A)
+    
+    the Vhold used here is -100mV
+    
+    page 8 of the paper : 
+    The double-pulseprotocol shown in the inset was applied at various recovery potentials at a frequency of 0.1 Hz. The magnitude of the fast
+    Na+ current during the test pulse was normalized to that
+    induced by the conditioning pulse. 
+
+
+    The protocol is a double pulse protocol at the frequency of 0.1Hz
+    
+    """  
+
+# DATA
+sakakibara_recov_100_dataset = []
+Vhold = -100
+time,recov,_ = dataSaka.Recovery_Sakakibara_all(Vhold)
+variances_time = [0 for t in time]
+sakakibara_recov_100_dataset.append(np.asarray([time, recov, variances_time]))
+
+
+# PROTOCOL
+tmp_protocol = []
+tpreMeasuringList1_recov_100 = []
+
+tperiod_recov_100 = 10000 # ms
+tstep1 = 1000
+tstep2 = 1000
+
+tMeasuring1_recov_100 = tstep1 
+tpreMeasuring2_recov_100 = tperiod_recov_100 - tstep2 
+
+Vstep1 = -20
+Vstep2 = -20  
+
+Split_list_recov_100 = [] # for the summary statistics function
+
+
+twaitList,_,_ = dataSaka.Recovery_Sakakibara_all(Vhold)
+
+Split_list_recov_100.append(len(twaitList))
+
+
+tpreList = []
+for twait in twaitList:
+    tpre = tperiod_recov_100 - tstep1 - twait - tstep2
+    tpreList.append(tpre)
+    tpreMeasuringList1_recov_100.append(tpre)
+
+sakakibara_recov_100_protocol = recovery_tpreList(twaitList,Vhold,Vstep1, Vstep2,tpreList,tstep1,tstep2)
+
+# CONDITIONS
+sakakibara_conditions = {'membrane.Na_o': 5,
+                        'membrane.Na_i': 5,
+                        'membrane.T': 290.15}
+
+# SUMMARY STATISTICS
+def sakakibara_recov_100_sum_stats(data):
+    output = []
+    sub_loop = 0
+
+    d_split = data.split_periodic(tperiod_recov_100, adjust = True)
+
+    for d in d_split:
+
+        dcond = d.trim(tpreMeasuringList1_recov_100[sub_loop], tpreMeasuringList1_recov_100[sub_loop]+tMeasuring1_recov_100, adjust = True)
+        dtest = d.trim_left(tpreMeasuring2_recov_100, adjust = True)
+        
+        current_cond = dcond['ina.i_Na'][:-1]
+        current_test = dtest['ina.i_Na'][:-1]
+
+
+        index_cond = np.argmax(np.abs(current_cond))
+        index_test = np.argmax(np.abs(current_test))
+        try :
+            output = output + [current_test[index_test] / current_cond[index_cond]]  # should I still normalize ?
+            sub_loop += 1
+        except :
+            output = output + [float('inf')]  
+            sub_loop += 1
+
+    return output
+
+# Experiment
+sakakibara_recov_100 = Experiment(
+    name = sakakibara_recov_100_name,
+    dataset=sakakibara_recov_100_dataset,
+    protocol=sakakibara_recov_100_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_recov_100_sum_stats,
+    description=sakakibara_recov_100_desc)
+
 #######################################################################################################################
 ###  kinetics of recovery curves - Sakakibara 1992
+sakakibara_recov_kin_name = "recovery kinetics"
 sakakibara_recov_kin_desc = """
     describes the protocol used to measure the fast time constant from the Recovery of I_na in the Sakakibara Paper (figure 9)
     
@@ -839,6 +1092,7 @@ def sakakibara_recov_kin_sum_stats(data):
 
 # Experiment
 sakakibara_recov_kin = Experiment(
+    name = sakakibara_recov_kin_name,
     dataset=sakakibara_recov_kin_dataset,
     protocol=sakakibara_recov_kin_protocol,
     conditions=sakakibara_conditions,

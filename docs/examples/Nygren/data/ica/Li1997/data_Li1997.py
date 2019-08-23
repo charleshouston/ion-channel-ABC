@@ -73,15 +73,15 @@ def IV_Li_all(Vhold : int):
     already converted to pA/pF
     """    
     try:
-        assert(Vhold in [80,60,40])
+        assert(Vhold in [-80,-60,-40])
     except:
         raise Exception("Wrong Vhold, ( = {} mV)".format(Vhold))
 
-    if Vhold == 80:
+    if Vhold == -80:
         x,y,sd = IV_Li_80()
-    elif Vhold == 60:
+    elif Vhold == -60:
         x,y,sd = IV_Li_60()
-    elif Vhold == 40:
+    elif Vhold == -40:
         x,y,sd = IV_Li_40()  
 
     return x,y,sd 
@@ -244,15 +244,15 @@ def Tau1_Li_all(Vhold : int):
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
     """    
     try:
-        assert(Vhold in [80,60,40])
+        assert(Vhold in [-80,-60,-40])
     except:
         raise Exception("Wrong Vhold, ( = {} mV)".format(Vhold))
 
-    if Vhold == 80:
+    if Vhold == -80:
         x,y,sd = Tau1_Li_80()
-    elif Vhold == 60:
+    elif Vhold == -60:
         x,y,sd = Tau1_Li_60()
-    elif Vhold == 40:
+    elif Vhold == -40:
         x,y,sd = Tau1_Li_40()  
 
     return x,y,sd 
@@ -313,15 +313,15 @@ def Tau2_Li_all(Vhold : int):
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
     """    
     try:
-        assert(Vhold in [80,60,40])
+        assert(Vhold in [-80,-60,-40])
     except:
         raise Exception("Wrong Vhold, ( = {} mV)".format(Vhold))
 
-    if Vhold == 80:
+    if Vhold == -80:
         x,y,sd = Tau2_Li_80()
-    elif Vhold == 60:
+    elif Vhold == -60:
         x,y,sd = Tau2_Li_60()
-    elif Vhold == 40:
+    elif Vhold == -40:
         x,y,sd = Tau2_Li_40()  
 
     return x,y,sd 
@@ -406,15 +406,15 @@ def Recov_Li_all(Vhold : int):
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
     """    
     try:
-        assert(Vhold in [80,60,40])
+        assert(Vhold in [-80,-60,-40])
     except:
         raise Exception("Wrong Vhold, ( = {} mV)".format(Vhold))
 
-    if Vhold == 80:
+    if Vhold == -80:
         x,y,sd = recov_Li_80()
-    elif Vhold == 60:
+    elif Vhold == -60:
         x,y,sd = recov_Li_60()
-    elif Vhold == 40:
+    elif Vhold == -40:
         x,y,sd = recov_Li_40()  
 
     return x,y,sd 

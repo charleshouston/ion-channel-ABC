@@ -30,6 +30,7 @@ def combine_sum_stats(*functions):
 class Experiment:
     """Contains related information from patch clamp experiment."""
     def __init__(self,
+                 name: str,
                  dataset: Union[np.ndarray, List[np.ndarray]],
                  protocol: myokit.Protocol,
                  conditions: Dict[str, float],
@@ -41,6 +42,8 @@ class Experiment:
         """Initialisation.
 
         Args:
+            name (str):
+                the name of the experiment to label the plots
             dataset (Union[np.ndarray, List[np.ndarray]]):
                 Experimental data in format (x, y, variance). More than one
                 dataset can be supplied in a list and will be assigned
@@ -87,6 +90,7 @@ class Experiment:
         self._conditions = conditions_exp
         self._Q10 = Q10
         self._description = description
+        self._name = name
 
     def __call__(self) -> None:
         """Print descriptor"""
@@ -119,6 +123,10 @@ class Experiment:
     @property
     def Q10_factor(self) -> List[int]:
         return self._Q10_factor
+    
+    @property
+    def name(self) -> str:
+        return self._name
 
 
 def setup(modelfile: str,
@@ -279,7 +287,7 @@ def get_observations_df(experiments: List[Experiment],
                 normalise_factor = 1.
 
             dataset = dataset.T.tolist()
-            dataset = [d_+[str(exp_id), normalise_factor] for d_ in dataset]
+            dataset = [d_+[str(exp_id)+" : "+exp.name, normalise_factor] for d_ in dataset]
             observations = observations.append(
                 pd.DataFrame(dataset, columns=cols),
                 ignore_index=True

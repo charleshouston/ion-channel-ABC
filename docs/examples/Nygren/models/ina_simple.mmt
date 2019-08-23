@@ -18,8 +18,8 @@ time = 0 bind time
 [membrane]
 dot(V) = -ina.i_Na
     in [mV]
-Na_o = 140000 [uM]
-Na_i = 5000 [uM]
+Na_o = 140 [mM]
+Na_i = 5 [mM]
 F = 96.5 [C/mmol]
 R = 8.314 [J/mol/K]
 T = 305 [K]
@@ -35,6 +35,8 @@ use membrane.FoRT as FoRT
 g_Na = 1.0 [mS/uF]
 A = 0.9 [1]
 g = m^3 * (A*h1 + (1-A)*h2)
+    in [1]
+G_Na_norm = g
     in [1]
 i_Na = g_Na * g * (V - ENa)
     in [pA/pF]
