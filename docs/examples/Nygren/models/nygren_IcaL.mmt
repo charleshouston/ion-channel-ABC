@@ -25,49 +25,49 @@ G_Na_norm = d_L * (f_Ca * f_L_1 + (1 - f_Ca) * f_L_2)
 k_Ca = 0.025
     in [mM]
 
-dot(d_L) = (d_L_infinity - d_L) / tau_d_L
+dot(d_L) = (d_L_infinity - d_L) / (tau_d_L*1000)
     in [1]
 d_L_infinity = 1 / (1 + exp((membrane.V + p1) / p2))
     in [1]
 tau_d_L = p3 * exp(-((membrane.V + p4) / p5) ^ 2) + p6
-    in [s]
+    in [ms]
     
 p1 = 9 [mV]
 p2 = -5.8 [mV]
-p3 = 0.0027 [s]
+p3 = 0.0027 [ms]
 p4 = 35 [mV]
 p5 = 30 [mV]
-p6 = 0.002 [s]
+p6 = 0.002 [ms]
 
 
-dot(f_L_1) = (f_L_infinity - f_L_1) / tau_f_L1
+dot(f_L_1) = (f_L_infinity - f_L_1) / (tau_f_L1*1000)
     in [1]
 f_L_infinity = 1 / (1 + exp((membrane.V + q1) / q2))
     in [1]
 tau_f_L1 = q3 * exp(-((membrane.V + q4) / q5) ^ 2) + q6
-    in [s]
+    in [ms]
     
 q1 = 27.4 [mV]
 q2 = 7.1 [mV]
-q3 = 0.161 [s]
+q3 = 0.161 [ms]
 q4 = 40 [mV]
 q5 = 14.4 [mV]
-q6 = 0.01 [s]
+q6 = 0.01 [ms]
 
-dot(f_L_2) = (f_L_infinity - f_L_2) / tau_f_L2
+dot(f_L_2) = (f_L_infinity - f_L_2) / (tau_f_L2*1000)
     in [1]
 tau_f_L2 = r1 * exp(-((membrane.V + r2) / r3) ^ 2) + r4
-    in [s]
+    in [ms]
 
-r1 = 1.3323 [s]
+r1 = 1.3323 [ms]
 r2 = 40 [mV]
 r3 = 14.2 [mV]
-r4 = 0.0626 [s]
+r4 = 0.0626 [ms]
 
 
 [environment]
 time = 0 bind time
-    in [s]
+    in [ms]
 
 
 

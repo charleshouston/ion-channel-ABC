@@ -129,6 +129,9 @@ def sakakibara_act_sum_stats(data):
         act_gate = d['ina.G_Na_norm']
         index = np.argmax(np.abs(act_gate))
         output = output+[np.abs(act_gate[index])]
+    Norm = output[-1]
+    for i in range(len(output)):
+        output[i] /= Norm
     return output
 
 # Experiment
@@ -195,7 +198,6 @@ def sakakibara_inact_sum_stats(data):
     for i in range(len(output)):
         output[i] /= Norm
     return output
-# TODO : normalize by the first point !!
 # Experiment
 sakakibara_inact = Experiment(
     name = sakakibara_inact_name,
@@ -629,7 +631,7 @@ sakakibara_inact_kin_2 = Experiment(
 
 #######################################################################################################################
 ###  Inactivation kinetics part 2 - Sakakibara 1992
-sakakibara_inact_kin_80_name = "Inactivation Kinetics w/ availability protocol : HP = -80mV"
+sakakibara_inact_kin_80_name = "Availability protocol : HP = -80mV"
 sakakibara_inact_kin_80_desc = """
     describes the protocol used to measure the inactivation kinetics in the Sakakibara Paper (figure 6)
     
@@ -669,7 +671,7 @@ spliting_list_inact_kin_80 = []
 
 tstepList,_,_ = dataSaka.Time_course_Inactivation_Sakakibara_all(Vcond)
 spliting_list_inact_kin_80.append(len(tstepList))
-twait = 2 
+twait = 0
 ttest = 30
 
 tpreList = []
@@ -756,6 +758,138 @@ sakakibara_inact_kin_80 = Experiment(
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_inact_kin_80_sum_stats,
     description=sakakibara_inact_kin_80_desc,
+    Q10 = Q10_tau,
+    Q10_factor = -1)
+
+#######################################################################################################################
+###  Inactivation kinetics part 2 - Sakakibara 1992
+sakakibara_inact_kin_100_name = "Availability protocol : HP = -100mV"
+sakakibara_inact_kin_100_desc = """
+    describes the protocol used to measure the inactivation kinetics in the Sakakibara Paper (figure 6)
+    
+    the Voltage used here is -100mV
+    
+    page 7 of the paper : 
+    Inactivation was induced by increasing
+    the conditioning pulse duration. Conditioning
+    pulses were applied to -80 and -100 mV Pulse
+    frequency was 0.1 Hz. Current magnitude during
+    the test pulse was normalized to levels obtained in
+    the absence of a conditioning pulse.
+
+    The protocol is a double pulse protocol at the frequency of 0.1Hz
+    
+    """
+
+# DATA
+sakakibara_inact_kin_100_dataset = []
+Vcond = -100
+timecourse, inact_timecourse,_ = dataSaka.Time_course_Inactivation_Sakakibara_all(Vcond)
+variances_inact_timecourse = [0 for x in inact_timecourse]
+sakakibara_inact_kin_100_dataset.append(np.asarray([timecourse, inact_timecourse, variances_inact_timecourse]))
+
+
+
+# PROTOCOL
+conditions_list, tmp_protocol = [], []
+tpreMeasuring_list, tMeasuring_list = [], []
+
+
+
+# This is the main part of the protocol
+
+tperiod_kin_100_saka = 10000 # ms
+spliting_list_inact_kin_100 = []
+
+tstepList,_,_ = dataSaka.Time_course_Inactivation_Sakakibara_all(Vcond)
+spliting_list_inact_kin_100.append(len(tstepList))
+twait = 0
+ttest = 30
+
+tpreList = []
+for tstep in tstepList :
+    tpre = tperiod_kin_100_saka - tstep - twait - ttest
+    tpreList.append(tpre)
+
+Vhold = -140 # mV
+Vtest = -20        
+    
+protocol = varying_test_duration_double_pulse(Vcond,Vhold, Vtest, tpreList, tstepList, twait, ttest)
+
+tmp_protocol.append(protocol)
+
+## This part is for initializing the protocol : to determine the max I_Na when there is no conditionning pulse
+
+twait = 0
+tstep = 0
+ttest = 30 
+tpre = tperiod_kin_100_saka - twait - ttest - tstep
+
+tpreMeasuring_kin_100_saka = tperiod_kin_100_saka - ttest
+
+Vhold = -140 # mV
+Vtest = -20        
+protocol = availability([Vhold],Vhold, Vtest, tpre, tstep, twait, ttest)
+
+tmp_protocol.append(protocol)
+
+# Fuse all the protocols into one
+sakakibara_inact_kin_100_protocol = tmp_protocol[0]
+for p in tmp_protocol[1:]:
+    for e in p.events():
+        sakakibara_inact_kin_100_protocol.add_step(e.level(), e.duration())
+
+# CONDITIONS
+sakakibara_conditions = {'membrane.Na_o': 5,
+                        'membrane.Na_i': 5,
+                        'membrane.T': 290.15}
+
+# SUMMARY STATISTICS
+def sakakibara_inact_kin_100_sum_stats(data):
+    output = []
+
+    cumulated_len = spliting_list_inact_kin_100[0]
+
+    # retrieving the current max in absence of conditionning pulse
+    dProtocol,d_split_init_kin_100 = data.split(tperiod_kin_100_saka*cumulated_len)
+
+    d_init_kin_100 = d_split_init_kin_100.split_periodic(tperiod_kin_100_saka, adjust = True)
+
+    d_init = d_init_kin_100[cumulated_len].trim_left(tpreMeasuring_kin_100_saka, adjust = True)
+    current = d_init['ina.i_Na']
+
+    current = current[:-1]
+    index = np.argmax(np.abs(current))
+    normalizing_peak_inact_kin_100 = current[index] 
+
+    # 6 : Fast inactivation kinetics : tau h1 part 2 
+
+
+    D_split = dProtocol.split_periodic(tperiod_kin_100_saka, adjust = True)
+
+    for d in D_split:
+
+        d = d.trim_left(tpreMeasuring_kin_100_saka, adjust = True)
+    
+        current = d['ina.i_Na']
+        current = current[:-1]
+
+        index = np.argmax(np.abs(current))
+        try :
+            output = output+ [current[index] / normalizing_peak_inact_kin_100] #should I still normalize since it's in the protocol itself ?
+        except : 
+            output = output+ [float('inf')]
+
+    return output
+
+# Experiment
+sakakibara_inact_kin_100 = Experiment(
+    name = sakakibara_inact_kin_100_name,
+    dataset=sakakibara_inact_kin_100_dataset,
+    protocol=sakakibara_inact_kin_100_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_100_sum_stats,
+    description=sakakibara_inact_kin_100_desc,
     Q10 = Q10_tau,
     Q10_factor = -1)
 

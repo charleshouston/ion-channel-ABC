@@ -9,8 +9,8 @@ Created on Wed Aug 14 17:42:47 2019
 from ionchannelABC.experiment import Experiment
 
 import data.ica.Li1997.data_Li1997 as data
-from ionchannelABC.protocol import availability_linear,availability
-from custom_protocols import recovery_tpreList, varying_test_duration_double_pulse, manual_steptrain_linear
+from ionchannelABC.protocol import availability_linear
+from custom_protocols import recovery_tpreList, manual_steptrain_linear
 import numpy as np
 import myokit
 import warnings
@@ -56,7 +56,6 @@ Vupper = 60+dV # need to add dV to Vupper to be sure that the step at 20mV happe
 Li_iv_80_protocol = myokit.pacing.steptrain_linear(Vlower,Vupper, dV, Vhold, tpreMeasuring_iv_Li, tstep) 
 
 # CONDITIONS 
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
@@ -115,7 +114,6 @@ Vupper = 60+dV # need to add dV to Vupper to be sure that the step at 20mV happe
 Li_iv_60_protocol = myokit.pacing.steptrain_linear(Vlower,Vupper, dV, Vhold, tpreMeasuring_iv_Li, tstep) 
 
 # CONDITIONS 
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
@@ -172,7 +170,7 @@ Vupper = 60+dV # need to add dV to Vupper to be sure that the step at 20mV happe
 Li_iv_40_protocol = myokit.pacing.steptrain_linear(Vlower,Vupper, dV, Vhold, tpreMeasuring_iv_Li, tstep) 
 
 # CONDITIONS 
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
+ 
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
@@ -229,7 +227,6 @@ Vupper = 20 + dV
 Li_act_protocol = manual_steptrain_linear(vsteps_act, Vhold, tpre, tstep) 
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
@@ -240,6 +237,9 @@ def Li_act_sum_stats(data):
         act_gate = d['i_caL.G_Na_norm']
         index = np.argmax(np.abs(act_gate))
         output = output+[np.abs(act_gate[index])]
+    Norm = output[-1]
+    for i in range(len(output)):
+        output[i] /= Norm         
     return output
 
 # Experiment
@@ -287,7 +287,6 @@ Li_inact_1000_protocol = availability_linear(Vlower,Vupper, dV,Vhold, Vtest, tpr
 
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
@@ -347,7 +346,6 @@ Li_inact_300_protocol = availability_linear(Vlower,Vupper, dV,Vhold, Vtest, tpre
 
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
@@ -407,7 +405,6 @@ Li_inact_150_protocol = availability_linear(Vlower,Vupper, dV,Vhold, Vtest, tpre
 
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
@@ -460,10 +457,11 @@ dataset2 = np.asarray([vsteps_th2, th2, variances_th2])
 Li_inact_kin_80_dataset = [dataset1,dataset2]
 
 # PROTOCOL
+
 tperiod_kin_80_Li = 10000 # ms
 tstep = 300 # ms 
-tpre = tperiod_kin_80_Li - tstep # before the first pulse occurs
-tpreMeasuring_kin_80_Li = tperiod_kin_80_Li - tstep # before the measurement
+tpre = tperiod_kin_80_Li - tstep  # before the first pulse occurs
+tpreMeasuring_kin_80_Li = tperiod_kin_80_Li - tstep  # before the measurement
 
 
 Vlower = -10
@@ -474,7 +472,6 @@ Li_inact_kin_80_protocol = myokit.pacing.steptrain_linear(Vlower,Vupper + dV, dV
 
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 
@@ -486,10 +483,11 @@ def Li_inact_kin_80_sum_stats(data):
 
     output = []
     ss_list =  []
-    
+
 
     for d in data.split_periodic(tperiod_kin_80_Li, adjust = True):
-        
+
+
         d = d.trim_left(tpreMeasuring_kin_80_Li, adjust = True)
         #d = d.trim(tpreMeasuring_kin_80_Li,tpreMeasuring_kin_80_Li+2, adjust = True)
         
@@ -523,8 +521,8 @@ def Li_inact_kin_80_sum_stats(data):
                 ss_list = ss_list + [taus]
                 
                 #debug
-                #plt.plot(time,current,time,double_exp(np.asarray(time), popt[0], popt[1], popt[2], popt[3]))
-                #plt.show()
+#                plt.plot(time,current,time,double_exp(np.asarray(time), popt[0], popt[1], popt[2], popt[3]))
+#                plt.show()
             except:
                 output = output+[float('inf')]
                 ss_list = ss_list+[float('inf')]
@@ -585,7 +583,6 @@ Li_inact_kin_60_protocol = myokit.pacing.steptrain_linear(Vlower,Vupper + dV, dV
 
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 
@@ -687,7 +684,6 @@ Li_inact_kin_40_protocol = myokit.pacing.steptrain_linear(Vlower,Vupper + dV, dV
 
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 
@@ -797,7 +793,6 @@ for twait in twaitList:
 Li_recov_80_protocol = recovery_tpreList(twaitList,Vhold,Vstep1, Vstep2,tpreList,tstep1,tstep2)
 
 # CONDITIONS
-#TODO : find the correct conditions of the paper for the concentrations of the different species.
 Li_conditions = {'membrane.T': room_temp}
 
 # SUMMARY STATISTICS
