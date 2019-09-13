@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import myokit
 from ionchannelABC.experiment import Experiment
+import warnings
+import scipy.optimize as so
 
 
 room_temp = 296
@@ -21,6 +23,10 @@ vsteps, peaks, sd = data.IV_Dias()
 variances = [sd**2 for sd in sd]
 dias_iv_dataset = np.asarray([vsteps, peaks, variances])
 
+vsteps_tau, taui, sd_taui = data.TauInact_Dias()
+variances_taui = [sd**2 for sd in sd_taui]
+dias_tau_dataset = np.asarray([vsteps_tau, taui, variances_taui])
+
 dias_iv_protocol = myokit.pacing.steptrain_linear(-100, 50, 10, -80, 5000, 100)
 dias_conditions = {'extra.Na_o': 140e3,
                    'sodium.Na_i': 10e3,
@@ -37,6 +43,39 @@ def dias_iv_sum_stats(data):
         output = output+[current[index]]
     return output
 
+def dias_iv_tau_sum_stats(data):
+    out1 = []
+    out2 = []
+    def single_exp(t, tau, A, A0):
+        return A*(1-np.exp(-t/tau))+A0
+    for d in data.split_periodic(5100, adjust=True):
+        d = d.trim(5000, 5100, adjust=True)
+        curr = d['ina.i_Na']
+        index = np.argmax(np.abs(curr))
+        out1 = out1+[curr[index]]
+        if (d['membrane.V'][0] >= vsteps_tau[0] and
+            d['membrane.V'][0] <= vsteps_tau[-1]):
+            # Separate decay portion
+            time = d['engine.time']
+            decay = curr[index:]
+            time = time[index:]
+            t0 = time[0]
+            time = [t-t0 for t in time]
+            # fit to single exponential
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', so.OptimizeWarning)
+                warnings.simplefilter('error', RuntimeWarning)
+                try:
+                    popt, _ = so.curve_fit(single_exp, time, decay,
+                                           p0=[2., 1., 0.],
+                                           bounds=([0., -np.inf, -np.inf],
+                                                   np.inf))
+                    taui = popt[0]
+                    out2 = out2 + [taui]
+                except:
+                    out2 = out2 + [float('inf')]
+    return out1+out2
+
 dias_iv = Experiment(
     dataset=dias_iv_dataset,
     protocol=dias_iv_protocol,
@@ -45,6 +84,16 @@ dias_iv = Experiment(
     description=dias_iv_desc,
     Q10=Q10_cond,
     Q10_factor=1
+)
+dias_iv_tau = Experiment(
+    dataset=[dias_iv_dataset,
+             dias_tau_dataset],
+    protocol=dias_iv_protocol,
+    conditions=dias_conditions,
+    sum_stats=dias_iv_tau_sum_stats,
+    description=dias_iv_desc,
+    Q10=Q10_cond,
+    Q10_factor=[1,-1]
 )
 
 
@@ -135,7 +184,16 @@ def zhang_rec_sum_stats(data):
 
         max1 = np.max(np.abs(pulse1))
         max2 = np.max(np.abs(pulse2))
-        output = output+[max2/max1]
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', RuntimeWarning)
+            try:
+                wait = d.trim(20, endtime-20, adjust=True)['ina.i_Na']
+                if np.max(np.abs(wait))>=max2:
+                    output = output+[float('inf')]
+                else:
+                    output = output+[max2/max1]
+            except:
+                output = output+[float('inf')]
     return output
 
 zhang_recovery = Experiment(
