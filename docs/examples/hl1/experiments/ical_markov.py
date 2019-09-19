@@ -165,10 +165,10 @@ variances_rec = [sd**2 for sd in sd_rec]
 rao_rec_dataset = np.asarray([times_rec, rec, variances_rec])
 
 rao_rec_protocol = recovery(
-    times_rec, -80, -20, -20, 5000, 400, 400
+    times_rec, -80, -20, -20, 10000, 400, 400
 )
 
-split_times = [5800+tw for tw in times_rec]
+split_times = [10800+tw for tw in times_rec]
 for i, time in enumerate(split_times[:-1]):
     split_times[i+1] += split_times[i]
 
@@ -177,8 +177,8 @@ def rao_rec_sum_stats(data):
     for i, time in enumerate(split_times):
         d_, data = data.split(time)
         pulse_traces.append(
-            d_.trim(d_['engine.time'][0]+5000,
-                    d_['engine.time'][0]+5800+times_rec[i],
+            d_.trim(d_['engine.time'][0]+10000,
+                    d_['engine.time'][0]+10800+times_rec[i],
                     adjust=True)
         )
     output = []
@@ -220,29 +220,41 @@ rao_taui_protocol = myokit.pacing.steptrain(
 
 def rao_taui_sum_stats(data):
     out = []
-    def single_exp(t, tau, A, A0):
-        return A*(1-np.exp(-t/tau))+A0
+    def single_exp(t, tau, A):
+        return A*np.exp(-t/tau)
     for d in data.split_periodic(5100, adjust=True):
         d = d.trim(5000, 5100, adjust=True)
         curr = d['ical.i_CaL']
         index = np.argmax(np.abs(curr))
-        # Separate decay portion
         time = d['engine.time']
+
+        # separate decay portion
         decay = curr[index:]
         time = time[index:]
         t0 = time[0]
         time = [t-t0 for t in time]
-        # fit to single exponential
+
         with warnings.catch_warnings():
             warnings.simplefilter('error', so.OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
+                # fit to single exponential
                 popt, _ = so.curve_fit(single_exp, time, decay,
-                                       p0=[50., 1., 0.],
-                                       bounds=([0., -np.inf, -np.inf],
+                                       p0=[50., 1.],
+                                       bounds=([0., -np.inf],
                                                np.inf))
+                fit = [single_exp(t,popt[0],popt[1]) for t in time]
+
+                # calculate r squared for fit
+                ss_res = np.sum((np.array(decay) - np.array(fit)) ** 2)
+                ss_tot = np.sum((np.array(decay) - np.mean(np.array(decay))) ** 2)
+                r2 = 1 - (ss_res / ss_tot)
+
                 taui = popt[0]
-                out = out + [taui]
+                if r2 > 0.99:
+                    out = out + [taui]
+                else:
+                    out = out + [float('inf')]
             except:
                 out = out + [float('inf')]
     return out
