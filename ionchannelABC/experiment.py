@@ -35,7 +35,7 @@ class Experiment:
                  conditions: Dict[str, float],
                  sum_stats: Union[Callable, List[Callable]],
                  tvar: str='phys.T',
-                 Q10: float=None,
+                 Q10: Union[float, List[float]]=None,
                  Q10_factor: Union[int, List[int]]=0,
                  description: str=""):
         """Initialisation.
@@ -52,8 +52,8 @@ class Experiment:
                 function(s) which may be list of functions as more than one
                 measurement could be made from one protocol.
             tvar: Name of temperature condition variable in `conditions`.
-            Q10 (float): Optional Q10 value to be used to adjust any
-                values to temperature of model.
+            Q10 (float, List[float]): Optional Q10 value(s) to adjust
+                values to temperature defined in modelfile.
             Q10_factor (int, List[int]): Optional factor for Q10 temperature
                 conversion. The factor is used when adjusting values
                 using the Q10 equation to differentiate between
@@ -71,9 +71,14 @@ class Experiment:
                 self._Q10_factor = [Q10_factor,]*len(dataset)
             else:
                 self._Q10_factor = Q10_factor
+            if isinstance(Q10, int):
+                self._Q10 = [Q10,]*len(dataset)
+            else:
+                self._Q10 = Q10
         else:
             self._dataset = [dataset]
             self._Q10_factor = [Q10_factor]
+            self._Q10 = [Q10]
 
         self._protocol = protocol
 
@@ -85,7 +90,6 @@ class Experiment:
         conditions_exp = conditions.copy() # in case conditions used by other experiments
         self._temperature = conditions_exp.pop(tvar, None)
         self._conditions = conditions_exp
-        self._Q10 = Q10
         self._description = description
 
     def __call__(self) -> None:
@@ -113,7 +117,7 @@ class Experiment:
         return self._temperature
 
     @property
-    def Q10(self) -> float:
+    def Q10(self) -> List[float]:
         return self._Q10
 
     @property
@@ -266,12 +270,12 @@ def get_observations_df(experiments: List[Experiment],
                 exp.temperature is not None and
                 model_temperature is not None and
                 model_temperature != exp.temperature and
-                exp.Q10 is not None and
+                exp.Q10[i] is not None and
                 exp.Q10_factor[i] is not None):
                 dataset = adjust_for_temperature(dataset,
                                                  exp.temperature,
                                                  model_temperature,
-                                                 exp.Q10,
+                                                 exp.Q10[i],
                                                  exp.Q10_factor[i])
 
             if normalise:
