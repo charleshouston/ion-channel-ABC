@@ -47,7 +47,7 @@ def dias_iv_tau_sum_stats(data):
     out1 = []
     out2 = []
     def single_exp(t, tau, A, A0):
-        return A*(1-np.exp(-t/tau))+A0
+        return A*np.exp(-t/tau)+A0
     for d in data.split_periodic(5100, adjust=True):
         d = d.trim(5000, 5100, adjust=True)
         curr = d['ina.i_Na']
@@ -70,8 +70,19 @@ def dias_iv_tau_sum_stats(data):
                                            p0=[2., 1., 0.],
                                            bounds=([0., -np.inf, -np.inf],
                                                    np.inf))
+                    fit = [single_exp(t,popt[0],popt[1],popt[2]) for t in time]
+
+                    # calculate r squared of fit
+                    ss_res = np.sum((np.array(decay)-np.array(fit))**2)
+                    ss_tot = np.sum((np.array(decay)-np.mean(np.array(decay)))**2)
+                    r2 = 1 - (ss_res / ss_tot)
                     taui = popt[0]
-                    out2 = out2 + [taui]
+
+                    # only accept reasonable curve fits
+                    if r2 > 0.99:
+                        out2 = out2 + [taui]
+                    else:
+                        out2 = out2 + [float('inf')]
                 except:
                     out2 = out2 + [float('inf')]
     return out1+out2
@@ -92,7 +103,7 @@ dias_iv_tau = Experiment(
     conditions=dias_conditions,
     sum_stats=dias_iv_tau_sum_stats,
     description=dias_iv_desc,
-    Q10=Q10_cond,
+    Q10=[Q10_cond, Q10_tau],
     Q10_factor=[1,-1]
 )
 
@@ -184,16 +195,17 @@ def zhang_rec_sum_stats(data):
 
         max1 = np.max(np.abs(pulse1))
         max2 = np.max(np.abs(pulse2))
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', RuntimeWarning)
-            try:
-                wait = d.trim(20, endtime-20, adjust=True)['ina.i_Na']
-                if np.max(np.abs(wait))>=max2:
-                    output = output+[float('inf')]
-                else:
-                    output = output+[max2/max1]
-            except:
-                output = output+[float('inf')]
+        output = output+[max2/max1]
+        #with warnings.catch_warnings():
+        #    warnings.simplefilter('error', RuntimeWarning)
+        #    try:
+        #        wait = d.trim(20, endtime-20, adjust=True)['ina.i_Na']
+        #        if np.max(np.abs(wait))>=max2:
+        #            output = output+[float('inf')]
+        #        else:
+        #            output = output+[max2/max1]
+        #    except:
+        #        output = output+[float('inf')]
     return output
 
 zhang_recovery = Experiment(

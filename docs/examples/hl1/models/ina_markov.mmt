@@ -8,6 +8,7 @@ desc: """
 membrane.V = -67
 ina.m = 0.0
 ina.h = 1.0
+ina.j = 1.0
 
 [engine]
 time = 0 bind time
@@ -42,7 +43,7 @@ use potassium.K_i as K_i
 use phys.FoRT as FoRT
 
 g_Na = 1.0 [mS/uF]
-g = m^3 * h
+g = m^3 * h * j
     in [1]
 i_Na = g_Na * g * (V - Erev)
     in [pA/pF]
@@ -66,6 +67,12 @@ tau_h = 1 / (k_3 + k_4)
 h_ss = k_4 * tau_h
     in [1]
 
+dot(j) = (h_ss - j) / tau_j
+    in [1]
+tau_j = A * tau_h
+    in [ms]
+A = 10 
+
 k_1 = p_1*exp(p_2 * V)
     in [1/ms]
 k_2 = p_3*exp(-p_4 * V)
@@ -75,9 +82,9 @@ k_3 = p_5*exp(p_6 * V)
 k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-p_1 = 1e-4 [1/ms]
-p_2 = 0.1 [1/mV]
-p_3 = 4e-5 [1/ms]
+p_1 = 1e3 [1/ms]
+p_2 = 0.05 [1/mV]
+p_3 = 1e1 [1/ms]
 p_4 = 0.05 [1/mV]
 p_5 = 5e-2 [1/ms]
 p_6 = 0.01 [1/mV]
