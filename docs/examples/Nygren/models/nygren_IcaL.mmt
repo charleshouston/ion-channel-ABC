@@ -25,7 +25,7 @@ G_Na_norm = d_L * (f_Ca * f_L_1 + (1 - f_Ca) * f_L_2)
 k_Ca = 0.025
     in [mM]
 
-dot(d_L) = (d_L_infinity - d_L) / (tau_d_L*1000)
+dot(d_L) = (d_L_infinity - d_L) / (tau_d_L*1000) # 1000 should be 0.001
     in [1]
 d_L_infinity = 1 / (1 + exp((membrane.V + p1) / p2))
     in [1]
@@ -40,7 +40,7 @@ p5 = 30 [mV]
 p6 = 0.002 [ms]
 
 
-dot(f_L_1) = (f_L_infinity - f_L_1) / (tau_f_L1*1000)
+dot(f_L_1) = (f_L_infinity - f_L_1) / (tau_f_L1*1000)# 1000 should be 0.001
     in [1]
 f_L_infinity = 1 / (1 + exp((membrane.V + q1) / q2))
     in [1]
@@ -54,7 +54,7 @@ q4 = 40 [mV]
 q5 = 14.4 [mV]
 q6 = 0.01 [ms]
 
-dot(f_L_2) = (f_L_infinity - f_L_2) / (tau_f_L2*1000)
+dot(f_L_2) = (f_L_infinity - f_L_2) / (tau_f_L2*1000)# 1000 should be 0.001
     in [1]
 tau_f_L2 = r1 * exp(-((membrane.V + r2) / r3) ^ 2) + r4
     in [ms]

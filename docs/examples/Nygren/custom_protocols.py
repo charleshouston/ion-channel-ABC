@@ -56,13 +56,17 @@ def recovery_tpreList(twait: List[float],
 def manual_steptrain_linear(vlist: List[float],
                  vhold: float,
                  tpre: float,
-                 tstep: float):
+                 tstep: float,
+                 tpost: float=0.
+                 ):
 
     # Check time arguments
     if tpre < 0:
         raise ValueError('Time tpre can not be negative.')
     if tstep < 0:
         raise ValueError('Time tstep can not be negative.')
+    if tpost < 0:
+        raise ValueError('Time tpost can not be negative.')
 
 
     # Create protocol
@@ -75,6 +79,9 @@ def manual_steptrain_linear(vlist: List[float],
         if tstep > 0:
             p.schedule(vstep, time, tstep)
             time += tstep
+        if tpost > 0:
+            p.schedule(vhold, time, tpost)
+            time += tpost
     return p
 
 

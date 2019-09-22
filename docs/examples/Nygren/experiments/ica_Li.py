@@ -259,9 +259,16 @@ Li_inact_1000_desc = """
     describes the protocol used to measure the activation curve in the Li Paper (figure 2B)
     
     page 3 of the paper :
-        Prepulses of varying durations ... absence of a prepulse
+        Prepulses of varying duration (150, 300, or 1,000 ms)
+        were applied to conditioning potentials between -70
+        and +50 mV, and then i_ca, was recorded during a
+        300-ms test pulse to + 10 mV. The inactivation variable
+        ( f ) was determined as i_ca, at a given prepulse potential
+        divided by the maximum i_ca, in the absence of a
+        prepulse. 
 
     The protocol is a double pulse protocol at the frequency of 0.1Hz
+        
     """
 
 # DATA
@@ -318,9 +325,16 @@ Li_inact_300_desc = """
     describes the protocol used to measure the activation curve in the Li Paper (figure 2B)
     
     page 3 of the paper :
-        Prepulses of varying durations ... absence of a prepulse
+        Prepulses of varying duration (150, 300, or 1,000 ms)
+        were applied to conditioning potentials between -70
+        and +50 mV, and then i_ca, was recorded during a
+        300-ms test pulse to + 10 mV. The inactivation variable
+        ( f ) was determined as i_ca, at a given prepulse potential
+        divided by the maximum i_ca, in the absence of a
+        prepulse. 
 
     The protocol is a double pulse protocol at the frequency of 0.1Hz
+        
     """
 
 # DATA
@@ -377,9 +391,16 @@ Li_inact_150_desc = """
     describes the protocol used to measure the activation curve in the Li Paper (figure 2B)
     
     page 3 of the paper :
-        Prepulses of varying durations ... absence of a prepulse
+        Prepulses of varying duration (150, 300, or 1,000 ms)
+        were applied to conditioning potentials between -70
+        and +50 mV, and then i_ca, was recorded during a
+        300-ms test pulse to + 10 mV. The inactivation variable
+        ( f ) was determined as i_ca, at a given prepulse potential
+        divided by the maximum i_ca, in the absence of a
+        prepulse. 
 
     The protocol is a double pulse protocol at the frequency of 0.1Hz
+        
     """
 
 # DATA
@@ -437,7 +458,15 @@ Li_inact_kin_80_desc = """
     
     the Voltage goes from -10mV to 30mV for this function with a dV = 10 mV.
 
-    page 4 of the paper :
+    page 3 of the paper :
+        The development of Ica inactivation was studied with the use of
+        depolarizing pulses from various HP. Figure 3A shows a
+        typical recording obtained during a 3OO-ms voltage step
+        from -80 to + 10 mV. The raw data were well fitted by a
+        biexponential relation with the time constants shown.
+        At all voltages, inactivation was well fitted by a biexponential 
+        relation and poorly fitted by a monoexponential
+        function.
 
     single test pulse at a frequency of 1Hz (since the step is a 100 msec test pulse)
     """
@@ -549,7 +578,15 @@ Li_inact_kin_60_desc = """
     
     the Voltage goes from -10mV to 30mV for this function with a dV = 10 mV.
 
-    page 4 of the paper :
+    page 3 of the paper :
+        The development of Ica inactivation was studied with the use of
+        depolarizing pulses from various HP. Figure 3A shows a
+        typical recording obtained during a 3OO-ms voltage step
+        from -80 to + 10 mV. The raw data were well fitted by a
+        biexponential relation with the time constants shown.
+        At all voltages, inactivation was well fitted by a biexponential 
+        relation and poorly fitted by a monoexponential
+        function.
 
     single test pulse at a frequency of 1Hz (since the step is a 100 msec test pulse)
     """
@@ -650,7 +687,15 @@ Li_inact_kin_40_desc =  """
     
     the Voltage goes from -10mV to 30mV for this function with a dV = 10 mV.
 
-    page 4 of the paper :
+    page 3 of the paper :
+        The development of Ica inactivation was studied with the use of
+        depolarizing pulses from various HP. Figure 3A shows a
+        typical recording obtained during a 3OO-ms voltage step
+        from -80 to + 10 mV. The raw data were well fitted by a
+        biexponential relation with the time constants shown.
+        At all voltages, inactivation was well fitted by a biexponential 
+        relation and poorly fitted by a monoexponential
+        function.
 
     single test pulse at a frequency of 1Hz (since the step is a 100 msec test pulse)
     """
@@ -752,6 +797,16 @@ Li_recov_80_desc =   """
     
     the Vhold used here is -80mV
     
+    
+    page 4 of the paper :
+        The time dependence of recovery from Ic, inactivation was studied with
+        the paired-pulse protocol illustrated in Fig. 4. Identical 300-ms pulses
+        (P1 and P2) from the HP (-80, -60, or -40 mV) to +1O mV were 
+        delivered every 10 s, with varying PI-p2 intervals. The
+        current during p2 (i2) relative to the current during P1
+        (i1) was determined as a function of the PI-P2 recovery
+        interval. 
+    
     The protocol is a double pulse protocol at the frequency of 0.1Hz
     
     """  
@@ -830,3 +885,100 @@ Li_recov_80 = Experiment(
     conditions=Li_conditions,
     sum_stats=Li_recov_80_sum_stats,
     description=Li_recov_80_desc)
+
+#######################################################################################################################
+###  recovery curves - Li 1997
+Li_recov_40_name = "Recovery, HP = -40 mV"
+Li_recov_40_desc =   """
+    describes the protocol used to measure the Recovery of I_ca_L in the Li Paper (figure 4B)
+    
+    the Vhold used here is -40mV
+    
+    
+    page 4 of the paper :
+        The time dependence of recovery from Ic, inactivation was studied with
+        the paired-pulse protocol illustrated in Fig. 4. Identical 300-ms pulses
+        (P1 and P2) from the HP (-80, -60, or -40 mV) to +1O mV were 
+        delivered every 10 s, with varying PI-p2 intervals. The
+        current during p2 (i2) relative to the current during P1
+        (i1) was determined as a function of the PI-P2 recovery
+        interval. 
+    
+    The protocol is a double pulse protocol at the frequency of 0.1Hz
+    
+    """  
+
+# DATA
+Li_recov_40_dataset = []
+Vhold = -40
+time,recov,sd_recov = data.Recov_Li_all(Vhold)
+variances_recov = [(sd_)**2 for sd_ in sd_recov]
+Li_recov_40_dataset.append(np.asarray([time, recov, variances_recov]))
+
+
+# PROTOCOL
+tpreMeasuringList1_recov_40 = []
+
+tperiod_recov_40 = 10000 # ms
+tstep1 = 300
+tstep2 = 300
+
+tMeasuring1_recov_40 = tstep1 
+tpreMeasuring2_recov_40 = tperiod_recov_40 - tstep2 
+
+Vstep1 = 10
+Vstep2 = 10  
+
+
+twaitList,_,_ = data.Recov_Li_all(Vhold)
+
+
+
+tpreList = []
+for twait in twaitList:
+    tpre = tperiod_recov_40 - tstep1 - twait - tstep2
+    tpreList.append(tpre)
+    tpreMeasuringList1_recov_40.append(tpre)
+
+Li_recov_40_protocol = recovery_tpreList(twaitList,Vhold,Vstep1, Vstep2,tpreList,tstep1,tstep2)
+
+# CONDITIONS
+Li_conditions = {'membrane.T': room_temp}
+
+
+# SUMMARY STATISTICS
+def Li_recov_40_sum_stats(data):
+    output = []
+    sub_loop = 0
+
+    d_split = data.split_periodic(tperiod_recov_40, adjust = True)
+
+    for d in d_split[:-1]: # for no reason the last split contains no information 
+
+
+        dcond = d.trim(tpreMeasuringList1_recov_40[sub_loop], tpreMeasuringList1_recov_40[sub_loop]+tMeasuring1_recov_40, adjust = True)
+        dtest = d.trim_left(tpreMeasuring2_recov_40, adjust = True)
+        
+        current_cond = dcond['i_caL.i_Ca_L'][:-1]
+        current_test = dtest['i_caL.i_Ca_L'][:-1]
+
+
+        index_cond = np.argmax(np.abs(current_cond))
+        index_test = np.argmax(np.abs(current_test))
+        try :
+            output = output + [current_test[index_test] / current_cond[index_cond]]  # should I still normalize ?
+            sub_loop += 1
+        except :
+            output = output + [float('inf')]  
+            sub_loop += 1
+
+    return output
+
+# Experiment
+Li_recov_40 = Experiment(
+    name = Li_recov_40_name,
+    dataset=Li_recov_40_dataset,
+    protocol=Li_recov_40_protocol,
+    conditions=Li_conditions,
+    sum_stats=Li_recov_40_sum_stats,
+    description=Li_recov_40_desc)

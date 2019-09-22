@@ -74,7 +74,7 @@ def plot_sim_results(modelfile: str,
     # Function for mapping observations onto plot later
     def measured_plot(**kwargs):
         measurements = kwargs.pop('measurements')
-        ax = plt.gca()
+#        ax = plt.gca()
         data = kwargs.pop('data')
         exp = data['exp_id'].unique()[0]
         plt.errorbar(measurements.loc[measurements['exp_id']==exp]['x'],
