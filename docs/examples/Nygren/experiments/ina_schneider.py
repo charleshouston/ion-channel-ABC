@@ -84,7 +84,6 @@ def schneider_iv_normalised_sum_stats(data):
     return output.tolist()
 
 schneider_iv = Experiment(
-    name = schneider_iv_name,
     dataset=schneider_iv_dataset,
     protocol=schneider_iv_protocol,
     conditions=schneider_conditions,
@@ -125,9 +124,13 @@ tstep = 12
 vhold = -135 # mV
 vlower = -65+1e-5
 vupper = 105+1e-5
+vupper_tm = 15+1e-5
 dv = 10
 schneider_tau_protocol = myokit.pacing.steptrain_linear(
     vlower, vupper+dv, dv, vhold, tpre, tstep)
+schneider_taum_protocol = myokit.pacing.steptrain_linear(
+    vlower, vupper_tm+dv, dv, vhold, tpre, tstep)
+
 
 def schneider_tau_sum_stats(data):
     def sum_of_exp(t, taum, tauh, Imax, C):
@@ -175,6 +178,45 @@ def schneider_tau_sum_stats(data):
     output = output1+output2
     return output
 
+def schneider_taum_sum_stats(data):
+    def sum_of_exp(t, taum, tauh, Imax, C):
+        return Imax*(1-np.exp(-t/taum))**3*np.exp(-t/tauh)+C
+    output = []
+    for i,d in enumerate(data.split_periodic(10012, adjust=True)):
+        d = d.trim_left(10000, adjust=True)
+
+        current = d['ina.i_Na'][:-1]
+        time = d['engine.time'][:-1]
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', so.OptimizeWarning)
+            warnings.simplefilter('error', RuntimeWarning)
+            try:
+                if len(time)<=1 or len(current)<=1:
+                    raise Exception('Failed simulation')
+                popt, _ = so.curve_fit(sum_of_exp,
+                                       time,
+                                       current,
+                                       p0=[0.05, 1., max(current,key=abs), 0.],
+                                       bounds=([0., 0., -np.inf, -np.max(np.abs(current))],
+                                               [np.inf, np.inf, np.inf, np.max(np.abs(current))]),
+                                       max_nfev=1000)
+
+                fit = [sum_of_exp(t,popt[0],popt[1],popt[2],popt[3]) for t in time]
+                # Calculate r2
+                ss_res = np.sum((np.array(current)-np.array(fit))**2)
+                ss_tot = np.sum((np.array(current)-np.mean(np.array(current)))**2)
+                r2 = 1 - (ss_res / ss_tot)
+
+                taum = popt[0]
+                if r2 > fit_threshold:
+                    output = output+[taum]
+                else:
+                    raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
+            except:
+                output = output+[float('inf')]
+    return output
+
 schneider_tau = Experiment(
     dataset=[schneider_taum_dataset,
              schneider_tauf_dataset],
@@ -184,7 +226,14 @@ schneider_tau = Experiment(
     description=schneider_tau_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
-
+schneider_taum = Experiment(
+    dataset=schneider_taum_dataset,
+    protocol=schneider_taum_protocol,
+    conditions=schneider_conditions,
+    sum_stats=schneider_taum_sum_stats,
+    description=schneider_tau_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
 
 #
 # Slow inactivation kinetics [Schneider1994]
@@ -272,7 +321,6 @@ def schneider_taus_sum_stats(data):
     return output
 
 schneider_taus = Experiment(
-    name = schneider_taus_name,
     dataset=schneider_taus_dataset,
     protocol=schneider_taus_protocol,
     conditions=schneider_conditions,
@@ -473,8 +521,8 @@ def schneider_recov_sum_stats(data):
                                            twaits_recov,
                                            recov,
                                            p0=[5.,20.,0.5,0.5,0.],
-                                           bounds=([0.,0.,-np.inf,-np.inf,-np.inf],
-                                                   np.inf),
+                                           bounds=([0.],
+                                                   [np.inf,np.inf,1.0,1.0,1.0]),
                                            max_nfev=1000)
 
                     fit = [double_exp(t,popt[0],popt[1],popt[2],popt[3],popt[4])

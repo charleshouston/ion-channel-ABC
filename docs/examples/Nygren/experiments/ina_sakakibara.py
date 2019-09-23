@@ -37,15 +37,14 @@ sakakibara_iv_desc ="""
 vsteps, peaks, _ = data.IV_Sakakibara()
 sakakibara_iv_dataset = np.asarray([vsteps, peaks, [0.,]*len(vsteps)])
 
-tperiod_iv_saka = 10000 # ms
-tstep = 1000 # ms (not precised in the paper, 1s seems enough to mesure the peak current)
-tpreMeasuring_iv_saka = tperiod_iv_saka - tstep # before the measurement
+tpre = 10000
+tstep = 1000
 Vhold = -140 # mV
-Vlower = -100.001 # modified to not go through V = 0 that makes the nygren model crash ( expression of I_na)
+Vlower = -100+1e-5 # modified to not go through V = 0 that makes the nygren model crash
 dV = 10
-Vupper = 20.001+dV
+Vupper = 20+1e-5
 sakakibara_iv_protocol = myokit.pacing.steptrain_linear(
-    Vlower,Vupper, dV, Vhold, tpreMeasuring_iv_saka, tstep)
+    Vlower, Vupper+dV, dV, Vhold, tpre, tstep)
 
 sakakibara_conditions = {'na_conc.Na_o': 5, # mM
                          'na_conc.Na_i': 5, # mM
@@ -53,8 +52,8 @@ sakakibara_conditions = {'na_conc.Na_o': 5, # mM
 
 def sakakibara_iv_sum_stats(data):
     output = []
-    for d in data.split_periodic(tperiod_iv_saka, adjust=True):
-        d = d.trim_left(tpreMeasuring_iv_saka, adjust=True)
+    for d in data.split_periodic(11000, adjust=True):
+        d = d.trim_left(10000, adjust=True)
         current = d['ina.i_Na']
         output = output+[max(current, key=abs)]
     return output
@@ -84,16 +83,15 @@ Na_o = 2
 vsteps, peaks, _ = data.IV_Sakakibara_fig3A_all(Na_o)
 sakakibara_iv_Nao2_dataset = np.asarray([vsteps, peaks, [0.,]*len(vsteps)])
 
-tperiod_iv_Nao2_saka = 10000 # ms
+tpre = 10000 # ms
 tstep = 1000 # ms (not precised in the paper, 1s seems enough to mesure the peak current)
-tpreMeasuring_iv_Nao2_saka = tperiod_iv_Nao2_saka - tstep # before the measurement
 
 Vhold = -140 # mV
-Vlower = -100.001 # modified to not go through V = 0 that makes the nygren model crash ( expression of I_na)
+Vlower = -100+1e-5 # modified to not go through V = 0 that makes the nygren model crash ( expression of I_na)
 dV = 10
-Vupper = 40+dV
+Vupper = 40+1e-5
 sakakibara_iv_Nao2_protocol = myokit.pacing.steptrain_linear(
-    Vlower, Vupper, dV, Vhold, tpreMeasuring_iv_Nao2_saka, tstep)
+    Vlower, Vupper+dV, dV, Vhold, tpre, tstep)
 
 sakakibara_iv_Nao2_conditions = {'na_conc.Na_o': Na_o,
                                  'na_conc.Na_i': 5,
@@ -175,8 +173,8 @@ sakakibara_act_dataset = np.asarray([vsteps_act, act, variances_act])
 
 def sakakibara_act_sum_stats(data):
     output = []
-    for d in data.split_periodic(tperiod_iv_saka, adjust=True):
-        d = d.trim_left(tpreMeasuring_iv_saka, adjust=True)
+    for d in data.split_periodic(11000, adjust=True):
+        d = d.trim_left(10000, adjust=True)
         act_gate = d['ina.g']
         output = output+[max(act_gate, key=abs)]
     norm = output[-1]
@@ -313,15 +311,14 @@ def sakakibara_inact_kin_1_sum_stats(data):
             try:
                 if len(time)<=1 or len(current)<=1:
                     raise Exception('Failed simulation')
-
                 popt, _ = so.curve_fit(double_exp,
                                        time,
                                        current,
-                                       p0=[2,20,1.,1.,0],
+                                       p0=[2,20,0.9*max(current,key=abs),0.1*max(current,key=abs),0],
                                        bounds=([0.,0.,-np.inf,-np.inf,-np.inf],
-                                               [50.,100.,np.inf,np.inf,np.inf]))
+                                               np.inf),
+                                       max_nfev=1000)
                 fit = [double_exp(t,popt[0],popt[1],popt[2],popt[3],popt[4]) for t in time]
-
                 # Calculate r2
                 ss_res = np.sum((np.array(current)-np.array(fit))**2)
                 ss_tot = np.sum((np.array(current)-np.mean(np.array(current)))**2)
@@ -434,6 +431,120 @@ sakakibara_inact_kin_100 = Experiment(
     Q10=None,
     Q10_factor=0
 )
+
+
+#
+# Recovery [Sakakibara1992]
+#
+sakakibara_rec_desc =    """
+    describes the protocol used to measure the Recovery of I_na in the Sakakibara Paper (figure 8A)
+
+    page 8 of the paper :
+    The double-pulseprotocol shown in the inset was applied at various recovery potentials at a frequency of 0.1 Hz. The magnitude of the fast
+    Na+ current during the test pulse was normalized to that
+    induced by the conditioning pulse.
+
+
+    The protocol is a double pulse protocol at the frequency of 0.1Hz
+    with differing wait potentials.
+"""
+prepulse_rec, rec_tauf, sd_rec_tauf = data.TauF_Recovery()
+variances_rec_tauf = [sd_**2 for sd_ in sd_rec_tauf]
+sakakibara_rec_tauf_dataset = np.array(
+    [prepulse_rec, rec_tauf, variances_rec_tauf])
+
+prepulse_rec, rec_taus, sd_rec_taus = data.TauS_Recovery()
+variances_rec_taus = [sd_**2 for sd_ in sd_rec_taus]
+sakakibara_rec_taus_dataset = np.array(
+    [prepulse_rec, rec_taus, variances_rec_taus])
+
+tpre = 10000 # ms
+tstep1 = 1000
+twaits_rec = [2**i for i in range(1,11)]
+tstep2 = 1000
+vstep1 = -20
+vstep2 = -20
+vhold = -140
+
+tmp_protocols = []
+for v in prepulse_rec:
+    tmp_protocols.append(
+        recovery(twaits_rec,vhold,vstep1,vstep2,tpre,tstep1,tstep2,v)
+    )
+sakakibara_rec_protocol = tmp_protocols[0]
+tsplit_rec = tmp_protocols[0].characteristic_time()
+for p in tmp_protocols[1:]:
+    for e in p.events():
+        sakakibara_rec_protocol.add_step(e.level(), e.duration())
+
+tsplits_rec = [t+tstep1+tstep2+tpre for t in twaits_rec]
+for i in range(len(tsplits_rec)-1):
+    tsplits_rec[i+1] += tsplits_rec[i]
+
+def sakakibara_rec_sum_stats(data):
+    def double_exp(t, tau_r1, tau_r2, A0, A1, A2):
+        return A0-A1*np.exp(-t/tau_r1)-A2*np.exp(-t/tau_r2)
+    output1 = []
+    output2 = []
+    timename = 'engine.time'
+    for i, d in enumerate(data.split_periodic(tsplit_rec, adjust=True, closed_intervals=True)):
+        recov = []
+        for t in tsplits_rec:
+            d_, d = d.split(t)
+            step1 = d_.trim(d_[timename][0]+10000,
+                            d_[timename][0]+10000+1000,
+                            adjust=True)
+            step2 = d_.trim_left(t-1000, adjust=True)
+            try:
+                max1 = max(step1['ina.i_Na'], key=abs)
+                max2 = max(step2['ina.i_Na'], key=abs)
+                recov = recov + [max2/max1]
+            except:
+                recov = recov + [float('inf')]
+
+        # Now fit output to double exponential
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', so.OptimizeWarning)
+            warnings.simplefilter('error', RuntimeWarning)
+            try:
+                popt, _ = so.curve_fit(double_exp,
+                                       twaits_rec,
+                                       recov,
+                                       p0=[5.,20.,0.5,0.5,0.],
+                                       bounds=(0.,
+                                               [100,1000,1.0,1.0,1.0]),
+                                       max_nfev=1000)
+
+                fit = [double_exp(t,popt[0],popt[1],popt[2],popt[3],popt[4])
+                       for t in twaits_rec]
+
+                # Calculate r2
+                ss_res = np.sum((np.array(recov)-np.array(fit))**2)
+                ss_tot = np.sum((np.array(recov)-np.mean(np.array(recov)))**2)
+                r2 = 1 - (ss_res / ss_tot)
+
+                tauf = min(popt[0],popt[1])
+                taus = max(popt[0],popt[1])
+                if r2 > 0.99:
+                    output1 = output1+[tauf]
+                    output2 = output2+[taus]
+                else:
+                    raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
+            except:
+                output1 = output1+[float('inf')]
+                output2 = output2+[float('inf')]
+    output = output1+output2
+    return output
+
+sakakibara_rec = Experiment(
+    dataset=[sakakibara_rec_tauf_dataset,
+             sakakibara_rec_taus_dataset],
+    protocol=sakakibara_rec_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
 
 
 #

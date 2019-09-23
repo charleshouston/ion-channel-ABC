@@ -42,9 +42,9 @@ def IV_Sakakibara():
 def IV_Sakakibara_fig3A_2():
     """
     IV curve (nA) data from Figure 3A in Sakakibara 1992 with [Na+]o = 2mM
-    No error reported    
+    No error reported
     Already converted to pA/pF ( cell capacitance = 0.1161 nF)
-    digitilized the 04/07/19 by Benjamin Marchand    
+    digitilized the 04/07/19 by Benjamin Marchand
     """
     x = [-100.05277,-90.02083,-80.25387,-70.022995,-60.125435,
         -50.103706,-40.20615,-30.306698,-20.517422,-10.796095,
@@ -53,7 +53,7 @@ def IV_Sakakibara_fig3A_2():
     y = [-0.040171184,-0.04726624,-0.03767147,-0.05315843,-0.093163274,
         -0.32303375,-0.3630386,-0.36178875,0.13461158,0.5980551,
         1.2345805,1.8543221,2.4905655,3.5560458,4.423269]
-    
+
     y = np.asarray(y)/0.1161 # converting to pA/pF
     y = y.tolist()
 
@@ -62,9 +62,9 @@ def IV_Sakakibara_fig3A_2():
 def IV_Sakakibara_fig3A_5():
     """
     IV curve (nA) data from Figure 3A in Sakakibara 1992 with [Na+]o = 5mM
-    No error reported 
+    No error reported
     Already converted to pA/pF ( cell capacitance = 0.1161 nF)
-    digitilized the 04/07/19 by Benjamin Marchand    
+    digitilized the 04/07/19 by Benjamin Marchand
     """
     x = [-100.11921,-90.087265,-80.18857,-70.35669,-60.14095,
         -50.00375,-40.259872,-30.298147,-20.716883,-10.588613,
@@ -82,9 +82,9 @@ def IV_Sakakibara_fig3A_5():
 def IV_Sakakibara_fig3A_20():
     """
     IV curve (nA) data from Figure 3A in Sakakibara 1992 with [Na+]o = 20mM
-    No error reported 
+    No error reported
     Already converted to pA/pF ( cell capacitance = 0.1161 nF)
-    digitilized the 04/07/19 by Benjamin Marchand    
+    digitilized the 04/07/19 by Benjamin Marchand
     """
     x = [-100.11921,-90.087265,-80.3222,-70.1657,-60.301064,
         -50.18293,-40.455853,-30.70895,-20.923836,-10.911792,
@@ -103,7 +103,7 @@ def IV_Sakakibara_fig3A_all(Na : int):
     """
     Returns the IV curve (nA) data from Figure 3A in Sakakibara 1992 with [Na+]o = 2,5 or 20 mM
 
-    """    
+    """
     try:
         assert(Na in [2,5,20])
     except:
@@ -114,9 +114,9 @@ def IV_Sakakibara_fig3A_all(Na : int):
     elif Na == 5:
         x,y,_ = IV_Sakakibara_fig3A_5()
     elif Na == 20:
-        x,y,_ = IV_Sakakibara_fig3A_20()  
+        x,y,_ = IV_Sakakibara_fig3A_20()
 
-    return x,y,None 
+    return x,y,None
 
 # figure 2
 def Act_Sakakibara():
@@ -124,8 +124,8 @@ def Act_Sakakibara():
     Activation data from Figure 2 in Sakakibara 1992
 
     error reported as + or - SEM (N=46)
-    
-    digitilized the 04/07/19 by Benjamin Marchand    
+
+    digitilized the 04/07/19 by Benjamin Marchand
     """
 
     x = [-100.14268,-90.370346,-80.2372,-70.027534,-60.390915,
@@ -159,7 +159,7 @@ def Act_Sakakibara_fig7():
     y = np.asarray([0.00264315,0.00679469,0.0212131,0.0404606,0.172631,
                     0.440670,0.705689,0.877712,0.964592,0.986858,
                     1.00369,1.00482])
-    
+
     ylower = np.asarray([0.00264315, 0.00679469, 0.0212131, 0.0404606, 0.172631,
                         0.44067, 0.685762, 0.853256, 0.9446645, 0.986858,
                         1.00369, 1.00482])
@@ -186,7 +186,7 @@ def Inact_Sakakibara():
     ylower = np.asarray([1.00242, 1.00234, 0.986563, 0.904362, 0.669383,
                         0.2933275, 0.0541988, -0.00257837, 0.0114761, 0.017439,
                         0.00589079])
-    
+
 
     sem = y-ylower
     N = 46
@@ -200,7 +200,7 @@ def Reversal_potential_Sakakibara():
     Reversal potential data from Figure 3B in Sakakibara 1992
     x corresponds to [Na+]o and y to the Reversal potential
     Error reported as + or - SEM (N=4)
-    digitilized the 08/07/19 by Benjamin Marchand   
+    digitilized the 08/07/19 by Benjamin Marchand
     """
     x = [2,5,10,20]
     y = np.asarray([-26.78964,-3.5984309,16.029884,28.931164])
@@ -222,9 +222,9 @@ def TauF_Inactivation_Sakakibara():
     Errors reported as mean + or - SEM for 8 cells
     """
     x = [-50, -40, -30, -20]
-    
+
     y = np.array([9.31, 5.56, 3.68, 2.62])
-    
+
     sem = np.array([0.63, 0.32, 0.23, 0.14])
     N = 8
     sd = np.sqrt(N)*sem
@@ -239,9 +239,9 @@ def TauS_Inactivation_Sakakibara():
     Errors reported as mean + or - SEM for 8 cells
     """
     x = [-50, -40, -30, -20]
-    
+
     y = np.array([59.2, 40.7, 16.9, 11.9])
-    
+
     sem = np.array([0.6, 5.7, 2.0, 1.0])
     N = 8
     sd = np.sqrt(N)*sem
@@ -256,9 +256,9 @@ def Rel_Tf_Sakakibara():
     Errors reported as mean + or - SEM for 8 cells
     """
     x = [-50, -40, -30, -20]
-    
+
     y = [0.88, 0.91, 0.92, 0.91]
-    
+
     sem = np.array([0.04, 0.02, 0.01, 0.02])
     N = 8
     sd = np.sqrt(N)*sem
@@ -275,11 +275,11 @@ def Time_course_Inactivation_Sakakibara_100():
     x = [13.618383,48.543922,104.8536,209.70401,307.70993,
         406.94058,507.34506,608.8216,808.44904,1009.2071,
         1506.5621,2008.5006]
-    
+
     y = [1.0001771,0.9633226,0.8897682,0.84734863,0.7554476,
         0.7322206,0.73836476,0.70938736,0.6887862,0.67025256,
         0.6111179,0.59258205]
-    
+
     return x, y, None
 
 def Time_course_Inactivation_Sakakibara_80():
@@ -292,18 +292,18 @@ def Time_course_Inactivation_Sakakibara_80():
     x = [5.7145677,29.230057,59.41954,107.55055,209.5316,
         309.55435,406.0836,507.48373,605.4515,806.0798,
         1007.6961]
-    
+
     y = [0.9936339,0.8555152,0.6790062,0.49132293,0.27539366,
         0.1996656,0.13169993,0.11845193,0.10217777,0.08887822,
         0.068500906]
-    
+
     return x, y, None
 
 def Time_course_Inactivation_Sakakibara_all(Vcond : int):
     """
     Returns the time course inactivation from Figure 6 in Sakakibara 1992 with Vcond = -80 or -100 mV
 
-    """    
+    """
     try:
         assert(Vcond in [-80,-100])
     except:
@@ -314,16 +314,16 @@ def Time_course_Inactivation_Sakakibara_all(Vcond : int):
     elif Vcond == -100:
         x,y,_ = Time_course_Inactivation_Sakakibara_100()
 
-    return x,y,None    
+    return x,y,None
 
 #figure 8A
 def Recovery_Sakakibara_100():
     """
     Recovery data from Figure 8A with Vhold = -100 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
-    """    
+    """
 
     x = [12.087913,21.428572,25.824175,29.67033,32.967033,
         38.46154,43.956043,47.252747,58.241756,74.72527,
@@ -342,10 +342,10 @@ def Recovery_Sakakibara_100():
 def Recovery_Sakakibara_120():
     """
     Recovery data from Figure 8A with Vhold = -120 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
-    """    
+    """
 
     x = [2,10.439561,13.736263,18.681318,
         22.527473,28.021978,32.967033,38.46154,43.956043,
@@ -364,10 +364,10 @@ def Recovery_Sakakibara_120():
 def Recovery_Sakakibara_140():
     """
     Recovery data from Figure 8A with Vhold = -140 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
-    """    
+    """
 
     x = [2,8.791209,13.186813,18.681318,
         21.978022,26.923077,32.967033,37.912086,41.758244,
@@ -387,10 +387,10 @@ def Recovery_Sakakibara_all(Vhold : int):
     """
     Returns the Recovery data from Figure 8A with Vhold between -140 and -100
     digitilized by Benjamin Marchand
-    """    
+    """
     try:
         assert(Vhold in [-140,-120,-100])
-    
+
     except:
         raise Exception("Wrong Vhold, ( = {} mV)".format(Vhold))
 
@@ -399,35 +399,54 @@ def Recovery_Sakakibara_all(Vhold : int):
     elif Vhold == -120:
         x,y,_ = Recovery_Sakakibara_120()
     elif Vhold == -100:
-        x,y,_ = Recovery_Sakakibara_100()        
-    
+        x,y,_ = Recovery_Sakakibara_100()
+
     return x,y,None
 
 
-def TauF_Inactivation_Sakakibara_Depol():
+def TauF_Recovery():
     """
-    Data for fast inactivation time constant
+    Data for fast recovery time constant
     from Sakakibara Fig 9.
     Errors reported as mean + or - SEM for 12,11,11,12,4 cells.
     """
     x = [-140, -120, -110, -100, -90]
-    y = [7.3419060624046795,
-    20.79767110039968,
-    45.124433704328595,
-    70.37630653239292,
-    93.05720409296985]
-    return x, y, None
+    y = np.array([7.182494525483941,
+         21.080778238617775,
+         44.85613625942195,
+         71.15848950350686,
+         94.1204967268066])
 
-def TauS_Inactivation_Sakakibara_Depol():
+    sem = np.array([7.921098705433488,
+           22.607420491967787,
+           48.78194467418629,
+           77.38627950439239,
+           102.35792127703817])
+    sem = np.abs(y-sem)
+    N = [12, 11, 11, 12, 4]
+    sd = np.sqrt(N)*sem
+
+    return x, y.tolist(), sd.tolist()
+
+def TauS_Recovery():
     """
-    Data for slow inactivation time constant
+    Data for slow recovery time constant
     from Sakakibara Fig 9.
     Errors reported same as previous.
     """
     x = [-140, -120, -110, -100, -90]
-    y = [73.10895701613708,
-    201.90499294522908,
-    284.4750075672543,
-    497.3832737043119,
-    737.304795871682]
-    return x, y, None
+    y = np.array([73.17664087948957,
+         200.27163030670607,
+         288.08070424186946,
+         503.9983907936142,
+         735.1852092122435])
+    sem = np.array([63.62733372428446,
+                    166.9829252154457,
+                    257.591290037445,
+                    444.3992111457802,
+                    596.0787555812192])
+    sem = np.abs(y-sem)
+    N = [12, 11, 11, 12, 4]
+    sd = np.sqrt(N)*sem
+
+    return x, y.tolist(), sd.tolist()
