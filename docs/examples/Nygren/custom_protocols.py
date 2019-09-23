@@ -117,26 +117,24 @@ def varying_test_duration(tstep: List[float],
     return p
 
 
-def varying_test_duration_double_pulse(vstep : float,
-                            vhold: float,
-                            vtest: float,
-                            tpreList: List[float],
-                            tstepList: List[float],
-                            twait: float,
-                            ttest: float,
-                            tpost: float=0.) -> myokit.Protocol:
-    """Varying duration of conditioning pulses to same potential with a test pulse."""
-
+def varying_test_duration_double_pulse(
+    vstep: float,
+    vhold: float,
+    vtest: float,
+    tpre: float,
+    tsteps: List[float],
+    twait: float,
+    ttest: float,
+    tpost: float=0.) -> myokit.Protocol:
+    """Varying duration of conditioning pulse with test pulse."""
 
     # Check time arguments
-    for tpre in tpreList:
-        if tpre < 0:
-            raise ValueError('Time tpre can not be negative.')
-    for tstep in tstepList :
+    for tstep in tsteps:
         if tstep < 0:
             raise ValueError('Time tstep can not be negative.')
-    assert(len(tpreList) == len(tstepList))
 
+    if tpre < 0:
+        raise ValueError('Time tpre can not be negative.')
     if twait < 0:
         raise ValueError('Time tstep can not be negative.')
     if ttest < 0:
@@ -147,9 +145,7 @@ def varying_test_duration_double_pulse(vstep : float,
     # Create protocol
     p = myokit.Protocol()
     time = 0.
-    for i in range(len(tstepList)):
-        tstep = tstepList[i]
-        tpre = tpreList[i]
+    for tstep in tsteps:
         if tpre > 0:
             p.schedule(vhold, time, tpre)
             time += tpre
