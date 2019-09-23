@@ -1,0 +1,83 @@
+[[model]]
+name: Fast Na+ channel model
+author: Charles Houston
+desc: """
+      Standardised model for ina current.
+      """
+
+# Initial values
+membrane.V = -67
+ina.m = 0.0
+ina.h1 = 1.0
+ina.h2 = 1.0
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[phys]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+T = 310 [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[na_conc]
+use phys.FoRT as FoRT
+Na_o = 140 [mM]
+Na_i = 5 [mM]
+E_Na = 1/FoRT * log(Na_o/Na_i)
+    in [mV]
+
+[membrane]
+dot(V) = -ina.i_Na
+    in [mV]
+
+[ina]
+use membrane.V as V
+use na_conc.E_Na as E_Na
+
+g_Na = 10 [S/F]
+S = 0.9
+g = m^3 * (S*h1 + (1-S)*h2)
+    in [1]
+i_Na = g_Na * g * (V - E_Na)
+    in [pA/pF]
+
+dot(m) = (m_ss - m) / tau_m
+    in [1]
+tau_m = 1 / (k_1 + k_2)
+    in [ms]
+m_ss = k_1 * tau_m
+    in [1]
+
+dot(h1) = (h_ss - h1) / tau_h1
+    in [1]
+tau_h1 = 1 / (k_3 + k_4)
+    in [ms]
+h_ss = k_4 * tau_h1
+    in [1]
+
+dot(h2) = (h_ss - h2) / tau_h2
+    in [1]
+A = 10
+tau_h2 = A*tau_h1
+    in [ms]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 1e3 [1/ms]
+p_2 = 0.05 [1/mV]
+p_3 = 1e1 [1/ms]
+p_4 = 0.05 [1/mV]
+p_5 = 5e-2 [1/ms]
+p_6 = 0.01 [1/mV]
+p_7 = 6e-3 [1/ms]
+p_8 = 0.05 [1/mV]
