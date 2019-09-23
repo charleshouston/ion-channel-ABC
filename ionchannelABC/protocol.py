@@ -9,6 +9,7 @@ def recovery(twait: List[float],
              tpre: float,
              tstep1: float,
              tstep2: float,
+             vwait: float=None,
              tpost: float=0.) -> myokit.Protocol:
     """Standard double-pulse recovery protocol."""
 
@@ -25,6 +26,9 @@ def recovery(twait: List[float],
         if t < 0:
             raise ValueError('Time twait can not be negative.')
 
+    if vwait is None:
+        vwait = vhold
+
     # Create protocol
     p = myokit.Protocol()
     time = 0
@@ -36,7 +40,7 @@ def recovery(twait: List[float],
             p.schedule(vstep1, time, tstep1)
             time += tstep1
         if t > 0:
-            p.schedule(vhold, time, t)
+            p.schedule(vwait, time, t)
             time += t
         if tstep2 > 0:
             p.schedule(vstep2, time, tstep2)

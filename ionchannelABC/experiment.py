@@ -30,20 +30,17 @@ def combine_sum_stats(*functions):
 class Experiment:
     """Contains related information from patch clamp experiment."""
     def __init__(self,
-                 name: str,
                  dataset: Union[np.ndarray, List[np.ndarray]],
                  protocol: myokit.Protocol,
                  conditions: Dict[str, float],
                  sum_stats: Union[Callable, List[Callable]],
-                 tvar: str='membrane.T',
+                 tvar: str='phys.T',
                  Q10: float=None,
                  Q10_factor: Union[int, List[int]]=0,
                  description: str=""):
         """Initialisation.
 
         Args:
-            name (str):
-                the name of the experiment to label the plots
             dataset (Union[np.ndarray, List[np.ndarray]]):
                 Experimental data in format (x, y, variance). More than one
                 dataset can be supplied in a list and will be assigned
@@ -90,7 +87,6 @@ class Experiment:
         self._conditions = conditions_exp
         self._Q10 = Q10
         self._description = description
-        self._name = name
 
     def __call__(self) -> None:
         """Print descriptor"""
@@ -123,16 +119,12 @@ class Experiment:
     @property
     def Q10_factor(self) -> List[int]:
         return self._Q10_factor
-    
-    @property
-    def name(self) -> str:
-        return self._name
 
 
 def setup(modelfile: str,
           *experiments: Experiment,
           pacevar: str='membrane.V',
-          tvar: str='membrane.T',
+          tvar: str='phys.T',
           prev_runs: List[str]=[],
           logvars: List[str]=myokit.LOG_ALL,
           normalise: bool=True
@@ -146,7 +138,7 @@ def setup(modelfile: str,
             Defaults to `membrane.V` assuming voltage clamp protocol but could
             also be set to stimulating current.
         tvar (str): Optionally specify name of temperature in modelfile.
-            Defaults to `membrane.T`.
+            Defaults to `phys.T`.
         prev_runs (List[str]): Path to previous pyABC runs containing samples
             to randomly sample outside of ABC algorithm.
         logvars (List[str]): Optionally specify variables to log in simulations.
@@ -287,7 +279,7 @@ def get_observations_df(experiments: List[Experiment],
                 normalise_factor = 1.
 
             dataset = dataset.T.tolist()
-            dataset = [d_+[str(exp_id)+" : "+exp.name, normalise_factor] for d_ in dataset]
+            dataset = [d_+[str(exp_id), normalise_factor] for d_ in dataset]
             observations = observations.append(
                 pd.DataFrame(dataset, columns=cols),
                 ignore_index=True

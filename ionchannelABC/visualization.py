@@ -27,7 +27,7 @@ def normalise(df, limits=None):
 def plot_sim_results(modelfile: str,
                      *experiments: Experiment,
                      pacevar: str='membrane.V',
-                     tvar: str='membrane.T',
+                     tvar: str='phys.T',
                      prev_runs: List[str]=[],
                      df: pd.DataFrame=None,
                      w: np.ndarray=None,
@@ -74,23 +74,22 @@ def plot_sim_results(modelfile: str,
     # Function for mapping observations onto plot later
     def measured_plot(**kwargs):
         measurements = kwargs.pop('measurements')
-#        ax = plt.gca()
         data = kwargs.pop('data')
         exp = data['exp_id'].unique()[0]
         plt.errorbar(measurements.loc[measurements['exp_id']==exp]['x'],
                      measurements.loc[measurements['exp_id']==exp]['y'],
                      yerr=np.sqrt(measurements.loc[measurements['exp_id']==exp]['variance']),
-                     label='obs',
+                     #label='obs',
                      ls='None', marker='x', c='k')
 
     # Actually make the plot
-    with sns.color_palette("gray"):
-        grid = sns.relplot(x='x', y='y',
-                           col='exp_id', kind='line',
-                           data=model_samples,
-                           ci='sd',
-                           facet_kws={'sharex': 'col',
-                                      'sharey': 'col'})
+    #with sns.color_palette("gray"):
+    grid = sns.relplot(x='x', y='y',
+                       col='exp_id', kind='line',
+                       data=model_samples,
+                       ci='sd',
+                       facet_kws={'sharex': 'col',
+                                  'sharey': 'col'})
 
     # Format lines in all plots
     for ax in grid.axes.flatten():
@@ -98,7 +97,7 @@ def plot_sim_results(modelfile: str,
             l.set_linestyle('-')
 
     grid = grid.map_dataframe(measured_plot, measurements=observations)
-    grid = grid.add_legend()
+    #grid = grid.add_legend()
 
     return grid
 
