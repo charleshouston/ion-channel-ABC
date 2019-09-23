@@ -23,20 +23,20 @@ def TauM_Activation_Schneider():
     Data for tau_m for i_Na from Schneider 1994 figure 3C
 
     Errors reported as mean + or - SD for n=23
-    
+
     digitilized the 01/07/19 by Benjamin Marchand
+    updated for corrected test pulses by Charles Houston 2019-09-20
     """
-    x =  [-62.334274,-52.34475,-42.424255,-32.455116,-22.43052,
-        -12.409013,-2.4418015,7.649152,17.55633]
-    
+    x = [-65, -55, -45, -35, -25, -15, -5, 5, 15]
+
     y = np.asarray([0.2802096,0.39335337,0.3340908,0.23605047,0.1959645,
                     0.16590016,0.1929139,0.17548873,0.15936272])
-    
+
     ylower = np.asarray([-0.010131356,0.1502184,0.09879723,0.06263277,0.097489536,
                      0.09139314,0.15936644,0.06917234,0.12407236])
-    
+
     sd = np.abs(y-ylower)
-    return x, y.tolist(), sd.tolist()  
+    return x, y.tolist(), sd.tolist()
 
 # figure 3B
 def TauF_Inactivation_Schneider():
@@ -44,25 +44,25 @@ def TauF_Inactivation_Schneider():
     Data for tau_f (fast) for i_Na from Schneider 1994 figure 3B
 
     Errors reported as mean + or - SD for n=23
-    
+
     digitilized the 01/07/19 by Benjamin Marchand
+    updated for corrected test pulses by Charles Houston 2019-09-20
     """
-    x =  [-64.20898,-54.2856,-44.850933,-34.55036,-24.710615,
-         -15.210477,-5.227276,4.574727,14.84092,24.470627,34.337234,
-          44.442173,54.703735,64.573906,74.83868,84.62929,95.37391,105.00077]
-    
+    x = [-65, -55, -45, -35, -25, -15, -5, 5, 15, 25, 35, 45, 55, 65, 75,
+         85, 95, 105]
+
     y = np.asarray([1.6562053,1.7388325,1.2643846,0.8249009,0.62296253,0.5015341,
                     0.358666,0.29900438,0.2890414,0.27903038,0.27574855,
                     0.273827,0.28131306,0.2646089,0.26001486,0.24330468,
                     0.22935106,0.2300779])
-    
+
     ylower = np.asarray([1.4159275,1.4676893,0.9127194,0.5873136,0.47397462,
                     0.3847658,0.24457617,0.21712212,0.23132537,0.22534105,
                     0.23548757,0.23088151,0.22896595,0.22434789,0.22378056,
                     0.20303167,0.18774183,0.18175751])
-    
+
     sd = np.abs(y-ylower)
-    return x, y.tolist(), sd.tolist()  
+    return x, y.tolist(), sd.tolist()
 
 #figure 5B
 def TauS_Inactivation_Schneider():
@@ -70,46 +70,45 @@ def TauS_Inactivation_Schneider():
     Data for tau_s (slow) for i_Na from Schneider 1994 figure 5B
 
     Errors reported as mean + or - SD for n=40
-    
+
     digitilized the 01/07/19 by Benjamin Marchand
     """
     x =  [-115,-105,-95,-85,
           -75,-65,-55]
-    
+
     y = np.asarray([76.365364,78.771286,74.83804,68.60557,
                     43.78963,29.352915,20.07485])
-    
-    ylower = np.asarray([47.15486,55.65152,44.25995,42.377945,
-                     26.698391,13.380271,12.305942]) # lower point of the error bar 
-    
-    sd = np.abs(y-ylower)
-    return x, y.tolist(), sd.tolist() 
 
-# figure 4 
+    ylower = np.asarray([47.15486,55.65152,44.25995,42.377945,
+                     26.698391,13.380271,12.305942]) # lower point of the error bar
+
+    sd = np.abs(y-ylower)
+    return x, y.tolist(), sd.tolist()
+
+# figure 4
 def Inact_Schneider_32():
     """
     Data points for inactivation curve of i_Na (h infinity) from fig 4
     prepulse duration 32 ms
     n = 7
-    
+
     no error reported
-    
+
     digitilized the 01/07/19 by Benjamin Marchand
-    """   
-    
+    """
+
     x = [-135.30276,-129.67128,-123.79758,-118.10554,-112.231834,-106.23702,
         -100.302765,-94.67128,-88.61591,-82.86332,-77.05017,-70.99481,
         -65.0,-59.307957,-53.373703,-47.5,-41.626297,-35.81315,
         -29.939445,-24.247404,-18.252596,-12.5,-6.444637,-0.8131488,
-        4.818339] 
-    
-    
+        4.818339]
+
     y = [1.0011135,1.0005568,1.0,0.99498886,0.99832964,0.9821826,
         0.9599109,0.94320714,0.903118,0.844098,0.798441,0.6937639,
         0.6330735,0.5545657,0.45935413,0.37082404,0.27449888,0.18875279,
         0.1091314,0.06013363,0.033407573,0.013919822,0.0061247214,0.004454343,
         0.0022271716]
-    
+
     return x,y,None
 
 def Inact_Schneider_64():
@@ -117,22 +116,22 @@ def Inact_Schneider_64():
     Data points for inactivation curve of i_Na (h infinity) from fig 4
     prepulse duration 64 ms
     n = 6
-    
+
     no error reported
     digitilized the 01/07/19 by Benjamin Marchand
-    """   
-    
+    """
+
     x = [-135.30276,-129.67128,-123.61591,-117.98443,-111.92907,-106.17647,
         -100.24222,-94.610725,-88.79758,-82.86332,-76.80796,-70.8737,-64.939445,
         -59.247406,-53.31315,-47.439445,-41.68685,-35.81315,-29.939445,-24.247404,
-        -18.313148,-12.5,-6.565744,-0.8737024,4.878893] 
-    
-    
+        -18.313148,-12.5,-6.565744,-0.8737024,4.878893]
+
+
     y = [0.99944323,0.9955457,0.9916481,0.97995543,0.967706,0.9482183,
         0.91258353,0.87861913,0.8006682,0.7243875,0.6252784,0.52115816,0.422049,
         0.33017817,0.23218262,0.15868597,0.1013363,0.059020046,0.033964366,0.012806236,
         0.0105790645,0.014476615,0.015033407,0.018374166,0.016703786]
-    
+
     return x,y,None
 
 def Inact_Schneider_128():
@@ -140,22 +139,22 @@ def Inact_Schneider_128():
     Data points for inactivation curve of i_Na (h infinity) from fig 4
     prepulse duration 128 ms
     n = 6
-    
+
     no error reported
     digitilized the 01/07/19 by Benjamin Marchand
-    """   
-    
+    """
+
     x = [-135.36333,-129.73183,-123.918686,-118.22665,-112.231834,-106.17647,
         -100.302765,-94.48962,-88.67647,-82.439445,-76.6263,-70.99481,-65.0,
         -59.18685,-53.373703,-47.439445,-41.444637,-35.570934,-29.818338,-24.186852,
-        -18.131489,-12.439446,-6.3840833,-0.6314879,4.9394464] 
-    
-    
+        -18.131489,-12.439446,-6.3840833,-0.6314879,4.9394464]
+
+
     y = [1.0,0.99832964,0.9888641,0.97884184,0.9688196,0.95768374,0.8997773,
         0.8402004,0.766147,0.6408686,0.5044543,0.3674833,0.25,0.15534522,0.08741648,
         0.049554564,0.008908686,0.005567929,0.0061247214,0.004454343,0.0033407572,
         0.0022271716,0.0022271716,0.0022271716,5.567929e-4]
-    
+
     return x,y,None
 
 def Inact_Schneider_256():
@@ -163,22 +162,22 @@ def Inact_Schneider_256():
     Data points for inactivation curve of i_Na (h infinity) from fig 4
     prepulse duration 256 ms
     n = 6
-    
+
     no error reported
     digitilized the 01/07/19 by Benjamin Marchand
-    """   
-    
+    """
+
     x = [-135.24222,-129.79239,-123.918686,-118.16609,-112.110725,-106.17647,
         -100.18166,-94.42907,-88.55537,-82.802765,-76.747406,-70.93426,-64.87889,
         -59.126297,-53.31315,-47.31834,-41.50519,-35.752594,-29.757786,-23.884083,
-        -18.192041,-12.378893,-6.5051904,-0.7525951,4.9394464] 
-    
-    
+        -18.192041,-12.378893,-6.5051904,-0.7525951,4.9394464]
+
+
     y = [0.9977728,0.9933185,0.98608017,0.97939867,0.9292873,0.89587975,
         0.86302894,0.78452116,0.68318486,0.5573497,0.4148107,0.25334075,0.1492205,
         0.07182628,0.04844098,-0.0027839644,0.0016703786,0.0033407572,0.0022271716,
         0.0027839644,0.0022271716,0.0016703786,0.0033407572,0.00389755,0.00389755]
-    
+
     return x,y,None
 
 def Inact_Schneider_512():
@@ -186,17 +185,17 @@ def Inact_Schneider_512():
     Data points for inactivation curve of i_Na (h infinity) from fig 4
     prepulse duration 512 ms
     n = 6
-    
+
     no error reported
     digitilized the 01/07/19 by Benjamin Marchand
-    """   
-    
+    """
+
     x = [-135.42387,-129.73183,-123.97924,-118.10554,-112.05017,-106.17647,
         -100.18166,-94.55017,-88.61591,-82.62111,-76.868515,-70.81315,-64.81834,
         -59.065742,-53.252594,-47.37889,-41.565742,-35.570934,-29.757786,-24.247404,
-        -18.192041,-12.378893,-6.5051904,-0.9342561,4.9394464] 
+        -18.192041,-12.378893,-6.5051904,-0.9342561,4.9394464]
 
-    
+
     y = [1.0005568,0.9927617,0.98608017,0.9682628,0.96213806,0.905902,0.85634744,
         0.7717149,0.6636971,0.5233853,0.37694877,0.21659243,0.1247216,0.067371935,
         0.041759465,-5.567929e-4,0.0066815144,0.0066815144,0.004454343,0.0066815144,
@@ -209,10 +208,10 @@ def Inact_Schneider_all(tprepulse : int):
     Returns the Data points for inactivation curve of i_Na (h infinity) from fig 4
     prepulse duration 512 ms
 
-    """    
+    """
     try:
         assert(tprepulse in [32,64,128,256,512])
-    
+
     except:
         raise("Wrong vhold, ( = {})".format(tprepulse))
 
@@ -221,19 +220,46 @@ def Inact_Schneider_all(tprepulse : int):
     elif tprepulse == 64:
         x,y,_ = Inact_Schneider_64()
     elif tprepulse == 128:
-        x,y,_ = Inact_Schneider_128()        
+        x,y,_ = Inact_Schneider_128()
     elif tprepulse == 256:
         x,y,_ = Inact_Schneider_256()
     elif tprepulse == 512:
-        x,y,_ = Inact_Schneider_512()      
-    
+        x,y,_ = Inact_Schneider_512()
+
     return x,y,None
+
+
+# Table 1
+def Inact_Schneider_Vh():
+    """
+    Inflexion point from inactivation curves at different prepulse
+    durations.
+
+    Errors as SD. From Table 1.
+    """
+
+    x = [32, 64, 128, 256, 512]
+    y = [-61.7, -66.6, -70.4, -73.3, -72.2]
+    sd = [6.4, 5.7, 4.7, 4.7, 2.6]
+    return x, y, sd
+
+def Inact_Schneider_k():
+    """Slope factor from inactivation curve fits with varying prepulse
+    duration.
+
+    Errors as SD. From Table 1.
+    """
+    x = [32, 64, 128, 256, 512]
+    y = [5.1, 5.3, 5.2, 5.0, 4.9]
+    sd = [1.7, 1.0, 0.7, 0.7, 0.5]
+    return x, y, sd
+
 
 # figure 5A
 def Reduction_Schneider_65():
     """
     Recovery data from Figure 5A with Vinact = -65 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
     """
@@ -251,7 +277,7 @@ def Reduction_Schneider_65():
 def Reduction_Schneider_75():
     """
     Recovery data from Figure 5A with Vinact = -75 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
     """
@@ -269,7 +295,7 @@ def Reduction_Schneider_75():
 def Reduction_Schneider_85():
     """
     Recovery data from Figure 5A with Vinact = -85 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
     """
@@ -287,7 +313,7 @@ def Reduction_Schneider_85():
 def Reduction_Schneider_95():
     """
     Recovery data from Figure 5A with Vinact = -95 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
     """
@@ -305,7 +331,7 @@ def Reduction_Schneider_95():
 def Reduction_Schneider_105():
     """
     Recovery data from Figure 5A with Vinact = -105 mV
-    
+
     No errors reported
     digitilized the 08/07/19 by Benjamin Marchand
     """
@@ -324,31 +350,31 @@ def Reduction_Schneider_all(Vinact : int):
     """
     Returns the Reduction of the i_Na peak current data from Figure 5A with Vinact between -105 and -65
 
-    """    
+    """
     try:
         assert(Vinact in [-105,-95,-85,-75,-65])
-    
+
     except:
         raise("Wrong Vinact, ( = {})".format(Vinact))
-      
+
     if Vinact == -105:
         x,y,_ = Reduction_Schneider_105()
     elif Vinact == -95:
-        x,y,_ = Reduction_Schneider_95()      
+        x,y,_ = Reduction_Schneider_95()
     elif Vinact == -85:
         x,y,_ = Reduction_Schneider_85()
     elif Vinact == -75:
-        x,y,_ = Reduction_Schneider_75()      
+        x,y,_ = Reduction_Schneider_75()
     elif Vinact == -65:
-        x,y,_ = Reduction_Schneider_65()     
+        x,y,_ = Reduction_Schneider_65()
     return x,y,None
 
 
-# figure 6 
+# figure 6
 def Recovery_Schneider_75():
     """
     Recovery data from Figure 6 with Vhold = -75 mV
-    
+
     No errors reported
     digitilized the 01/07/19 by Benjamin Marchand
     """
@@ -370,7 +396,7 @@ def Recovery_Schneider_75():
 def Recovery_Schneider_85():
     """
     Recovery data from Figure 6 with Vhold = -85 mV
-    
+
     No errors reported
     digitilized the 01/07/19 by Benjamin Marchand
     """
@@ -391,9 +417,9 @@ def Recovery_Schneider_85():
 def Recovery_Schneider_95():
     """
     Recovery data from Figure 6
-    
+
     Vhold = -95 mV
-    
+
     No errors reported
     digitilized the 01/07/19 by Benjamin Marchand
     """
@@ -415,7 +441,7 @@ def Recovery_Schneider_95():
 def Recovery_Schneider_105():
     """
     Recovery data from Figure 6 with Vhold = -105 mV
-    
+
     No errors reported
     digitilized the 01/07/19 by Benjamin Marchand
     """
@@ -435,7 +461,7 @@ def Recovery_Schneider_105():
 def Recovery_Schneider_115():
     """
     Recovery data from Figure 6 with Vhold = -115 mV
-    
+
     No errors reported
     digitilized the 01/07/19 by Benjamin Marchand
     """
@@ -455,7 +481,7 @@ def Recovery_Schneider_115():
 def Recovery_Schneider_125():
     """
     Recovery data from Figure 6 with Vhold = -125 mV
-    
+
     No errors reported
     digitilized the 01/07/19 by Benjamin Marchand
     """
@@ -475,7 +501,7 @@ def Recovery_Schneider_125():
 def Recovery_Schneider_135():
     """
     Recovery data from Figure 6 with Vhold = -135 mV
-    
+
     No errors reported
     digitilized the 01/07/19 by Benjamin Marchand
     """
@@ -497,10 +523,10 @@ def Recovery_Schneider_all(Vhold : int):
     """
     Returns the Recovery data from Figure 6 with Vhold between -135 and -75
 
-    """    
+    """
     try:
         assert(Vhold in [-135,-125,-115,-105,-95,-85,-75])
-    
+
     except:
         raise("Wrong vhold, ( = {})".format(Vhold))
 
@@ -509,24 +535,32 @@ def Recovery_Schneider_all(Vhold : int):
     elif Vhold == -125:
         x,y,_ = Recovery_Schneider_125()
     elif Vhold == -115:
-        x,y,_ = Recovery_Schneider_115()        
+        x,y,_ = Recovery_Schneider_115()
     elif Vhold == -105:
         x,y,_ = Recovery_Schneider_105()
     elif Vhold == -95:
-        x,y,_ = Recovery_Schneider_95()      
+        x,y,_ = Recovery_Schneider_95()
     elif Vhold == -85:
         x,y,_ = Recovery_Schneider_85()
     elif Vhold == -75:
-        x,y,_ = Recovery_Schneider_75()      
+        x,y,_ = Recovery_Schneider_75()
 
     return x,y,None
 
+# Table 2
+def Recovery_Schneider_tau_r1():
+    """Time constants from double exponential fit to recovery curve."""
 
+    x = [-135,-125,-115,-105,-95]
+    y = [1.6,4.7,6.5,9.6,15.9]
+    sd = [0.2,3.1,4.1,2.5,9.4]
+    return x, y, sd
 
+def Recovery_Schneider_tau_r2():
+    """Time constants from double exponential fit to recovery curve."""
 
+    x = [-135,-125,-115,-105,-95,-85]
+    y = [8.6,19.8,33.5,48.7,53.2,80.6]
+    sd = [2.9,10.2,17.2,23.1,33.3,47.6]
 
-
-
-
-
-
+    return x, y, sd
