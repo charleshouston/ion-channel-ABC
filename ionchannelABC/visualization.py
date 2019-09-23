@@ -1,7 +1,7 @@
 from .distance import IonChannelDistance
 from .experiment import (Experiment,
                          setup)
-from pyabc.visualization.kde import kde_1d
+from pyabc.visualization.kde import (kde_1d,plot_kde_matrix)
 import numpy as np
 import pandas as pd
 import warnings
@@ -206,3 +206,21 @@ def plot_parameters_kde(df, w, limits, aspect=None, height=None):
     g.despine(bottom=True, left=True)
 
     return g
+
+
+def plot_kde_matrix_custom(df, w, limits=None, refval=None):
+    """Wrapper around pyabc.visualization.plot_kde_matrix."""
+
+    arr_ax = plot_kde_matrix(df, w, limits=limits, refval=refval)
+
+    # Remove titles
+    n_par = df.shape[1]
+    for i in range(0, n_par):
+        for j in range(0, i):
+            # lower axis is 2D density
+            ax = arr_ax[i, j]
+            ax.set_title(None)
+
+    plt.set_cmap('viridis')
+
+    return arr_ax
