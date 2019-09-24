@@ -1,0 +1,78 @@
+[[model]]
+name: Delayed rectifier K (iKr) channel model
+author: Charles Houston
+desc: """
+      Simple model for iKr.
+      """
+# Initial values
+membrane.V = -67
+ikr.x = 0.0
+ikr.r = 1.0
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[extra]
+K_o = 5400 [uM]
+
+[phys]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+T = 296 [K]
+FoRT = F / (R * T)
+
+[membrane]
+dot(V) = -ikr.i_Kr
+    in [mV]
+
+[potassium]
+use phys.FoRT as FoRT
+use extra.K_o as K_o
+   
+K_i = 143e3 [uM]
+E_K = 1/FoRT * log(K_o/K_i)
+    in [mV]
+
+[ikr]
+use membrane.V as V
+use potassium.E_K as E_K
+use extra.K_o as K_o
+
+g_Kr = 0.5 [mS/uF]
+g = x * r
+    in [1]
+i_Kr = g_Kr * sqrt(K_o/5400) * g * (V - E_K)
+    in [pA/pF]
+
+dot(x) = (x_ss - x) / tau_x
+    in [1]
+tau_x = 1 / (k_1 + k_2)
+    in [ms]
+x_ss = k_1 * tau_x
+    in [1]
+
+dot(r) = (r_ss - r) / tau_r
+    in [1]
+tau_r = 1 / (k_3 + k_4)
+    in [ms]
+r_ss = k_4 * tau_r
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 1e-4 [1/ms]
+p_2 = 0.1 [1/mV]
+p_3 = 4e-5 [1/ms]
+p_4 = 0.05 [1/mV]
+p_5 = 5e-2 [1/ms]
+p_6 = 0.01 [1/mV]
+p_7 = 5e-2 [1/ms]
+p_8 = 0.01 [1/mV]
