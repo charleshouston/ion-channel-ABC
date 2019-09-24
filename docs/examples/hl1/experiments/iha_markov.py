@@ -44,10 +44,33 @@ sartiani_conditions = {'extra.K_o': 25e3,
                        'phys.T': room_temp}
 
 def sartiani_iv_sum_stats(data):
+    # Current amplitudes are measured by fitting a mono exponential
+    # decay function to the activating trace
+    # and subtracting the
+    # steady-state from the current at the beginning of the tail step.
     output = []
+    def decay(t, tau, A, A0):
+        return A*np.exp(-t/tau) + A0
     for d in data.split_periodic(7500, adjust=True):
         d = d.trim(6500, 7500, adjust=True)
-        output = output + [max(d['iha.i_ha'], key=abs)]
+
+        curr = d['iha.i_ha']
+        time = d['engine.time']
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', RuntimeWarning)
+            warnings.simplefilter('error', so.OptimizeWarning)
+            try:
+                popt, _ = so.curve_fit(decay,
+                                       time, curr,
+                                       p0=[1000, 1., 0.],
+                                       bounds=([0., -np.inf, -np.inf],
+                                               np.inf))
+                steady_state = popt[2]
+                amplitude = d['iha.i_ha'][0]-steady_state
+                output = output + [amplitude]
+            except:
+                output = output + [float('inf')]
     return output
 
 sartiani_iv = Experiment(
@@ -94,31 +117,37 @@ for v in vsteps_act:
 def sartiani_act_sum_stats(data):
     out_ss = []
     out_tau = []
-    def simple_exp(t, tau, A):
-        return A*(1-np.exp(-t/tau))
+    def simple_exp(t, tau, A, A0):
+        return A*(1-np.exp(-t/tau)) + A0
     for d in data.split_periodic(7500, adjust=True):
-        d = d.trim(5000, 6500, adjust=True)
-        cond = d['iha.g']
-        time = d['engine.time']
+        activating_trace = d.trim(5000, 6500, adjust=True)
+        curr_act = activating_trace['iha.i_ha']
+        time_act = activating_trace['engine.time']
+
+        tail_trace = d.trim(6500, 7500, adjust=True)
+        curr_tail = tail_trace['iha.i_ha']
         with warnings.catch_warnings():
             warnings.simplefilter('error', RuntimeWarning)
             warnings.simplefilter('error', so.OptimizeWarning)
             try:
                 popt, _ = so.curve_fit(simple_exp,
-                                       time,
-                                       cond,
-                                       p0=[1000., 1.],
-                                       bounds=([0., -np.inf],
+                                       time_act,
+                                       curr_act,
+                                       p0=[1000., 1., 0.],
+                                       bounds=([0., -np.inf, -np.inf],
                                                np.inf))
                 tau_a = popt[0]
-                max_cond = popt[1]
-                out_ss = out_ss + [max_cond]
+                steady_state = popt[1]+popt[2]
+                amplitude = curr_tail[0]-steady_state
+
+                fit = [simple_exp(t, popt[0], popt[1], popt[2]) for t in time_act]
+                out_ss = out_ss + [amplitude]
                 out_tau = out_tau + [tau_a]
             except:
                 out_ss = out_ss + [float('inf')]
                 out_tau = out_tau + [float('inf')]
 
-    max_out_ss = max(out_ss)
+    max_out_ss = max(out_ss, key=abs)
     out_ss = [o/max_out_ss for o in out_ss]
     return out_ss + out_tau
 

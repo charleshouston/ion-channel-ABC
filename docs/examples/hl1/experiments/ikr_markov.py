@@ -87,8 +87,8 @@ for i in range(len(tsplit)-1):
 # duration as independent variable
 def toyoda_taua_sum_stats(data):
     output = []
-    def simple_exp(t, taua, A):
-        return A*(1-np.exp(-t/taua))
+    def single_exp(t, taua, A, A0):
+        return A*(1-np.exp(-t/taua))+A0
 
     for d in data.split_periodic(characteristic_time, adjust=True):
         peak_tail = []
@@ -101,12 +101,12 @@ def toyoda_taua_sum_stats(data):
             warnings.simplefilter('error', so.OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
-                popt, _ = so.curve_fit(simple_exp,
+                popt, _ = so.curve_fit(single_exp,
                                        intervals,
                                        peak_tail,
-                                       p0=[500, 1.],
-                                       bounds=([0., 0.],
-                                               [np.inf, np.inf]))
+                                       p0=[500, 1., 0.],
+                                       bounds=([0., -np.inf, -np.inf],
+                                               np.inf))
                 taua = popt[0]
                 output = output+[taua]
             except:
@@ -151,7 +151,41 @@ toyoda_deact_protocol = myokit.pacing.steptrain_linear(
     -120, -20, 10, 20, 5000, 1000, 5000
 )
 
-def toyoda_deact_sum_stats(data):
+def toyoda_deact_single_exp_sum_stats(data):
+    out = []
+
+    def single_exp(t, tauf, A, A0):
+        return A*np.exp(-t/tauf)+A0
+
+    for d in data.split_periodic(11000, adjust=True):
+        d = d.trim(5000, 6000, adjust=True)
+        current = d['ikr.i_Kr']
+        time = d['engine.time']
+        index = np.argmax(np.abs(current))
+
+        # set time zero to peak current
+        current = current[index:]
+        time = time[index:]
+        t0 = time[0]
+        time = [t-t0 for t in time]
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', so.OptimizeWarning)
+            warnings.simplefilter('error', RuntimeWarning)
+            try:
+                if len(time)<=1 or len(current)<=1:
+                    raise Exception('failed simulation')
+                popt, _ = so.curve_fit(single_exp, time, current,
+                                       p0=[10., 1.0, 0.0],
+                                       bounds=([0., -np.inf, -np.inf],
+                                               np.inf))
+                taud = popt[0]
+                out = out + [taud]
+            except:
+                out = out + [float('inf')]
+    return out
+
+def toyoda_deact_double_exp_sum_stats(data):
     out1 = []
     out2 = []
     out3 = []
@@ -199,13 +233,23 @@ def toyoda_deact_sum_stats(data):
     output = out1 + out2 + out3
     return output
 
-toyoda_deact = Experiment(
+toyoda_deact_single_exp = Experiment(
+    dataset=toyoda_taui_f_dataset,
+    protocol=toyoda_deact_protocol,
+    conditions=toyoda_conditions,
+    sum_stats=toyoda_deact_single_exp_sum_stats,
+    description=toyoda_deact_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1
+)
+
+toyoda_deact_double_exp = Experiment(
     dataset=[toyoda_taui_f_dataset,
              toyoda_taui_s_dataset,
              toyoda_taui_relamp_dataset],
     protocol=toyoda_deact_protocol,
     conditions=toyoda_conditions,
-    sum_stats=toyoda_deact_sum_stats,
+    sum_stats=toyoda_deact_double_exp_sum_stats,
     description=toyoda_deact_desc,
     Q10=Q10_tau,
     Q10_factor=[-1,-1,0]
@@ -244,8 +288,8 @@ for v in vsteps:
 
 def toyoda_trec_sum_stats(data):
     output = []
-    def simple_exp(t, taur):
-        return 1-np.exp(-t/taur)
+    def single_exp(t, taur, A, A0):
+        return A*(1-np.exp(-t/taur))+A0
     for d in data.split_periodic(7000, adjust=True):
         d = d.trim(6000, 7000, adjust=True)
         current = d['ikr.i_Kr']
@@ -259,14 +303,14 @@ def toyoda_trec_sum_stats(data):
             warnings.simplefilter('error', so.OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
-                imax = max(current, key=abs)
-                current = [c_/imax for c_ in current]
+                #imax = max(current, key=abs)
+                #current = [c_/imax for c_ in current]
                 if len(time)<=1 or len(current)<=1:
                     raise Exception('failed sim')
-                popt, _ = so.curve_fit(simple_exp, time, current,
-                                       p0=[1.],
-                                       bounds=([0.],
-                                               [np.inf]))
+                popt, _ = so.curve_fit(single_exp, time, current,
+                                       p0=[1., 1., 0.],
+                                       bounds=([0., -np.inf, -np.inf],
+                                               np.inf))
                 taur = popt[0]
                 output = output + [taur]
             except:
