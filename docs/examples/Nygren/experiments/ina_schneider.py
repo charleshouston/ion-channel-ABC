@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 Q10_tau = 2.79 # [tenTusscher2004]
 Q10_cond = 1.5 # [Correa1991]
 
-fit_threshold = 0.95 # for curve_fit
+fit_threshold = 0.9 # for curve_fit
 
 
 #
@@ -133,8 +133,8 @@ schneider_taum_protocol = myokit.pacing.steptrain_linear(
 
 
 def schneider_tau_sum_stats(data):
-    def sum_of_exp(t, taum, tauh, Imax, C):
-        return Imax*(1-np.exp(-t/taum))**3*np.exp(-t/tauh)+C
+    def sum_of_exp(t, taum, tauh, C):
+        return (1-np.exp(-t/taum))**3*np.exp(-t/tauh)+C
     output1 = []
     output2 = []
     for i,d in enumerate(data.split_periodic(10012, adjust=True)):
@@ -147,17 +147,19 @@ def schneider_tau_sum_stats(data):
             warnings.simplefilter('error', so.OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
+                maxcurr = max(current, key=abs)
+                current = [c/maxcurr for c in current]
                 if len(time)<=1 or len(current)<=1:
                     raise Exception('Failed simulation')
                 popt, _ = so.curve_fit(sum_of_exp,
                                        time,
                                        current,
-                                       p0=[0.5, 1., max(current,key=abs), 0.],
-                                       bounds=([0., 0., -np.inf, -np.inf],
-                                                np.inf),
+                                       p0=[0.5, 1., 0.],
+                                       bounds=([0., 0., -1.0],
+                                               [np.inf, np.inf, 1.0]),
                                        max_nfev=1000)
 
-                fit = [sum_of_exp(t,popt[0],popt[1],popt[2],popt[3]) for t in time]
+                fit = [sum_of_exp(t,popt[0],popt[1],popt[2]) for t in time]
                 # Calculate r2
                 ss_res = np.sum((np.array(current)-np.array(fit))**2)
                 ss_tot = np.sum((np.array(current)-np.mean(np.array(current)))**2)
@@ -179,8 +181,8 @@ def schneider_tau_sum_stats(data):
     return output
 
 def schneider_taum_sum_stats(data):
-    def sum_of_exp(t, taum, tauh, Imax, C):
-        return Imax*(1-np.exp(-t/taum))**3*np.exp(-t/tauh)+C
+    def sum_of_exp(t, taum, tauh, C):
+        return (1-np.exp(-t/taum))**3*np.exp(-t/tauh)+C
     output = []
     for i,d in enumerate(data.split_periodic(10012, adjust=True)):
         d = d.trim_left(10000, adjust=True)
@@ -192,17 +194,19 @@ def schneider_taum_sum_stats(data):
             warnings.simplefilter('error', so.OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
+                maxcurr = max(current, key=abs)
+                current = [c/maxcurr for c in current]
                 if len(time)<=1 or len(current)<=1:
                     raise Exception('Failed simulation')
                 popt, _ = so.curve_fit(sum_of_exp,
                                        time,
                                        current,
-                                       p0=[0.05, 1., max(current,key=abs), 0.],
-                                       bounds=([0., 0., -np.inf, -np.max(np.abs(current))],
-                                               [np.inf, np.inf, np.inf, np.max(np.abs(current))]),
+                                       p0=[0.05, 1., 0.],
+                                       bounds=([0., 0., -1.0],
+                                               [np.inf, np.inf, 1.0]),
                                        max_nfev=1000)
 
-                fit = [sum_of_exp(t,popt[0],popt[1],popt[2],popt[3]) for t in time]
+                fit = [sum_of_exp(t,popt[0],popt[1],popt[2]) for t in time]
                 # Calculate r2
                 ss_res = np.sum((np.array(current)-np.array(fit))**2)
                 ss_tot = np.sum((np.array(current)-np.mean(np.array(current)))**2)
@@ -277,8 +281,10 @@ for i in range(len(tsplits)-1):
     tsplits[i+1] += tsplits[i]
 
 def schneider_taus_sum_stats(data):
-    def single_exp(t, tau, A, C):
-        return A*np.exp(-t/tau)+C
+    #def single_exp(t, tau, A, C):
+    #    return A*np.exp(-t/tau)+C
+    def single_exp(t, tau):
+        return np.exp(-t/tau)
     output = []
     # Split by test pulse potential
     for d in data.split_periodic(tsplit_tests, adjust=True):
@@ -288,24 +294,32 @@ def schneider_taus_sum_stats(data):
             d_ = d_.trim_left(t-ttest, adjust=True)
             current = d_['ina.i_Na'][:-1]
             peaks = peaks + [max(current, key=abs)]
-        norm = peaks[0]
-        for i in range(len(peaks)):
-            peaks[i] /= norm
 
         # fit to single exponential
         with warnings.catch_warnings():
             warnings.simplefilter('error', so.OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
+                norm = peaks[0]
+                for i in range(len(peaks)):
+                    peaks[i] /= norm
+
+                peaks = [p-peaks[-1] for p in peaks]
+                maxpk = max(peaks, key=abs)
+                peaks = [p/maxpk for p in peaks]
                 popt, _ = so.curve_fit(single_exp,
                                        tprepulse,
                                        peaks,
-                                       p0=[40, 1., 0.],
-                                       bounds=([0., -np.inf, -np.inf],
-                                               np.inf),
+                                       p0 = 1.,
+                                       bounds = (0., np.inf),
+                                       #p0=[1., peaks[0]-peaks[-1], peaks[0]],
+                                       #bounds=(0.,
+                                       #        [np.inf, 1.0, 1.0]),
                                        max_nfev=1000)
 
-                fit = [single_exp(t,popt[0],popt[1],popt[2]) for t in tprepulse]
+                #fit = [single_exp(t,popt[0],popt[1],popt[2]) for t in tprepulse]
+                fit = [single_exp(t,popt[0]) for t in tprepulse]
+
                 # Calculate r2
                 ss_res = np.sum((np.array(peaks)-np.array(fit))**2)
                 ss_tot = np.sum((np.array(peaks)-np.mean(np.array(peaks)))**2)
@@ -394,21 +408,22 @@ def schneider_inact_sum_stats(data):
         for d_ in d.split_periodic(10012+tsteps_inact[i], adjust=True, closed_intervals=False):
             d_ = d_.trim_left(10000+tsteps_inact[i], adjust=True)
             inact = inact + [max(d_['ina.g'], key=abs)]
-        norm = inact[0]
-        for j in range(len(inact)):
-            inact[j] /= norm
 
         # fit to boltzmann function
         with warnings.catch_warnings():
             warnings.simplefilter('error', so.OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
+                norm = inact[0]
+                for j in range(len(inact)):
+                    inact[j] /= norm
                 popt, _ = so.curve_fit(boltzmann_fn,
                                        vsteps_inact,
                                        inact,
-                                       p0=[-60, 5],
-                                       bounds=(-np.inf,
-                                               np.inf))
+                                       p0=[-70, 5],
+                                       bounds=([-100., 0.],
+                                               100),
+                                       max_nfev=1000)
 
                 fit = [boltzmann_fn(v,popt[0],popt[1]) for v in vsteps_inact]
                 # Calculate r2

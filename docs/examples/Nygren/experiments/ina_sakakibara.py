@@ -21,6 +21,8 @@ import scipy.optimize as so
 Q10_tau = 2.79 # [tenTusscher2004]
 Q10_cond = 1.5 # [Correa1991]
 
+fit_threshold = 0.9
+
 
 #
 # IV curve [Sakakibara1992]
@@ -59,7 +61,6 @@ def sakakibara_iv_sum_stats(data):
     return output
 
 sakakibara_iv = Experiment(
-    #name = sakakibara_iv_name,
     dataset=sakakibara_iv_dataset,
     protocol=sakakibara_iv_protocol,
     conditions=sakakibara_conditions,
@@ -71,7 +72,6 @@ sakakibara_iv = Experiment(
 #
 # IV curves for varying extracellular Sodium [Sakakibara1992]
 #
-#sakakibara_iv_Nao2_name = "IV  [Nao] = 2mM"
 sakakibara_iv_Nao2_desc ="""
     describes the protocol used to measure the differents IV-curves in the Sakakibara Paper (figure 3A)
     this protocol is for measuring the curve with Nao = 2mM
@@ -97,7 +97,6 @@ sakakibara_iv_Nao2_conditions = {'na_conc.Na_o': Na_o,
                                  'na_conc.Na_i': 5,
                                  'phys.T': 290.15}
 sakakibara_iv_Nao2 = Experiment(
-    #name = sakakibara_iv_Nao2_name,
     dataset=sakakibara_iv_Nao2_dataset,
     protocol=sakakibara_iv_Nao2_protocol,
     conditions=sakakibara_iv_Nao2_conditions,
@@ -107,7 +106,6 @@ sakakibara_iv_Nao2 = Experiment(
     Q10_factor=1)
 
 
-#sakakibara_iv_Nao5_name = "IV  [Nao] = 5mM"
 sakakibara_iv_Nao5_desc ="""
     describes the protocol used to measure the differents IV-curves in the Sakakibara Paper (figure 3A)
     this protocol is for measuring the curve with Nao = 5mM
@@ -122,7 +120,6 @@ sakakibara_iv_Nao5_conditions = {'na_conc.Na_o': Na_o,
                                  'na_conc.Na_i': 5,
                                  'phys.T': 290.15}
 sakakibara_iv_Nao5 = Experiment(
-    #name = sakakibara_iv_Nao5_name,
     dataset=sakakibara_iv_Nao5_dataset,
     protocol=sakakibara_iv_Nao2_protocol,
     conditions=sakakibara_iv_Nao5_conditions,
@@ -131,7 +128,7 @@ sakakibara_iv_Nao5 = Experiment(
     Q10=Q10_cond,
     Q10_factor=1)
 
-#sakakibara_iv_Nao20_name = "IV  [Nao] = 20mM"
+
 sakakibara_iv_Nao20_desc ="""
     describes the protocol used to measure the differents IV-curves in the Sakakibara Paper (figure 3A)
     this protocol is for measuring the curve with Nao = 20mM
@@ -146,7 +143,6 @@ sakakibara_iv_Nao20_conditions = {'na_conc.Na_o': Na_o,
                                   'na_conc.Na_i': 5,
                                   'phys.T': 290.15}
 sakakibara_iv_Nao20 = Experiment(
-    #name = sakakibara_iv_Nao20_name,
     dataset=sakakibara_iv_Nao20_dataset,
     protocol=sakakibara_iv_Nao2_protocol,
     conditions=sakakibara_iv_Nao20_conditions,
@@ -159,7 +155,6 @@ sakakibara_iv_Nao20 = Experiment(
 #
 # Activation [Sakakibara1992]
 #
-#sakakibara_act_name = "activation"
 sakakibara_act_desc = """
     describes the protocol used to measure the activation curve in the Sakakibara Paper (figure 2)
 
@@ -183,7 +178,6 @@ def sakakibara_act_sum_stats(data):
     return output
 
 sakakibara_act = Experiment(
-    #name = sakakibara_act_name,
     dataset=sakakibara_act_dataset,
     protocol=sakakibara_iv_protocol,
     conditions=sakakibara_conditions,
@@ -196,7 +190,6 @@ sakakibara_act = Experiment(
 #
 # Inactivation [Sakakibara1992]
 #
-#sakakibara_inact_name = "inactivation"
 sakakibara_inact_desc = """
     describes the protocol used to measure the activation curve in the Sakakibara Paper (figure 2)
 
@@ -241,7 +234,6 @@ def sakakibara_inact_sum_stats(data):
     return output
 
 sakakibara_inact = Experiment(
-    #name = sakakibara_inact_name,
     dataset=sakakibara_inact_dataset,
     protocol=sakakibara_inact_protocol,
     conditions=sakakibara_conditions,
@@ -250,11 +242,11 @@ sakakibara_inact = Experiment(
     Q10=None,
     Q10_factor=0)
 
+
 #
 # Inactivation kinetics [Sakakibara1992]
 #
-#sakakibara_inact_kin_1_name = "Inactivation Kinetics"
-sakakibara_inact_kin_1_desc =   """
+sakakibara_inact_kin_desc =   """
     describes the protocol used to measure the inactivation kinetics (tau_f and tau_s) in the Sakakibara Paper (figure 5B)
 
     the Voltage goes from -50mV to -20mV for this function with a dV = 10 mV.
@@ -273,7 +265,7 @@ dataset1 = np.asarray([vsteps_th1, th1, variances_th1])
 vsteps_th2, th2, sd_th2 = data.TauS_Inactivation_Sakakibara()
 variances_th2 = [(sd_)**2 for sd_ in sd_th2]
 dataset2 = np.asarray([vsteps_th2, th2, variances_th2])
-sakakibara_inact_kin_1_dataset = [dataset1, dataset2]
+sakakibara_inact_kin_dataset = [dataset1, dataset2]
 
 tstep = 100 # ms
 tpre = 10000 # before the first pulse occurs
@@ -281,12 +273,10 @@ Vhold = -140 # mV
 Vlower = -50
 dV = 10
 Vupper = -20+dV
-sakakibara_inact_kin_1_protocol = myokit.pacing.steptrain_linear(
+sakakibara_inact_kin_protocol = myokit.pacing.steptrain_linear(
     Vlower, Vupper, dV, Vhold, tpre, tstep)
 
-def sakakibara_inact_kin_1_sum_stats(data):
-    #def double_exp(t, tauh, taus, Ah, As):
-    #    return Ah*np.exp(-t/tauh) + As*np.exp(-t/taus)
+def sakakibara_inact_kin_sum_stats(data):
     def double_exp(t, tauh, taus, Ah, As, A0):
         return Ah*np.exp(-t/tauh) + As*np.exp(-t/taus) + A0
 
@@ -309,14 +299,15 @@ def sakakibara_inact_kin_1_sum_stats(data):
             warnings.simplefilter('error', OptimizeWarning)
             warnings.simplefilter('error', RuntimeWarning)
             try:
+                current = [c/current[0] for c in current]
                 if len(time)<=1 or len(current)<=1:
                     raise Exception('Failed simulation')
                 popt, _ = so.curve_fit(double_exp,
                                        time,
                                        current,
-                                       p0=[2,20,0.9*max(current,key=abs),0.1*max(current,key=abs),0],
-                                       bounds=([0.,0.,-np.inf,-np.inf,-np.inf],
-                                               np.inf),
+                                       p0=[2,20,0.9,0.1,0],
+                                       bounds=(0.,
+                                               [np.inf, np.inf, 1.0, 1.0, 1.0]),
                                        max_nfev=1000)
                 fit = [double_exp(t,popt[0],popt[1],popt[2],popt[3],popt[4]) for t in time]
                 # Calculate r2
@@ -327,7 +318,7 @@ def sakakibara_inact_kin_1_sum_stats(data):
                 tauh = min(popt[0],popt[1])
                 taus = max(popt[0],popt[1])
 
-                if r2 > 0.99:
+                if r2 > fit_threshold:
                     output1 = output1+[tauh]
                     output2 = output2+[taus]
                 else:
@@ -338,22 +329,19 @@ def sakakibara_inact_kin_1_sum_stats(data):
     output = output1+output2
     return output
 
-sakakibara_inact_kin_1 = Experiment(
-    #name = sakakibara_inact_kin_1_name,
-    dataset=sakakibara_inact_kin_1_dataset,
-    protocol=sakakibara_inact_kin_1_protocol,
+sakakibara_inact_kin = Experiment(
+    dataset=sakakibara_inact_kin_dataset,
+    protocol=sakakibara_inact_kin_protocol,
     conditions=sakakibara_conditions,
-    sum_stats=sakakibara_inact_kin_1_sum_stats,
-    description=sakakibara_inact_kin_1_desc,
-    Q10 = Q10_tau,
-    Q10_factor = -1)
+    sum_stats=sakakibara_inact_kin_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
 
 
 #
 # Inactivation kinetics [Sakakibara1992]
 #
-#sakakibara_inact_kin_2_name = "Inactivation Kinetics w/ availability protocol"
-#sakakibara_inact_kin_80_name = "Availability protocol : HP = -80mV"
 sakakibara_inact_kin_2_desc = """
     describes the protocol used to measure the inactivation kinetics in the Sakakibara Paper (figure 6)
 
@@ -510,7 +498,7 @@ def sakakibara_rec_sum_stats(data):
                 popt, _ = so.curve_fit(double_exp,
                                        twaits_rec,
                                        recov,
-                                       p0=[5.,20.,0.5,0.5,0.],
+                                       p0=[1.,10.,0.9,0.1,0.],
                                        bounds=(0.,
                                                [100,1000,1.0,1.0,1.0]),
                                        max_nfev=1000)
@@ -525,7 +513,7 @@ def sakakibara_rec_sum_stats(data):
 
                 tauf = min(popt[0],popt[1])
                 taus = max(popt[0],popt[1])
-                if r2 > 0.99:
+                if r2 > fit_threshold:
                     output1 = output1+[tauf]
                     output2 = output2+[taus]
                 else:
@@ -550,7 +538,6 @@ sakakibara_rec = Experiment(
 #
 # Recovery [Sakakibara1992]
 #
-#sakakibara_recov_name = "recovery (3 Holding Potentials)"
 sakakibara_rec_desc =    """
     describes the protocol used to measure the Recovery of I_na in the Sakakibara Paper (figure 8A)
 
@@ -624,7 +611,6 @@ def sakakibara_rec100_sum_stats(data):
     return sakakibara_rec_sum_stats_wrapper(data, tsplits100)
 
 sakakibara_rec140 = Experiment(
-    #name = sakakibara_recov_name,
     dataset=sakakibara_rec140_dataset,
     protocol=sakakibara_rec140_protocol,
     conditions=sakakibara_conditions,
@@ -633,7 +619,6 @@ sakakibara_rec140 = Experiment(
     Q10=None,
     Q10_factor=0)
 sakakibara_rec120 = Experiment(
-    #name = sakakibara_recov_name,
     dataset=sakakibara_rec120_dataset,
     protocol=sakakibara_rec120_protocol,
     conditions=sakakibara_conditions,
@@ -642,7 +627,6 @@ sakakibara_rec120 = Experiment(
     Q10=None,
     Q10_factor=0)
 sakakibara_rec100 = Experiment(
-    #name = sakakibara_recov_name,
     dataset=sakakibara_rec100_dataset,
     protocol=sakakibara_rec100_protocol,
     conditions=sakakibara_conditions,
@@ -650,134 +634,3 @@ sakakibara_rec100 = Experiment(
     description=sakakibara_rec100_desc,
     Q10=None,
     Q10_factor=0)
-
-
-#
-# BELOW IS UNCHECKED - Charles 2019-09-20
-#
-
-#######################################################################################################################
-###  kinetics of recovery curves - Sakakibara 1992
-#sakakibara_recov_kin_name = "recovery kinetics"
-#sakakibara_recov_kin_desc = """
-#    describes the protocol used to measure the fast time constant from the Recovery of I_na in the Sakakibara Paper (figure 9)
-#
-#    the Vhold used here is -140mV ,-120mV -110mV, -100mV and -90mV
-#
-#    The protocol is not decribed but was assumed to be the same as for the recovery protocol (fig 8A)
-#    The protocol is a double pulse protocol at the frequency of 0.1Hz
-#
-#    """
-#
-## DATA
-#vsteps_th_depol, th_depol, _ = dataSaka.TauF_Inactivation_Sakakibara_Depol()
-#variances_depol = [0.]*len(th_depol)
-#sakakibara_recov_kin_dataset = np.asarray([vsteps_th_depol, th_depol, variances_depol])
-#
-#
-## PROTOCOL
-#tmp_protocol = []
-#tpreMeasuringList1_recov_kin = []
-#
-#tperiod_recov_kin = 10000 # ms
-#tstep1 = 1000
-#tstep2 = 1000
-#
-#tMeasuring1_recov_kin = tstep1
-#tpreMeasuring2_recov_kin = tperiod_recov_kin - tstep2
-#
-#Vstep1 = -20
-#Vstep2 = -20
-#
-#twaitList_recov_kin = [2,5,10,15,20,25,30,35,40,45,50,75,100,200,300,400,500,600,700,800,900,1000]
-#Split_list_recov_kin = [len(twaitList_recov_kin)]
-#
-#for Vhold in [-140, -120, -110, -100, -90]:
-#
-#    tpreList = []
-#    for twait in twaitList_recov_kin:
-#        tpre = tperiod_recov_kin - tstep1 - twait - tstep2
-#        tpreList.append(tpre)
-#        tpreMeasuringList1_recov_kin.append(tpre)
-#
-#    protocol = recovery_tpreList(twaitList_recov_kin,Vhold,Vstep1, Vstep2,tpreList,tstep1,tstep2)
-#
-#    tmp_protocol.append(protocol)
-#
-## Fuse all the protocols into one
-#sakakibara_recov_kin_protocol = tmp_protocol[0]
-#for p in tmp_protocol[1:]:
-#    for e in p.events():
-#        sakakibara_recov_kin_protocol.add_step(e.level(), e.duration())
-#
-## CONDITIONS
-#sakakibara_conditions = {'membrane.Na_o': 5,
-#                        'membrane.Na_i': 5,
-#                        'membrane.T': 290.15}
-#
-## SUMMARY STATISTICS
-#def sakakibara_recov_kin_sum_stats(data):
-#    def simple_exp(t, tauh):
-#        return np.exp(-t/tauh)
-#    output = []
-#    loop = 0
-#    sub_loop = 0
-#
-#
-#    # spliting back the 5 protocols
-#    dProtocolOne,dProtocoltwofive = data.split(tperiod_recov_kin*Split_list_recov_kin[0])
-#    dProtocolTwo,dProtocolThreefive  = dProtocoltwofive.split(tperiod_recov_kin*2*Split_list_recov_kin[0])
-#    dProtocolThree,dProtocolfourfive = dProtocolThreefive.split(tperiod_recov_kin*3*Split_list_recov_kin[0])
-#    dProtocolFour,dProtocolFive  = dProtocolfourfive.split(tperiod_recov_kin*4*Split_list_recov_kin[0])
-#    dProtocols = [dProtocolOne,dProtocolTwo,dProtocolThree,dProtocolFour,dProtocolFive]
-#
-#    for dOneProtocol in dProtocols:
-#        rec = []
-#
-#        d_split = dOneProtocol.split_periodic(tperiod_recov, adjust = True)
-#
-#        d_split = d_split[loop*Split_list_recov_kin[0]:]    # specific to split_periodic function
-#        #( if the time begins at t0 >0 it will create empty arrays from 0 to t0 : here we are getting rid of them)
-#
-#        for d in d_split:
-#
-#            dcond = d.trim(tpreMeasuringList1_recov_kin[sub_loop], tpreMeasuringList1_recov_kin[sub_loop]+tMeasuring1_recov_kin, adjust = True)
-#            dtest = d.trim_left(tpreMeasuring2_recov_kin, adjust = True)
-#
-#            current_cond = dcond['ina.i_Na'][:-1]
-#            current_test = dtest['ina.i_Na'][:-1]
-#
-#            index_cond = np.argmax(np.abs(current_cond))
-#            index_test = np.argmax(np.abs(current_test))
-#            try :
-#                rec.append(current_test[index_test] / current_cond[index_cond])
-#                sub_loop += 1
-#            except :
-#                rec.append(float('inf'))
-#                sub_loop += 1
-#        with warnings.catch_warnings():
-#            warnings.simplefilter('error', OptimizeWarning)
-#            warnings.simplefilter('error', RuntimeWarning)
-#            try:
-#            # Fit simple exponential to recovery curve
-#
-#                popt, _ = so.curve_fit(simple_exp, twaitList_recov_kin, 1.-np.asarray(rec),p0=[5], bounds=([0.1], [50.0]))
-#                tauh = popt[0]
-#
-#                output = output + [tauh]
-#            except:
-#                output = output + [float('inf')]
-#        loop += 1
-#
-#    return output
-#
-## Experiment
-#sakakibara_recov_kin = Experiment(
-#    name = sakakibara_recov_kin_name,
-#    dataset=sakakibara_recov_kin_dataset,
-#    protocol=sakakibara_recov_kin_protocol,
-#    conditions=sakakibara_conditions,
-#    sum_stats=sakakibara_recov_kin_sum_stats,
-#    description=sakakibara_recov_kin_desc,
-#     Q10 = Q10_tau,
-#    Q10_factor = -1)
