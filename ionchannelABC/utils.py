@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from pyabc.weighted_statistics import weighted_std,weighted_mean
 from pyabc.acceptor import SimpleFunctionAcceptor, accept_use_complete_history
 from pyabc.transition.multivariatenormal import MultivariateNormalTransition
 
@@ -26,19 +27,29 @@ def ion_channel_sum_stats_calculator(model_output: pd.DataFrame) -> dict:
 def theoretical_population_size(sampling_density: int,
                                 n_parameters: int) -> int:
     """Calculate theoretical minimum particule population size.
-    
+
     Determines theoretical particle population size required to
     sample hyperspace with sufficient fidelity.
 
     Args:
         sampling_density (int): Number of particles per dimension.
-        n_parameters (int): Number of parameters (= number of 
+        n_parameters (int): Number of parameters (= number of
             of the parameter hyperspace).
 
     Returns:
         Theoretical minimum particle population size.
     """
     return int((10**(np.log10(sampling_density)))**n_parameters)
+
+
+def weighted_cv(df, w, sample_size=None) -> pd.DataFrame:
+    """Calculates weighted coefficient of variation."""
+    def weighted_cv_(points):
+        multiplier = 1.
+        if sample_size is not None:
+            multipler = (1+1/(4*sample_size))
+        return multipler*weighted_std(points, w)/abs(weighted_mean(points,w))
+    return df.apply(weighted_cv_, axis=0)
 
 
 class IonChannelAcceptor(SimpleFunctionAcceptor):
