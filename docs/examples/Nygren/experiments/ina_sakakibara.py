@@ -27,7 +27,6 @@ fit_threshold = 0.9
 #
 # IV curve [Sakakibara1992]
 #
-#sakakibara_iv_name = "IV"
 sakakibara_iv_desc ="""
     describes the protocol used to measure the IV peak-current curve in the Sakakibara Paper figure 1B
 
@@ -204,13 +203,10 @@ vsteps_inact, inact, sd_inact = data.Inact_Sakakibara()
 variances_inact = [(sd_)**2 for sd_ in sd_inact]
 sakakibara_inact_dataset = np.asarray([vsteps_inact, inact, variances_inact])
 
-tperiod_inact_saka = 10000 # ms
+tpre = 10000 # ms
 tstep = 1000
 twait = 0
 ttest = 30
-tpre = tperiod_inact_saka - tstep - twait - ttest
-tpreMeasuring_inact_saka = tperiod_inact_saka - ttest # tperiod - ttest
-tMeasuring_inact_saka = ttest
 
 Vhold = -140 # mV
 Vtest = -20
@@ -223,14 +219,13 @@ sakakibara_inact_protocol = availability_linear(
 
 def sakakibara_inact_sum_stats(data):
     output = []
-    for d in data.split_periodic(tperiod_inact_saka, adjust=True):
-        d = d.trim_left(tpreMeasuring_inact_saka, adjust = True)
+    for d in data.split_periodic(11030, adjust=True):
+        d = d.trim_left(11000, adjust = True)
         inact_gate = d['ina.g']
-        index = np.argmax(np.abs(inact_gate))
-        output = output+[np.abs(inact_gate[index])]
-    Norm = output[0]
+        output = output+[max(inact_gate, key=abs)]
+    norm = output[0]
     for i in range(len(output)):
-        output[i] /= Norm
+        output[i] /= norm
     return output
 
 sakakibara_inact = Experiment(
@@ -260,12 +255,14 @@ sakakibara_inact_kin_desc =   """
 # Fast inactivation kinetics
 vsteps_th1, th1, sd_th1 = data.TauF_Inactivation_Sakakibara()
 variances_th1 = [(sd_)**2 for sd_ in sd_th1]
-dataset1 = np.asarray([vsteps_th1, th1, variances_th1])
+sakakibara_inact_kin_fast_dataset = np.asarray([vsteps_th1, th1, variances_th1])
 # Slow inactivation kinetics
 vsteps_th2, th2, sd_th2 = data.TauS_Inactivation_Sakakibara()
 variances_th2 = [(sd_)**2 for sd_ in sd_th2]
-dataset2 = np.asarray([vsteps_th2, th2, variances_th2])
-sakakibara_inact_kin_dataset = [dataset1, dataset2]
+sakakibara_inact_kin_slow_dataset = np.asarray([vsteps_th2, th2, variances_th2])
+
+sakakibara_inact_kin_dataset = [sakakibara_inact_kin_fast_dataset,
+                                sakakibara_inact_kin_slow_dataset]
 
 tstep = 100 # ms
 tpre = 10000 # before the first pulse occurs
@@ -276,12 +273,12 @@ Vupper = -20+dV
 sakakibara_inact_kin_protocol = myokit.pacing.steptrain_linear(
     Vlower, Vupper, dV, Vhold, tpre, tstep)
 
-def sakakibara_inact_kin_sum_stats(data):
+def sakakibara_inact_kin_sum_stats(data, fast=True, slow=True):
     def double_exp(t, tauh, taus, Ah, As, A0):
         return Ah*np.exp(-t/tauh) + As*np.exp(-t/taus) + A0
 
-    output1 = []
-    output2 =  []
+    output_fast = []
+    output_slow =  []
     for d in data.split_periodic(10100, adjust=True):
         d = d.trim_left(10000, adjust=True)
 
@@ -319,21 +316,47 @@ def sakakibara_inact_kin_sum_stats(data):
                 taus = max(popt[0],popt[1])
 
                 if r2 > fit_threshold:
-                    output1 = output1+[tauh]
-                    output2 = output2+[taus]
+                    if fast:
+                        output_fast = output_fast+[tauh]
+                    if slow:
+                        output_slow = output_slow+[taus]
                 else:
                     raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
             except:
-                output1 = output1+[float('inf')]
-                output2 = output2+[float('inf')]
-    output = output1+output2
+                if fast:
+                    output_fast = output_slow+[float('inf')]
+                if slow:
+                    output_slow = output_slow+[float('inf')]
+    output = output_fast+output_slow
     return output
+
+def sakakibara_inact_kin_fast_sum_stats(data):
+    return sakakibara_inact_kin_sum_stats(data, fast=True, slow=False)
+
+def sakakibara_inact_kin_slow_sum_stats(data):
+    return sakakibara_inact_kin_sum_stats(data, fast=False, slow=True)
 
 sakakibara_inact_kin = Experiment(
     dataset=sakakibara_inact_kin_dataset,
     protocol=sakakibara_inact_kin_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_inact_kin_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_inact_kin_fast = Experiment(
+    dataset=sakakibara_inact_kin_fast_dataset,
+    protocol=sakakibara_inact_kin_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_fast_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_inact_kin_slow = Experiment(
+    dataset=sakakibara_inact_kin_slow_dataset,
+    protocol=sakakibara_inact_kin_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_slow_sum_stats,
     description=sakakibara_inact_kin_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
@@ -469,7 +492,7 @@ tsplits_rec = [t+tstep1+tstep2+tpre for t in twaits_rec]
 for i in range(len(tsplits_rec)-1):
     tsplits_rec[i+1] += tsplits_rec[i]
 
-def sakakibara_rec_sum_stats(data):
+def sakakibara_rec_sum_stats(data, fast=True, slow=True):
     def double_exp(t, tau_r1, tau_r2, A0, A1, A2):
         return A0-A1*np.exp(-t/tau_r1)-A2*np.exp(-t/tau_r2)
     output1 = []
@@ -514,15 +537,24 @@ def sakakibara_rec_sum_stats(data):
                 tauf = min(popt[0],popt[1])
                 taus = max(popt[0],popt[1])
                 if r2 > fit_threshold:
-                    output1 = output1+[tauf]
-                    output2 = output2+[taus]
+                    if fast:
+                        output1 = output1+[tauf]
+                    if slow:
+                        output2 = output2+[taus]
                 else:
                     raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
             except:
-                output1 = output1+[float('inf')]
-                output2 = output2+[float('inf')]
+                if fast:
+                    output1 = output1+[float('inf')]
+                if slow:
+                    output2 = output2+[float('inf')]
     output = output1+output2
     return output
+
+def sakakibara_rec_fast_sum_stats(data):
+    return sakakibara_rec_sum_stats(data, fast=True, slow=False)
+def sakakibara_rec_slow_sum_stats(data):
+    return sakakibara_rec_sum_stats(data, fast=False, slow=True)
 
 sakakibara_rec = Experiment(
     dataset=[sakakibara_rec_tauf_dataset,
@@ -530,6 +562,22 @@ sakakibara_rec = Experiment(
     protocol=sakakibara_rec_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_rec_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_rec_fast = Experiment(
+    dataset=sakakibara_rec_tauf_dataset,
+    protocol=sakakibara_rec_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_fast_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_rec_slow = Experiment(
+    dataset=sakakibara_rec_taus_dataset,
+    protocol=sakakibara_rec_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_slow_sum_stats,
     description=sakakibara_rec_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
