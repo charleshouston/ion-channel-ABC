@@ -93,9 +93,12 @@ c1_h = -40
 a1_h = 0.135
 a2_h = 6.8
 a3_h = 80
-b1_h = 0.13
-#eq_amp = ((b4_h*exp(b5_h*(-c1_h)) + b6_h*exp(b7_h*(-c1_h))) * (1 + exp(((-c1_h) + b2_h) / -b3_h)))^-1
-#     in [1]
+# ensure continuity of alpha_h
+a4_h = a1_h * exp(-(c1_h+a3_h)/a2_h)
+
+# ensure continuity of beta_h
+b1_h = (b4_h*exp(b5_h*c1_h) + b6_h*exp(b7_h*c1_h))^(-1) * (1+exp(-(c1_h+b2_h)/b3_h))^(-1)
+#b1_h = 0.13
 b2_h = 10.66
 b3_h = 11.1
 b4_h = 3.56
@@ -105,7 +108,7 @@ b7_h = 0.35
 
 alpha_h = piecewise(
     V >= c1_h, 
-    0,
+    a4_h, #(0,) original
     a1_h * exp(-(V + a3_h) / a2_h)
     )
     in [1/ms]
@@ -133,7 +136,10 @@ a4_j = 0.04391
 a5_j = 37.78
 a6_j = 0.311
 a7_j = 79.23
-b1_j = 0.3
+
+# Ensure continuity of beta_j
+b1_j = b5_j * exp(-b6_j * V)/(1 + exp(-b7_j * (V + b8_j))) * (exp(-b2_j * V) / (1 + exp(-b3_j * (V + b4_j))))^(-1)
+#b1_j = 0.3
 b2_j = 2.535e-7
 b3_j = 0.1
 b4_j = 32
