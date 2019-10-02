@@ -1,5 +1,5 @@
 [[model]]
-name: Fast Na+ channel model
+name: STA
 author: Charles Houston
 desc: """
       Standardised model for ina current.
@@ -38,7 +38,7 @@ use membrane.V as V
 use na_conc.E_Na as E_Na
 
 g_Na = 10 [S/F]
-S = 0.9
+S = 0.87
 g = m^3 * (S*h1 + (1-S)*h2)
     in [1]
 i_Na = g_Na * g * (V - E_Na)
@@ -60,7 +60,7 @@ h_ss = k_4 * tau_h1
 
 dot(h2) = (h_ss - h2) / tau_h2
     in [1]
-A = 10
+A = 10^(0.6)
 tau_h2 = A*tau_h1
     in [ms]
 
@@ -73,11 +73,15 @@ k_3 = p_5*exp(p_6 * V)
 k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-p_1 = 1e3 [1/ms]
-p_2 = 0.05 [1/mV]
-p_3 = 1e1 [1/ms]
-p_4 = 0.05 [1/mV]
-p_5 = 5e-2 [1/ms]
-p_6 = 0.01 [1/mV]
-p_7 = 6e-3 [1/ms]
-p_8 = 0.05 [1/mV]
+p_1 = 10^(1.3)
+    in [1/ms]
+p_2 = 0.014 [1/mV]
+p_3 = 10^(-0.4)
+    in [1/ms]
+p_4 = 0.058 [1/mV]
+p_5 = 10^(2.2) 
+    in [1/ms]
+p_6 = 0.11 [1/mV]
+p_7 = 10^(-3.2) 
+    in [1/ms]
+p_8 = 0.051 [1/mV]

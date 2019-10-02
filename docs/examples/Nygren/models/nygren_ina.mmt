@@ -1,9 +1,9 @@
 [[model]]
 author: Cellml converter
 desc: """
-    bMathematical Model Of An Adult Human Atrial Cell, 1998'
+    Mathematical Model Of An Adult Human Atrial Cell, 1998'
     """
-name: nygren1998
+name: NYG
 
 
 # Initial values
@@ -55,14 +55,14 @@ s1 = 0.9
 
 dot(m) = (m_ss - m) / tau_m
     in [1]
-m_ss = 1 / (1 + exp((V + r1 ) / r2 ))
+m_ss = 1 / (1 + exp(-(V + r1 ) / r2 ))
     in [1]
 # Multiplied by 1000 to convert [s]->[ms]
 tau_m = 1000 * (r3 * exp(-((V + r4) / r5) ^ 2) + r6)
     in [ms]
 
 r1 = 27.12 [mV]
-r2 = -8.21 [mV]
+r2 = 8.21 [mV]
 r3 = 4.2e-5 [s]
 r4 = 25.57 [mV]
 r5 = 28.8 [mV]
