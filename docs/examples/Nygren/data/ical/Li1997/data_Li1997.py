@@ -40,7 +40,7 @@ def IV_Li_60():
 
      ylower = np.asarray([0.021219056,0.018300518,-0.24539581,-1.4977056,-5.351791,
                          -9.4118805,-10.774013,-10.001114,-7.4570847,-3.9587488,
-                         -2.1630037,-0.31918526])                       
+                         -2.1630037,-0.31918526])
 
      sem =  y - ylower
      N = 9
@@ -59,8 +59,8 @@ def IV_Li_40():
                     -6.0949717,-4.7316656,-3.1692936,-1.7236261,-0.06519903 ])
 
      ylower = np.asarray([0.015400335,-0.47482225,-2.5783906,-5.8215284,-6.9845753,
-                         -6.8569856,-5.5142746,-3.6154995,-1.7236261,-0.06519903 ])          
-             
+                         -6.8569856,-5.5142746,-3.6154995,-1.7236261,-0.06519903 ])
+
      sem =  y - ylower
      N = 10
      sd = np.sqrt(N)*sem
@@ -68,10 +68,10 @@ def IV_Li_40():
 
 def IV_Li_all(Vhold : int):
     """
-    Returns the IV curve (pA/pF) from Figure 1C 
+    Returns the IV curve (pA/pF) from Figure 1C
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
     already converted to pA/pF
-    """    
+    """
     try:
         assert(Vhold in [-80,-60,-40])
     except:
@@ -82,9 +82,9 @@ def IV_Li_all(Vhold : int):
     elif Vhold == -60:
         x,y,sd = IV_Li_60()
     elif Vhold == -40:
-        x,y,sd = IV_Li_40()  
+        x,y,sd = IV_Li_40()
 
-    return x,y,sd 
+    return x,y,sd
 
 # import matplotlib.pyplot as plt
 # for Vhold in [80,60,40]:
@@ -113,7 +113,7 @@ def Act_Li():
      sem = yupper - y
      N = 10
      sd = np.sqrt(N)*sem
-     return x, y.tolist(), sd.tolist()     
+     return x, y.tolist(), sd.tolist()
 
 # Steady State Inactivation
 def Inact_Li_1000():
@@ -172,10 +172,10 @@ def Inact_Li_150():
 
 def inact_Li_all(tstep : int):
     """
-    Steady-State inactivation curve  from Figure 1C 
+    Steady-State inactivation curve  from Figure 1C
     in Li and Nattel 1997 with tstep = 1000, 300, 150 mS
 
-    """    
+    """
     try:
         assert(tstep in [1000,300,150])
     except:
@@ -186,9 +186,9 @@ def inact_Li_all(tstep : int):
     elif tstep == 300:
         x,y,sd = Inact_Li_300()
     elif tstep == 150:
-        x,y,sd = Inact_Li_150()  
+        x,y,sd = Inact_Li_150()
 
-    return x,y,sd 
+    return x,y,sd
 
 # import matplotlib.pyplot as plt
 # for tstep in [1000,300,150]:
@@ -206,7 +206,7 @@ def Tau1_Li_80():
      x = [-10, 0, 10, 20, 30]
      y = np.asarray([9.3351, 9.5781, 11.2823, 10.5040, 9.6271])
      yupper = np.asarray([10.3084, 10.6500, 12.4983, 11.5740, 11.6703])
-     sem = yupper - y 
+     sem = yupper - y
      N = 12
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -219,7 +219,7 @@ def Tau1_Li_60():
      x = [-10, 0, 10, 20, 30]
      y = np.asarray([11.250413,10.649782,12.664147,14.214826,16.567045])
      yupper = np.asarray([11.250413,10.649782,12.664147,16.32484,20.786776])
-     sem = yupper - y 
+     sem = yupper - y
      N = 10
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -231,18 +231,18 @@ def Tau1_Li_40():
      """
      x = [-10, 0, 10, 20, 30]
      y = np.asarray([11.334802,10.607138,12.410981,14.214675,14.54217])
-     yupper = np.asarray([11.334802,10.607138,12.410981,14.214675,14.54217]) # not sure there is any uncertainty : 
+     yupper = np.asarray([11.334802,10.607138,12.410981,14.214675,14.54217]) # not sure there is any uncertainty :
      # hard to distinguish on the figure
-     sem = yupper - y 
+     sem = yupper - y
      N = 8
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
 
 def Tau1_Li_all(Vhold : int):
     """
-    Returns Time Constant data for tau 1 from Figure 3B 
+    Returns Time Constant data for tau 1 from Figure 3B
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
-    """    
+    """
     try:
         assert(Vhold in [-80,-60,-40])
     except:
@@ -253,9 +253,9 @@ def Tau1_Li_all(Vhold : int):
     elif Vhold == -60:
         x,y,sd = Tau1_Li_60()
     elif Vhold == -40:
-        x,y,sd = Tau1_Li_40()  
+        x,y,sd = Tau1_Li_40()
 
-    return x,y,sd 
+    return x,y,sd
 
 # import matplotlib.pyplot as plt
 # for Vhold in [80,60,40]:
@@ -273,7 +273,7 @@ def Tau2_Li_80():
     y = np.asarray([87.5782, 62.5797, 50.7630, 54.3979, 76.2176])
     yupper = np.asarray([94.4024, 67.1252, 58.0298, 54.8554, 92.1267])
 
-    sem = yupper - y 
+    sem = yupper - y
     N = 12
     sd = np.sqrt(N)*sem
     return x, y.tolist(), sd.tolist()
@@ -286,8 +286,8 @@ def Tau2_Li_60():
      x = [-10, 0, 10, 20, 30]
      y = np.asarray([74.84698,62.14582,52.21172,61.257946,72.47672])
      yupper = np.asarray([74.84698,62.14582,52.21172,61.257946,72.47672]) # unable to distinguish the error bars
-     
-     sem = yupper - y 
+
+     sem = yupper - y
      N = 10
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -299,9 +299,9 @@ def Tau2_Li_40():
      """
      x = [-10, 0, 10, 20, 30]
      y = np.asarray([74.84839,61.74902,54.189396,60.86114,85.72313])
-     yupper = np.asarray([74.84839,61.74902,54.189396,60.86114,92.24713]) 
-     
-     sem = yupper - y 
+     yupper = np.asarray([74.84839,61.74902,54.189396,60.86114,92.24713])
+
+     sem = yupper - y
      N = 8
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -309,9 +309,9 @@ def Tau2_Li_40():
 
 def Tau2_Li_all(Vhold : int):
     """
-    Returns Time Constant data for tau 2 from Figure 3B 
+    Returns Time Constant data for tau 2 from Figure 3B
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
-    """    
+    """
     try:
         assert(Vhold in [-80,-60,-40])
     except:
@@ -322,9 +322,9 @@ def Tau2_Li_all(Vhold : int):
     elif Vhold == -60:
         x,y,sd = Tau2_Li_60()
     elif Vhold == -40:
-        x,y,sd = Tau2_Li_40()  
+        x,y,sd = Tau2_Li_40()
 
-    return x,y,sd 
+    return x,y,sd
 
 # import matplotlib.pyplot as plt
 # for Vhold in [80,60,40]:
@@ -332,7 +332,7 @@ def Tau2_Li_all(Vhold : int):
 #     plt.plot(x,y)
 # plt.legend(('80','60','40'))
 # plt.show()
-    
+
 def recov_Li_80():
      """
      recovery data for I2/I1 -80mV HP
@@ -349,9 +349,9 @@ def recov_Li_80():
      yupper = np.asarray([-6.7262736E-5,0.3819375,0.7326487,0.86688375,0.9454335,
                          0.9792601,1.0013157,1.0107998,1.0219014,1.0293446,
                          1.0101173,1.0316103,1.0297416,1.0067493,1.004213,
-                         1.0008514]) 
-     
-     sem = yupper - y 
+                         1.0008514])
+
+     sem = yupper - y
      N = 11
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -373,8 +373,8 @@ def recov_Li_60():
                          0.76048887,0.8053105,0.7606776,0.83686656,0.91564596,
                          0.95610696,0.99522924,1.0086211,1.0003675,0.99928963,
                          0.99921584])
-                              
-     sem = yupper - y 
+
+     sem = yupper - y
      N = 7
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -393,8 +393,8 @@ def recov_Li_40():
      yupper = np.asarray([0.20086457,0.47179395,0.62038225,0.67877287,0.7767501,
                          0.8076696,0.815856,0.85658765,0.87609714,0.9085637,
                          0.9378197,0.96824545,0.96611273,0.9866967])
-                                                       
-     sem = yupper - y 
+
+     sem = yupper - y
      N = 8
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -402,9 +402,9 @@ def recov_Li_40():
 
 def Recov_Li_all(Vhold : int):
     """
-    Returns recovery data for I2/I1 from Figure 4B 
+    Returns recovery data for I2/I1 from Figure 4B
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
-    """    
+    """
     try:
         assert(Vhold in [-80,-60,-40])
     except:
@@ -415,9 +415,39 @@ def Recov_Li_all(Vhold : int):
     elif Vhold == -60:
         x,y,sd = recov_Li_60()
     elif Vhold == -40:
-        x,y,sd = recov_Li_40()  
+        x,y,sd = recov_Li_40()
 
-    return x,y,sd 
+    return x,y,sd
+
+
+def TauF_Recov_Li():
+    """
+    Data for fast recovery time constant for i_CaL
+    from text on H230 in Li1997.
+    Errors reported as mean +/- SEM for 7,8 cells
+    """
+    x = [-60, -40]
+    y = [32, 169]
+    sem = np.array([8, 37])
+    N = [7, 8]
+    sd = np.sqrt(N)*sem
+
+    return x, y, sd.tolist()
+
+def TauS_Recov_Li():
+    """
+    Data for slow recovery time constant for i_CaL
+    from text on H230 in Li1997.
+    Errors reported as mean +/- SEM for 11,7,8 cells
+    """
+    x = [-80, -60, -40]
+    y = [55, 242, 1384]
+    sem = np.array([10, 51, 219])
+    N = [11, 7, 8]
+    sd = np.sqrt(N)*sem
+
+    return x, y, sd.tolist()
+
 
 # import matplotlib.pyplot as plt
 # for Vhold in [80,60,40]:
@@ -431,7 +461,7 @@ def relat_curr_Li_2_0():
      relative current as function of the pulse number
      data for -40mV HP and 2.0Hz
      Data from Li et al '97 Fig 5C
-     """     
+     """
      x = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
      y = np.asarray([1.0012542,0.65933526,0.5895303,0.5552531,0.5068999,
                     0.50781155,0.4725323,0.4462981,0.4482151,0.4199685,
@@ -439,8 +469,8 @@ def relat_curr_Li_2_0():
      ylower = np.asarray([1.0012542,0.58158517,0.5131229,0.48387176,0.4335103,
                          0.43844426,0.40919393,0.37290603,0.37582675,0.34557107,
                          0.33039427,0.3202435,0.3251758,0.31804115,0.3340317])
-                                                       
-     sem = y - ylower 
+
+     sem = y - ylower
      N = 13
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
@@ -450,7 +480,7 @@ def relat_curr_Li_1_0():
      relative current as function of the pulse number
      data for -40mV HP and 1.0Hz
      Data from Li et al '97 Fig 5C
-     """     
+     """
      x = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
      y = np.asarray([0.9969004,0.7293747,0.6538748,0.6165824,0.5692329,
                     0.5460156,0.52279586,0.5096331,0.49747497,0.4823023,
@@ -458,7 +488,7 @@ def relat_curr_Li_1_0():
      yupper = np.asarray([0.9969004,0.77662545,0.7172132,0.67388767,0.64061505,
                          0.6204139,0.60222185,0.5830277,0.5668447,0.5587072,
                          0.55559653,0.5414251,0.541328,0.5301735,0.5351042])
-                                                       
+
      sem = yupper - y
      N = 13
      sd = np.sqrt(N)*sem
@@ -469,7 +499,7 @@ def relat_curr_Li_0_5():
      relative current as function of the pulse number
      data for -40mV HP and 0.5Hz
      Data from Li et al '97 Fig 5C
-     """     
+     """
      x = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
      y = np.asarray([0.99891114,0.87314105,0.83283085,0.78749293,0.77935785,
                     0.7601613,0.74498695,0.72981185,0.73273176,0.74068016,
@@ -477,7 +507,7 @@ def relat_curr_Li_0_5():
      ylower = np.asarray([0.99891114,0.84700227,0.7986474,0.75130206,0.7270778,
                          0.72698236,0.70577586,0.69060236,0.69251776,0.70448595,
                          0.69835585,0.6982621,0.69916797,0.6920366,0.6889276])
-                                                       
+
      sem = y - ylower
      N = 13
      sd = np.sqrt(N)*sem
@@ -488,7 +518,7 @@ def relat_curr_Li_0_1():
      relative current as function of the pulse number
      data for -40mV HP and 0.1Hz
      Data from Li et al '97 Fig 5C
-     """     
+     """
      x = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
      y = np.asarray([0.9989128,0.9777005,0.9796158,0.9795196,0.9754052,
                     0.9793321,0.97521687,0.9791438,0.986086,0.96085554,
@@ -496,7 +526,7 @@ def relat_curr_Li_0_1():
      ylower = np.asarray([0.9989128,0.9777005,0.9796158,0.9553907,0.953287,
                          0.9562069,0.94807106,0.95300335,0.9579373,0.9276791,
                          0.9376358,0.94860196,0.9344289,0.94639874,0.95635456])
-                                
+
      sem = y - ylower
      N = 13
      sd = np.sqrt(N)*sem
@@ -504,9 +534,9 @@ def relat_curr_Li_0_1():
 
 def Relat_curr_Li_all(frequency : float):
     """
-    Returns relative current as function of the pulse number from Figure 5C 
+    Returns relative current as function of the pulse number from Figure 5C
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
-    """    
+    """
     try:
         assert(frequency in [2.0,1.0,0.5,0.1])
     except:
@@ -517,11 +547,11 @@ def Relat_curr_Li_all(frequency : float):
     elif frequency == 1.0:
         x,y,sd = relat_curr_Li_1_0()
     elif frequency == 0.5:
-        x,y,sd = relat_curr_Li_0_5()  
+        x,y,sd = relat_curr_Li_0_5()
     elif frequency == 0.1:
-        x,y,sd = relat_curr_Li_0_1() 
+        x,y,sd = relat_curr_Li_0_1()
 
-    return x,y,sd 
+    return x,y,sd
 
 # import matplotlib.pyplot as plt
 # for frequency in [2.0,1.0,0.5,0.1]:
@@ -533,13 +563,13 @@ def Relat_curr_Li_all(frequency : float):
 def relat_curr_ss_Li_80():
      """
      relative current as function of the Frequency (Hz)
-     data for -80mV HP 
+     data for -80mV HP
      Data from Li et al '97 Fig 6B
-     """     
+     """
      x = [0.2,0.5,1,2]
      y = np.asarray([1,0.97614056,0.9490366,0.87891024])
      ylower = np.asarray([1,0.939259,0.8953926,0.8210704])
-                                
+
      sem = y - ylower
      N = 8
      sd = np.sqrt(N)*sem
@@ -548,13 +578,13 @@ def relat_curr_ss_Li_80():
 def relat_curr_ss_Li_60():
      """
      relative current as function of the Frequency (Hz)
-     data for -60mV HP 
+     data for -60mV HP
      Data from Li et al '97 Fig 6B
-     """     
+     """
      x = [0.2,0.5,1,2]
-     y = np.asarray([1,0.87806815,0.6858296,0.63749784]) 
+     y = np.asarray([1,0.87806815,0.6858296,0.63749784])
      ylower = np.asarray([1,0.82945347,0.6858296,0.63749784])
-                                
+
      sem = y - ylower
      N = 10
      sd = np.sqrt(N)*sem
@@ -563,13 +593,13 @@ def relat_curr_ss_Li_60():
 def relat_curr_ss_Li_40():
      """
      relative current as function of the Frequency (Hz)
-     data for -40mV HP 
+     data for -40mV HP
      Data from Li et al '97 Fig 6B
-     """     
+     """
      x = [0.2,0.5,1,2]
-     y = np.asarray([1,0.7364104,0.4720861,0.406147]) 
+     y = np.asarray([1,0.7364104,0.4720861,0.406147])
      ylower = np.asarray([1,0.70120144,0.39748573,0.3323858])
-                                
+
      sem = y - ylower
      N = 13
      sd = np.sqrt(N)*sem
@@ -577,9 +607,9 @@ def relat_curr_ss_Li_40():
 
 def relat_curr_ss_Li_all(Vhold : int):
     """
-    Returns relative current as function of the Frequency (Hz) from Figure 6B 
+    Returns relative current as function of the Frequency (Hz) from Figure 6B
     in Li and Nattel 1997 with Vhold = -80, -60, -40 mV
-    """    
+    """
     try:
         assert(Vhold in [80,60,40])
     except:
@@ -590,9 +620,9 @@ def relat_curr_ss_Li_all(Vhold : int):
     elif Vhold == 60:
         x,y,sd = relat_curr_ss_Li_60()
     elif Vhold == 40:
-        x,y,sd = relat_curr_ss_Li_40()  
+        x,y,sd = relat_curr_ss_Li_40()
 
-    return x,y,sd 
+    return x,y,sd
 
 # import matplotlib.pyplot as plt
 # for Vhold in [80,60,40]:

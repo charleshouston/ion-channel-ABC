@@ -1,0 +1,87 @@
+[[model]]
+author: Cellml converter
+desc: """
+    'Mathematical Model Of An Adult Human Atrial Cell, 1998'
+    i_Ca_L channel
+    """
+name: NYG
+
+# Initial values
+i_caL.d_L   =  1.30050000000000000e-5
+i_caL.f_L_1 = 0.9986
+i_caL.f_L_2 = 0.9986
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[phys]
+F = 96487 [C/mol]
+R = 8314 [mJ/mol/K]
+T = 306.15 [K]
+FoRT = F/(R*T)
+
+[membrane]
+Cm = 50 [pF]
+dot(V)  = -ical.i_CaL
+    in [mV]
+
+[ca_conc]
+Ca_i = 7.24950000000000030e-5
+    in [mM]
+
+[ical]
+use membrane.Cm as Cm
+use membrane.V as V
+use ca_conc.Ca_d as Ca_d
+
+i_CaL = (g_Ca_L * g * (V - E_Ca_app))/Cm
+    in [pA/pF]
+g = d_L * (f_Ca * f_L_1 + (1 - f_Ca) * f_L_2)
+
+g_Ca_L = 6.75
+    in [nS]
+E_Ca_app = 60
+    in [mV]
+f_Ca = Ca_d / (Ca_d + k_Ca)
+    in [1]
+k_Ca = 0.025
+    in [mM]
+
+dot(d_L) = (d_L_infinity - d_L) / tau_d_L
+    in [1]
+d_L_infinity = 1 / (1 + exp((V + p1) / -p2))
+    in [1]
+tau_d_L = 1000 * (p3 * exp(-((V + p4) / p5) ^ 2) + p6)
+    in [ms]
+    
+p1 = 9 [mV]
+p2 = 5.8 [mV]
+p3 = 0.0027 [s]
+p4 = 35 [mV]
+p5 = 30 [mV]
+p6 = 0.002 [s]
+
+dot(f_L_1) = (f_L_infinity - f_L_1) / tau_f_L1
+    in [1]
+f_L_infinity = 1 / (1 + exp((membrane.V + q1) / q2))
+    in [1]
+tau_f_L1 = 1000 * (q3 * exp(-((membrane.V + q4) / q5) ^ 2) + q6)
+    in [ms]
+    
+q1 = 27.4 [mV]
+q2 = 7.1 [mV]
+q3 = 0.161 [s]
+q4 = 40 [mV]
+q5 = 14.4 [mV]
+q6 = 0.01 [s]
+
+dot(f_L_2) = (f_L_infinity - f_L_2) / tau_f_L2
+    in [1]
+tau_f_L2 = 1000 * (r1 * exp(-((membrane.V + r2) / r3) ^ 2) + r4)
+    in [ms]
+
+r1 = 1.3323 [s]
+r2 = 40 [mV]
+r3 = 14.2 [mV]
+r4 = 0.0626 [s]
