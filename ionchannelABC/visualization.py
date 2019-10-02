@@ -3,11 +3,12 @@ from .experiment import (Experiment,
                          setup)
 from pyabc.visualization.kde import (kde_1d,plot_kde_matrix)
 import numpy as np
+import myokit
 import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import Callable, List
+from typing import Callable, List, Union, Tuple
 
 
 def normalise(df, limits=None):
@@ -24,19 +25,30 @@ def normalise(df, limits=None):
     return result
 
 
-def plot_sim_results(modelfile: str,
+def plot_sim_results(modelfiles: Union[str,List[str]],
                      *experiments: Experiment,
+                     masks: List[List[Union[int,Tuple[int]]]]=None,
                      pacevar: str='membrane.V',
                      tvar: str='phys.T',
                      prev_runs: List[str]=[],
-                     df: pd.DataFrame=None,
-                     w: np.ndarray=None,
+                     df: Union[pd.DataFrame,List[pd.DataFrame]]=None,
+                     w: Union[np.ndarray,List[np.ndarray]]=None,
                      n_samples: int=100) -> sns.FacetGrid:
     """Plot output of ABC against experimental and/or original output.
 
     Args:
         modelfile (str): Path to Myokit MMT file.
         *experiments (Experiment): Experiments to plot.
+        masks (list): Optional masking list for the case when comparing
+            multiple models and you only want some models to plot on
+            a subset of the experiments. Format is a list of lists with
+            experiments to use having a value not None. A tuple value should
+            be used in the case that an experiment produces more than
+            one plot.
+        pacevar (str): Name of pacing variable in model.
+        tvar (str): Name of temperature variable in model.
+        prev_runs (list): Previous pyabc.History objects to randomly
+            sample from when producing plots.
         df (pd.DataFrame): Dataframe of parameters (see pyabc.History).
             If `None` runs model with current parameter settings.
         w (np.ndarray): The corresponding weights (see pyabc.History).
@@ -46,30 +58,61 @@ def plot_sim_results(modelfile: str,
     Returns
         sns.FacetGrid: Plots of measured output.
     """
-
-    observations, model, summary_statistics = setup(modelfile,
-                                                    *experiments,
-                                                    pacevar=pacevar,
-                                                    tvar=tvar,
-                                                    prev_runs=prev_runs,
-                                                    normalise=False)
-
-    # Generate model samples from ABC approximate posterior or create default
-    # samples if posterior was not provided as input.
     model_samples = pd.DataFrame({})
-    if df is not None:
-        posterior_samples = (df.sample(n=n_samples, weights=w, replace=True)
-                               .to_dict(orient='records'))
-    else:
-        posterior_samples = [{}]
 
-    for i, th in enumerate(posterior_samples):
-        results = summary_statistics(model(th))
-        output = pd.DataFrame({'x': observations.x,
-                               'y': list(results.values()),
-                               'exp_id': observations.exp_id})
-        output['sample'] = i
-        model_samples = model_samples.append(output, ignore_index=True)
+    # wrap inputs if necessary and only one
+    if not isinstance(modelfiles, list):
+        modelfiles = [modelfiles]
+    if not isinstance(df, list):
+        df = [df]
+    if not isinstance(w, list):
+        w = [w]
+
+    for i, modelfile in enumerate(modelfiles):
+        if masks is not None and masks[i] is not None:
+            experiment_list = [experiments[j] for j,val in enumerate(masks[i])
+                                              if val is not None]
+        else:
+            experiment_list = experiments
+        observations, model, summary_statistics = setup(modelfile,
+                                                        *experiment_list,
+                                                        pacevar=pacevar,
+                                                        tvar=tvar,
+                                                        prev_runs=prev_runs,
+                                                        normalise=False)
+
+        m = myokit.load_model(modelfile)
+        name = m.name()
+
+        # Create list of exp_ids to map to
+        exp_map = []
+        if masks is not None and masks[i] is not None:
+            for j in range(len(masks[i])):
+                if masks[i][j] is not None:
+                    if isinstance(masks[i][j], tuple):
+                        for k in range(len(masks[i][j])):
+                            exp_map.append(str(masks[i][j][k]))
+                    else:
+                        exp_map.append(str(masks[i][j]))
+
+        # Generate model samples from ABC approximate posterior or create default
+        # samples if posterior was not provided as input.
+        if df is not None and df[i] is not None:
+            posterior_samples = (df[i].sample(n=n_samples, weights=w[i], replace=True)
+                                      .to_dict(orient='records'))
+        else:
+            posterior_samples = [{}]
+
+        for j, th in enumerate(posterior_samples):
+            results = summary_statistics(model(th))
+            output = pd.DataFrame({'x': observations.x,
+                                   'y': list(results.values()),
+                                   'exp_id': observations.exp_id})
+            output['sample'] = j
+            output['model'] = name
+            if masks is not None and masks[i] is not None:
+                output.exp_id = [exp_map[int(exp_id)] for exp_id in output.exp_id]
+            model_samples = model_samples.append(output, ignore_index=True)
 
     # Function for mapping observations onto plot later
     def measured_plot(**kwargs):
@@ -79,13 +122,12 @@ def plot_sim_results(modelfile: str,
         plt.errorbar(measurements.loc[measurements['exp_id']==exp]['x'],
                      measurements.loc[measurements['exp_id']==exp]['y'],
                      yerr=np.sqrt(measurements.loc[measurements['exp_id']==exp]['variance']),
-                     #label='obs',
                      ls='None', marker='x', c='k')
 
     # Actually make the plot
-    #with sns.color_palette("gray"):
     grid = sns.relplot(x='x', y='y',
                        col='exp_id', kind='line',
+                       hue='model',
                        data=model_samples,
                        ci='sd',
                        facet_kws={'sharex': 'col',
@@ -97,9 +139,69 @@ def plot_sim_results(modelfile: str,
             l.set_linestyle('-')
 
     grid = grid.map_dataframe(measured_plot, measurements=observations)
-    #grid = grid.add_legend()
 
     return grid
+
+def plot_experiment_traces(modelfile: str,
+                           currvar: str,
+                           split_data_fns: List[Callable],
+                           *experiments: Experiment,
+                           df: pd.DataFrame=None,
+                           w: np.ndarray=None,
+                           pacevar: str='membrane.V',
+                           timevar: str='engine.time',
+                           log_interval: float=None,
+                           n_samples: int=100,
+                           ) -> sns.FacetGrid:
+
+    _, model, _ = setup(modelfile,
+                        *experiments,
+                        log_interval=log_interval,
+                        pacevar=pacevar,
+                        normalise=False)
+
+    model_samples = pd.DataFrame({})
+    if df is not None:
+        posterior_samples = (df.sample(n=n_samples, weights=w, replace=True)
+                               .to_dict(orient='records'))
+    else:
+        posterior_samples = [{}]
+
+    for i, th in enumerate(posterior_samples):
+        data = model(th)
+        output = pd.DataFrame({})
+        for j, d in enumerate(data):
+            split_f = split_data_fns[j]
+            data_exp = split_f(data[j])
+            for k, step in enumerate(data_exp):
+                output_exp = pd.DataFrame({'time': step[timevar],
+                                           'y': step[pacevar],
+                                           'measure': 'voltage',
+                                           'step': k,
+                                           'exp_id': j})
+                output = output.append(output_exp, ignore_index=True)
+                output_exp = pd.DataFrame({'time': step[timevar],
+                                           'y': step[currvar],
+                                           'measure': 'current',
+                                           'step': k,
+                                           'exp_id': j})
+                output = output.append(output_exp, ignore_index=True)
+
+        output['sample'] = i
+        model_samples = model_samples.append(output, ignore_index=True)
+
+    grid = sns.relplot(x='time', y='y',
+                       hue='step',
+                       col='exp_id', row='measure',
+                       palette='viridis',
+                       legend=False,
+                       data=model_samples,
+                       kind='line',
+                       ci='sd',
+                       facet_kws={'sharex': 'col',
+                                  'sharey': 'row'})
+    return grid
+
 
 
 def plot_distance_weights(

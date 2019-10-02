@@ -127,6 +127,7 @@ def setup(modelfile: str,
           tvar: str='phys.T',
           prev_runs: List[str]=[],
           logvars: List[str]=myokit.LOG_ALL,
+          log_interval: float=None,
           normalise: bool=True
           ) -> Tuple[pd.DataFrame, Callable, Callable]:
     """Combine chosen experiments into inputs for ABC.
@@ -205,7 +206,7 @@ def setup(modelfile: str,
                     return None
             sim.reset()
             try:
-                sim_output.append(sim.run(time, log=logvars))
+                sim_output.append(sim.run(time, log=logvars, log_interval=log_interval))
             except:
                 del(sim_output)
                 return None
