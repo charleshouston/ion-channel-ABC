@@ -171,7 +171,7 @@ def sakakibara_act_sum_stats(data):
         d = d.trim_left(10000, adjust=True)
         act_gate = d['ina.g']
         output = output+[max(act_gate, key=abs)]
-    norm = output[-1]
+    norm = max(output)
     for i in range(len(output)):
         output[i] /= norm
     return output
@@ -223,7 +223,7 @@ def sakakibara_inact_sum_stats(data):
         d = d.trim_left(11000, adjust = True)
         inact_gate = d['ina.g']
         output = output+[max(inact_gate, key=abs)]
-    norm = output[0]
+    norm = max(output)
     for i in range(len(output)):
         output[i] /= norm
     return output
