@@ -7,9 +7,10 @@ desc: """
 name: NYG
 
 # Initial values
-i_caL.d_L   =  1.30050000000000000e-5
-i_caL.f_L_1 = 0.9986
-i_caL.f_L_2 = 0.9986
+membrane.V = -74.2525
+ical.d_L   =  1.30050000000000000e-5
+ical.f_L_1 = 0.9986
+ical.f_L_2 = 0.9986
 
 [engine]
 time = 0 bind time
@@ -27,7 +28,7 @@ dot(V)  = -ical.i_CaL
     in [mV]
 
 [ca_conc]
-Ca_i = 7.24950000000000030e-5
+Ca_d = 7.24950000000000030e-5
     in [mM]
 
 [ical]

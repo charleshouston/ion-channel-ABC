@@ -9,8 +9,7 @@ Updated: Charles Houston 2019-10-02
 
 from ionchannelABC.experiment import Experiment
 import data.ical.Li1997.data_Li1997 as data
-from ionchannelABC.protocol import availability_linear
-from custom_protocols import recovery_tpreList, manual_steptrain_linear
+from ionchannelABC.protocol import availability_linear, recovery
 import numpy as np
 import myokit
 import warnings
@@ -40,30 +39,34 @@ li_iv_80_desc = li_iv_desc + "\n HP = -80mV"
 li_iv_60_desc = li_iv_desc + "\n HP = -60mV"
 li_iv_40_desc = li_iv_desc + "\n HP = -40mV"
 
-vsteps_iv, peaks_iv_80, sd_iv_80 = data.IV_Li_all(-80)
+vsteps_iv_80, peaks_iv_80, sd_iv_80 = data.IV_Li_all(-80)
 variances_iv_80 =  [(sd_)**2 for sd_ in sd_iv_80]
-li_iv_80_dataset = np.asarray([vsteps_iv, peaks_iv_80, variances_iv_80])
-vsteps_iv, peaks_iv_60, sd_iv_60 = data.IV_Li_all(-60)
-variances_iv_60 =  [(sd_)**2 for sd_ in sd_iv_80]
-li_iv_60_dataset = np.asarray([vsteps_iv, peaks_iv_60, variances_iv_60])
-vsteps_iv, peaks_iv_40, sd_iv_40 = data.IV_Li_all(-40)
+li_iv_80_dataset = np.asarray([vsteps_iv_80, peaks_iv_80, variances_iv_80])
+vsteps_iv_60, peaks_iv_60, sd_iv_60 = data.IV_Li_all(-60)
+variances_iv_60 =  [(sd_)**2 for sd_ in sd_iv_60]
+li_iv_60_dataset = np.asarray([vsteps_iv_60, peaks_iv_60, variances_iv_60])
+vsteps_iv_40, peaks_iv_40, sd_iv_40 = data.IV_Li_all(-40)
 variances_iv_40 =  [(sd_)**2 for sd_ in sd_iv_40]
-li_iv_40_dataset = np.asarray([vsteps_iv, peaks_iv_40, variances_iv_40])
+li_iv_40_dataset = np.asarray([vsteps_iv_40, peaks_iv_40, variances_iv_40])
+
+maxpeak = max(peaks_iv_80, key=abs)
+peaks_iv_80_norm = [p/abs(maxpeak) for p in peaks_iv_80]
+sd_iv_80_norm = [sd_/abs(maxpeak) for sd_ in sd_iv_80]
+variances_iv_80_norm =  [(sd_)**2 for sd_ in sd_iv_80_norm]
+li_iv_80_norm_dataset = np.asarray([vsteps_iv_80, peaks_iv_80_norm, variances_iv_80_norm])
 
 tpre = 10000 # ms
 tstep = 300
-vlower = -70
 dv = 10
-vupper = 60+dV
 
 li_iv_80_protocol = myokit.pacing.steptrain_linear(
-    vlower, vupper, dv, -80, tpre, tstep)
+    min(vsteps_iv_80), max(vsteps_iv_80)+dv, dv, -80, tpre, tstep)
 li_iv_60_protocol = myokit.pacing.steptrain_linear(
-    vlower, vupper, dv, -60, tpre, tstep)
+    min(vsteps_iv_60), max(vsteps_iv_60)+dv, dv, -60, tpre, tstep)
 li_iv_40_protocol = myokit.pacing.steptrain_linear(
-    vlower, vupper, dv, -40, tpre, tstep)
+    min(vsteps_iv_40), max(vsteps_iv_40)+dv, dv, -40, tpre, tstep)
 
-li_conditions = {'membrane.T': 309.15}
+li_conditions = {'phys.T': 309.15}
 
 def li_iv_sum_stats(data):
     output = []
@@ -73,6 +76,13 @@ def li_iv_sum_stats(data):
         # magnitude measured as difference between peak and steady-state at end of step
         output = output + [max(current, key=abs)-current[-1]]
     return output
+def li_iv_norm_sum_stats(data):
+    output = li_iv_sum_stats(data)
+    norm = max(output, key=abs)
+    for i in range(len(output)):
+        output[i] /= abs(norm)
+    return output
+
 
 li_iv_80 = Experiment(
     dataset=li_iv_80_dataset,
@@ -82,6 +92,14 @@ li_iv_80 = Experiment(
     description=li_iv_80_desc,
     Q10=Q10_cond,
     Q10_factor=1)
+li_iv_80_norm = Experiment(
+    dataset=li_iv_80_norm_dataset,
+    protocol=li_iv_80_protocol,
+    conditions=li_conditions,
+    sum_stats=li_iv_norm_sum_stats,
+    description=li_iv_80_desc,
+    Q10=None,
+    Q10_factor=0)
 li_iv_60 = Experiment(
     dataset=li_iv_60_dataset,
     protocol=li_iv_60_protocol,
@@ -119,17 +137,17 @@ tstep = 300
 vhold = -80 # mV
 vlower = -80
 dv = 10
-vupper = 20 + dV
+vupper = 20+dv
 
-li_act_protocol = myokit.pacing.steptrain_linear(
-    vlower, vupper+dv, dv, vhold, tpre, tstep)
+li_act_protocol = myokit.pacing.steptrain(
+    vsteps_act, vhold, tpre, tstep)
 
 def li_act_sum_stats(data):
     output = []
     for d in data.split_periodic(10300, adjust=True):
         d = d.trim_left(10000, adjust=True)
         act_gate = d['ical.g']
-        output = output + max(act_gate, key=abs)
+        output = output + [max(act_gate, key=abs)]
     norm = max(output)
     for i in range(len(output)):
         output[i] /= norm
@@ -167,13 +185,13 @@ li_inact_300_desc = li_inact_desc + "\n prepulse=300ms"
 li_inact_150_desc = li_inact_desc + "\n prepulse=150ms"
 
 vsteps_inact, inact_1000, sd_inact_1000 = data.inact_Li_all(1000)
-variances_inact = [(sd_)**2 for sd_ in sd_inact_1000]
+variances_inact_1000 = [(sd_)**2 for sd_ in sd_inact_1000]
 li_inact_1000_dataset = np.asarray([vsteps_inact, inact_1000, variances_inact_1000])
 vsteps_inact, inact_300, sd_inact_300 = data.inact_Li_all(300)
-variances_inact = [(sd_)**2 for sd_ in sd_inact_300]
+variances_inact_300 = [(sd_)**2 for sd_ in sd_inact_300]
 li_inact_300_dataset = np.asarray([vsteps_inact, inact_300, variances_inact_300])
 vsteps_inact, inact_150, sd_inact_150 = data.inact_Li_all(150)
-variances_inact = [(sd_)**2 for sd_ in sd_inact_150]
+variances_inact_150 = [(sd_)**2 for sd_ in sd_inact_150]
 li_inact_150_dataset = np.asarray([vsteps_inact, inact_150, variances_inact_150])
 
 tpre = 10000
@@ -183,7 +201,7 @@ vhold = -80 # mV
 vtest = 10
 vlower = -80
 dv = 10
-vupper = 50+dV
+vupper = 50+dv
 
 li_inact_1000_protocol = availability_linear(
     vlower, vupper, dv, vhold, vtest, tpre, 1000, twait, ttest)
@@ -196,8 +214,8 @@ def li_inact_sum_stats(data, tstep):
     output = []
     for d in data.split_periodic(10300+tstep, adjust=True):
         d = d.trim_left(10000+tstep, adjust=True)
-        inact_gate = d['i_caL.g']
-        output = output + max(inact_gate, key=abs)
+        inact_gate = d['ical.g']
+        output = output + [max(inact_gate, key=abs)]
     norm = output[0] # absence of prepulse
     for i in range(len(output)):
         output[i] /= norm
@@ -224,19 +242,19 @@ li_inact_1000 = Experiment(
     Q10=None,
     Q10_factor=0)
 li_inact_300 = Experiment(
-    dataset=li_inact_300,
-    protocol=li_inact_300,
+    dataset=li_inact_300_dataset,
+    protocol=li_inact_300_protocol,
     conditions=li_conditions,
-    sum_stats=li_inact_300,
-    description=li_inact_300,
+    sum_stats=li_inact_300_sum_stats,
+    description=li_inact_300_desc,
     Q10=None,
     Q10_factor=0)
 li_inact_150 = Experiment(
-    dataset=li_inact_150,
-    protocol=li_inact_150,
+    dataset=li_inact_150_dataset,
+    protocol=li_inact_150_protocol,
     conditions=li_conditions,
-    sum_stats=li_inact_150,
-    description=li_inact_150,
+    sum_stats=li_inact_150_sum_stats,
+    description=li_inact_150_desc,
     Q10=None,
     Q10_factor=0)
 
@@ -291,8 +309,8 @@ li_inact_kin_40_dataset = [dataset1,dataset2]
 tpre = 10000 # ms
 tstep = 300
 vlower = -10
-dv = 10+dv
-vupper = 30
+dv = 10
+vupper = 30+dv
 
 li_inact_kin_80_protocol = myokit.pacing.steptrain_linear(
     vlower, vupper, dv, -80, tpre, tstep)
@@ -362,11 +380,11 @@ li_inact_kin_80 = Experiment(
     Q10=Q10_tau,
     Q10_factor=-1)
 li_inact_kin_60 = Experiment(
-    dataset=li_inact_kin_60,
-    protocol=li_inact_kin_60,
+    dataset=li_inact_kin_60_dataset,
+    protocol=li_inact_kin_60_protocol,
     conditions=li_conditions,
     sum_stats=li_inact_kin_sum_stats,
-    description=li_inact_kin_60,
+    description=li_inact_kin_60_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
 li_inact_kin_40 = Experiment(
@@ -400,11 +418,11 @@ li_recov_desc =   """
     """
 prepulses_recov_tauf, recov_tauf, sd_recov_tauf = data.TauF_Recov_Li()
 variances_recov_tauf = [sd_**2 for sd_ in sd_recov_tauf]
-li_recov_tauf_dataset = np.array([vhold, recov_tauf, variances_recov_tauf])
+li_recov_tauf_dataset = np.asarray([prepulses_recov_tauf, recov_tauf, variances_recov_tauf])
 
-prepulses_recov_taus, recov_tauf, sd_recov_tauf = data.TauF_Recov_Li()
-variances_recov_tauf = [sd_**2 for sd_ in sd_recov_tauf]
-li_recov_tauf_dataset = np.array([vhold, recov_tauf, variances_recov_tauf])
+prepulses_recov_taus, recov_taus, sd_recov_taus = data.TauS_Recov_Li()
+variances_recov_taus = [sd_**2 for sd_ in sd_recov_taus]
+li_recov_taus_dataset = np.asarray([prepulses_recov_taus, recov_taus, variances_recov_taus])
 
 tpre = 10000 # ms
 tstep1 = 300
@@ -461,7 +479,7 @@ def li_recov_sum_stats(data):
                                            twaits_recov,
                                            recov,
                                            p0=[50.,500.,0.5,0.5,0.],
-                                           bounds=([0.],
+                                           bounds=(0.,
                                                    [np.inf,np.inf,1.0,1.0,1.0]),
                                            max_nfev=1000)
 
@@ -518,7 +536,9 @@ li_recov = Experiment(
     protocol=li_recov_protocol,
     conditions=li_conditions,
     sum_stats=li_recov_sum_stats,
-    description=li_recov_desc)
+    description=li_recov_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
 
 
 #

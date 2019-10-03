@@ -86,12 +86,6 @@ def IV_Li_all(Vhold : int):
 
     return x,y,sd
 
-# import matplotlib.pyplot as plt
-# for Vhold in [80,60,40]:
-#     x,y,s_ = IV_Li_all(Vhold)
-#     plt.plot(x,y)
-# plt.legend(('80','60','40'))
-# plt.show()
 
 # Steady State Activation
 
@@ -100,7 +94,7 @@ def Act_Li():
      Steady-State activation curve
      Data from Li et al '97 Fig. 2B
      """
-     x = [-80,-70, -60, -50, -40, -30, -25, -20, -15,
+     x = [-80, -70, -60, -50, -40, -30, -25, -20, -15,
          -10, -5, 0, 5, 10, 15, 20]
      y = np.asarray([0.0071,0.0071, 0.0061, 0.0119, 0.0332,
                      0.0836,0.1344, 0.2093, 0.3371, 0.5095,
