@@ -140,7 +140,7 @@ li_act = Experiment(
     protocol=li_act_protocol,
     conditions=li_conditions,
     sum_stats=li_act_sum_stats,
-    description=li_act_desc
+    description=li_act_desc,
     Q10=None,
     Q10_factor=0)
 
@@ -437,7 +437,7 @@ def li_recov_sum_stats(data):
     output1 = []
     output2 = []
     timename = 'engine.time'
-    for i,d in enumerate(data.split_periodic(tsplit_recov, adjust=True, closed_intervals=True)):
+    for i,d in enumerate(data.split_periodic(tsplit_recov, adjust=True, closed_intervals=False)):
         recov = []
         for t in tsplits_recov:
             d_, d = d.split(t)
@@ -519,3 +519,114 @@ li_recov = Experiment(
     conditions=li_conditions,
     sum_stats=li_recov_sum_stats,
     description=li_recov_desc)
+
+
+#
+# Use-dependent inactivation [Li1997]
+#
+li_use_inact_desc =   """
+    Use-dependent inactivation of I_Ca current from [Li1997] (Fig 5).
+
+    Protocol is a pulse train from various holding potentials using
+    300ms pulses to +10mV.
+
+    Holding potentials were -80,-60,-40mV.
+    """
+pulse_freq_80, pulse_const_80, sd_pulse_const_80 = data.Use_Inact_Li_80()
+variances_pulse_const_80 = [sd_**2 for sd_ in sd_pulse_const_80]
+li_use_inact_80_dataset = np.array([pulse_freq_80, pulse_const_80, variances_pulse_const_80])
+
+pulse_freq_60, pulse_const_60, sd_pulse_const_60 = data.Use_Inact_Li_60()
+variances_pulse_const_60 = [sd_**2 for sd_ in sd_pulse_const_60]
+li_use_inact_60_dataset = np.array([pulse_freq_60, pulse_const_60, variances_pulse_const_60])
+
+pulse_freq_40, pulse_const_40, sd_pulse_const_40 = data.Use_Inact_Li_40()
+variances_pulse_const_40 = [sd_**2 for sd_ in sd_pulse_const_40]
+li_use_inact_40_dataset = np.array([pulse_freq_40, pulse_const_40, variances_pulse_const_40])
+
+freq = pulse_freq_80
+vpulse = 10 # mV
+tpulse = 300 # ms
+tpre = 60000
+npulses = 15
+
+tmp_protocols = []
+for vhold in [-80,-60,-40]:
+    for f in freq:
+        p = myokit.Protocol()
+        period = 1000./f # ms
+        p.add_step(vhold, tpre)
+        for n in range(npulses):
+            p.add_step(vpulse, tpulse)
+            p.add_step(vhold, period-tpulse)
+        tmp_protocols.append(p)
+li_use_inact_protocol = tmp_protocols[0]
+tsplits = [tmp_protocols[0].characteristic_time(),
+           tmp_protocols[1].characteristic_time(),
+           tmp_protocols[2].characteristic_time()]
+
+for p in tmp_protocols[1:]:
+    for e in p.events():
+        li_use_inact_protocol.add_step(e.level(), e.duration())
+
+def li_use_inact_sum_stats(data):
+    def single_exp(n, k, D):
+        return D*np.exp(-k*n)
+
+    output = []
+    # split separate vholds
+    for dvhold in data.split_periodic(sum(tsplits), adjust=True, closed_intervals=False):
+        for i, f in freq:
+            pulses = [] # to hold the fitting data
+
+            period = 1000./f
+
+            dtrain, dvhold = dvhold.split(tsplits[i])
+            dtrain = dtrain.trim_left(tpre, adjust=True)
+            for d in dtrain.split_periodic(period, adjust=True, closed_intervals=False):
+                d = d.trim_right(period-tpulse)
+                current = d['ical.i_CaL']
+                pulses = pulses + [max(current, key=abs)]
+
+            # fit to exponential equation
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', so.OptimizeWarning)
+                warnings.simplefilter('error', RuntimeWarning)
+                try:
+                    # normalise to first pulse
+                    norm = pulses[0]
+                    for i in range(len(pulses)):
+                        pulses[i] /= norm
+                    popt, _ = so.curve_fit(single_exp,
+                                           list(range(npulses)),
+                                           pulses,
+                                           p0 = [0.2, 0.2],
+                                           bounds = (0.,
+                                                     [np.inf, 1.0]),
+                                           max_nfev=1000)
+
+                    fit = [single_exp(n, popt[0], popt[1]) for n in range(npulses)]
+                    # Calculate r2
+                    ss_res = np.sum((np.array(pulses)-np.array(fit))**2)
+                    ss_tot = np.sum((np.array(pulses)-np.mean(np.array(pulses)))**2)
+                    r2 = 1 - (ss_res / ss_tot)
+
+                    pulse_const = 1./popt[0]
+                    if r2 > fit_threshold:
+                        output = output+[pulse_const]
+                    else:
+                        raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
+                except:
+                    output = output + [float('inf')]
+    return output
+
+li_use_inact = Experiment(
+    dataset=[li_use_inact_dataset_80,
+             li_use_inact_dataset_60,
+             li_use_inact_dataset_40],
+    protocol=li_use_inact_protocol,
+    conditions=li_conditions,
+    sum_stats=li_use_inact_sum_stats,
+    description=li_use_inact_desc,
+    Q10=None,
+    Q10_factor=0.)

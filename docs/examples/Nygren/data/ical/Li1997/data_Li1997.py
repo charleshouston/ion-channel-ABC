@@ -553,6 +553,70 @@ def Relat_curr_Li_all(frequency : float):
 
     return x,y,sd
 
+
+def Use_Inact_Li_80():
+    """Pulse constants for use-dependent inactivation (Fig 5D).
+
+    Given as mean +/- SE.
+
+    x: Hz
+    y: Pulse constant (1/k) see text.
+    """
+    x = [0.5, 1.0, 2.0]
+    y = np.asarray([8.412698412698413,
+                    3.682539682539683,
+                    4.253968253968255])
+    sem = np.asarray([9.238095238095239,
+                      4.19047619047619,
+                      4.825396825396825])
+    sem = np.abs(y-sem)
+    N = 8
+    sd = np.sqrt(N)*sem
+
+    return x, y.tolist(), sd.tolist()
+
+def Use_Inact_Li_60():
+    """Pulse constants for use-dependent inactivation (Fig 5D).
+
+    Given as mean +/- SE.
+
+    x: Hz
+    y: Pulse constant (1/k) see text.
+    """
+    x = [0.5, 1.0, 2.0]
+    y = np.asarray([2.6984126984126973,
+                    3.238095238095239,
+                    3.1746031746031744])
+    sem = np.asarray([3.3968253968253963,
+                      3.841269841269842,
+                      3.904761904761904])
+    sem = np.abs(y-sem)
+    N = 10
+    sd = np.sqrt(N)*sem
+
+    return x, y.tolist(), sd.tolist()
+
+def Use_Inact_Li_40():
+    """Pulse constants for use-dependent inactivation (Fig 5D).
+
+    Given as mean +/- SE.
+
+    x: Hz
+    y: Pulse constant (1/k) see text.
+    """
+    x = [0.5, 1.0, 2.0]
+    y = np.asarray([1.9682539682539677,
+                    2.000000000000001,
+                    1.6825396825396814])
+    sem = np.asarray([2.4126984126984135,
+                      2.53968253968254,
+                      2.1269841269841274])
+    sem = np.abs(y-sem)
+    N = 10
+    sd = np.sqrt(N)*sem
+
+    return x, y.tolist(), sd.tolist()
+
 # import matplotlib.pyplot as plt
 # for frequency in [2.0,1.0,0.5,0.1]:
 #     x,y,s_ = Relat_curr_Li_all(frequency)
