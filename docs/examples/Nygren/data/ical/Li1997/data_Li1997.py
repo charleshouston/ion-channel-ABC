@@ -606,10 +606,66 @@ def Use_Inact_Li_40():
                       2.53968253968254,
                       2.1269841269841274])
     sem = np.abs(y-sem)
+    N = 13
+    sd = np.sqrt(N)*sem
+
+    return x, y.tolist(), sd.tolist()
+
+def Use_Inact_Li_SS_80():
+    """Steady-state current decay from use-dependent inactivation (Fig 6B)
+
+    Given as mean +/- SE
+    """
+    x = [0.5, 1.0, 2.0]
+    y = np.array([0.9797787693879196,
+                  0.9505994462514449,
+                  0.8828929329856725])
+    sem = np.array([0.942279777425338,
+                    0.8974893148033655,
+                    0.8266578855407113])
+    sem = np.abs(y-sem)
+    N = 8
+    sd = np.sqrt(N)*sem
+    return x, y.tolist(), sd.tolist()
+
+
+def Use_Inact_Li_SS_60():
+    """Steady-state current decay from use-dependent inactivation (Fig 6B)
+
+    Given as mean +/- SE
+    """
+    x = [0.5, 1.0, 2.0]
+    y = np.array([0.879781457487702,
+                  0.688093062014462,
+                  0.645385876723744])
+    sem = np.array([0.8297962420365044,
+                    0.6630937340394075,
+                    0.6141501572538373])
+    sem = np.abs(y-sem)
     N = 10
     sd = np.sqrt(N)*sem
 
     return x, y.tolist(), sd.tolist()
+
+
+def Use_Inact_Li_SS_40():
+    """Steady-state current decay from use-dependent inactivation (Fig 6B)
+
+    Given as mean +/- SE
+    """
+    x = [0.5, 1.0, 2.0]
+    y = np.array([0.7391602376280207,
+                  0.4787236902233811,
+                  0.41726700895137225])
+    sem = np.array([0.7016612456654392,
+                    0.4037391467971292,
+                    0.3391575495282386])
+    sem = np.abs(y-sem)
+    N = 13
+    sd = np.sqrt(N)*sem
+
+    return x, y.tolist(), sd.tolist()
+
 
 # import matplotlib.pyplot as plt
 # for frequency in [2.0,1.0,0.5,0.1]:

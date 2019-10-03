@@ -555,14 +555,23 @@ li_use_inact_desc =   """
 pulse_freq_80, pulse_const_80, sd_pulse_const_80 = data.Use_Inact_Li_80()
 variances_pulse_const_80 = [sd_**2 for sd_ in sd_pulse_const_80]
 li_use_inact_80_dataset = np.array([pulse_freq_80, pulse_const_80, variances_pulse_const_80])
+_, ss_decay_80, sd_ss_decay_80 = data.Use_Inact_Li_SS_80()
+variances_ss_decay_80 = [sd_**2 for sd_ in sd_ss_decay_80]
+li_use_inact_ss_80_dataset = np.array([pulse_freq_80, ss_decay_80, variances_ss_decay_80])
 
 pulse_freq_60, pulse_const_60, sd_pulse_const_60 = data.Use_Inact_Li_60()
 variances_pulse_const_60 = [sd_**2 for sd_ in sd_pulse_const_60]
 li_use_inact_60_dataset = np.array([pulse_freq_60, pulse_const_60, variances_pulse_const_60])
+_, ss_decay_60, sd_ss_decay_60 = data.Use_Inact_Li_SS_60()
+variances_ss_decay_60 = [sd_**2 for sd_ in sd_ss_decay_60]
+li_use_inact_ss_60_dataset = np.array([pulse_freq_60, ss_decay_60, variances_ss_decay_60])
 
 pulse_freq_40, pulse_const_40, sd_pulse_const_40 = data.Use_Inact_Li_40()
 variances_pulse_const_40 = [sd_**2 for sd_ in sd_pulse_const_40]
 li_use_inact_40_dataset = np.array([pulse_freq_40, pulse_const_40, variances_pulse_const_40])
+_, ss_decay_40, sd_ss_decay_40 = data.Use_Inact_Li_SS_40()
+variances_ss_decay_40 = [sd_**2 for sd_ in sd_ss_decay_40]
+li_use_inact_ss_40_dataset = np.array([pulse_freq_40, ss_decay_40, variances_ss_decay_40])
 
 freq = pulse_freq_80
 vpulse = 10 # mV
@@ -591,17 +600,21 @@ for p in tmp_protocols[1:]:
 
 def li_use_inact_sum_stats(data):
     def single_exp(n, k, D):
-        return D*np.exp(-k*n)
+        return (1-D)+D*np.exp(-k*n)
 
-    output = []
+    output1 = []
+    output2 = []
+
     # split separate vholds
     for dvhold in data.split_periodic(sum(tsplits), adjust=True, closed_intervals=False):
-        for i, f in freq:
+        for i, f in enumerate(freq):
             pulses = [] # to hold the fitting data
 
             period = 1000./f
 
-            dtrain, dvhold = dvhold.split(tsplits[i])
+            dtrain, dvhold = dvhold.split(sum(tsplits[:i+1]))
+            t0 = dtrain['engine.time'][0]
+            dtrain['engine.time'] = [t-t0 for t in dtrain['engine.time']]
             dtrain = dtrain.trim_left(tpre, adjust=True)
             for d in dtrain.split_periodic(period, adjust=True, closed_intervals=False):
                 d = d.trim_right(period-tpulse)
@@ -630,20 +643,25 @@ def li_use_inact_sum_stats(data):
                     ss_res = np.sum((np.array(pulses)-np.array(fit))**2)
                     ss_tot = np.sum((np.array(pulses)-np.mean(np.array(pulses)))**2)
                     r2 = 1 - (ss_res / ss_tot)
-
                     pulse_const = 1./popt[0]
+                    ss_decay = 1.-popt[1]
                     if r2 > fit_threshold:
-                        output = output+[pulse_const]
+                        output1 = output1+[pulse_const]
+                        output2 = output2+[ss_decay]
                     else:
                         raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
                 except:
-                    output = output + [float('inf')]
-    return output
+                    output1 = output1 + [float('inf')]
+                    output2 = output2 + [float('inf')]
+    return output1+output2
 
 li_use_inact = Experiment(
-    dataset=[li_use_inact_dataset_80,
-             li_use_inact_dataset_60,
-             li_use_inact_dataset_40],
+    dataset=[li_use_inact_80_dataset,
+             li_use_inact_60_dataset,
+             li_use_inact_40_dataset,
+             li_use_inact_ss_80_dataset,
+             li_use_inact_ss_60_dataset,
+             li_use_inact_ss_40_dataset],
     protocol=li_use_inact_protocol,
     conditions=li_conditions,
     sum_stats=li_use_inact_sum_stats,
