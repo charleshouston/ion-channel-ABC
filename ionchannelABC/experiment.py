@@ -67,7 +67,7 @@ class Experiment:
         """
         if isinstance(dataset, list):
             self._dataset = dataset
-            if isinstance(Q10_factor, int):
+            if not isinstance(Q10_factor, list):
                 self._Q10_factor = [Q10_factor,]*len(dataset)
             else:
                 self._Q10_factor = Q10_factor
