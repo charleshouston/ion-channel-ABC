@@ -70,7 +70,7 @@ li_conditions = {'phys.T': 309.15}
 
 def li_iv_sum_stats(data):
     output = []
-    for d in data.split_periodic(10300, adjust=True):
+    for d in data.split_periodic(10300, adjust=True, closed_intervals=False):
         d = d.trim_left(10000, adjust=True)
         current = d['ical.i_CaL'][:-1] # the last value for some models can be NaN
         # magnitude measured as difference between peak and steady-state at end of step
@@ -144,7 +144,7 @@ li_act_protocol = myokit.pacing.steptrain(
 
 def li_act_sum_stats(data):
     output = []
-    for d in data.split_periodic(10300, adjust=True):
+    for d in data.split_periodic(10300, adjust=True, closed_intervals=False):
         d = d.trim_left(10000, adjust=True)
         act_gate = d['ical.g']
         output = output + [max(act_gate, key=abs)]
@@ -212,7 +212,7 @@ li_inact_150_protocol = availability_linear(
 
 def li_inact_sum_stats(data, tstep):
     output = []
-    for d in data.split_periodic(10300+tstep, adjust=True):
+    for d in data.split_periodic(10300+tstep, adjust=True, closed_intervals=False):
         d = d.trim_left(10000+tstep, adjust=True)
         inact_gate = d['ical.g']
         output = output + [max(inact_gate, key=abs)]
@@ -321,10 +321,10 @@ li_inact_kin_40_protocol = myokit.pacing.steptrain_linear(
 
 def li_inact_kin_sum_stats(data):
     def double_exp(t, tauh, taus, Ah, As, A0):
-        return Ah*np.exp(-t/tauh) + As*np.exp(-t/taus)
+        return A0 + Ah*np.exp(-t/tauh) + As*np.exp(-t/taus)
     output_fast = []
     output_slow = []
-    for d in data.split_periodic(10300, adjust=True):
+    for d in data.split_periodic(10300, adjust=True, closed_intervals=False):
         d = d.trim_left(10000, adjust=True)
 
         current = d['ical.i_CaL'][:-1]
