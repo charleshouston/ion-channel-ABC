@@ -241,6 +241,61 @@ def plot_distance_weights(
     return grid
 
 
+def plot_variables(v: np.ndarray,
+                   variables: Union[dict,List[dict]],
+                   modelfiles: Union[str,List[str]],
+                   par_samples: Union[dict,List[dict]]=None):
+    """Plot model variables over voltage range."""
+
+    if not isinstance(variables, list):
+        variables = [variables]
+    if not isinstance(modelfiles, list):
+        modelfiles = [modelfiles]
+    if not isinstance(par_samples, list):
+        par_samples = [par_samples,]*len(variables)
+
+    fig, ax = plt.subplots(ncols=len(variables[0]), nrows=1,
+                           figsize=(len(variables[0])*3, 3))
+
+    samples = pd.DataFrame({})
+    for i, modelfile in enumerate(modelfiles):
+        m = myokit.load_model(modelfile)
+
+        if par_samples[i] is not None:
+            for j, pars in enumerate(par_samples[i]):
+                for p, val in pars.items():
+                    if p.startswith("log"):
+                        val = 10**val
+                        p = p[4:]
+                    m.set_value(p, val)
+
+                output = pd.DataFrame({})
+                for key, var in variables[i].items():
+                    output[key] = m.get(var).pyfunc()(v)
+                output['V'] = v
+                output['samples'] = j
+                output['model'] = m.name()
+                samples = samples.append(output, ignore_index=True)
+        else:
+            # Plot original values
+            output = pd.DataFrame({})
+            for key, var in variables[i].items():
+                try:
+                    output[key] = m.get(var).pyfunc()(v)
+                except:
+                    raise Exception('Could not find variable '+key+' in modelfile '+modelfile)
+                output['V'] = v
+            output['model'] = m.name()
+            samples = samples.append(output)
+
+    for i, key in enumerate(variables[0].keys()):
+        sns.lineplot(x='V', y=key, hue='model', data=samples, ci='sd', ax=ax[i], legend=False)
+
+    plt.tight_layout()
+
+    return ax
+
+
 def plot_parameters_kde(df, w, limits, aspect=None, height=None):
     """Plot grid of parameter KDE density estimates.
 
@@ -308,7 +363,6 @@ def plot_parameters_kde(df, w, limits, aspect=None, height=None):
     g.despine(bottom=True, left=True)
 
     return g
-
 
 def plot_kde_matrix_custom(df, w, limits=None, refval=None):
     """Wrapper around pyabc.visualization.plot_kde_matrix."""
