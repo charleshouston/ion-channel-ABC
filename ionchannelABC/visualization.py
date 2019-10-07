@@ -27,6 +27,7 @@ def normalise(df, limits=None):
 
 def plot_sim_results(modelfiles: Union[str,List[str]],
                      *experiments: Experiment,
+                     temp_match_model: int=0.,
                      masks: List[List[Union[int,Tuple[int]]]]=None,
                      pacevar: str='membrane.V',
                      tvar: str='phys.T',
@@ -39,6 +40,8 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
     Args:
         modelfile (str): Path to Myokit MMT file.
         *experiments (Experiment): Experiments to plot.
+        temp_match_model (int): index of modelfile that all simulation
+            output will be temperature adjusted to.
         masks (list): Optional masking list for the case when comparing
             multiple models and you only want some models to plot on
             a subset of the experiments. Format is a list of lists with
@@ -68,6 +71,8 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
     if not isinstance(w, list):
         w = [w]
 
+    all_observations = []
+    model_names = []
     for i, modelfile in enumerate(modelfiles):
         if masks is not None and masks[i] is not None:
             experiment_list = [experiments[j] for j,val in enumerate(masks[i])
@@ -83,6 +88,7 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
 
         m = myokit.load_model(modelfile)
         name = m.name()
+        model_names.append(name)
 
         # Create list of exp_ids to map to
         exp_map = []
@@ -114,6 +120,25 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
                 output.exp_id = [exp_map[int(exp_id)] for exp_id in output.exp_id]
             model_samples = model_samples.append(output, ignore_index=True)
 
+        if masks is not None and masks[i] is not None:
+            observations.exp_id = [exp_map[int(exp_id)] for exp_id in observations.exp_id]
+        all_observations.append(observations)
+
+    # Temperature adjust to model temperature specified in index
+    # i.e. scale those model variables not at the same temperature
+    # This is done by checking the observation y values (which are scaled
+    # to model temperature in `setup`
+    plot_obs = all_observations[temp_match_model]
+    for i, model_obs in enumerate(all_observations):
+        name = model_names[i]
+        for exp_id in model_obs['exp_id'].unique():
+            po_temp = plot_obs[plot_obs['exp_id']==exp_id]
+            mo_temp = model_obs[model_obs['exp_id']==exp_id]
+            temp_adjust_factor = np.nanmean(po_temp['y'].values/mo_temp['y'].values)
+            model_samples.loc[(model_samples['model']==name) &
+                              (model_samples['exp_id']==exp_id),'y'] *= temp_adjust_factor
+
+
     # Function for mapping observations onto plot later
     def measured_plot(**kwargs):
         measurements = kwargs.pop('measurements')
@@ -141,6 +166,7 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
     grid = grid.map_dataframe(measured_plot, measurements=observations)
 
     return grid
+
 
 def plot_experiment_traces(modelfile: str,
                            currvar: str,
