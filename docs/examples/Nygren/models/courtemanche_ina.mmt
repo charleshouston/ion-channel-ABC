@@ -138,7 +138,7 @@ a6_j = 0.311
 a7_j = 79.23
 
 # Ensure continuity of beta_j
-b1_j = b5_j * exp(-b6_j * V)/(1 + exp(-b7_j * (V + b8_j))) * (exp(-b2_j * V) / (1 + exp(-b3_j * (V + b4_j))))^(-1)
+b1_j = b5_j * exp(-b6_j * c1_j)/(1 + exp(-b7_j * (c1_j + b8_j))) * (exp(-b2_j * c1_j) / (1 + exp(-b3_j * (c1_j + b4_j))))^(-1)
 #b1_j = 0.3
 b2_j = 2.535e-7
 b3_j = 0.1
