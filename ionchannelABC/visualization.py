@@ -27,7 +27,7 @@ def normalise(df, limits=None):
 
 def plot_sim_results(modelfiles: Union[str,List[str]],
                      *experiments: Experiment,
-                     temp_match_model: int=0.,
+                     temp_match_model: int=0,
                      masks: List[List[Union[int,Tuple[int]]]]=None,
                      pacevar: str='membrane.V',
                      tvar: str='phys.T',
@@ -270,7 +270,8 @@ def plot_distance_weights(
 def plot_variables(v: np.ndarray,
                    variables: Union[dict,List[dict]],
                    modelfiles: Union[str,List[str]],
-                   par_samples: Union[dict,List[dict]]=None):
+                   par_samples: Union[dict,List[dict]]=None,
+                   figshape: Tuple[int]=None):
     """Plot model variables over voltage range."""
 
     if not isinstance(variables, list):
@@ -280,8 +281,18 @@ def plot_variables(v: np.ndarray,
     if not isinstance(par_samples, list):
         par_samples = [par_samples,]*len(variables)
 
-    fig, ax = plt.subplots(ncols=len(variables[0]), nrows=1,
-                           figsize=(len(variables[0])*3, 3))
+    if figshape is None:
+        ncols = len(variables[0])
+        nrows = 1
+    else:
+        assert(figshape[0]+figshape[1]<=len(variables),
+               'Fig shape does not match number of variables!')
+        ncols = figshape[0]
+        nrows = figshape[1]
+
+    fig, ax = plt.subplots(ncols=ncols, nrows=nrows,
+                           figsize=(ncols*5, nrows*5),
+                           sharex=True)
 
     samples = pd.DataFrame({})
     for i, modelfile in enumerate(modelfiles):
@@ -314,12 +325,14 @@ def plot_variables(v: np.ndarray,
             output['model'] = m.name()
             samples = samples.append(output)
 
+    # redorder axes for plotting
     for i, key in enumerate(variables[0].keys()):
-        sns.lineplot(x='V', y=key, hue='model', data=samples, ci='sd', ax=ax[i], legend=False)
+        sns.lineplot(x='V', y=key, hue='model', data=samples, ci='sd', ax=ax.flatten()[i], legend=False)
+        sns.despine(ax=ax.flatten()[i])
 
     plt.tight_layout()
 
-    return ax
+    return fig, ax
 
 
 def plot_parameters_kde(df, w, limits, aspect=None, height=None):
