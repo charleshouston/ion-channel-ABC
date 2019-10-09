@@ -38,8 +38,8 @@ use membrane.V as V
 use na_conc.E_Na as E_Na
 
 g_Na = 10 [S/F]
-S = 0.87
-g = m^3 * (S*h1 + (1-S)*h2)
+#S = 0.87
+g = m^3 * h1 * h2 #(S*h1 + (1-S)*h2)
     in [1]
 i_Na = g_Na * g * (V - E_Na)
     in [pA/pF]
