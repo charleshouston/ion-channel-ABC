@@ -224,8 +224,12 @@ def sakakibara_inact_sum_stats(data):
         inact_gate = d['ina.g']
         output = output+[max(inact_gate, key=abs)]
     norm = max(output)
-    for i in range(len(output)):
-        output[i] /= norm
+    try:
+        for i in range(len(output)):
+            output[i] /= norm
+    except:
+        for i in range(len(output)):
+            output[i] = float('inf')
     return output
 
 sakakibara_inact = Experiment(
