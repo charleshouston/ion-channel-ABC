@@ -136,6 +136,8 @@ a4_j = 0.04391
 a5_j = 37.78
 a6_j = 0.311
 a7_j = 79.23
+# enforce continuity
+a8_j = (-a1_j * exp(a2_j * c1_j) - a3_j * exp(-a4_j * c1_j)) * ((c1_j + a5_j) / (1 + exp(a6_j * (c1_j + a7_j))))
 
 # Ensure continuity of beta_j
 b1_j = b5_j * exp(-b6_j * c1_j)/(1 + exp(-b7_j * (c1_j + b8_j))) * (exp(-b2_j * c1_j) / (1 + exp(-b3_j * (c1_j + b4_j))))^(-1)
@@ -150,7 +152,7 @@ b8_j  = 40.14
 
 alpha_j = piecewise(
     V >= c1_j, 
-    0,
+    a8_j,
     (-a1_j * exp(a2_j * V) - a3_j * exp(-a4_j * V)) * ((V + a5_j) / (1 + exp(a6_j * (V + a7_j))))
     )
     in [1/ms]
