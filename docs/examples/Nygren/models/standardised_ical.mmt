@@ -1,0 +1,96 @@
+[[model]]
+name: STA
+author: Charles Houston
+desc: """
+      Standardised model for ical current.
+      """
+
+# Initial values
+membrane.V = -80
+ical.d = 0.0
+ical.f_1 = 1.0
+ical.f_2 = 1.0
+#ical.f_Ca = 1.0
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[phys]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+T = 310 [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[ca_conc]
+use phys.FoRT as FoRT
+Ca_o = 1.8 [mM]
+Ca_i = 0.0001 [mM]
+
+[membrane]
+dot(V) = -ical.i_CaL
+    in [mV]
+
+[ical]
+use membrane.V as V
+use ca_conc.Ca_i as Ca_i
+
+g_CaL = 0.1238 [S/F]
+g = d * f_1 * f_2 * f_Ca
+    in [1]
+i_CaL = g_CaL * g * (V - E_Ca_app)
+    in [pA/pF]
+E_Ca_app = 65 [mV]
+
+dot(d) = (d_ss - d) / tau_d
+    in [1]
+tau_d = 1 / (k_1 + k_2)
+    in [ms]
+d_ss = k_1 * tau_d
+    in [1]
+
+dot(f_1) = (f_ss - f_1) / tau_f1
+    in [1]
+tau_f1 = 1 / (k_3 + k_4)
+    in [ms]
+f_ss = k_4 * tau_f1
+    in [1]
+
+dot(f_2) = (f_ss - f_2) / tau_f2
+A = 10
+tau_f2 = A*tau_f1
+    in [ms]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 10^(1.3)
+    in [1/ms]
+p_2 = 0.014 [1/mV]
+p_3 = 10^(-0.4)
+    in [1/ms]
+p_4 = 0.058 [1/mV]
+p_5 = 10^(2.2) 
+    in [1/ms]
+p_6 = 0.11 [1/mV]
+p_7 = 10^(-3.2) 
+    in [1/ms]
+p_8 = 0.051 [1/mV]
+
+# Gating constants for f_Ca [Courtemanche1998]
+r1 = 0.00035
+
+f_Ca = 0.5 # set to eliminate calcium dependence in calibration
+#dot(f_Ca) = (f_Ca_inf - f_Ca) / tau_f_Ca
+#    in [1]
+tau_f_Ca = 2
+    in [ms]
+f_Ca_inf = 1 / (1 + (Ca_i / r1))
+    in [1]

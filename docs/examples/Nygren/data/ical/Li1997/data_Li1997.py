@@ -666,6 +666,17 @@ def Use_Inact_Li_SS_40():
 
     return x, y.tolist(), sd.tolist()
 
+def Act_Tau_Li():
+    """Activation time constant of ical.
+
+    From text on p H233.
+    """
+    x = [10]
+    y = [0.6]
+    sem = np.array([0.2])
+    N = 6
+    sd = np.sqrt(N)*sem
+    return x, y, sd.tolist()
 
 # import matplotlib.pyplot as plt
 # for frequency in [2.0,1.0,0.5,0.1]:
@@ -786,4 +797,3 @@ def IV_Li_RTdeg():
      N = 6
      sd = np.sqrt(N)*sem
      return x, y.tolist(), sd.tolist()
-

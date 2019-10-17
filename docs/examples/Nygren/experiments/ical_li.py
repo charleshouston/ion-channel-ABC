@@ -18,8 +18,11 @@ import scipy.optimize as so
 import matplotlib.pyplot as plt
 
 
-Q10_tau = 2.1  # [tenTusscher2004]
-Q10_cond = 2.3 # [Kiyosue1993]
+#Q10_tau = 2.1  # [tenTusscher2004]
+#Q10_cond = 2.3 # [Kiyosue1993]
+
+Q10_tau = 0.9  # [Li1997]
+Q10_cond = 1.2 # [Li1997]
 
 fit_threshold = 0.9
 
@@ -66,7 +69,8 @@ li_iv_60_protocol = myokit.pacing.steptrain_linear(
 li_iv_40_protocol = myokit.pacing.steptrain_linear(
     min(vsteps_iv_40), max(vsteps_iv_40)+dv, dv, -40, tpre, tstep)
 
-li_conditions = {'phys.T': 309.15}
+li_conditions = {'phys.T': 309.15, # K
+                 'ca_conc.Ca_o': 2.0}   # mM
 
 def li_iv_sum_stats(data):
     output = []
@@ -132,6 +136,10 @@ vsteps_act, act, sd_act = data.Act_Li()
 variances_act = [(sd_)**2 for sd_ in sd_act]
 li_act_dataset = np.asarray([vsteps_act, act, variances_act])
 
+vstep_tau_a, tau_a, sd_tau_a = data.Act_Tau_Li()
+variances_tau_a = [(sd_)**2 for sd_ in sd_tau_a]
+li_act_tau_dataset = np.asarray([vstep_tau_a, tau_a, variances_tau_a])
+
 tpre  = 10000 # ms
 tstep = 300
 vhold = -80 # mV
@@ -142,16 +150,60 @@ vupper = 20+dv
 li_act_protocol = myokit.pacing.steptrain(
     vsteps_act, vhold, tpre, tstep)
 
-def li_act_sum_stats(data):
+def li_act_sum_stats(data, act_tau_10=False):
+    def single_exp(t, tau, A):
+        return 1-A*np.exp(-t/tau)
     output = []
+    output_tau = []
+
     for d in data.split_periodic(10300, adjust=True, closed_intervals=False):
         d = d.trim_left(10000, adjust=True)
         act_gate = d['ical.g']
         output = output + [max(act_gate, key=abs)]
+
+        if act_tau_10 and np.isclose(d['membrane.V'][0], 10.0):
+            time = d['engine.time']
+            index = np.argmax(act_gate)
+
+            # trim anything after peak
+            act_gate = act_gate[:index]
+            time = time[:index]
+
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', OptimizeWarning)
+                warnings.simplefilter('error', RuntimeWarning)
+                try:
+                    norm = max(act_gate, key=abs)
+                    act_gate = [a/norm for a in act_gate]
+                    if len(time)<=1 or len(act_gate)<=1:
+                        raise Exception('Failed simulation')
+                    popt, _ = so.curve_fit(single_exp,
+                                           time,
+                                           act_gate,
+                                           p0=[0.5, 1],
+                                           bounds=(0., np.inf),
+                                           max_nfev=1000)
+                    fit = [single_exp(t,popt[0],popt[1]) for t in time]
+                    # Calculate r2
+                    ss_res = np.sum((np.array(act_gate)-np.array(fit))**2)
+                    ss_tot = np.sum((np.array(act_gate)-np.mean(np.array(act_gate)))**2)
+                    r2 = 1 - (ss_res / ss_tot)
+
+                    tau = popt[0]
+
+                    if r2 > fit_threshold:
+                        output_tau = [tau]
+                    else:
+                        raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
+                except:
+                    output_tau = [float('inf')]
     norm = max(output)
     for i in range(len(output)):
         output[i] /= norm
-    return output
+    return output+output_tau
+
+def li_act_and_tau_sum_stats(data):
+    return li_act_sum_stats(data, act_tau_10=True)
 
 li_act = Experiment(
     dataset=li_act_dataset,
@@ -161,6 +213,16 @@ li_act = Experiment(
     description=li_act_desc,
     Q10=None,
     Q10_factor=0)
+
+li_act_and_tau = Experiment(
+    dataset=[li_act_dataset,
+             li_act_tau_dataset],
+    protocol=li_act_protocol,
+    conditions=li_conditions,
+    sum_stats=li_act_and_tau_sum_stats,
+    description=li_act_desc,
+    Q10=Q10_tau,
+    Q10_factor=[0,-1])
 
 
 #
@@ -289,6 +351,7 @@ vsteps_th2, th2, sd_th2 = data.Tau2_Li_all(-80)
 variances_th2 = [(sd_)**2 for sd_ in sd_th2]
 dataset2 = np.asarray([vsteps_th2, th2, variances_th2])
 li_inact_kin_80_dataset = [dataset1,dataset2]
+li_inact_kin_80_taus_dataset = dataset2
 
 vsteps_th1, th1, sd_th1 = data.Tau1_Li_all(-60)
 variances_th1 = [(sd_)**2 for sd_ in sd_th1]
@@ -319,7 +382,7 @@ li_inact_kin_60_protocol = myokit.pacing.steptrain_linear(
 li_inact_kin_40_protocol = myokit.pacing.steptrain_linear(
     vlower, vupper, dv, -40, tpre, tstep)
 
-def li_inact_kin_sum_stats(data):
+def li_inact_kin_sum_stats(data, fast=True, slow=True):
     def double_exp(t, tauh, taus, Ah, As, A0):
         return A0 + Ah*np.exp(-t/tauh) + As*np.exp(-t/taus)
     output_fast = []
@@ -368,8 +431,15 @@ def li_inact_kin_sum_stats(data):
             except:
                 output_fast = output_slow+[float('inf')]
                 output_slow = output_slow+[float('inf')]
-    output = output_fast+output_slow
+    output = []
+    if fast:
+        output += output_fast
+    if slow:
+        output += output_slow
     return output
+
+def li_inact_kin_taus_sum_stats(data):
+    return li_inact_kin_sum_stats(data, fast=False, slow=True)
 
 li_inact_kin_80 = Experiment(
     dataset=li_inact_kin_80_dataset,
@@ -379,6 +449,16 @@ li_inact_kin_80 = Experiment(
     description=li_inact_kin_80_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
+
+li_inact_kin_taus_80 = Experiment(
+    dataset=li_inact_kin_80_taus_dataset,
+    protocol=li_inact_kin_80_protocol,
+    conditions=li_conditions,
+    sum_stats=li_inact_kin_taus_sum_stats,
+    description=li_inact_kin_80_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+
 li_inact_kin_60 = Experiment(
     dataset=li_inact_kin_60_dataset,
     protocol=li_inact_kin_60_protocol,
@@ -446,7 +526,7 @@ tsplits_recov = [t+tstep1+tstep2+tpre for t in twaits_recov]
 for i in range(len(tsplits_recov)-1):
     tsplits_recov[i+1] += tsplits_recov[i]
 
-def li_recov_sum_stats(data):
+def li_recov_sum_stats(data, fast=True, slow=True):
     def double_exp(t, tau_f, tau_s, Af, As, A0):
         return A0-Af*np.exp(-t/tau_f)-As*np.exp(-t/tau_s)
     def single_exp(t, tau_s, As, A0):
@@ -459,10 +539,10 @@ def li_recov_sum_stats(data):
         recov = []
         for t in tsplits_recov:
             d_, d = d.split(t)
-            step1 = d_.trim(d_[timename][0]+tpre,
-                            d_[timename][0]+tpre+tstep1,
+            step1 = d_.trim(d_[timename][0]+10000,
+                            d_[timename][0]+10300,
                             adjust=True)
-            step2 = d_.trim_left(t-tstep2, adjust=True)
+            step2 = d_.trim_left(t-300, adjust=True)
             try:
                 max1 = max(step1['ical.i_CaL'], key=abs)
                 max2 = max(step2['ical.i_CaL'], key=abs)
@@ -485,7 +565,6 @@ def li_recov_sum_stats(data):
 
                     fit = [double_exp(t,popt[0],popt[1],popt[2],popt[3],popt[4])
                            for t in twaits_recov]
-
                     # Calculate r2
                     ss_res = np.sum((np.array(recov)-np.array(fit))**2)
                     ss_tot = np.sum((np.array(recov)-np.mean(np.array(recov)))**2)
@@ -514,7 +593,6 @@ def li_recov_sum_stats(data):
 
                     fit = [single_exp(t,popt[0],popt[1],popt[2])
                            for t in twaits_recov]
-
                     # Calculate r2
                     ss_res = np.sum((np.array(recov)-np.array(fit))**2)
                     ss_tot = np.sum((np.array(recov)-np.mean(np.array(recov)))**2)
@@ -527,8 +605,15 @@ def li_recov_sum_stats(data):
                         raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
                 except:
                     output2 = output2+[float('inf')]
-    output = output1+output2
+    output = []
+    if fast:
+        output += output1
+    if slow:
+        output += output2
     return output
+
+def li_recov_taus_sum_stats(data):
+    return li_recov_sum_stats(data, fast=False, slow=True)
 
 li_recov = Experiment(
     dataset=[li_recov_tauf_dataset,
@@ -536,6 +621,14 @@ li_recov = Experiment(
     protocol=li_recov_protocol,
     conditions=li_conditions,
     sum_stats=li_recov_sum_stats,
+    description=li_recov_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+li_recov_taus = Experiment(
+    dataset=li_recov_taus_dataset,
+    protocol=li_recov_protocol,
+    conditions=li_conditions,
+    sum_stats=li_recov_taus_sum_stats,
     description=li_recov_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
