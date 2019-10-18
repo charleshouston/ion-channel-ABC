@@ -31,6 +31,9 @@ nygren_inact_kin_desc = """
     in [Firek1995] (same lab and Nygren et al refer to
     `our data`).
 
+    We assume the SD is 10% of the given time constants as
+    no error is reported.
+
     Current traces are recorded in response to selected
     voltage steps from a holding potential of -80 mV. Analysis
     of the kinetics of inactivation of these records showed that
@@ -42,7 +45,8 @@ nygren_inact_kin_desc = """
     for the isolated Ito.
     """
 vsteps_taui, tau_i, _ = data.Inact_Kin_Nygren()
-variances_taui = [0.]*len(vsteps_taui)
+sd = np.asarray(tau_i)*0.1
+variances_taui = [sd_**2 for sd_ in sd]
 nygren_inact_kin_dataset = np.asarray([vsteps_taui, tau_i, variances_taui])
 
 nygren_inact_kin_protocol = myokit.pacing.steptrain(
@@ -124,7 +128,10 @@ nygren_rec_desc = """
     the same recovery protocol as described
     in [Shibata1989] (same lab and Nygren et al refer to
     `our data`), and using the temperature of the Nygren
-    cell model: 33C,
+    cell model: 33C.
+
+    We assume the SD is 10% of the given time constants as
+    no error is reported.
 
     Two idential depolarizing voltage-clamp pulses from the holding
     potential were applied to a potential (+20 mV) that activated
@@ -132,7 +139,8 @@ nygren_rec_desc = """
     pulses was varied.
     """
 prepulses, tau_r, _ = data.Rec_Nygren()
-variances_taur = [0.]*len(prepulses)
+sd_taur = 0.1*np.asarray(tau_r)
+variances_taur = [sd_**2 for sd_ in sd_taur]
 nygren_rec_dataset = np.asarray([prepulses, tau_r, variances_taur])
 
 twaits = [2**i for i in range(1,8)]
