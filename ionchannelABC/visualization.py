@@ -271,8 +271,23 @@ def plot_variables(v: np.ndarray,
                    variables: Union[dict,List[dict]],
                    modelfiles: Union[str,List[str]],
                    par_samples: Union[dict,List[dict]]=None,
+                   original: bool=False,
                    figshape: Tuple[int]=None):
-    """Plot model variables over voltage range."""
+    """Plot model variables over voltage range.
+
+    v (np.ndarray): Voltage range to plot over.
+    variables (dict): Dictionary mapping common names to variables in the
+        model to be plotted.
+    modelfiles (str): Location of modelfiles to plot.
+    par_samples (dict): Samples of parameter values to set in model to
+        plot summarised results.
+    original (bool): Whether to plot original parameter values as
+        dashed lines.
+    figshape (Tuple[int]): Shape of figure. Defaults to single row
+    """
+    if original:
+        assert(par_samples is not None,
+               'Require parameter value samples to plot original values.')
 
     if not isinstance(variables, list):
         variables = [variables]
@@ -298,6 +313,14 @@ def plot_variables(v: np.ndarray,
     for i, modelfile in enumerate(modelfiles):
         m = myokit.load_model(modelfile)
 
+        original_vals = {}
+        if original:
+            for p in par_samples[i][0].keys():
+                name = p
+                if p.startswith("log"):
+                    name = p[4:]
+                original_vals[name] = m.value(name)
+
         if par_samples[i] is not None:
             for j, pars in enumerate(par_samples[i]):
                 for p, val in pars.items():
@@ -312,10 +335,15 @@ def plot_variables(v: np.ndarray,
                 output['V'] = v
                 output['samples'] = j
                 output['model'] = m.name()
+                output['data'] = 'recalibrated'
                 samples = samples.append(output, ignore_index=True)
-        else:
-            # Plot original values
+
+        # Plot original values
+        if par_samples[i] is None or original:
             output = pd.DataFrame({})
+            if original:
+                for p, val in original_vals.items():
+                    m.set_value(p, val)
             for key, var in variables[i].items():
                 try:
                     output[key] = m.get(var).pyfunc()(v)
@@ -323,11 +351,15 @@ def plot_variables(v: np.ndarray,
                     raise Exception('Could not find variable '+key+' in modelfile '+modelfile)
                 output['V'] = v
             output['model'] = m.name()
+            output['data'] = 'original'
             samples = samples.append(output)
 
     # redorder axes for plotting
     for i, key in enumerate(variables[0].keys()):
-        sns.lineplot(x='V', y=key, hue='model', data=samples, ci='sd', ax=ax.flatten()[i], legend=False)
+        sns.lineplot(x='V', y=key, hue='model', style='data',
+                     data=samples,
+                     ci='sd', ax=ax.flatten()[i],
+                     legend=False)
         sns.despine(ax=ax.flatten()[i])
 
     plt.tight_layout()
