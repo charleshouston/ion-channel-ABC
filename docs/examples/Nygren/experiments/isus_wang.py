@@ -3,7 +3,7 @@ Experiments from [Wang1993]
 Charles Houston 2019-10-18
 """
 from ionchannelABC.experiment import Experiment
-from ionchannelABC.protocol import recovery, availability_linear
+from ionchannelABC.protocol import availability
 import data.isus.Wang1993.data_Wang1993 as data
 import numpy as np
 import myokit
@@ -154,43 +154,46 @@ wang_act_kin = Experiment(
     Q10=Q10_tau,
     Q10_factor=-1)
 
-# #
-# # Inactivation [Wang1993]
-# #
-# wang_inact_desc = """
-#     Steady-state inactivation curve for ito in human
-#     atrial myocytes [Wang1993] cf Fig 2c.
 #
-#     Voltage-dependent inactivation was assessed with the use of a
-#     two-pulse protocol with a 1000 ms prepulse to voltages between -80
-#     and +40 mV, followed by a 1000 ms test pulse to +60 mV.
-#     """
-# vsteps_inact, inact, sd_inact = data.Inact_Wang()
-# variances_inact = [sd_**2 for sd_ in sd_inact]
-# wang_inact_dataset = np.asarray([vsteps_inact, inact, variances_inact])
+# Inactivation [Wang1993]
 #
-# wang_inact_protocol = availability(
-#     vsteps_inact, -80, 60, 20000, 1000, 0, 1000)
-#
-# def wang_inact_sum_stats(data):
-#     output = []
-#     for d in data.split_periodic(22000, adjust=True, closed_intervals=False):
-#         d = d.trim_left(21000, adjust=True)
-#         inact_gate = d['ito.g']
-#         output = output + [max(inact_gate, key=abs)]
-#     norm = max(output)
-#     try:
-#         for i in range(len(output)):
-#             output[i] /= norm
-#     except:
-#         output = [float('inf'),]*len(output)
-#     return output
-#
-# wang_inact = Experiment(
-#     dataset=wang_inact_dataset,
-#     protocol=wang_inact_protocol,
-#     conditions=wang_conditions,
-#     sum_stats=wang_inact_sum_stats,
-#     description=wang_inact_desc,
-#     Q10=None,
-#     Q10_factor=0.)
+wang_inact_desc = """
+    Steady-state inactivation curve for isus in human
+    atrial myocytes [Wang1993] cf Fig 7a.
+
+    Isus is measured from the steady-state current at the end
+    of a 2000 ms test pulse at +40 mV preceded by a 1000 ms
+    conditioning pulse at various potentials delivered from a
+    holding potential of -60 mV. Current amplitude is normalised
+    to the maximum value obtained with a conditioning voltage of
+    -90 mV.
+    """
+vsteps_inact, inact, sd_inact = data.Inact_Wang()
+variances_inact = [sd_**2 for sd_ in sd_inact]
+wang_inact_dataset = np.asarray([vsteps_inact, inact, variances_inact])
+
+wang_inact_protocol = availability(
+    vsteps_inact, -60, 40, 20000, 1000, 0, 2000)
+
+def wang_inact_sum_stats(data):
+    output = []
+    for d in data.split_periodic(23000, adjust=True, closed_intervals=False):
+        d = d.trim_left(21000, adjust=True)
+        inact_gate = d['isus.g']
+        output = output + [inact_gate[-1]]
+    norm = output[0]
+    try:
+        for i in range(len(output)):
+            output[i] /= norm
+    except:
+        output = [float('inf'),]*len(output)
+    return output
+
+wang_inact = Experiment(
+    dataset=wang_inact_dataset,
+    protocol=wang_inact_protocol,
+    conditions=wang_conditions,
+    sum_stats=wang_inact_sum_stats,
+    description=wang_inact_desc,
+    Q10=None,
+    Q10_factor=0.)
