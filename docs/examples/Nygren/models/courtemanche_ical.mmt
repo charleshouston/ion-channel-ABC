@@ -9,7 +9,7 @@ desc:   """
 membrane.V = -81.18
 ical.d = 0.000137
 ical.f = 0.999
-ical.f_Ca = 0.775
+#ical.f_Ca = 0.775
 
 [engine]
 time = 0 bind time
@@ -77,8 +77,10 @@ f_inf = 1 / (1 + exp((V + q6) / q7))
 # Gating constants for f_Ca
 r1 = 0.00035
 
-dot(f_Ca) = (f_Ca_inf - f_Ca) / tau_f_Ca
+f_Ca = 0.5 # eliminating calcium-inactivation for calibration
     in [1]
+#dot(f_Ca) = (f_Ca_inf - f_Ca) / tau_f_Ca
+#    in [1]
 tau_f_Ca = 2
     in [ms]
 f_Ca_inf = 1 / (1 + (Ca_i / r1))
