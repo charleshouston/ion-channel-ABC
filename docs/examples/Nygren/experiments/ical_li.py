@@ -15,7 +15,6 @@ import myokit
 import warnings
 from scipy.optimize import OptimizeWarning
 import scipy.optimize as so
-import matplotlib.pyplot as plt
 
 
 #Q10_tau = 2.1  # [tenTusscher2004]

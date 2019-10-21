@@ -70,20 +70,20 @@ def courtemanche_kin_sum_stats(data, act=True, inact=True):
         index = np.argmax(np.abs(current))
         if act:
             # Set time zero to peak current
-            act = current[:index]
+            current_act = current[:index]
             time_act = time[:index]
 
             with warnings.catch_warnings():
                 warnings.simplefilter('error', OptimizeWarning)
                 warnings.simplefilter('error', RuntimeWarning)
                 try:
-                    norm = act[-1]
-                    act = [c/norm for c in act]
-                    if len(time_act)<=1 or len(act)<=1:
+                    norm = current_act[-1]
+                    current_act = [c/norm for c in current_act]
+                    if len(time_act)<=1 or len(current_act)<=1:
                         raise Exception('Failed simulation')
                     popt, _ = so.curve_fit(single_exp_act,
                                            time_act,
-                                           act,
+                                           current_act,
                                            p0=[10,0.5,0.],
                                            bounds=(0.,
                                                    [np.inf, 1.0, 1.0]),
@@ -91,8 +91,8 @@ def courtemanche_kin_sum_stats(data, act=True, inact=True):
                     fit_act = [single_exp_act(t,popt[0],popt[1],popt[2]) for t in time_act]
 
                     # Calculate r2
-                    ss_res = np.sum((np.array(act)-np.array(fit_act))**2)
-                    ss_tot = np.sum((np.array(act)-np.mean(np.array(act)))**2)
+                    ss_res = np.sum((np.array(current_act)-np.array(fit_act))**2)
+                    ss_tot = np.sum((np.array(current_act)-np.mean(np.array(current_act)))**2)
                     r2 = 1 - (ss_res / ss_tot)
 
                     taua = popt[0]
@@ -106,7 +106,7 @@ def courtemanche_kin_sum_stats(data, act=True, inact=True):
 
         if inact:
             # Set time zero to peak current
-            inact = current[index:]
+            current_inact = current[index:]
             time_inact = time[index:]
             t0 = time_inact[0]
             time_inact = [t-t0 for t in time_inact]
@@ -115,13 +115,13 @@ def courtemanche_kin_sum_stats(data, act=True, inact=True):
                 warnings.simplefilter('error', OptimizeWarning)
                 warnings.simplefilter('error', RuntimeWarning)
                 try:
-                    norm = inact[0]
-                    inact = [c/norm for c in inact]
-                    if len(time_inact)<=1 or len(inact)<=1:
+                    norm = current_inact[0]
+                    current_inact = [c/norm for c in current_inact]
+                    if len(time_inact)<=1 or len(current_inact)<=1:
                         raise Exception('Failed simulation')
                     popt, _ = so.curve_fit(single_exp_inact,
                                            time_inact,
-                                           inact,
+                                           current_inact,
                                            p0=[100,0.5,0.],
                                            bounds=(0.,
                                                    [np.inf, 1.0, 1.0]),
@@ -129,8 +129,8 @@ def courtemanche_kin_sum_stats(data, act=True, inact=True):
                     fit_inact = [single_exp_inact(t,popt[0],popt[1],popt[2]) for t in time_inact]
 
                     # Calculate r2
-                    ss_res = np.sum((np.array(inact)-np.array(fit_inact))**2)
-                    ss_tot = np.sum((np.array(inact)-np.mean(np.array(inact)))**2)
+                    ss_res = np.sum((np.array(current_inact)-np.array(fit_inact))**2)
+                    ss_tot = np.sum((np.array(current_inact)-np.mean(np.array(current_inact)))**2)
                     r2 = 1 - (ss_res / ss_tot)
 
                     taui = popt[0]
@@ -143,11 +143,11 @@ def courtemanche_kin_sum_stats(data, act=True, inact=True):
                     output_inact = output_inact+[float('inf')]
     return output_act+output_inact
 
-def courtemanche_act_kin_protocol(data):
-    return courtemanche_kin_protocol(data, act=True, inact=False)
+def courtemanche_act_kin_sum_stats(data):
+    return courtemanche_kin_sum_stats(data, act=True, inact=False)
 
-def courtemanche_inact_kin_protocol(data):
-    return courtemanche_kin_protocol(data, act=False, inact=True)
+def courtemanche_inact_kin_sum_stats(data):
+    return courtemanche_kin_sum_stats(data, act=False, inact=True)
 
 courtemanche_kin = Experiment(
     dataset=[courtemanche_act_kin_dataset,
@@ -160,17 +160,17 @@ courtemanche_kin = Experiment(
     Q10_factor=-1)
 courtemanche_act_kin = Experiment(
     dataset=courtemanche_act_kin_dataset,
-    protocol=courtemanche_act_kin_protocol,
+    protocol=courtemanche_kin_protocol,
     conditions=wang_conditions,
-    sum_stats=courtemanche_kin_sum_stats,
+    sum_stats=courtemanche_act_kin_sum_stats,
     description=courtemanche_kin_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
 courtemanche_inact_kin = Experiment(
     dataset=courtemanche_inact_kin_dataset,
-    protocol=courtemanche_inact_kin_protocol,
+    protocol=courtemanche_kin_protocol,
     conditions=wang_conditions,
-    sum_stats=courtemanche_kin_sum_stats,
+    sum_stats=courtemanche_inact_kin_sum_stats,
     description=courtemanche_kin_desc,
     Q10=Q10_tau,
     Q10_factor=-1)

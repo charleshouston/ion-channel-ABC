@@ -502,7 +502,7 @@ def sakakibara_rec_sum_stats(data, fast=True, slow=True):
     output1 = []
     output2 = []
     timename = 'engine.time'
-    for i, d in enumerate(data.split_periodic(tsplit_rec, adjust=True, closed_intervals=True)):
+    for i, d in enumerate(data.split_periodic(tsplit_rec, adjust=True, closed_intervals=False)):
         recov = []
         for t in tsplits_rec:
             d_, d = d.split(t)

@@ -44,8 +44,11 @@ def firek_inact_sum_stats(data):
         inact_gate = d['ito.g']
         output = output + [max(inact_gate, key=abs)]
     norm = max(output)
-    for i in range(len(output)):
-        output[i] /= norm
+    try:
+        for i in range(len(output)):
+            output[i] /= norm
+    except:
+        output = [float('inf'),]*len(output)
     return output
 
 firek_inact = Experiment(
