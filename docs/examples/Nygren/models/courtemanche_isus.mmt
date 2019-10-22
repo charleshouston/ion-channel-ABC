@@ -41,14 +41,14 @@ use membrane.Cm as Cm
 
 i_sus = g_sus * g * (V - E_K) / Cm
     in [pA/pF]
-g = a^3*i
+g = a^3*i*(1 + r1/(1+exp((V+r2)/-r3)))
     in [1]
-
-g_sus = 0.005 * (1 + r1/(1+exp((V+r2)/-r3)))
-    in [nS/pF]
 r1 = 10 [nS/pF]
 r2 = -15 [mV]
 r3 = 13 [mV]
+
+g_sus = 0.005
+    in [nS/pF]
 
 # Gating constants for a
 p1 = 30.3 [mV]
