@@ -2,14 +2,14 @@
 author: Cellml converter
 desc: """
     Mathematical Model Of An Adult Human Atrial Cell, 1998
-    i_sus channel
+    i_to channel
     """
-name: NYG
+name: NYG_FULL
 
 # Initial values
 membrane.V = -74.2525
-isus.r = 0.0010678
-isus.s = 0.949
+ito.r = 0.0010678
+ito.s = 0.949
 
 [engine]
 time = 0 bind time
@@ -23,7 +23,7 @@ FoRT = F/(R*T)
 
 [membrane]
 Cm = 50 [pF]
-dot(V)  = -isus.i_sus
+dot(V)  = -ito.i_to
     in [mV]
 
 [k_conc]
@@ -33,42 +33,40 @@ K_o = 1 [mM]
 E_K = 1/FoRT * log(K_o/K_i)
     in [mV]
 
-[isus]
+[ito]
 use membrane.Cm as Cm
 use membrane.V as V
 use k_conc.E_K as E_K
 
-i_sus = (g_sus * g * (V - E_K))/Cm
+i_to = (g_to * g * (V - E_K))/Cm
     in [pA/pF]
 g = r * s
-g_sus = 2.75
+g_to = 7.5
     in [nS]
 
 dot(r) = (r_inf - r) / tau_r
     in [1]
-r_inf = 1 / (1 + exp((V + p1) / -p2))
+r_inf = 1 / (1 + exp((V - p1) / -p2))
     in [1]
-tau_r = 1000 * (p3 / (1 + exp((V + p4) / p5)) + p6)
+tau_r = 1000 * (p3 * exp(-(V / p4) ^ 2) + p5)
     in [ms]
     
-p1 = 4.3 [mV]
-p2 = 8 [mV]
-p3 = 0.009 [s]
-p4 = 5 [mV]
-p5 = 12 [mV]
-p6 = 0.0005 [s]
+p1 = 1 [mV]
+p2 = 11 [mV]
+p3 = 0.0035 [s]
+p4 = 30 [mV]
+p5 = 0.0015 [s]
 
 dot(s) = (s_inf - s) / tau_s
     in [1]
-s_inf = (1-q3) / (1 + exp((V + q1) / q2)) + q3
+s_inf = 1 / (1 + exp((V + q1) / q2))
     in [1]
-tau_s = 1000 * (q4 / (1 + exp((V + q5) / q6)) + q7)
+tau_s = 1000 * (q3 * exp(-((V + q4) / q5) ^ 2) + q6)
     in [ms]
     
-q1 = 20 [mV]
-q2 = 10 [mV]
-q3 = 0.6
-q4 = 0.047 [s]
-q5 = 60 [mV]
-q6 = 10 [mV]
-q7 = 0.3 [s]
+q1 = 40.5 [mV]
+q2 = 11.5 [mV]
+q3 = 0.4812 [s]
+q4 = 52.45 [mV]
+q5 = 14.97 [mV]
+q6 = 0.01414 [s]
