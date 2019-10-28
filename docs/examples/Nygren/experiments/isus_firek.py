@@ -42,7 +42,7 @@ def firek_inact_sum_stats(data):
     for d in data.split_periodic(22900, adjust=True, closed_intervals=False):
         d = d.trim_left(22500, adjust=True)
         inact_gate = d['isus.g']
-        output = output + [max(inact_gate, key=abs)]
+        output = output + [inact_gate[-1]]
     norm = max(output)
     try:
         for i in range(len(output)):

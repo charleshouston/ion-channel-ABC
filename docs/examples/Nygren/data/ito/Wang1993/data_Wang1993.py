@@ -28,7 +28,7 @@ def Act_Wang():
                         0.9390243902439026,
                         1.0139372822299653])
     sem = np.abs(y-yerr)
-    N = 6
+    N = 7
     sd = np.sqrt(N)*sem
     return x, y.tolist(), sd.tolist()
 

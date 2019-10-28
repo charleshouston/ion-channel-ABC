@@ -26,18 +26,21 @@ wang_act_desc = """
     Steady-state activation curve for ito in human
     atrial myocytes [Wang1993] cf Fig 2c.
 
-    Voltage-dependent activation as assessed by the tail current at
-    -40 mV after 5 ms depolarizations to a variety of test potentials.
+    Voltage dependence of activation as determined from peak current
+    during 1000 ms depolarising pulses from a holding potential of
+    -80 mV to various test potentials.
     """
 vsteps_act, act, sd_act = data.Act_Wang()
 variances_act = [sd_**2 for sd_ in sd_act]
 wang_act_dataset = np.asarray([vsteps_act, act, variances_act])
 
-wang_act_protocol = myokit.Protocol()
-for v in vsteps_act:
-    wang_act_protocol.add_step(-80, 20000) # tpre at vhold
-    wang_act_protocol.add_step(v, 5)      # test pulse
-    wang_act_protocol.add_step(-40, 100)   # measure pulse
+#wang_act_protocol = myokit.Protocol()
+#for v in vsteps_act:
+#    wang_act_protocol.add_step(-80, 20000) # tpre at vhold
+#    wang_act_protocol.add_step(v, 5)      # test pulse
+#    wang_act_protocol.add_step(-40, 100)   # measure pulse
+wang_act_protocol = myokit.pacing.steptrain(
+    vsteps_act, -80, 10000, 1000)
 
 wang_conditions = {'phys.T': 295.15,  # K
                    'k_conc.K_i': 130, # mM
@@ -46,8 +49,8 @@ wang_conditions = {'phys.T': 295.15,  # K
 
 def wang_act_sum_stats(data):
     output = []
-    for d in data.split_periodic(20105, adjust=True, closed_intervals=False):
-        d = d.trim_left(20005, adjust=True)
+    for d in data.split_periodic(11000, adjust=True, closed_intervals=False):
+        d = d.trim_left(10000, adjust=True)
         act_gate = d['ito.g']
         output = output + [max(act_gate, key=abs)]
     norm = max(output)
