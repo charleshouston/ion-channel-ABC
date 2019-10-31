@@ -152,9 +152,10 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
     # Actually make the plot
     grid = sns.relplot(x='x', y='y',
                        col='exp_id', kind='line',
-                       hue='model',
+                       hue='model', style='model',
                        data=model_samples,
                        ci='sd',
+                       markers=True,
                        facet_kws={'sharex': 'col',
                                   'sharey': 'col'})
 
@@ -271,7 +272,7 @@ def plot_variables(v: np.ndarray,
                    variables: Union[dict,List[dict]],
                    modelfiles: Union[str,List[str]],
                    par_samples: Union[dict,List[dict]]=None,
-                   original: bool=False,
+                   original: Union[bool,List[bool]]=False,
                    figshape: Tuple[int]=None):
     """Plot model variables over voltage range.
 
@@ -295,6 +296,8 @@ def plot_variables(v: np.ndarray,
         modelfiles = [modelfiles]
     if not isinstance(par_samples, list):
         par_samples = [par_samples,]*len(variables)
+    if not isinstance(original, list):
+        original = [original,]*len(variables)
 
     if figshape is None:
         ncols = len(variables[0])
@@ -314,7 +317,7 @@ def plot_variables(v: np.ndarray,
         m = myokit.load_model(modelfile)
 
         original_vals = {}
-        if original:
+        if original[i]:
             for p in par_samples[i][0].keys():
                 name = p
                 if p.startswith("log"):
@@ -339,7 +342,7 @@ def plot_variables(v: np.ndarray,
                 samples = samples.append(output, ignore_index=True)
 
         # Plot original values
-        if par_samples[i] is None or original:
+        if par_samples[i] is None or original[i]:
             output = pd.DataFrame({})
             if original:
                 for p, val in original_vals.items():
