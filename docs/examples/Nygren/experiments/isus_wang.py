@@ -51,8 +51,7 @@ for v in vsteps_act:
 
 wang_conditions = {'phys.T': 295.15,  # K
                    'k_conc.K_i': 130, # mM
-                   'k_conc.K_o': 5.4
-                  }
+                   'k_conc.K_o': 5.4}
 
 def wang_act_and_kin_sum_stats(data, ss=True, tau=True):
     def single_exp(t, tau, A, A0):
@@ -111,7 +110,7 @@ def wang_act_and_kin_sum_stats(data, ss=True, tau=True):
                     output_tau = output_tau + [float('inf')]
 
     if ss:
-        norm = max(output_ss)
+        norm = output_ss[-1]
         try:
             for i in range(len(output_ss)):
                 output_ss[i] /= norm
