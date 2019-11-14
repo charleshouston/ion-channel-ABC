@@ -1,0 +1,163 @@
+[[model]]
+name: COU_FULL
+author: Lukas Engelbert
+amended: Charles Houston
+desc: """
+      Courtemanche model for fast sodium current
+      """
+
+# Initial values
+membrane.V = -81.18
+ina.m = 0.002908
+ina.h = 0.9649
+ina.j = 0.9775
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ina.i_Na
+    in [mV]
+Cm = 100 [pF]
+
+[phys]
+F = 96.4867
+    in [C/mmol]
+R = 8.3143
+    in [J/mol/K]
+T = 310
+    in [K]
+FoRT = F/(R*T)
+
+[na_conc]
+use phys.FoRT as FoRT
+
+Na_o = 140 
+    in [mM]
+Na_i = 11.17 
+    in [mM]
+E_Na = 1/FoRT * log(Na_o / Na_i)
+    in [mV]
+
+[ina]
+use membrane.V as V
+use membrane.Cm as Cm
+use na_conc.E_Na as E_Na
+
+g_Na = 7.8e3 [pS/pF]
+g = m^3 * h * j
+forcing = V - E_Na
+    in [mV]
+i_Na = g_Na * g * forcing / Cm 
+    in [pA/pF]
+
+# M Gate
+dot(m) = (m_inf - m) / tau_m
+    in [1]
+tau_m = 1 / (alpha_m + beta_m)
+    in [ms]
+m_inf = alpha_m * tau_m
+    in [1]
+m_inf_cube = m ^ 3 
+    in [1]
+    
+# Gating constants for m
+a1_m = -47.13
+a2_m = 0.32
+a3_m = 0.1
+a4_m = 3.2
+b1_m = 0.08
+b2_m = 11
+
+alpha_m = piecewise(
+    V == a1_m, 
+    a4_m,
+    (a2_m * (V - a1_m)) / (1 - exp(-a3_m * (V - a1_m)))
+    )
+    in [1/ms]
+beta_m = b1_m * exp(-V/b2_m)
+    in [1/ms]
+
+
+# H Gate
+dot(h) = (h_inf - h) / tau_h
+    in [1]
+h_inf = alpha_h / (alpha_h + beta_h)
+    in [1]
+tau_h = 1 / (alpha_h + beta_h)
+    in [ms]
+
+# Gating constants for h
+c1_h = -40
+a1_h = 0.135
+a2_h = 6.8
+a3_h = 80
+# ensure continuity of alpha_h
+a4_h = a1_h * exp(-(c1_h+a3_h)/a2_h)
+
+# ensure continuity of beta_h
+b1_h = (b4_h*exp(b5_h*c1_h) + b6_h*exp(b7_h*c1_h))^(-1) * (1+exp(-(c1_h+b2_h)/b3_h))^(-1)
+#b1_h = 0.13
+b2_h = 10.66
+b3_h = 11.1
+b4_h = 3.56
+b5_h = 0.079
+b6_h = 3.1e5
+b7_h = 0.35
+
+alpha_h = piecewise(
+    V >= c1_h, 
+    a4_h, #(0,) original
+    a1_h * exp(-(V + a3_h) / a2_h)
+    )
+    in [1/ms]
+beta_h = piecewise(
+    V >= c1_h, 
+    (b1_h * (1 + exp(-(V + b2_h) / b3_h)))^(-1),
+    b4_h * exp(b5_h * V) + b6_h * exp(b7_h * V)
+    )
+    in [1/ms]
+
+# J Gate
+dot(j) = (j_inf - j) / tau_j
+    in [1]
+j_inf = alpha_j / (alpha_j + beta_j)
+    in [1]
+tau_j = 1 / (alpha_j + beta_j)
+    in [ms]
+    
+# Gating constants for j
+c1_j = -40
+a1_j = 127140
+a2_j = 0.2444
+a3_j = 3.474e-5
+a4_j = 0.04391
+a5_j = 37.78
+a6_j = 0.311
+a7_j = 79.23
+# enforce continuity
+a8_j = (-a1_j * exp(a2_j * c1_j) - a3_j * exp(-a4_j * c1_j)) * ((c1_j + a5_j) / (1 + exp(a6_j * (c1_j + a7_j))))
+
+# Ensure continuity of beta_j
+b1_j = b5_j * exp(-b6_j * c1_j)/(1 + exp(-b7_j * (c1_j + b8_j))) * (exp(-b2_j * c1_j) / (1 + exp(-b3_j * (c1_j + b4_j))))^(-1)
+#b1_j = 0.3
+b2_j = 2.535e-7
+b3_j = 0.1
+b4_j = 32
+b5_j = 0.1212
+b6_j = 0.01052
+b7_j = 0.1378
+b8_j  = 40.14
+
+alpha_j = piecewise(
+    V >= c1_j, 
+    a8_j,
+    (-a1_j * exp(a2_j * V) - a3_j * exp(-a4_j * V)) * ((V + a5_j) / (1 + exp(a6_j * (V + a7_j))))
+    )
+    in [1/ms]
+beta_j = piecewise(
+    V >= c1_j, (b1_j * exp(-b2_j * V)) / (1 + exp(-b3_j * (V + b4_j))),
+    b5_j * exp(-b6_j * V)/(1 + exp(-b7_j * (V + b8_j)))
+    )
+    in [1/ms]

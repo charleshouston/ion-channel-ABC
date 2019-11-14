@@ -1,0 +1,87 @@
+[[model]]
+name: COU_UNIFIED
+author: Lukas Engelbert
+desc:   """
+        L-Type channel model from Courtemanche et al '98
+        """
+
+# Initial Conditions
+membrane.V = -81.18
+ical.d = 0.000137
+ical.f = 0.999
+#ical.f_Ca = 0.775
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ical.i_CaL
+    in [mV]
+Cm = 100 [pF]
+
+[phys]
+T = 310 [K]
+
+[ca_conc]
+Ca_i = 0.0001013 [mM]
+Ca_o = 1 [mM]
+
+[ical]
+use membrane.V as V
+use ca_conc.Ca_i as Ca_i
+use membrane.Cm as Cm
+
+i_CaL = g_CaL * g * (V - E_Ca_app) / Cm
+    in [pA/pF]
+g = d*f*f_Ca
+    in [1]
+E_Ca_app = 65
+    in [mV]
+g_CaL = 0.1238
+    in [nS/pF]
+
+# Gating constants for d
+p1 = 10
+p2 = 6.24
+p3 = 0.035
+p4 = 10 
+p5 = 8
+
+dot(d) = (d_inf - d) / tau_d
+    in [1]
+tau_d = piecewise(
+    abs(V + p1) < 1e-10, 1 / (2*p2*p3),
+    (1 - exp((V + p1) / -p2)) / (p3 * (V + p1) * (1 + exp((V + p1) / -p2)))
+    )
+    in [ms]
+d_inf = 1 / (1 + exp((V + p4) / -p5))
+    in [1]
+
+# Gating constants for f
+q1 = 9
+q2 = 0.0197
+q3 = 0.0337
+q4 = 10
+q5 = 0.02
+q6 = 28
+q7 = 6.9
+
+dot(f) = (f_inf - f) / tau_f
+    in [1]
+tau_f = q1 / (q2 * exp(-q3 ^ 2 * (V + q4) ^ 2) + q5)
+    in [ms]
+f_inf = 1 / (1 + exp((V + q6) / q7))
+    in [1]
+
+# Gating constants for f_Ca
+r1 = 0.00035
+
+f_Ca = 0.5 # eliminating calcium-inactivation for calibration
+    in [1]
+#dot(f_Ca) = (f_Ca_inf - f_Ca) / tau_f_Ca
+#    in [1]
+tau_f_Ca = 2
+    in [ms]
+f_Ca_inf = 1 / (1 + (Ca_i / r1))
+    in [1]
