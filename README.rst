@@ -31,7 +31,8 @@ getting_started.ipynb_ notebook.
 
 **Update: It is suggested to start by looking at notebooks in the
 docs/examples/human-atrial folder which are more current 
-(e.g. nygren_ina_original.ipynb) while the getting_start.ipynb_ is updated.**
+(e.g. nygren_ina_original.ipynb) while the getting_start.ipynb notebook
+is updated.**
 
 .. _myokit: http://myokit.org
 .. _pyabc: https://github.com/icb-dcm/pyabc
