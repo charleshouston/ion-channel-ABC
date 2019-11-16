@@ -302,7 +302,7 @@ def plot_variables(v: np.ndarray,
         ncols = len(variables[0])
         nrows = 1
     else:
-        assert figshape[0]+figshape[1]<=len(variables), 'Fig shape does not match number of variables!'
+        assert figshape[0]*figshape[1]<=len(variables[0]), 'Fig shape does not match number of variables!'
         ncols = figshape[0]
         nrows = figshape[1]
 
