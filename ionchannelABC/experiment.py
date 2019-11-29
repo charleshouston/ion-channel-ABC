@@ -123,6 +123,7 @@ class Experiment:
 
 def setup(modelfile: str,
           *experiments: Experiment,
+          err_pars: List[str]=None,
           pacevar: str='membrane.V',
           tvar: str='phys.T',
           prev_runs: List[str]=[],
@@ -135,6 +136,8 @@ def setup(modelfile: str,
     Args:
         modelfile (str): Path to Myokit MMT file.
         *experiments (Experiment): Any number of experiments to run in ABC.
+        err_pars (List[str]): Optional list of parameters representing model
+            discrepancy variance for each experiment.
         pacevar (str): Optionally specify name of pacing variable in modelfile.
             Defaults to `membrane.V` assuming voltage clamp protocol but could
             also be set to stimulating current.
@@ -198,6 +201,8 @@ def setup(modelfile: str,
                         **pars)
         for sim, time in zip(simulations, times):
             for p, v in pars.items():
+                if err_pars is not None and p in err_pars:
+                    continue
                 try:
                     sim.set_constant(p, v)
                 except:
@@ -223,7 +228,7 @@ def setup(modelfile: str,
     )
     def summary_statistics(data):
         if data is None:
-            return {}
+            return {str(i): np.inf for i in range(len(observations))}
         ss = {str(i): val/normalise_factor[i]
               for i, val in enumerate(sum_stats_combined(data))}
         return ss
