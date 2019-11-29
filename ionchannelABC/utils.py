@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
-from pyabc.weighted_statistics import weighted_std,weighted_mean
-from pyabc.acceptor import SimpleFunctionAcceptor, accept_use_complete_history
+
+from pyabc import UniformAcceptor
+from pyabc.weighted_statistics import weighted_std, weighted_mean
 from pyabc.transition.multivariatenormal import MultivariateNormalTransition
 
 """
-This module contains utility classes/functions for use with pyabc.
+This module contains utility classes/functions for use with pyABC.
 """
 
 def ion_channel_sum_stats_calculator(model_output: pd.DataFrame) -> dict:
@@ -52,17 +53,20 @@ def weighted_cv(df, w, sample_size=None) -> pd.DataFrame:
     return df.apply(weighted_cv_, axis=0)
 
 
-class IonChannelAcceptor(SimpleFunctionAcceptor):
-    """Identical to SimpleFunctionAcceptor other than uses complete history."""
-    def __init__(self):
-        fun = accept_use_complete_history
-        super().__init__(fun)
+class IonChannelAcceptor(UniformAcceptor):
+    """Identical to UniformAcceptor setting to use complete history.
+
+    Included for back compatibility on some example notebooks. Likely
+    to be removed in the future.
+    """
+    def __init__(self, use_complete_history: bool=False):
+        super().__init__(use_complete_history=use_complete_history)
 
 
 class EfficientMultivariateNormalTransition(MultivariateNormalTransition):
     """Efficient implementation of multivariate normal for multiple samples.
 
-    Only override the default `rvs` method.
+    Only overrides the default `rvs` method.
     """
     def rvs(self, size=None):
         if size is None:
