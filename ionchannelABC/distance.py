@@ -122,7 +122,7 @@ class DiscrepancyKernel(StochasticKernel):
             eps_keys: List[str] = None,
             exp_mask: List[int] = None,
             pdf_max: float = None):
-        super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
+        super().__init__(ret_scale="SCALE_LOG", keys=keys, pdf_max=pdf_max)
 
         self.keys = keys
 
