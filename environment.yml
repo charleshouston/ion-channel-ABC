@@ -6,7 +6,8 @@ dependencies:
   - matplotlib
   - seaborn
   - numpy
+  - scipy
   - pandas
   - pip:
     - myokit==1.28.3
-    - pyabc==0.9.12
+    - pyabc==0.9.23
