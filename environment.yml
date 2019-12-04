@@ -9,5 +9,5 @@ dependencies:
   - scipy
   - pandas
   - pip:
-    - myokit==1.28.3
+    - myokit==1.29.1
     - pyabc==0.9.23
