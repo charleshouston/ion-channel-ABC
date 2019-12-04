@@ -180,7 +180,7 @@ def sakakibara_inact_kin_sum_stats(data, fast=True, slow=True):
                     raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
             except:
                 if fast:
-                    output_fast = output_slow+[float('inf')]
+                    output_fast = output_fast+[float('inf')]
                 if slow:
                     output_slow = output_slow+[float('inf')]
     output = output_fast+output_slow
