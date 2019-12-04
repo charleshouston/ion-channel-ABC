@@ -16,7 +16,7 @@ setup(
     long_description=readme,
     author='Charles Houston',
     author_email='charles.houston@pm.me',
-    url='https://github.com/c22n/ion-channel-ABC',
+    url='https://github.com/charleshouston/ion-channel-ABC',
     license=license,
     packages=find_packages(exclude=('tests', 'docs'))
 )
