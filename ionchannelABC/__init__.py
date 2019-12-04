@@ -3,7 +3,8 @@ from .utils import (ion_channel_sum_stats_calculator,
                     IonChannelAcceptor,
                     theoretical_population_size)
 
-from .distance import IonChannelDistance
+from .distance import (IonChannelDistance,
+                       DiscrepancyKernel)
 
 from .experiment import (Experiment,
                          setup)
@@ -15,5 +16,3 @@ from .visualization import (plot_sim_results,
 from .parameter_sensitivity import (calculate_parameter_sensitivity,
                                     plot_parameter_sensitivity,
                                     plot_regression_fit)
-
-#from .full_parameters import generate_training_data
