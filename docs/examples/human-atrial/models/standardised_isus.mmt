@@ -1,0 +1,79 @@
+[[model]]
+name: STA
+author: Charles Houston
+desc: """
+      Standardised model for isus current.
+      """
+
+# Initial values
+membrane.V = -80
+isus.r = 0.0
+isus.s = 1.0
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[phys]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+T = 310 [K]
+FoRT = F / (R * T)
+    in [1/mV]
+
+[k_conc]
+use phys.FoRT as FoRT
+K_i = 7.24950000000000030e-5 [mM]
+K_o = 1 [mM]
+E_K = 1/FoRT * log(K_o/K_i)
+    in [mV]
+
+[membrane]
+dot(V) = -isus.i_sus
+    in [mV]
+
+[isus]
+use membrane.V as V
+use k_conc.E_K as E_K
+
+g_sus = 0.1652 [S/F]
+g = r * s
+    in [1]
+i_sus = g_sus * g * (V - E_K)
+    in [pA/pF]
+
+dot(r) = (r_ss - r) / tau_r
+    in [1]
+tau_r = 1 / (k_1 + k_2)
+    in [ms]
+r_ss = k_1 * tau_r
+    in [1]
+
+dot(s) = (s_ss - s) / tau_s
+    in [1]
+tau_s = 1 / (k_3 + k_4)
+    in [ms]
+s_ss = k_4 * tau_s
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 10^(-0.96)
+    in [1/ms]
+p_2 = 0.13 [1/mV]
+p_3 = 10^(-0.97)
+    in [1/ms]
+p_4 = 0.022 [1/mV]
+p_5 = 10^(-2.4) 
+    in [1/ms]
+p_6 = 0.0015 [1/mV]
+p_7 = 10^(-5.9) 
+    in [1/ms]
+p_8 = 0.029 [1/mV]

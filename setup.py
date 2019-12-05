@@ -11,12 +11,12 @@ with open('LICENSE') as f:
 
 setup(
     name='ionchannelABC',
-    version='0.2.0',
+    version='0.3.0',
     description='Approximate Bayesian computation for ion channel models',
     long_description=readme,
     author='Charles Houston',
     author_email='charles.houston@pm.me',
-    url='https://github.com/c22n/ion-channel-ABC',
+    url='https://github.com/charleshouston/ion-channel-ABC',
     license=license,
     packages=find_packages(exclude=('tests', 'docs'))
 )

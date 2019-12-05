@@ -1,0 +1,91 @@
+[[model]]
+name: COU
+author: Charles Houston
+desc:   """
+        Transient outward channel current from [Courtemanche1998]
+        """
+
+# Initial Conditions
+membrane.V = -81.18
+ito.a = 0.000137
+ito.i = 0.999
+
+[engine]
+time = 0 bind time
+    in [ms]
+
+[membrane]
+dot(V) = -ito.i_to
+    in [mV]
+Cm = 100 [pF]
+
+[phys]
+F = 96.4867
+    in [C/mmol]
+R = 8.3143
+    in [J/mol/K]
+T = 295.15 # ito was modelled at room temperature and adjusted
+    in [K]
+FoRT = F/(R*T)
+
+[k_conc]
+use phys.FoRT as FoRT
+K_i = 139 [mM]
+K_o = 5.4 [mM]
+E_K = 1/FoRT * log(K_o/K_i)
+
+[ito]
+use membrane.V as V
+use k_conc.E_K as E_K 
+use membrane.Cm as Cm
+
+i_to = g_to * g * (V - E_K) / Cm
+    in [pA/pF]
+g = a^3*i
+    in [1]
+g_to = 0.1652
+    in [nS/pF]
+
+# Gating constants for a
+p1 = 20.47 [mV]
+p2 = 17.54 [mV]
+p3 = 0.65 [ms]
+p4 = 10 [mV]
+p5 = 8.5 [mV]
+p6 = -30 [mV]
+p7 = 59 [mV]
+p8 = 2.5 
+p9 = 82 [mV]
+p10 = 17 [mV]
+
+dot(a) = (a_inf - a) / tau_a
+    in [1]
+a_inf = (1 + exp((V + p1) / -p2))^(-1)
+    in [1]
+alpha_a = p3*(exp((V + p4) / -p5) + exp((V + p6) / -p7))^(-1)
+    in [ms]
+beta_a = p3*(p8 + exp((V + p9)/p10))^(-1)
+    in [ms]
+tau_a = (alpha_a + beta_a)^(-1)
+
+
+# Gating constants for i
+q1 = 43.1 [mV]
+q2 = 5.3 [mV]
+q3 = 18.53 [ms]
+q4 = 113.7 [mV]
+q5 = 10.95 [mV] 
+q6 = 35.56 [ms]
+q7 = 1.26 [mV]
+q8 = 7.44 [mV]
+
+dot(i) = (i_inf - i) / tau_i
+    in [1]
+i_inf = (1 + exp((V + q1) / q2))^(-1)
+    in [1]
+alpha_i = (q3 + exp((V+q4)/q5))^(-1)
+    in [1/ms]
+beta_i = (q6 + exp((V+q7)/-q8))^(-1)
+    in [1/ms]
+tau_i = (alpha_i + beta_i)^(-1)
+    in [ms]
