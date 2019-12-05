@@ -17,8 +17,8 @@ ical.f = 0.99
 ical.fCa = 0.99
 icat.a = 0.01
 icat.r = 0.99
-ikr.xf = 0.01
-ikr.xs = 0.01
+ikr.x = 0.01
+#ikr.xs = 0.01
 ikr.r = 0.99
 ito.a = 0.01
 ito.r = 0.99
@@ -29,51 +29,8 @@ calcium_sr.Ca_SRuptake = 800
 calcium_sr.Ca_SRrelease = 800
 sodium.Na_i = 15e3
 potassium.K_i = 120e3
-#calcium.c1 = 0.2
-#calcium.c2 = 0.2
-#calcium.c3 = 0.2
-#calcium.c4 = 0.2
-#calcium.c5 = 0.2
-#calcium.c6 = 0.2
-#calcium.c7 = 0.2
-#calcium.c8 = 0.2
-#calcium.c9 = 0.2
-#calcium.c10 = 0.2
-#calcium.c11 = 0.2
-#calcium.c12 = 0.2
-#calcium.c13 = 0.2
-#calcium.c14 = 0.2
-#calcium.c15 = 0.2
-#calcium.c16 = 0.2
-#calcium.c17 = 0.2
-#calcium.c18 = 0.2
-#calcium.c19 = 0.2
-#calcium.c20 = 0.2
-#calcium.c21 = 0.2
-#calcium.c22 = 0.2
-#calcium.c23 = 0.2
-#calcium.c24 = 0.2
-#calcium.c25 = 0.2
-#calcium.c26 = 0.2
-#calcium.c27 = 0.2
-#calcium.c28 = 0.2
-#calcium.c29 = 0.2
-#calcium.c30 = 0.2
-#calcium.c31 = 0.2
-#calcium.c32 = 0.2
-#calcium.c33 = 0.2
-#calcium.c34 = 0.2
-#calcium.c35 = 0.2
-#calcium.c36 = 0.2
-#calcium.c37 = 0.2
-#calcium.c38 = 0.2
-#calcium.c39 = 0.2
-#calcium.c40 = 0.2
-#calcium.c41 = 0.2
-#calcium.c42 = 0.2
-#calcium.c43 = 0.2
-#calcium.c44 = 0.2
-#calcium.c45 = 0.2
+calcium.Ca_i = 0.2
+calcium.Ca_sub = 0.2
 
 
 #
@@ -101,7 +58,7 @@ FoRT = F / (R * T)
 Cm = 13.7 [uF]
 dot(V) = -1 * (i_ion + i_stim)
     in [mV]
-stim_amplitude = -80 [pA/pF]
+stim_amplitude = -40 [pA/pF]
 i_ion = ical.i_CaL + icat.i_CaT + ikr.i_Kr + ito.i_to + ikss.i_Kss +  ik1.i_k1 + iha.i_ha + ina.i_Na + inab.i_Nab + inak.i_NaK + incx.i_NCX
     in [pA/pF]
 i_stim = engine.pace * stim_amplitude
@@ -115,10 +72,14 @@ i_stim = engine.pace * stim_amplitude
 #Acap = 1.38544e-5
 #    in [cm^2]
 V_cell = 3.5 [pL] : volume of cell
-V_sub = 0.01*V_cell [pL] : volume of SL subspace compartment
-V_i = 0.46*V_cell - V_sub [pL] : volume of remaining intracellular space
+V_sub = 0.01*V_cell : volume of SL subspace compartment
+    in [pL]
+V_i = 0.46*V_cell - V_sub : volume of remaining intracellular space
+    in [pL]
 V_SRuptake = 0.0116*V_cell : volume of SR uptake compartment
+    in [pL]
 V_SRrelease = 0.0012*V_cell : volume of SR release compartment
+    in [pL]
 
 #V_SRuptake = 0.9*V_SR : volume of SRuptake compartment
 #V_SRrelease = 0.1*V_SR : volume of SRrelease compartment
@@ -294,15 +255,12 @@ tau_fCa = fCass/a_fCa
 #
 [icat]
 use membrane.V as V
-use calcium.E_Ca as E_Ca
 
-g_CaT = 1.0
-    in [mS/uF]
-E_Ca_offset = 40.0
-    in [mV]
+g_CaT = 1.0 [mS/uF]
+E_CaT = 45 [mV]
 g = a * r
     in [1]
-i_CaT = g_CaT * g * (V - E_Ca + E_Ca_offset)
+i_CaT = g_CaT * g * (V - E_CaT)
     in [pA/pF]
 
 dot(a) = (a_ss - a) / tau_a
@@ -328,22 +286,14 @@ k_3 = p_5*exp(p_6 * V)
 k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-p_1 = 1e-4
-    in [1/ms]
-p_2 = 0.1 
-    in [1/mV]
-p_3 = 4e-5
-    in [1/ms]
-p_4 = 0.05
-    in [1/mV]
-p_5 = 5e-2
-    in [1/ms]
-p_6 = 0.01
-    in [1/mV]
-p_7 = 6e-3
-    in [1/ms]
-p_8 = 0.05
-    in [1/mV]
+p_1 = 1e-4 [1/ms]
+p_2 = 0.1 [1/mV]
+p_3 = 4e-5 [1/ms]
+p_4 = 0.05 [1/mV]
+p_5 = 5e-2 [1/ms]
+p_6 = 0.01 [1/mV]
+p_7 = 6e-3 [1/ms]
+p_8 = 0.05 [1/mV]
 
 
 #
@@ -354,34 +304,24 @@ use membrane.V as V
 use potassium.E_K as E_K
 use extra.K_o as K_o
 
-g_Kr = 0.5
-    in [mS/uF]
-x = Arel * xf + (1-Arel) * xs
+g_Kr = 0.5 [mS/uF]
+g = x * r
     in [1]
-g = sqrt(K_o/5400) * x * r
-    in [1]
-i_Kr = g_Kr * g * (V - E_K)
+i_Kr = g_Kr * sqrt(K_o/5400) * g * (V - E_K)
     in [pA/pF]
 
-dot(xf) = (xf_ss - xf) / tau_xf
+dot(x) = (x_ss - x) / tau_x
     in [1]
-tau_xf = 1 / (k_1 + k_2)
+tau_x = 1 / (k_1 + k_2)
     in [ms]
-xf_ss = k_1 * tau_xf
-    in [1]
-
-dot(xs) = (xs_ss - xs) / tau_xs
-    in [1]
-tau_xs = 1 / (k_3 + k_4)
-    in [ms]
-xs_ss = k_3 * tau_xs
+x_ss = k_1 * tau_x
     in [1]
 
 dot(r) = (r_ss - r) / tau_r
     in [1]
-tau_r = 1 / (k_5 + k_6)
+tau_r = 1 / (k_3 + k_4)
     in [ms]
-r_ss = k_6 * tau_r
+r_ss = k_4 * tau_r
     in [1]
 
 k_1 = p_1*exp(p_2 * V)
@@ -393,48 +333,14 @@ k_3 = p_5*exp(p_6 * V)
 k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-k_5 = p_9*exp(p_10 * V)
-    in [1/ms]
-k_6 = p_11*exp(-p_12 * V)
-    in [1/ms]
-
-# Model relative amplitude of fast and slow time constant
-# using Boltzmann curve
-Arel = (1 + exp(s_A*(h_A+V)))^(-1)
-    in [1]
-s_A = 0.2
-    in [1]
-h_A = -20
-    in [mV]
-
-p_1 = 1e-4
-    in [1/ms]
-p_2 = 0.1 
-    in [1/mV]
-p_3 = 4e-5
-    in [1/ms]
-p_4 = 0.05
-    in [1/mV]
-p_5 = 1e-4
-    in [1/ms]
-p_6 = 0.1 
-    in [1/mV]
-# from equal steady-state activation gate
-# p_2+p_4==p_6+p_8
-# log(p_1)+log(p_3)==log(p_5)+log(p_7)
-p_7 = p_3*p_5/p_1     # from equal steady-state activation
-    in [1/ms]
-p_8 = p_2+p_4-p_6     # from equal steady-state activation
-    in [1/mV]
-
-p_9 = 5e-2
-    in [1/ms]
-p_10 = 0.01
-    in [1/mV]
-p_11 = 6e-3
-    in [1/ms]
-p_12 = 0.05
-    in [1/mV]
+p_1 = 1e-4 [1/ms]
+p_2 = 0.1 [1/mV]
+p_3 = 4e-5 [1/ms]
+p_4 = 0.05 [1/mV]
+p_5 = 5e-2 [1/ms]
+p_6 = 0.01 [1/mV]
+p_7 = 5e-2 [1/ms]
+p_8 = 0.01 [1/mV]
 
 
 #
@@ -772,7 +678,7 @@ CSQN_tot = 24750 [uM] : total calsquestrin concentration
 [calcium_sr]
 use calcium_buffers.CSQN_tot as CSQN_tot
 use calcium_buffers.Km_CSQN as Km_CSQN
-use cell.V_SR as V_SR
+#use cell.V_SR as V_SR
 use cell.V_SRuptake as V_SRuptake
 use cell.V_SRrelease as V_SRrelease
 use serca.J_SERCA as J_SERCA
@@ -799,6 +705,7 @@ use cell.V_SRrelease as V_SRrelease
 #use cell.Acap as Acap
 use membrane.Cm as Cm
 use phys.F as F
+use phys.FoRT as FoRT
 use calcium_buffers.Km_TRPN as Km_TRPN
 use calcium_buffers.TRPN_tot as TRPN_tot
 use calcium_buffers.Km_CMDN as Km_CMDN
@@ -810,6 +717,7 @@ use diff.J_diff as J_diff
 use incx.i_NCX as i_NCX
 use ical.i_CaL as i_CaL
 use icat.i_CaT as i_CaT
+use extra.Ca_o as Ca_o
 
 beta_i = (1 + TRPN_tot*Km_TRPN/((Ca_i + Km_TRPN)^2) + CMDN_tot*Km_CMDN/((Ca_i + Km_CMDN)^2))^(-1)
 beta_subSL = (1 + TRPN_tot*Km_TRPN/((Ca_sub + Km_TRPN)^2) + CMDN_tot*Km_CMDN/((Ca_sub + Km_CMDN)^2))^(-1)
