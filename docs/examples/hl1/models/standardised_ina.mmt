@@ -1,58 +1,65 @@
 [[model]]
-name: Fast Na+ channel model
+name: STA
 author: Charles Houston
 desc: """
-      Simple model for ina channel.
+      Standardised model for ina current.
       """
+
 # Initial values
 membrane.V = -67
 ina.m = 0.0
-ina.h = 1.0
-ina.j = 1.0
+ina.h1 = 1.0
+ina.h2 = 1.0
 
 [engine]
 time = 0 bind time
     in [ms]
 
-[membrane]
-dot(V) = -ina.i_Na
-    in [mV]
+[phys]
+F = 96.5 [C/mmol]
+R = 8.314 [J/mol/K]
+T = 296 [K]
+FoRT = F / (R * T)
+    in [1/mV]
 
 [extra]
 Na_o = 140000 [uM]
 K_o = 4000 [uM]
 
 [sodium]
+use phys.FoRT as FoRT
+use extra.Na_o as Na_o
 Na_i = 5000 [uM]
 
 [potassium]
+use phys.FoRT as FoRT
+use extra.K_o as K_o
 K_i = 140000 [uM]
 
-[phys]
-F = 96.5 [C/mmol]
-R = 8.314 [J/mol/K]
-T = 296 [K]
-FoRT = F/(R*T)
+[membrane]
+dot(V) = -ina.i_Na
+    in [mV]
 
 [ina]
 use membrane.V as V
-use extra.Na_o as Na_o
-use sodium.Na_i as Na_i
-use extra.K_o as K_o
-use potassium.K_i as K_i
 use phys.FoRT as FoRT
+use sodium.Na_i as Na_i
+use potassium.K_i as K_i
+use extra.Na_o as Na_o
+use extra.K_o as K_o
 
-g_Na = 1.0 [mS/uF]
-g = m^3 * (s*h * (1-s)*j)
+g_Na = 200 [S/F]
+g = m^3 * h1 * h2
     in [1]
-i_Na = g_Na * g * (V - Erev)
+i_Na = g_Na * g * (V - E_Na + E_offset)
     in [pA/pF]
-s = 0.9 [1]
+E_offset = 44 [mV]
 
-P_Na = 0.9 [1]
-P_K = 1-P_Na
-Erev = 1/FoRT * log((P_Na*Na_o + P_K*K_o)/(P_Na*Na_i + P_K*K_i))
-    in [mV]
+E_Na = 1/FoRT * log(Na_o/Na_i)
+#P_Na = 0.9
+#P_K = 1-P_Na
+#Erev = 1/FoRT * log((P_Na*Na_o + P_K*K_o)/(P_Na*Na_i + P_K*K_i))
+#    in [mV]
 
 dot(m) = (m_ss - m) / tau_m
     in [1]
@@ -61,18 +68,18 @@ tau_m = 1 / (k_1 + k_2)
 m_ss = k_1 * tau_m
     in [1]
 
-dot(h) = (h_ss - h) / tau_h
+dot(h1) = (h_ss - h1) / tau_h1
     in [1]
-tau_h = 1 / (k_3 + k_4)
+tau_h1 = 1 / (k_3 + k_4)
     in [ms]
-h_ss = k_4 * tau_h
+h_ss = k_4 * tau_h1
     in [1]
 
-dot(j) = (h_ss - j) / tau_j
+dot(h2) = (h_ss - h2) / tau_h2
     in [1]
-tau_j = A * tau_h
+A = 10^(1.4)
+tau_h2 = A*tau_h1
     in [ms]
-A = 10 
 
 k_1 = p_1*exp(p_2 * V)
     in [1/ms]
@@ -83,11 +90,15 @@ k_3 = p_5*exp(p_6 * V)
 k_4 = p_7*exp(-p_8 * V)
     in [1/ms]
 
-p_1 = 1e3 [1/ms]
-p_2 = 0.05 [1/mV]
-p_3 = 1e1 [1/ms]
-p_4 = 0.05 [1/mV]
-p_5 = 5e-2 [1/ms]
-p_6 = 0.01 [1/mV]
-p_7 = 6e-3 [1/ms]
-p_8 = 0.05 [1/mV]
+p_1 = 10^(1.7)
+    in [1/ms]
+p_2 = 0.10 [1/mV]
+p_3 = 10^(-2.5)
+    in [1/ms]
+p_4 = 0.09 [1/mV]
+p_5 = 10^(1.3) 
+    in [1/ms]
+p_6 = 0.003 [1/mV]
+p_7 = 10^(-3.3) 
+    in [1/ms]
+p_8 = 0.15 [1/mV]

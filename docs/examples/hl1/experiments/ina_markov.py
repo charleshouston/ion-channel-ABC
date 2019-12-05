@@ -12,6 +12,8 @@ room_temp = 296
 Q10_cond = 1.5 # [Correa1991]
 Q10_tau = 2.79 # [tenTusscher2004]
 
+fit_threshold = 0.9
+
 
 #
 # IV curve [Dias2014]
@@ -23,9 +25,13 @@ vsteps, peaks, sd = data.IV_Dias()
 variances = [sd**2 for sd in sd]
 dias_iv_dataset = np.asarray([vsteps, peaks, variances])
 
-vsteps_tau, taui, sd_taui = data.TauInact_Dias()
+vsteps_taua, taua, sd_taua = data.TauAct_Dias()
+variances_taua = [sd**2 for sd in sd_taua]
+dias_taua_dataset = np.asarray([vsteps_taua, taua, variances_taua])
+
+vsteps_taui, taui, sd_taui = data.TauInact_Dias()
 variances_taui = [sd**2 for sd in sd_taui]
-dias_tau_dataset = np.asarray([vsteps_tau, taui, variances_taui])
+dias_taui_dataset = np.asarray([vsteps_taui, taui, variances_taui])
 
 dias_iv_protocol = myokit.pacing.steptrain_linear(-100, 50, 10, -80, 5000, 100)
 dias_conditions = {'extra.Na_o': 140e3,
@@ -34,27 +40,63 @@ dias_conditions = {'extra.Na_o': 140e3,
                    'potassium.K_i': 130e3,
                    'phys.T': room_temp}
 
-def dias_iv_sum_stats(data):
-    output = []
-    for d in data.split_periodic(5100, adjust=True):
-        d = d.trim(5000, 5100, adjust=True)
-        current = d['ina.i_Na']
-        index = np.argmax(np.abs(current))
-        output = output+[current[index]]
-    return output
+#def dias_iv_sum_stats(data):
+#    output = []
+#    for d in data.split_periodic(5100, adjust=True):
+#        d = d.trim(5000, 5100, adjust=True)
+#        current = d['ina.i_Na']
+#        index = np.argmax(np.abs(current))
+#        output = output+[current[index]]
+#    return output
 
-def dias_iv_tau_sum_stats(data):
+def dias_iv_tau_sum_stats(data, ss=True, taua=True, taui=True):
     out1 = []
     out2 = []
-    def single_exp(t, tau, A, A0):
+    out3 = []
+    def activation_exp(t, tau, A, A0):
+        return A*(1-np.exp(-t/tau))**3+A0
+    def inactivation_exp(t, tau, A, A0):
         return A*np.exp(-t/tau)+A0
     for d in data.split_periodic(5100, adjust=True):
         d = d.trim(5000, 5100, adjust=True)
         curr = d['ina.i_Na']
         index = np.argmax(np.abs(curr))
-        out1 = out1+[curr[index]]
-        if (d['membrane.V'][0] >= vsteps_tau[0] and
-            d['membrane.V'][0] <= vsteps_tau[-1]):
+        if ss:
+            out1 = out1+[curr[index]]
+        if (taua and
+            d['membrane.V'][0] >= vsteps_taua[0] and
+            d['membrane.V'][0] <= vsteps_taua[-1]):
+            # Separate activation portion
+            time = d['engine.time']
+            rise = curr[:index]
+            time = time[:index]
+            # fit to activation exponential
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', so.OptimizeWarning)
+                warnings.simplefilter('error', RuntimeWarning)
+                try:
+                    popt, _ = so.curve_fit(activation_exp, time, rise,
+                                           p0=[0.5, 1., 0.],
+                                           bounds=([0., -np.inf, -np.inf],
+                                                   np.inf))
+                    fit = [activation_exp(t,popt[0],popt[1],popt[2]) for t in time]
+
+                    # calculate r squared of fit
+                    ss_res = np.sum((np.array(rise)-np.array(fit))**2)
+                    ss_tot = np.sum((np.array(rise)-np.mean(np.array(rise)))**2)
+                    r2 = 1 - (ss_res / ss_tot)
+                    taua = popt[0]
+
+                    # only accept reasonable curve fits
+                    if r2 > fit_threshold:
+                        out2 = out2 + [taua]
+                    else:
+                        out2 = out2 + [float('inf')]
+                except:
+                    out2 = out2 + [float('inf')]
+        if (taui and
+            d['membrane.V'][0] >= vsteps_taui[0] and
+            d['membrane.V'][0] <= vsteps_taui[-1]):
             # Separate decay portion
             time = d['engine.time']
             decay = curr[index:]
@@ -66,11 +108,11 @@ def dias_iv_tau_sum_stats(data):
                 warnings.simplefilter('error', so.OptimizeWarning)
                 warnings.simplefilter('error', RuntimeWarning)
                 try:
-                    popt, _ = so.curve_fit(single_exp, time, decay,
+                    popt, _ = so.curve_fit(inactivation_exp, time, decay,
                                            p0=[2., 1., 0.],
                                            bounds=([0., -np.inf, -np.inf],
                                                    np.inf))
-                    fit = [single_exp(t,popt[0],popt[1],popt[2]) for t in time]
+                    fit = [inactivation_exp(t,popt[0],popt[1],popt[2]) for t in time]
 
                     # calculate r squared of fit
                     ss_res = np.sum((np.array(decay)-np.array(fit))**2)
@@ -79,13 +121,20 @@ def dias_iv_tau_sum_stats(data):
                     taui = popt[0]
 
                     # only accept reasonable curve fits
-                    if r2 > 0.99:
-                        out2 = out2 + [taui]
+                    if r2 > fit_threshold:
+                        out3 = out3 + [taui]
                     else:
-                        out2 = out2 + [float('inf')]
+                        out3 = out3 + [float('inf')]
                 except:
-                    out2 = out2 + [float('inf')]
-    return out1+out2
+                    out3 = out3 + [float('inf')]
+    return out1+out2+out3
+
+def dias_iv_sum_stats(data):
+    return dias_iv_tau_sum_stats(data, ss=True, tau=False)
+def dias_taua_sum_stats(data):
+    return dias_iv_tau_sum_stats(data, ss=False, taua=True, taui=False)
+def dias_taui_sum_stats(data):
+    return dias_iv_tau_sum_stats(data, ss=False, taua=False, taui=True)
 
 dias_iv = Experiment(
     dataset=dias_iv_dataset,
@@ -96,15 +145,34 @@ dias_iv = Experiment(
     Q10=Q10_cond,
     Q10_factor=1
 )
+dias_tau_act = Experiment(
+    dataset=dias_taua_dataset,
+    protocol=dias_iv_protocol,
+    conditions=dias_conditions,
+    sum_stats=dias_taui_sum_stats,
+    description=dias_iv_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1
+)
+dias_tau_inact = Experiment(
+    dataset=dias_taui_dataset,
+    protocol=dias_iv_protocol,
+    conditions=dias_conditions,
+    sum_stats=dias_taui_sum_stats,
+    description=dias_iv_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1
+)
 dias_iv_tau = Experiment(
     dataset=[dias_iv_dataset,
-             dias_tau_dataset],
+             dias_taua_dataset,
+             dias_taui_dataset],
     protocol=dias_iv_protocol,
     conditions=dias_conditions,
     sum_stats=dias_iv_tau_sum_stats,
     description=dias_iv_desc,
-    Q10=[Q10_cond, Q10_tau],
-    Q10_factor=[1,-1]
+    Q10=[Q10_cond,Q10_tau,Q10_tau],
+    Q10_factor=[1,-1,-1]
 )
 
 
@@ -157,8 +225,9 @@ zhang_rec_desc = """Recovery curve for iNa in Zhang 2013.
 Experiments conducted at room temperature.
 """
 
-tsteps_rec, rec, _ = data.Recovery_Zhang()
-zhang_rec_dataset = np.asarray([tsteps_rec, rec, [0.]*len(rec)])
+tsteps_rec, rec, sd_rec = data.Recovery_Zhang()
+variances_rec = [sd_**2 for sd_ in sd_rec]
+zhang_rec_dataset = np.asarray([tsteps_rec, rec, variances_rec])
 
 zhang_rec_protocol = recovery(
     tsteps_rec, -120, -30, -30, 3000, 20, 20

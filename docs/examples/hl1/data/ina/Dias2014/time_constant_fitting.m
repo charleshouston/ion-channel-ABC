@@ -1,35 +1,23 @@
 clc
 clearvars
 
-% Script to obtain time constants from i_CaL current traces
-inactn30 = csvread("Fig6_trace_inact_n30.csv");
-inactn40 = csvread("Fig6_trace_inact_n40.csv");
-inactn50 = csvread("Fig6_trace_inact_n50.csv");
-inactn60 = csvread("Fig6_trace_inact_n60.csv");
+% Script to obtain time constants from i_Na current traces
+peak_act = csvread("peak_activation.csv");
+peak_inact = csvread("peak_inactivation.csv");
 
-t_inactn30 = inactn30(:,1);I_inactn30 = inactn30(:,2);
-t_inactn40 = inactn40(:,1);I_inactn40 = inactn40(:,2);
-t_inactn50 = inactn50(:,1);I_inactn50 = inactn50(:,2);
-t_inactn60 = inactn60(:,1);I_inactn60 = inactn60(:,2);
+t_act = peak_act(:,1); I_act = peak_act(:,2);
+t_inact = peak_inact(:,1); I_inact = peak_inact(:,2);
 
-t_inactn30 = t_inactn30-t_inactn30(1);
-t_inactn40 = t_inactn40-t_inactn40(1);
-t_inactn50 = t_inactn50-t_inactn50(1);
-t_inactn60 = t_inactn60-t_inactn60(1);
+t_act = t_act-t_act(1);
+t_inact = t_inact-t_inact(1);
 
-I_inactn30 = I_inactn30/max(I_inactn30);
-I_inactn40 = I_inactn40/max(I_inactn40);
-I_inactn50 = I_inactn50/max(I_inactn50);
-I_inactn60 = I_inactn60/max(I_inactn60);
+I_act = -(I_act-I_act(1));
+I_act = (I_act-min(I_act))/(max(I_act)-min(I_act));
+I_inact = 1-I_inact;
+I_inact = (I_inact-min(I_inact))/(max(I_inact)-min(I_inact));
 
-[fit_inactn30,gofn30] = fit(t_inactn30,1-I_inactn30,'exp1');
-[fit_inactn40,gofn40] = fit(t_inactn40,1-I_inactn40,'exp1');
-[fit_inactn50,gofn50] = fit(t_inactn50,1-I_inactn50,'exp1');
-[fit_inactn60,gofn60] = fit(t_inactn60,1-I_inactn60,'exp1');
+act_model = fittype('(1-exp(-t/tau))^3','independent','t');
+inact_model = fittype('exp(-t/tau)','independent','t');
 
-V = [-60,-50,-40,-30]
-fit = [fit_inactn60.b,fit_inactn50.b,fit_inactn40.b,fit_inactn30.b];
-gof = [gofn60.rmse,gofn50.rmse,gofn40.rmse,gofn30.rmse];
-
-tau = -1./fit
-sd = abs(-fit.^-2 .* gof)
+[fit_act,gof_act] = fit(t_act, I_act, act_model, 'Start', [0.5]);
+[fit_inact,gof_inact] = fit(t_inact,I_inact,inact_model,'Start',[5]);
