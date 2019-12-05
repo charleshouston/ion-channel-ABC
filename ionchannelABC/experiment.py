@@ -1,10 +1,12 @@
-from functools import wraps, reduce
+from functools import wraps
 import numpy as np
-import myokit
 import pandas as pd
 from typing import List, Callable, Dict, Union, Tuple
 import warnings
+
 from pyabc import History
+from pyabc import Distribution
+import myokit
 
 
 def log_transform(f):
@@ -67,11 +69,11 @@ class Experiment:
         """
         if isinstance(dataset, list):
             self._dataset = dataset
-            if isinstance(Q10_factor, int):
+            if not isinstance(Q10_factor, list):
                 self._Q10_factor = [Q10_factor,]*len(dataset)
             else:
                 self._Q10_factor = Q10_factor
-            if isinstance(Q10, int):
+            if not isinstance(Q10, list):
                 self._Q10 = [Q10,]*len(dataset)
             else:
                 self._Q10 = Q10
@@ -127,9 +129,11 @@ class Experiment:
 
 def setup(modelfile: str,
           *experiments: Experiment,
+          timeout: int=None,
           pacevar: str='membrane.V',
           tvar: str='phys.T',
           prev_runs: List[str]=[],
+          additional_pars: Distribution=None,
           logvars: List[str]=myokit.LOG_ALL,
           log_interval: float=None,
           normalise: bool=True
@@ -194,12 +198,24 @@ def setup(modelfile: str,
     # Create model function
     def simulate_model(**pars):
         sim_output = []
-        # Pre-optimised parameters
+        # Previously calibrated parameters
         for df, w in zip(sample_df, sample_w):
             pars = dict([(key[4:], 10**value) if key.startswith("log")
                          else (key, value)
-                         for key, value in df.sample(weights=w, replace=True).items()],
+                         for key, value in df.sample(weights=w, replace=True).to_dict('records')[0].items()],
                         **pars)
+        # Additional parameters that are not refined during calibration
+        if additional_pars is not None:
+            pars = dict([(key[4:], 10**value) if key.startswith("log")
+                         else (key, value)
+                         for key, value in dict(additional_pars.rvs()).items()],
+                        **pars)
+
+        # Create timeout ProgressReporter if necessary
+        progress = None
+        if timeout is not None:
+            progress = myokit.Timeout(timeout)
+
         for sim, time in zip(simulations, times):
             for p, v in pars.items():
                 try:
@@ -210,7 +226,12 @@ def setup(modelfile: str,
                     return None
             sim.reset()
             try:
-                sim_output.append(sim.run(time, log=logvars, log_interval=log_interval))
+                sim_output.append(
+                    sim.run(time,
+                            log=logvars,
+                            log_interval=log_interval,
+                            progress=progress)
+                    )
             except:
                 del(sim_output)
                 return None
