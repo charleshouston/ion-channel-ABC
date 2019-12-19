@@ -7,7 +7,8 @@ from .distance import (IonChannelDistance,
                        DiscrepancyKernel)
 
 from .experiment import (Experiment,
-                         setup)
+                         setup,
+                         get_observations_df)
 
 from .visualization import (plot_sim_results,
                             plot_experiment_traces,

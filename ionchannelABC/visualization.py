@@ -1,7 +1,7 @@
 from .distance import IonChannelDistance
 from .experiment import (Experiment,
-                         setup)
-from pyabc.visualization.kde import (kde_1d,plot_kde_matrix)
+                         setup,
+                         get_observations_df)
 import numpy as np
 import myokit
 import pandas as pd
@@ -9,7 +9,10 @@ import warnings
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Callable, List, Union, Tuple
+import pymc3.stats
 
+from pyabc import Distribution
+from pyabc.visualization.kde import kde_1d, plot_kde_matrix
 
 def normalise(df, limits=None):
     result = df.copy()
@@ -32,10 +35,19 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
                      pacevar: str='membrane.V',
                      tvar: str='phys.T',
                      prev_runs: List[str]=[],
+                     additional_pars: Distribution=None,
                      df: Union[pd.DataFrame,List[pd.DataFrame]]=None,
                      w: Union[np.ndarray,List[np.ndarray]]=None,
-                     n_samples: int=100) -> sns.FacetGrid:
+                     n_samples: int=100,
+                     #credible_interval: float=0.89,
+                     alpha: float=0.2,
+                     exclude_infs: bool=False) -> sns.FacetGrid:
     """Plot output of ABC against experimental and/or original output.
+
+    Note that excluding infinite values assumes that previous runs or
+    additional parameters have been passed which gives a stochastic model
+    on each parameter sample (i.e. the parameter is not re-sampled on each
+    attempt).
 
     Args:
         modelfile (str): Path to Myokit MMT file.
@@ -84,6 +96,7 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
                                                         pacevar=pacevar,
                                                         tvar=tvar,
                                                         prev_runs=prev_runs,
+                                                        additional_pars=additional_pars,
                                                         normalise=False)
 
         m = myokit.load_model(modelfile)
@@ -110,7 +123,17 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
             posterior_samples = [{}]
 
         for j, th in enumerate(posterior_samples):
-            results = summary_statistics(model(th))
+            results = {'0': float('inf')}
+            if exclude_infs:
+                try_limit = 100
+                try_cnt = 0
+                while not np.all(np.isfinite(list(results.values()))) and try_cnt < try_limit:
+                    results = summary_statistics(model(th))
+                    try_cnt += 1
+                if try_cnt == try_limit:
+                    raise Exception('exclude_infs failed in 100 iterations')
+            else:
+                results = summary_statistics(model(th))
             output = pd.DataFrame({'x': observations.x,
                                    'y': list(results.values()),
                                    'exp_id': observations.exp_id})
@@ -154,10 +177,40 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
                        col='exp_id', kind='line',
                        hue='model', style='model',
                        data=model_samples,
-                       ci='sd',
+                       estimator=np.median,
+                       ci=None,
                        markers=True,
                        facet_kws={'sharex': 'col',
                                   'sharey': 'col'})
+
+    current_palette = sns.color_palette()
+
+    # calculate HPDI for each sample
+    for j, exp_id in enumerate(model_samples['exp_id'].unique()):
+        ax = grid.axes.flatten()[j]
+        for mi, model in enumerate(model_samples['model'].unique()):
+            data = model_samples[(model_samples['exp_id']==exp_id) & \
+                                 (model_samples['model']==model)]
+            hpd67 = np.zeros((len(data['x'].unique()), 2))
+            hpd89 = np.zeros((len(data['x'].unique()), 2))
+            hpd97 = np.zeros((len(data['x'].unique()), 2))
+            for i, xi in enumerate(data['x'].unique()):
+                data_xi = data[data['x']==xi]
+                hpd67[i,:] = pymc3.stats.hpd(data_xi['y'],
+                                             credible_interval=0.67)
+                hpd89[i,:] = pymc3.stats.hpd(data_xi['y'],
+                                             credible_interval=0.89)
+                hpd97[i,:] = pymc3.stats.hpd(data_xi['y'],
+                                             credible_interval=0.97)
+
+
+            # plot on graph
+            ax.fill_between(data['x'].unique(), hpd67[:,0], hpd67[:,1],
+                            alpha=alpha, color=current_palette[mi])
+            ax.fill_between(data['x'].unique(), hpd89[:,0], hpd89[:,1],
+                            alpha=alpha, color=current_palette[mi])
+            ax.fill_between(data['x'].unique(), hpd97[:,0], hpd97[:,1],
+                            alpha=alpha, color=current_palette[mi])
 
     # Format lines in all plots
     for ax in grid.axes.flatten():
@@ -170,21 +223,34 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
 
 
 def plot_experiment_traces(modelfile: str,
-                           currvar: str,
+                           recordvars: List[str],
                            split_data_fns: List[Callable],
                            *experiments: Experiment,
                            df: pd.DataFrame=None,
                            w: np.ndarray=None,
+                           prev_runs: List[str]=[],
+                           additional_pars: Distribution=None,
+                           #credible_interval: float=0.89,
+                           alpha: float=0.2,
                            pacevar: str='membrane.V',
                            timevar: str='engine.time',
                            log_interval: float=None,
                            n_samples: int=100,
+                           timeout: int=None,
+                           exclude_fails: bool=False,
+                           try_limit: int=100
                            ) -> sns.FacetGrid:
 
+    if timevar not in recordvars:
+        recordvars = [timevar,]+recordvars
     _, model, _ = setup(modelfile,
                         *experiments,
                         log_interval=log_interval,
+                        logvars=[pacevar,]+recordvars,
                         pacevar=pacevar,
+                        prev_runs=prev_runs,
+                        timeout=timeout,
+                        additional_pars=additional_pars,
                         normalise=False)
 
     model_samples = pd.DataFrame({})
@@ -195,7 +261,18 @@ def plot_experiment_traces(modelfile: str,
         posterior_samples = [{}]
 
     for i, th in enumerate(posterior_samples):
-        data = model(th)
+        data = None
+        if exclude_fails:
+            try_limit = try_limit
+            try_cnt = 0
+            while data is None and try_cnt<try_limit:
+                data = model(th)
+                try_cnt += 1
+            if try_cnt == try_limit:
+                raise Exception('failed to simulate after 100 attempts')
+        else:
+            data = model(th)
+
         output = pd.DataFrame({})
         for j, d in enumerate(data):
             split_f = split_data_fns[j]
@@ -203,17 +280,19 @@ def plot_experiment_traces(modelfile: str,
             for k, step in enumerate(data_exp):
                 output_exp = pd.DataFrame({'time': step[timevar],
                                            'y': step[pacevar],
-                                           'measure': 'voltage',
+                                           'measure': 'pace',
                                            'step': k,
                                            'exp_id': j})
                 output = output.append(output_exp, ignore_index=True)
-                output_exp = pd.DataFrame({'time': step[timevar],
-                                           'y': step[currvar],
-                                           'measure': 'current',
-                                           'step': k,
-                                           'exp_id': j})
-                output = output.append(output_exp, ignore_index=True)
-
+                for rvar in recordvars:
+                    if rvar == timevar:
+                        continue
+                    output_exp = pd.DataFrame({'time': step[timevar],
+                                               'y': step[rvar],
+                                               'measure': rvar,
+                                               'step': k,
+                                               'exp_id': j})
+                    output = output.append(output_exp, ignore_index=True)
         output['sample'] = i
         model_samples = model_samples.append(output, ignore_index=True)
 
@@ -224,9 +303,41 @@ def plot_experiment_traces(modelfile: str,
                        legend=False,
                        data=model_samples,
                        kind='line',
-                       ci='sd',
+                       estimator=np.median,
+                       ci=None,
                        facet_kws={'sharex': 'col',
                                   'sharey': 'row'})
+
+    current_palette = sns.color_palette()
+
+    # calculate HPDI for each sample
+    for j, exp_id in enumerate(model_samples['exp_id'].unique()):
+        for k, measure in enumerate(model_samples['measure'].unique()):
+            ax = grid.axes.flatten()[j]
+            for si, step_id in enumerate(model_samples['step'].unique()):
+                data = model_samples[(model_samples['exp_id']==exp_id)   & \
+                                     (model_samples['measure']==measure) & \
+                                     (model_samples['step']==step_id)]
+                hpd67 = np.zeros((len(data['time'].unique()), 2))
+                hpd89 = np.zeros((len(data['time'].unique()), 2))
+                hpd97 = np.zeros((len(data['time'].unique()), 2))
+                for i, ti in enumerate(data['time'].unique()):
+                    data_ti = data[data['time']==ti]
+                    hpd67[i,:] = pymc3.stats.hpd(data_ti['y'],
+                                                 credible_interval=0.67)
+                    hpd89[i,:] = pymc3.stats.hpd(data_ti['y'],
+                                                 credible_interval=0.89)
+                    hpd97[i,:] = pymc3.stats.hpd(data_ti['y'],
+                                                 credible_interval=0.97)
+
+                # plot on graph
+                ax.fill_between(data['time'].unique(), hpd67[:,0], hpd67[:,1],
+                                alpha=alpha, color=current_palette[si])
+                ax.fill_between(data['time'].unique(), hpd89[:,0], hpd89[:,1],
+                                alpha=alpha, color=current_palette[si])
+                ax.fill_between(data['time'].unique(), hpd97[:,0], hpd97[:,1],
+                                alpha=alpha, color=current_palette[si])
+
     return grid
 
 
@@ -272,6 +383,8 @@ def plot_variables(v: np.ndarray,
                    modelfiles: Union[str,List[str]],
                    par_samples: Union[dict,List[dict]]=None,
                    original: Union[bool,List[bool]]=False,
+                   #credible_interval: float=0.89,
+                   alpha: float=0.2,
                    figshape: Tuple[int]=None):
     """Plot model variables over voltage range.
 
@@ -353,13 +466,38 @@ def plot_variables(v: np.ndarray,
             output['data'] = 'original'
             samples = samples.append(output)
 
+    current_palette = sns.color_palette()
+
     # redorder axes for plotting
     for i, key in enumerate(variables[0].keys()):
         sns.lineplot(x='V', y=key, hue='model', style='data',
                      data=samples,
-                     ci='sd', ax=ax.flatten()[i],
+                     estimator=np.median,
+                     ci=None,
+                     ax=ax.flatten()[i],
                      legend=False)
         sns.despine(ax=ax.flatten()[i])
+        for mi, model in enumerate(samples['model'].unique()):
+            data = samples[(samples['model']==model)]
+            hpd67 = np.zeros((len(data['V'].unique()), 2))
+            hpd89 = np.zeros((len(data['V'].unique()), 2))
+            hpd97 = np.zeros((len(data['V'].unique()), 2))
+            for k, vk in enumerate(data['V'].unique()):
+                data_vk = data[data['V']==vk]
+                hpd67[k,:] = pymc3.stats.hpd(data_vk[key],
+                                             credible_interval=0.67)
+                hpd89[k,:] = pymc3.stats.hpd(data_vk[key],
+                                             credible_interval=0.89)
+                hpd97[k,:] = pymc3.stats.hpd(data_vk[key],
+                                             credible_interval=0.97)
+
+            # plot on graph
+            ax.flatten()[i].fill_between(data['V'].unique(), hpd67[:,0], hpd67[:,1],
+                                         alpha=alpha, color=current_palette[mi])
+            ax.flatten()[i].fill_between(data['V'].unique(), hpd89[:,0], hpd89[:,1],
+                                         alpha=alpha, color=current_palette[mi])
+            ax.flatten()[i].fill_between(data['V'].unique(), hpd97[:,0], hpd97[:,1],
+                                         alpha=alpha, color=current_palette[mi])
 
     plt.tight_layout()
 
@@ -450,3 +588,74 @@ def plot_kde_matrix_custom(df, w, limits=None, refval=None):
     plt.set_cmap('viridis')
 
     return arr_ax
+
+
+def plot_data_adjustment(modelfiles: List[str],
+                         *experiments: Experiment,
+                         tvar: str='phys.T') -> sns.FacetGrid:
+    """Plots raw data before and after adjustment to model temperature.
+
+    Args:
+        modelfiles (List[str]): Models with temperature to adjust.
+        experiments (Experiment): Experimental data to plot.
+        tvar (str): Name of temperature variable in model file.
+
+    Returns:
+        sns.FacetGrid: Plots of experimental data.
+    """
+    if not isinstance(modelfiles, list):
+        modelfiles = [modelfiles]
+
+    tvars = [tvar,]*len(modelfiles)
+
+    temperatures = []
+    for i, model in enumerate(modelfiles):
+        m = myokit.load_model(model)
+        temperatures.append(m.get(tvars[i]).value())
+
+    observations = pd.DataFrame({})
+    # get adjusted for each model
+    for temp in temperatures:
+        observations_temp = get_observations_df(
+                list(experiments),
+                normalise=False,
+                temp_adjust=True,
+                model_temperature=temp)
+        observations_temp['T'] = str(temp)+'K'
+        observations = observations.append(observations_temp)
+
+    # get unadjusted raw data
+    observations_unadjusted = get_observations_df(list(experiments),
+                                       normalise=False,
+                                       temp_adjust=False,
+                                       model_temperature=None)
+    observations_unadjusted['T'] = 'unadjusted'
+
+    grid = sns.relplot(x='x', y='y',
+                       col='exp_id',
+                       kind='scatter',
+                       hue='T', style='T',
+                       data=observations,
+                       markers=True,
+                       facet_kws={'sharex': 'col',
+                                  'sharey': 'col'})
+
+    def error_bars(**kwargs):
+        measurements = kwargs.pop('measurements')
+        data = kwargs.pop('data')
+        # add error bars to adjusted
+        for temp in data['T'].unique():
+            plt.errorbar(data.loc[data['T']==temp]['x'],
+                         data.loc[data['T']==temp]['y'],
+                         yerr=np.sqrt(data.loc[data['T']==temp]['variance']),
+                         ls='None', marker=None)
+        # add unadjusted data and error bars
+        for exp_id in data['exp_id'].unique():
+            plt.errorbar(measurements.loc[measurements['exp_id']==exp_id]['x'],
+                         measurements.loc[measurements['exp_id']==exp_id]['y'],
+                         yerr=np.sqrt(measurements.loc[measurements['exp_id']==exp_id]['variance']),
+                         ls='None', marker='x', color='k')
+
+    grid = grid.map_dataframe(error_bars, measurements=observations_unadjusted)
+
+    return grid
