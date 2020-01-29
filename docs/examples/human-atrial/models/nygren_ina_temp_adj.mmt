@@ -2,6 +2,7 @@
 author: Cellml converter
 desc: """
     Mathematical Model Of An Adult Human Atrial Cell, 1998'
+    Adjusted to temperature of 310K using Q10 factor.
     """
 name: NYG_FULL
 
@@ -24,7 +25,7 @@ FoRT = F/(R*T)
 
 [membrane]
 Cm = 0.05 [nF]
-dot(V) = -ina.i_Na 
+dot(V) = -ina.i_Na / Cm
     in [mV]
 
 [na_conc]
@@ -43,14 +44,14 @@ use phys.FoRT as FoRT
 use na_conc.Na_o as Na_o
 use na_conc.E_Na as E_Na
 
-i_Na = (P_Na*0.001/Cm) * g * forcing
-    in [pA/pF]
+i_Na = P_Na * g * forcing
+    in [pA]
 
 K_Q10 = 2.79^((306.15-310)/10)
 
 forcing = Na_o * V * F * FoRT * (exp(V-E_Na)*FoRT - 1.0)/(exp(V*FoRT)-1.0)
-P_Na = 0.0016
-    in [m^3/s (1e-12)]
+P_Na = 0.0016 / 1000
+    in [m^3/ms (1e-12)]
 
 g = m^3 * (s1*h1 + (1-s1)*h2)
 s1 = 0.9
@@ -90,20 +91,3 @@ q5 = 3.2 [mV]
 q6 = 3e-4 [s]
 q7 = 0.12 [s]
 q8 = 3e-3 [s]
-
-# Not sure where these came from?
-#r1 =  51.3 [mV]
-#r2 =  -12.8 [mV]
-#r3 = 0.082 [s]
-#r4 = 13.78 [mV]
-#r5 = 10.59 [mV]
-#r6 = 9.92e-6 [s]
-
-#q1 = 95.11 [mV]
-#q2 = 6.66 [mV]
-#q3 =  12.73/10 [s]
-#q4 = 49.51 [mV]
-#q5 =  8.45 [mV]
-#q6 =  1.77/10 [s]
-#q7 =  10.65 [s]
-#q8 =  18.27 [s]

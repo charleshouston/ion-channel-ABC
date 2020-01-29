@@ -22,14 +22,14 @@ T = 306.15 [K]
 FoRT = F/(R*T)
 
 [membrane]
-Cm = 50 [pF]
-dot(V)  = -ito.i_to
+Cm = 0.05 [nF]
+dot(V)  = -ito.i_to / Cm
     in [mV]
 
 [k_conc]
 use phys.FoRT as FoRT
-K_i = 7.24950000000000030e-5 [mM]
-K_o = 1 [mM]
+K_i = 130 [mM]
+K_o = 5.4 [mM]
 E_K = 1/FoRT * log(K_o/K_i)
     in [mV]
 
@@ -38,8 +38,8 @@ use membrane.Cm as Cm
 use membrane.V as V
 use k_conc.E_K as E_K
 
-i_to = (g_to * g * (V - E_K))/Cm
-    in [pA/pF]
+i_to = g_to * g * (V - E_K)
+    in [pA]
 g = r * s
 g_to = 7.5
     in [nS]

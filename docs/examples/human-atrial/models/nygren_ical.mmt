@@ -23,8 +23,8 @@ T = 306.15 [K]
 FoRT = F/(R*T)
 
 [membrane]
-Cm = 50 [pF]
-dot(V)  = -ical.i_CaL
+Cm = 0.05 [nF]
+dot(V)  = -ical.i_CaL / Cm
     in [mV]
 
 [ca_conc]
@@ -38,8 +38,8 @@ use membrane.Cm as Cm
 use membrane.V as V
 use ca_conc.Ca_d as Ca_d
 
-i_CaL = (g_Ca_L * g * (V - E_Ca_app))/Cm
-    in [pA/pF]
+i_CaL = g_Ca_L * g * (V - E_Ca_app)
+    in [pA]
 g = d * (f_Ca * f_1 + (1 - f_Ca) * f_2)
 
 g_Ca_L = 6.75

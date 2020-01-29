@@ -1,0 +1,465 @@
+[[model]]
+author: Cellml converter
+desc: """
+    Full Nygren model with parameterised Nygren channel models
+    added for ina, ical, isus (ikur). ito is replaced with the 
+    standardised form.
+    """
+name: nygren_fiset_firek_clark_lindblad_clark_giles_1998
+# Initial values
+membrane.V                                          = -74.2525
+ina.m                             = 0.0032017
+ina.h1                           = 0.8814
+ina.h2                           = 0.8742
+ical.d                      =  1.30050000000000000e-5
+ical.f_1                   = 0.9986
+ical.f_2                   = 0.9986
+ito.r = 0.0010678
+ito.s = 0.949
+isus.r_sus        =  1.59490000000000006e-4
+isus.s_sus        = 0.9912
+delayed_rectifier_K_currents_n_gate.n               = 0.0048357
+delayed_rectifier_K_currents_pa_gate.p_a            = 0.0001
+intracellular_ion_concentrations.Na_i               = 8.5547
+intracellular_ion_concentrations.K_i                = 129.435
+intracellular_ion_concentrations.Ca_i               = 6.729e-5
+intracellular_ion_concentrations.Ca_d               =  7.24950000000000030e-5
+intracellular_Ca_buffering.O_C                      = 0.0275
+intracellular_Ca_buffering.O_TC                     = 0.0133
+intracellular_Ca_buffering.O_TMgC                   = 0.1961
+intracellular_Ca_buffering.O_TMgMg                  = 0.7094
+cleft_space_ion_concentrations.Na_c                 = 130.011
+cleft_space_ion_concentrations.K_c                  = 5.3581
+cleft_space_ion_concentrations.Ca_c                 = 1.8147
+Ca_handling_by_the_SR.O_Calse                       = 0.4369
+Ca_handling_by_the_SR.Ca_rel                        = 0.6465
+Ca_handling_by_the_SR.Ca_up                         = 0.6646
+Ca_handling_by_the_SR.F1                            = 0.4284
+Ca_handling_by_the_SR.F2                            = 0.0028
+
+[Ca_handling_by_the_SR]
+dot(Ca_rel) = (i_tr - i_rel) / (2 * Vol_rel * membrane.F) - 31 [mM] * dot(O_Calse)
+    in [mM]
+dot(Ca_up) = (i_up - i_tr) / (2 * Vol_up * membrane.F)
+    in [mM]
+dot(F1) = r_recov * (1 - F1 - F2) - r_act * F1
+    in [1]
+dot(F2) = r_act * F1 - r_inact * F2
+    in [1]
+I_up_max = 2800
+    in [pA]
+dot(O_Calse) = 480 [m^3/s/mol] * Ca_rel * (1 - O_Calse) - 400 [S/F] * O_Calse
+    in [1]
+Vol_rel = 4.41e-5
+    in [nL]
+Vol_up = 0.0003969
+    in [nL]
+alpha_rel = 200000
+    in [m^3*A/mol (1e-12)]
+i_rel = alpha_rel * (F2 / (F2 + 0.25)) ^ 2 * (Ca_rel - intracellular_ion_concentrations.Ca_i)
+    in [pA]
+i_tr = (Ca_up - Ca_rel) * 2 * membrane.F * Vol_rel / tau_tr
+    in [pA]
+i_up = I_up_max * (intracellular_ion_concentrations.Ca_i / k_cyca - k_xcs ^ 2 * Ca_up / k_srca) / ((intracellular_ion_concentrations.Ca_i + k_cyca) / k_cyca + k_xcs * (Ca_up + k_srca) / k_srca)
+    in [pA]
+k_cyca = 0.0003
+    in [mM]
+k_rel_d = 0.003
+    in [mM]
+k_rel_i = 0.0003
+    in [mM]
+k_srca = 0.5
+    in [mM]
+k_xcs = 0.4
+    in [1]
+r_act = 203.8 [S/F] * ((intracellular_ion_concentrations.Ca_i / (intracellular_ion_concentrations.Ca_i + k_rel_i)) ^ 4 + (intracellular_ion_concentrations.Ca_d / (intracellular_ion_concentrations.Ca_d + k_rel_d)) ^ 4)
+    in [S/F]
+r_inact = 33.96 [S/F] + 339.6 [S/F] * (intracellular_ion_concentrations.Ca_i / (intracellular_ion_concentrations.Ca_i + k_rel_i)) ^ 4
+    in [S/F]
+r_recov = 0.815
+    in [S/F]
+tau_tr = 0.01
+    in [s]
+
+
+[ito]
+use membrane.V as V
+use membrane.V as V
+use membrane.R as R
+use membrane.T as T
+use membrane.F as F
+use cleft_space_ion_concentrations.K_c as K_c
+use intracellular_ion_concentrations.K_i as K_i
+
+K_Q10 = 2.2^((306.15-310)/10)
+    in [1]
+
+g_to = 0.1652 * cond_factor
+    in [nS]
+cond_factor = 1
+    in [1]
+E_K = R*T/F * log(K_c/K_i)
+    in [mV]
+g = r * s
+    in [1]
+i_to = g_to * g * (V - E_K)
+    in [pA]
+
+dot(r) = (r_ss - r) / tau_r
+    in [1]
+tau_r = 1 / (k_1 + k_2) / K_Q10
+    in [s]
+r_ss = k_1 * tau_r
+    in [1]
+
+dot(s) = (s_ss - s) / tau_s
+    in [1]
+tau_s = 1 / (k_3 + k_4) / K_Q10
+    in [s]
+s_ss = k_4 * tau_s
+    in [1]
+
+k_1 = p_1*exp(p_2 * V) * 1000
+    in [1/s]
+k_2 = p_3*exp(-p_4 * V) * 1000
+    in [1/s]
+k_3 = p_5*exp(p_6 * V) * 1000
+    in [1/s]
+k_4 = p_7*exp(-p_8 * V) * 1000
+    in [1/s]
+
+p_1 = 10^(1.3)
+    in [1/ms]
+p_2 = 0.014 [1/mV]
+p_3 = 10^(-0.4)
+    in [1/ms]
+p_4 = 0.058 [1/mV]
+p_5 = 10^(2.2) 
+    in [1/ms]
+p_6 = 0.11 [1/mV]
+p_7 = 10^(-3.2) 
+    in [1/ms]
+p_8 = 0.051 [1/mV]
+
+
+[ical]
+use membrane.V as V
+use intracellular_ion_concentrations.Ca_d as Ca_d
+
+i_CaL = g_Ca_L * g * (V - E_Ca_app)
+    in [pA]
+g = d * (f_Ca * f_1 + (1 - f_Ca) * f_2)
+
+g_Ca_L = 6.75*cond_factor
+    in [nS]
+cond_factor = 1
+    in [1]
+E_Ca_app = 60
+    in [mV]
+f_Ca = Ca_d / (Ca_d + k_Ca)
+    in [1]
+k_Ca = 0.025
+    in [mM]
+
+dot(d) = (d_inf - d) / tau_d
+    in [1]
+d_inf = 1 / (1 + exp((V + p1) / -p2))
+    in [1]
+tau_d = p3 * exp(-((V + p4) / p5) ^ 2) + p6
+    in [s]
+    
+p1 = 9 [mV]
+p2 = 5.8 [mV]
+p3 = 0.0027 [s]
+p4 = 35 [mV]
+p5 = 30 [mV]
+p6 = 0.002 [s]
+
+dot(f_1) = (f_inf - f_1) / tau_f_1
+    in [1]
+f_inf = 1 / (1 + exp((V + q1) / q2))
+    in [1]
+tau_f_1 = q3 * exp(-((V + q4) / q5) ^ 2) + q6
+    in [s]
+    
+q1 = 27.4 [mV]
+q2 = 7.1 [mV]
+q3 = 0.161 [s]
+q4 = 40 [mV]
+q5 = 14.4 [mV]
+q6 = 0.01 [s]
+
+dot(f_2) = (f_inf - f_2) / tau_f_2
+    in [1]
+tau_f_2 = r1 * exp(-((V + r2) / r3) ^ 2) + r4
+    in [s]
+
+r1 = 1.3323 [s]
+r2 = 40 [mV]
+r3 = 14.2 [mV]
+r4 = 0.0626 [s]
+
+
+[Na_Ca_ion_exchanger_current]
+d_NaCa = 0.0003
+    in [m^12/mol^4]
+gamma = 0.45
+    in [1]
+i_NaCa = k_NaCa * (intracellular_ion_concentrations.Na_i ^ 3 * cleft_space_ion_concentrations.Ca_c * exp(gamma * membrane.F * membrane.V / (membrane.R * membrane.T)) - cleft_space_ion_concentrations.Na_c ^ 3 * intracellular_ion_concentrations.Ca_i * exp((gamma - 1) * membrane.V * membrane.F / (membrane.R * membrane.T))) / (1 + d_NaCa * (cleft_space_ion_concentrations.Na_c ^ 3 * intracellular_ion_concentrations.Ca_i + intracellular_ion_concentrations.Na_i ^ 3 * cleft_space_ion_concentrations.Ca_c))
+    in [pA]
+k_NaCa = 0.0374842
+    in [m^12*A/mol^4 (1e-12)]
+
+[background_currents]
+E_Ca = membrane.R * membrane.T / (2 * membrane.F) * log(cleft_space_ion_concentrations.Ca_c / intracellular_ion_concentrations.Ca_i)
+    in [mV]
+g_B_Ca = 0.078681
+    in [nS]
+g_B_Na = 0.060599
+    in [nS]
+i_B_Ca = g_B_Ca * (membrane.V - E_Ca)
+    in [pA]
+i_B_Na = g_B_Na * (membrane.V - ina.E_Na)
+    in [pA]
+
+[cleft_space_ion_concentrations]
+Ca_b = 1.8
+    in [mM]
+dot(Ca_c) = (Ca_b - Ca_c) / tau_Ca + (ical.i_CaL + background_currents.i_B_Ca + sarcolemmal_calcium_pump_current.i_CaP - 2 * Na_Ca_ion_exchanger_current.i_NaCa) / (2 * Vol_c * membrane.F)
+    in [mM]
+K_b = 5.4
+    in [mM]
+dot(K_c) = (K_b - K_c) / tau_K + (ito.i_to + isus.i_sus + inward_rectifier.i_K1 + delayed_rectifier_K_currents.i_Kr + delayed_rectifier_K_currents.i_Ks - 2 * sodium_potassium_pump.i_NaK) / (Vol_c * membrane.F)
+    in [mM]
+Na_b = 130
+    in [mM]
+dot(Na_c) = (Na_b - Na_c) / tau_Na + (ina.i_Na + background_currents.i_B_Na + 3 * sodium_potassium_pump.i_NaK + 3 * Na_Ca_ion_exchanger_current.i_NaCa + intracellular_ion_concentrations.phi_Na_en) / (Vol_c * membrane.F)
+    in [mM]
+Vol_c = 0.136 * intracellular_ion_concentrations.Vol_i
+    in [nL]
+tau_Ca = 24.7
+    in [s]
+tau_K = 10
+    in [s]
+tau_Na = 14.3
+    in [s]
+
+[delayed_rectifier_K_currents]
+g_Kr = 0.5
+    in [nS]
+g_Ks = 1
+    in [nS]
+i_Kr = g_Kr * delayed_rectifier_K_currents_pa_gate.p_a * delayed_rectifier_K_currents_pi_gate.p_i * (membrane.V - ito.E_K)
+    in [pA]
+i_Ks = g_Ks * delayed_rectifier_K_currents_n_gate.n * (membrane.V - ito.E_K)
+    in [pA]
+
+[delayed_rectifier_K_currents_n_gate]
+dot(n) = (n_infinity - n) / tau_n
+    in [1]
+n_infinity = 1 / (1 + exp((membrane.V - 19.9 [mV]) / -12.7 [mV]))
+    in [1]
+tau_n = 0.7 [s] + 0.4 [s] * exp(-((membrane.V - 20 [mV]) / 20 [mV]) ^ 2)
+    in [s]
+
+[delayed_rectifier_K_currents_pa_gate]
+dot(p_a) = (p_a_infinity - p_a) / tau_p_a
+    in [1]
+p_a_infinity = 1 / (1 + exp((membrane.V + 15 [mV]) / -6 [mV]))
+    in [1]
+tau_p_a = 0.03118 [s] + 0.21718 [s] * exp(-((membrane.V + 20.1376 [mV]) / 22.1996 [mV]) ^ 2)
+    in [s]
+
+[delayed_rectifier_K_currents_pi_gate]
+p_i = 1 / (1 + exp((membrane.V + 55 [mV]) / 24 [mV]))
+    in [1]
+
+[environment]
+time = 0 bind time
+    in [s]
+
+[intracellular_Ca_buffering]
+Mg_i = 2.5
+    in [mM]
+dot(O_C) = 200000 [m^3/s/mol] * intracellular_ion_concentrations.Ca_i * (1 - O_C) - 476 [S/F] * O_C
+    in [1]
+dot(O_TC) = 78400 [m^3/s/mol] * intracellular_ion_concentrations.Ca_i * (1 - O_TC) - 392 [S/F] * O_TC
+    in [1]
+dot(O_TMgC) = 200000 [m^3/s/mol] * intracellular_ion_concentrations.Ca_i * (1 - O_TMgC - O_TMgMg) - 6.6 [S/F] * O_TMgC
+    in [1]
+dot(O_TMgMg) = 2000 [m^3/s/mol] * Mg_i * (1 - O_TMgC - O_TMgMg) - 666 [S/F] * O_TMgMg
+    in [1]
+dOCdt = dot(O_C)
+    in [S/F]
+dOTCdt = dot(O_TC)
+    in [S/F]
+dOTMgCdt = dot(O_TMgC)
+    in [S/F]
+
+[intracellular_ion_concentrations]
+dot(Ca_d) = -(ical.i_CaL + i_di) / (2 * Vol_d * membrane.F)
+    in [mM]
+dot(Ca_i) = -(-i_di + background_currents.i_B_Ca + sarcolemmal_calcium_pump_current.i_CaP - 2 * Na_Ca_ion_exchanger_current.i_NaCa + Ca_handling_by_the_SR.i_up - Ca_handling_by_the_SR.i_rel) / (2 * Vol_i * membrane.F) - (0.08 [mM] * intracellular_Ca_buffering.dOTCdt + 0.16 [mM] * intracellular_Ca_buffering.dOTMgCdt + 0.045 [mM] * intracellular_Ca_buffering.dOCdt)
+    in [mM]
+dot(K_i) = -(ito.i_to + isus.i_sus + inward_rectifier.i_K1 + delayed_rectifier_K_currents.i_Kr + delayed_rectifier_K_currents.i_Ks - 2 * sodium_potassium_pump.i_NaK) / (Vol_i * membrane.F)
+    in [mM]
+dot(Na_i) = -(ina.i_Na + background_currents.i_B_Na + 3 * sodium_potassium_pump.i_NaK + 3 * Na_Ca_ion_exchanger_current.i_NaCa + phi_Na_en) / (Vol_i * membrane.F)
+    in [mM]
+Vol_d = 0.02 * Vol_i
+    in [nL]
+Vol_i = 0.005884
+    in [nL]
+i_di = (Ca_d - Ca_i) * 2 * membrane.F * Vol_d / tau_di
+    in [pA]
+phi_Na_en = -1.68
+    in [pA]
+tau_di = 0.01
+    in [s]
+
+[inward_rectifier]
+g_K1 = 3
+    in [nS]
+i_K1 = g_K1 * (cleft_space_ion_concentrations.K_c / 1 [mM]) ^ 0.4457 * (membrane.V - ito.E_K) / (1 + exp(1.5 * (membrane.V - ito.E_K + 3.6 [mV]) * membrane.F / (membrane.R * membrane.T)))
+    in [pA]
+
+[membrane]
+Cm = 0.05
+    in [nF]
+F = 96487
+    in [C/mol]
+R = 8314
+    in [mJ/mol/K]
+T = 306.15
+    in [K]
+dot(V) = -1 / Cm * (i_Stim + ina.i_Na + ical.i_CaL + ito.i_to + isus.i_sus + inward_rectifier.i_K1 + delayed_rectifier_K_currents.i_Kr + delayed_rectifier_K_currents.i_Ks + background_currents.i_B_Na + background_currents.i_B_Ca + sodium_potassium_pump.i_NaK + sarcolemmal_calcium_pump_current.i_CaP + Na_Ca_ion_exchanger_current.i_NaCa)
+    in [mV]
+i_Stim = piecewise(environment.time >= stim_start and environment.time <= stim_end and environment.time - stim_start - floor((environment.time - stim_start) / stim_period) * stim_period <= stim_duration, stim_amplitude, 0 [pA])
+    in [pA]
+stim_amplitude = -280
+    in [pA]
+stim_duration = 0.006
+    in [s]
+stim_end =  1.00000000000000000e8
+    in [s]
+stim_period = 1
+    in [s]
+stim_start = 0.1
+    in [s]
+
+[sarcolemmal_calcium_pump_current]
+i_CaP = i_CaP_max * intracellular_ion_concentrations.Ca_i / (intracellular_ion_concentrations.Ca_i + k_CaP)
+    in [pA]
+i_CaP_max = 4
+    in [pA]
+k_CaP = 0.0002
+    in [mM]
+
+[ina]
+use membrane.V as V
+use membrane.R as R
+use membrane.T as T
+use membrane.F as F
+use cleft_space_ion_concentrations.Na_c as Na_c
+use intracellular_ion_concentrations.Na_i as Na_i
+
+E_Na = R * T / F * log(Na_c / Na_i)
+    in [mV]
+
+i_Na = P_Na * g * forcing
+    in [pA/pF]
+
+forcing = Na_c * V * F^2 / R / T * (exp(V-E_Na)*F/R/T - 1.0)/(exp(V*F/R/T)-1.0)
+cond_factor = 1
+P_Na = 0.0016*cond_factor
+    in [m^3/s (1e-12)]
+
+g = m^3 * (s1*h1 + (1-s1)*h2)
+s1 = 0.9
+
+dot(m) = (m_ss - m) / tau_m
+    in [1]
+m_ss = 1 / (1 + exp(-(V + r1 ) / r2 ))
+    in [1]
+tau_m = r3 * exp(-((V + r4) / r5) ^ 2) + r6
+    in [ms]
+
+r1 = 27.12 [mV]
+r2 = 8.21 [mV]
+r3 = 4.2e-5 [s]
+r4 = 25.57 [mV]
+r5 = 28.8 [mV]
+r6 = 2.4e-5 [s]
+
+dot(h1) = (h_ss - h1) / tau_h1
+    in [1]
+h_ss = 1 / (1 + exp((V + q1) / q2 ))
+    in [1]
+tau_h1 = q3 / (1 + exp((V + q4) / q5 )) + q6
+    in [ms]
+
+dot(h2) = (h_ss - h2) / tau_h2
+    in [1]
+tau_h2 = q7 / (1 + exp((V + q4) / q5)) + q8
+    in [ms]
+
+q1 = 63.6 [mV]
+q2 = 5.3 [mV]
+q3 = 0.03 [s]
+q4 = 35.1 [mV]
+q5 = 3.2 [mV]
+q6 = 3e-4 [s]
+q7 = 0.12 [s]
+q8 = 3e-3 [s]
+
+
+[sodium_potassium_pump]
+i_NaK = i_NaK_max * cleft_space_ion_concentrations.K_c / (cleft_space_ion_concentrations.K_c + k_NaK_K) * intracellular_ion_concentrations.Na_i ^ 1.5 / (intracellular_ion_concentrations.Na_i ^ 1.5 + k_NaK_Na ^ 1.5) * (membrane.V + 150 [mV]) / (membrane.V + 200 [mV])
+    in [pA]
+i_NaK_max = 70.8253
+    in [pA]
+k_NaK_K = 1
+    in [mM]
+k_NaK_Na = 11
+    in [mM]
+
+
+[isus]
+use membrane.V as V
+use ito.E_K as E_K
+
+i_sus = g_sus * g * (V - E_K)
+    in [pA]
+g = r_sus * s_sus
+g_sus = 2.75*cond_factor
+    in [nS]
+cond_factor = 1
+    in [1]
+
+dot(r_sus) = (r_inf - r_sus) / tau_r
+    in [1]
+r_inf = 1 / (1 + exp((V + p1) / -p2))
+    in [1]
+tau_r = p3 / (1 + exp((V + p4) / p5)) + p6
+    in [ms]
+    
+p1 = 4.3 [mV]
+p2 = 8 [mV]
+p3 = 0.009 [s]
+p4 = 5 [mV]
+p5 = 12 [mV]
+p6 = 0.0005 [s]
+
+dot(s_sus) = (s_inf - s_sus) / tau_s
+    in [1]
+s_inf = (1-q3) / (1 + exp((V + q1) / q2)) + q3
+    in [1]
+tau_s = q4 / (1 + exp((V + q5) / q6)) + q7
+    in [ms]
+    
+q1 = 20 [mV]
+q2 = 10 [mV]
+q3 = 0.6
+q4 = 0.047 [s]
+q5 = 60 [mV]
+q6 = 10 [mV]
+q7 = 0.3 [s]

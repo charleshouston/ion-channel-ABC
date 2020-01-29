@@ -2,7 +2,8 @@
 author: Cellml converter
 desc: """
     Mathematical Model Of An Adult Human Atrial Cell, 1998
-    i_to channel
+    i_to channel.
+    Temperature adjusted to 310K using Q10 factor.
     """
 name: NYG
 
@@ -22,8 +23,8 @@ T = 310#306.15 [K]
 FoRT = F/(R*T)
 
 [membrane]
-Cm = 50 [pF]
-dot(V)  = -ito.i_to
+Cm = 0.05 [nF]
+dot(V)  = -ito.i_to / Cm
     in [mV]
 
 [k_conc]
@@ -38,8 +39,8 @@ use membrane.Cm as Cm
 use membrane.V as V
 use k_conc.E_K as E_K
 
-i_to = (g_to * g * (V - E_K))/Cm
-    in [pA/pF]
+i_to = g_to * g * (V - E_K)
+    in [pA]
 g = r * s
 g_to = 7.5
     in [nS]
