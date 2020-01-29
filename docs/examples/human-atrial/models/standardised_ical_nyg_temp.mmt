@@ -3,6 +3,7 @@ name: STA
 author: Charles Houston
 desc: """
       Standardised model for ical current.
+      Adjusted to 306.15K using Q10 factor.
       """
 
 # Initial values
@@ -19,7 +20,7 @@ time = 0 bind time
 [phys]
 F = 96.5 [C/mmol]
 R = 8.314 [J/mol/K]
-T = 310 [K]
+T = 306.15 [K]
 FoRT = F / (R * T)
     in [1/mV]
 
@@ -43,16 +44,19 @@ i_CaL = g_CaL * g * (V - E_Ca_app)
     in [pA]
 E_Ca_app = 65 [mV]
 
+K_Q10_act = 1.7^((306.15-310)/10)
+K_Q10_inact = 1.3^((306.15-310)/10)
+
 dot(d) = (d_ss - d) / tau_d
     in [1]
-tau_d = 1 / (k_1 + k_2)
+tau_d = 1 / (k_1 + k_2) / K_Q10_act
     in [ms]
 d_ss = k_1 * tau_d
     in [1]
 
 dot(f_1) = (f_ss - f_1) / tau_f1
     in [1]
-tau_f1 = 1 / (k_3 + k_4)
+tau_f1 = 1 / (k_3 + k_4) / K_Q10_inact
     in [ms]
 f_ss = k_4 * tau_f1
     in [1]

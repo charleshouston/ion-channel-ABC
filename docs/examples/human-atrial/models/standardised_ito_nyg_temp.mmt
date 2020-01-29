@@ -3,6 +3,7 @@ name: STA
 author: Charles Houston
 desc: """
       Standardised model for ito current.
+      Adjusted to 306.15K using Q10 factor.
       """
 
 # Initial values
@@ -17,7 +18,7 @@ time = 0 bind time
 [phys]
 F = 96.5 [C/mmol]
 R = 8.314 [J/mol/K]
-T = 310 [K]
+T = 306.15 [K]
 FoRT = F / (R * T)
     in [1/mV]
 
@@ -36,6 +37,8 @@ dot(V) = -ito.i_to
 use membrane.V as V
 use k_conc.E_K as E_K
 
+K_Q10 = 2.2^((306.15-310)/10)
+
 g_to = 0.1652 [nS]
 g = r * s
     in [1]
@@ -44,14 +47,14 @@ i_to = g_to * g * (V - E_K)
 
 dot(r) = (r_ss - r) / tau_r
     in [1]
-tau_r = 1 / (k_1 + k_2)
+tau_r = 1 / (k_1 + k_2) / K_Q10
     in [ms]
 r_ss = k_1 * tau_r
     in [1]
 
 dot(s) = (s_ss - s) / tau_s
     in [1]
-tau_s = 1 / (k_3 + k_4)
+tau_s = 1 / (k_3 + k_4) / K_Q10
     in [ms]
 s_ss = k_4 * tau_s
     in [1]

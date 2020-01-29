@@ -23,8 +23,8 @@ FoRT = F / (R * T)
 
 [k_conc]
 use phys.FoRT as FoRT
-K_i = 7.24950000000000030e-5 [mM]
-K_o = 1 [mM]
+K_i = 130 [mM]
+K_o = 5.4 [mM]
 E_K = 1/FoRT * log(K_o/K_i)
     in [mV]
 
@@ -36,11 +36,11 @@ dot(V) = -isus.i_sus
 use membrane.V as V
 use k_conc.E_K as E_K
 
-g_sus = 0.1652 [S/F]
+g_sus = 0.1652 [nS]
 g = r * s
     in [1]
 i_sus = g_sus * g * (V - E_K)
-    in [pA/pF]
+    in [pA]
 
 dot(r) = (r_ss - r) / tau_r
     in [1]
