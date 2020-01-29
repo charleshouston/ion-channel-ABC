@@ -23,6 +23,11 @@ Q10_cond = 1.5 # [Correa1991]
 
 fit_threshold = 0.9
 
+# optional adjustments to match papers
+nyg_adjust_act = 22.8
+nyg_adjust_inact = 32.2
+cou_adjust = 20
+
 
 #
 # IV curve [Sakakibara1992]
@@ -164,6 +169,15 @@ sakakibara_act_desc = """
 vsteps_act, act, sd_act = data.Act_Sakakibara()
 variances_act = [(sd_)**2 for sd_ in sd_act]
 sakakibara_act_dataset = np.asarray([vsteps_act, act, variances_act])
+# Nygren et al. adjust the steady-state activation +22.8mV
+vsteps_act_nyg_adjust = [v+nyg_adjust_act for v in vsteps_act]
+sakakibara_act_nyg_adjust_dataset = np.asarray([vsteps_act_nyg_adjust, act, variances_act])
+
+sakakibara_act_nyg_adjust_protocol = myokit.pacing.steptrain_linear(
+    -100+nyg_adjust_act, 30+nyg_adjust_act, 10, -140+nyg_adjust_act, 5e3, 1e3, 5e3)
+
+#sakakibara_act_nyg_adjust_protocol = myokit.pacing.steptrain_linear(
+#    -100+nyg_adjust_act, 30+nyg_adjust_act, 10, -140+nyg_adjust_act, 1e4, 1e3)
 
 def sakakibara_act_sum_stats(data):
     output = []
@@ -179,6 +193,15 @@ def sakakibara_act_sum_stats(data):
 sakakibara_act = Experiment(
     dataset=sakakibara_act_dataset,
     protocol=sakakibara_iv_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_act_sum_stats,
+    description=sakakibara_act_desc,
+    Q10=None,
+    Q10_factor=0)
+
+sakakibara_act_nyg_adjust = Experiment(
+    dataset=sakakibara_act_nyg_adjust_dataset,
+    protocol=sakakibara_act_nyg_adjust_protocol,
     conditions=sakakibara_conditions,
     sum_stats=sakakibara_act_sum_stats,
     description=sakakibara_act_desc,
@@ -202,6 +225,13 @@ sakakibara_inact_desc = """
 vsteps_inact, inact, sd_inact = data.Inact_Sakakibara()
 variances_inact = [(sd_)**2 for sd_ in sd_inact]
 sakakibara_inact_dataset = np.asarray([vsteps_inact, inact, variances_inact])
+vsteps_inact_nyg_adjust = [v+nyg_adjust_inact for v in vsteps_inact]
+sakakibara_inact_nyg_adjust_dataset = np.asarray([
+    vsteps_inact_nyg_adjust, inact, variances_inact])
+vsteps_inact_cou_adjust = [v+cou_adjust for v in vsteps_inact]
+sakakibara_inact_cou_adjust_dataset = np.asarray([
+    vsteps_inact_cou_adjust, inact, variances_inact])
+
 
 tpre = 10000 # ms
 tstep = 1000
@@ -216,6 +246,15 @@ Vupper = -30
 
 sakakibara_inact_protocol = availability_linear(
     Vlower, Vupper, dV, Vhold, Vtest, tpre, tstep, twait, ttest)
+sakakibara_inact_nyg_adjust_protocol = availability_linear(
+    Vlower+nyg_adjust_inact, Vupper+nyg_adjust_inact, dV,
+    Vhold+nyg_adjust_inact, Vtest+nyg_adjust_inact,
+    tpre, tstep, twait, ttest)
+sakakibara_inact_cou_adjust_protocol = availability_linear(
+    Vlower+cou_adjust, Vupper+cou_adjust, dV,
+    Vhold+cou_adjust, Vtest+cou_adjust,
+    tpre, tstep, twait, ttest)
+
 
 def sakakibara_inact_sum_stats(data):
     output = []
@@ -240,6 +279,24 @@ sakakibara_inact = Experiment(
     description=sakakibara_inact_desc,
     Q10=None,
     Q10_factor=0)
+sakakibara_inact_nyg_adjust = Experiment(
+    dataset=sakakibara_inact_nyg_adjust_dataset,
+    protocol=sakakibara_inact_nyg_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_sum_stats,
+    description=sakakibara_inact_desc,
+    Q10=None,
+    Q10_factor=0)
+sakakibara_inact_cou_adjust = Experiment(
+    dataset=sakakibara_inact_cou_adjust_dataset,
+    protocol=sakakibara_inact_cou_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_sum_stats,
+    description=sakakibara_inact_desc,
+    Q10=None,
+    Q10_factor=0)
+
+
 
 
 #
@@ -260,13 +317,34 @@ sakakibara_inact_kin_desc =   """
 vsteps_th1, th1, sd_th1 = data.TauF_Inactivation_Sakakibara()
 variances_th1 = [(sd_)**2 for sd_ in sd_th1]
 sakakibara_inact_kin_fast_dataset = np.asarray([vsteps_th1, th1, variances_th1])
+
+vsteps_th1_nyg_adjust = [v+nyg_adjust_inact for v in vsteps_th1]
+sakakibara_inact_kin_fast_nyg_adjust_dataset = np.array([
+    vsteps_th1_nyg_adjust, th1, variances_th1])
+vsteps_th1_cou_adjust = [v+cou_adjust for v in vsteps_th1]
+sakakibara_inact_kin_fast_cou_adjust_dataset = np.array([
+    vsteps_th1_cou_adjust, th1, variances_th1])
+
 # Slow inactivation kinetics
 vsteps_th2, th2, sd_th2 = data.TauS_Inactivation_Sakakibara()
 variances_th2 = [(sd_)**2 for sd_ in sd_th2]
 sakakibara_inact_kin_slow_dataset = np.asarray([vsteps_th2, th2, variances_th2])
 
+vsteps_th2_nyg_adjust = [v+nyg_adjust_inact for v in vsteps_th2]
+sakakibara_inact_kin_slow_nyg_adjust_dataset = np.array([
+    vsteps_th2_nyg_adjust, th2, variances_th2])
+vsteps_th2_cou_adjust = [v+cou_adjust for v in vsteps_th2]
+sakakibara_inact_kin_slow_cou_adjust_dataset = np.array([
+    vsteps_th2_cou_adjust, th2, variances_th2])
+
 sakakibara_inact_kin_dataset = [sakakibara_inact_kin_fast_dataset,
                                 sakakibara_inact_kin_slow_dataset]
+sakakibara_inact_kin_nyg_adjust_dataset = [
+        sakakibara_inact_kin_fast_nyg_adjust_dataset,
+        sakakibara_inact_kin_slow_nyg_adjust_dataset]
+sakakibara_inact_kin_cou_adjust_dataset = [
+        sakakibara_inact_kin_fast_cou_adjust_dataset,
+        sakakibara_inact_kin_slow_cou_adjust_dataset]
 
 tstep = 100 # ms
 tpre = 10000 # before the first pulse occurs
@@ -276,6 +354,13 @@ dV = 10
 Vupper = -20+dV
 sakakibara_inact_kin_protocol = myokit.pacing.steptrain_linear(
     Vlower, Vupper, dV, Vhold, tpre, tstep)
+sakakibara_inact_kin_nyg_adjust_protocol = myokit.pacing.steptrain_linear(
+    Vlower+nyg_adjust_inact, Vupper+nyg_adjust_inact, dV,
+    Vhold+nyg_adjust_inact, tpre, tstep)
+sakakibara_inact_kin_cou_adjust_protocol = myokit.pacing.steptrain_linear(
+    Vlower+cou_adjust, Vupper+cou_adjust, dV,
+    Vhold+cou_adjust, tpre, tstep)
+
 
 def sakakibara_inact_kin_sum_stats(data, fast=True, slow=True):
     def double_exp(t, tauh, taus, Ah, As, A0):
@@ -286,7 +371,8 @@ def sakakibara_inact_kin_sum_stats(data, fast=True, slow=True):
     for d in data.split_periodic(10100, adjust=True):
         d = d.trim_left(10000, adjust=True)
 
-        current = d['ina.i_Na'][:-1]
+        current = d['ina.g'][:-1] # Courtemanche forcing hides current at 0mV
+        #current = d['ina.i_Na'][:-1]
         time = d['engine.time'][:-1]
         index = np.argmax(np.abs(current))
 
@@ -328,7 +414,7 @@ def sakakibara_inact_kin_sum_stats(data, fast=True, slow=True):
                     raise RuntimeWarning('scipy.optimize.curve_fit found a poor fit')
             except:
                 if fast:
-                    output_fast = output_slow+[float('inf')]
+                    output_fast = output_fast+[float('inf')]
                 if slow:
                     output_slow = output_slow+[float('inf')]
     output = output_fast+output_slow
@@ -364,6 +450,58 @@ sakakibara_inact_kin_slow = Experiment(
     description=sakakibara_inact_kin_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
+
+sakakibara_inact_kin_nyg_adjust = Experiment(
+    dataset=sakakibara_inact_kin_nyg_adjust_dataset,
+    protocol=sakakibara_inact_kin_nyg_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_inact_kin_fast_nyg_adjust = Experiment(
+    dataset=sakakibara_inact_kin_fast_nyg_adjust_dataset,
+    protocol=sakakibara_inact_kin_nyg_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_fast_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_inact_kin_slow_nyg_adjust = Experiment(
+    dataset=sakakibara_inact_kin_slow_nyg_adjust_dataset,
+    protocol=sakakibara_inact_kin_nyg_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_slow_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+
+sakakibara_inact_kin_cou_adjust = Experiment(
+    dataset=sakakibara_inact_kin_cou_adjust_dataset,
+    protocol=sakakibara_inact_kin_cou_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_inact_kin_fast_cou_adjust = Experiment(
+    dataset=sakakibara_inact_kin_fast_cou_adjust_dataset,
+    protocol=sakakibara_inact_kin_cou_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_fast_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_inact_kin_slow_cou_adjust = Experiment(
+    dataset=sakakibara_inact_kin_slow_cou_adjust_dataset,
+    protocol=sakakibara_inact_kin_cou_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_inact_kin_slow_sum_stats,
+    description=sakakibara_inact_kin_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+
+
 
 
 #
@@ -468,10 +606,25 @@ variances_rec_tauf = [sd_**2 for sd_ in sd_rec_tauf]
 sakakibara_rec_tauf_dataset = np.array(
     [prepulse_rec, rec_tauf, variances_rec_tauf])
 
+prepulse_rec_nyg_adjust = [v+nyg_adjust_inact for v in prepulse_rec]
+sakakibara_rec_tauf_nyg_adjust_dataset = np.array([
+    prepulse_rec_nyg_adjust, rec_tauf, variances_rec_tauf])
+prepulse_rec_cou_adjust = [v+cou_adjust for v in prepulse_rec]
+sakakibara_rec_tauf_cou_adjust_dataset = np.array([
+    prepulse_rec_cou_adjust, rec_tauf, variances_rec_tauf])
+
 prepulse_rec, rec_taus, sd_rec_taus = data.TauS_Recovery()
 variances_rec_taus = [sd_**2 for sd_ in sd_rec_taus]
 sakakibara_rec_taus_dataset = np.array(
     [prepulse_rec, rec_taus, variances_rec_taus])
+
+prepulse_rec_nyg_adjust = [v+nyg_adjust_inact for v in prepulse_rec]
+sakakibara_rec_taus_nyg_adjust_dataset = np.array([
+    prepulse_rec_nyg_adjust, rec_taus, variances_rec_taus])
+prepulse_rec_cou_adjust = [v+cou_adjust for v in prepulse_rec]
+sakakibara_rec_taus_cou_adjust_dataset = np.array([
+    prepulse_rec_cou_adjust, rec_taus, variances_rec_taus])
+
 
 tpre = 10000 # ms
 tstep1 = 1000
@@ -491,6 +644,40 @@ tsplit_rec = tmp_protocols[0].characteristic_time()
 for p in tmp_protocols[1:]:
     for e in p.events():
         sakakibara_rec_protocol.add_step(e.level(), e.duration())
+
+tmp_protocols = []
+for v in prepulse_rec_nyg_adjust:
+    tmp_protocols.append(
+        recovery(twaits_rec, vhold+nyg_adjust_inact,
+                 vstep1+nyg_adjust_inact,
+                 vstep2+nyg_adjust_inact,
+                 tpre,
+                 tstep1,
+                 tstep2,
+                 v)
+    )
+sakakibara_rec_nyg_adjust_protocol = tmp_protocols[0]
+tsplit_rec = tmp_protocols[0].characteristic_time()
+for p in tmp_protocols[1:]:
+    for e in p.events():
+        sakakibara_rec_nyg_adjust_protocol.add_step(e.level(), e.duration())
+
+tmp_protocols = []
+for v in prepulse_rec_cou_adjust:
+    tmp_protocols.append(
+        recovery(twaits_rec, vhold,
+                 vstep1,
+                 vstep2,
+                 tpre,
+                 tstep1,
+                 tstep2,
+                 v)
+    )
+sakakibara_rec_cou_adjust_protocol = tmp_protocols[0]
+tsplit_rec = tmp_protocols[0].characteristic_time()
+for p in tmp_protocols[1:]:
+    for e in p.events():
+        sakakibara_rec_cou_adjust_protocol.add_step(e.level(), e.duration())
 
 tsplits_rec = [t+tstep1+tstep2+tpre for t in twaits_rec]
 for i in range(len(tsplits_rec)-1):
@@ -585,6 +772,60 @@ sakakibara_rec_slow = Experiment(
     description=sakakibara_rec_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
+
+sakakibara_rec_nyg_adjust = Experiment(
+    dataset=[sakakibara_rec_tauf_nyg_adjust_dataset,
+             sakakibara_rec_taus_nyg_adjust_dataset],
+    protocol=sakakibara_rec_nyg_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_rec_fast_nyg_adjust = Experiment(
+    dataset=sakakibara_rec_tauf_nyg_adjust_dataset,
+    protocol=sakakibara_rec_nyg_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_fast_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_rec_slow_nyg_adjust = Experiment(
+    dataset=sakakibara_rec_taus_nyg_adjust_dataset,
+    protocol=sakakibara_rec_nyg_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_slow_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+
+sakakibara_rec_cou_adjust = Experiment(
+    dataset=[sakakibara_rec_tauf_cou_adjust_dataset,
+             sakakibara_rec_taus_cou_adjust_dataset],
+    protocol=sakakibara_rec_cou_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_rec_fast_cou_adjust = Experiment(
+    dataset=sakakibara_rec_tauf_cou_adjust_dataset,
+    protocol=sakakibara_rec_cou_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_fast_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+sakakibara_rec_slow_cou_adjust = Experiment(
+    dataset=sakakibara_rec_taus_cou_adjust_dataset,
+    protocol=sakakibara_rec_cou_adjust_protocol,
+    conditions=sakakibara_conditions,
+    sum_stats=sakakibara_rec_slow_sum_stats,
+    description=sakakibara_rec_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+
+
 
 
 #

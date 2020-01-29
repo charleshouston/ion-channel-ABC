@@ -23,6 +23,11 @@ Q10_cond = 1.5 # [Correa1991]
 
 fit_threshold = 0.9 # for curve_fit
 
+# optional adjustments to match papers
+nyg_adjust_act = 22.8
+nyg_adjust_inact = 32.2
+cou_adjust = 20
+
 
 #
 # IV curve [Schneider1994]
@@ -115,6 +120,14 @@ vsteps_tm, tm, sd_tm = dataSch.TauM_Activation_Schneider()
 variances_tm = [(sd_)**2 for sd_ in sd_tm]
 schneider_taum_dataset = np.asarray([vsteps_tm, tm, variances_tm])
 
+vsteps_tm_nyg_adjust = [v+nyg_adjust_act for v in vsteps_tm]
+schneider_taum_nyg_adjust_dataset = np.asarray(
+    [vsteps_tm_nyg_adjust, tm, variances_tm])
+vsteps_tm_cou_adjust = [v+cou_adjust for v in vsteps_tm]
+schneider_taum_cou_adjust_dataset = np.asarray(
+    [vsteps_tm_cou_adjust, tm, variances_tm])
+
+
 vsteps_tf, tf, sd_tf = dataSch.TauF_Inactivation_Schneider()
 variances_tf = [(sd_)**2 for sd_ in sd_tf]
 schneider_tauf_dataset = np.asarray([vsteps_tf, tf, variances_tf])
@@ -130,6 +143,12 @@ schneider_tau_protocol = myokit.pacing.steptrain_linear(
     vlower, vupper+dv, dv, vhold, tpre, tstep)
 schneider_taum_protocol = myokit.pacing.steptrain_linear(
     vlower, vupper_tm+dv, dv, vhold, tpre, tstep)
+schneider_taum_nyg_adjust_protocol = myokit.pacing.steptrain_linear(
+    vlower+nyg_adjust_act, vupper_tm+dv+nyg_adjust_act, dv,
+    vhold+nyg_adjust_act, tpre, tstep)
+schneider_taum_cou_adjust_protocol = myokit.pacing.steptrain_linear(
+    vlower+cou_adjust, vupper_tm+dv+cou_adjust, dv,
+    vhold+cou_adjust, tpre, tstep)
 
 
 def schneider_tau_sum_stats(data):
@@ -238,6 +257,25 @@ schneider_taum = Experiment(
     description=schneider_tau_desc,
     Q10=Q10_tau,
     Q10_factor=-1)
+
+schneider_taum_nyg_adjust = Experiment(
+    dataset=schneider_taum_nyg_adjust_dataset,
+    protocol=schneider_taum_nyg_adjust_protocol,
+    conditions=schneider_conditions,
+    sum_stats=schneider_taum_sum_stats,
+    description=schneider_tau_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+schneider_taum_cou_adjust = Experiment(
+    dataset=schneider_taum_cou_adjust_dataset,
+    protocol=schneider_taum_cou_adjust_protocol,
+    conditions=schneider_conditions,
+    sum_stats=schneider_taum_sum_stats,
+    description=schneider_tau_desc,
+    Q10=Q10_tau,
+    Q10_factor=-1)
+
+
 
 #
 # Slow inactivation kinetics [Schneider1994]
