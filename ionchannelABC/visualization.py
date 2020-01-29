@@ -39,7 +39,7 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
                      df: Union[pd.DataFrame,List[pd.DataFrame]]=None,
                      w: Union[np.ndarray,List[np.ndarray]]=None,
                      n_samples: int=100,
-                     #credible_interval: float=0.89,
+                     credible_interval: Union[float, List[float]]=0.89,
                      alpha: float=0.2,
                      exclude_infs: bool=False) -> sns.FacetGrid:
     """Plot output of ABC against experimental and/or original output.
@@ -69,6 +69,9 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
         w (np.ndarray): The corresponding weights (see pyabc.History).
         n_samples (int): Number of ABC posterior samples used to
             generate summary output.
+        credible_interval (float, List[float]): % interval to plot for high density
+            posterior interval.
+        alpha (float): Transparency value for shaded region.
 
     Returns
         sns.FacetGrid: Plots of measured output.
@@ -82,9 +85,12 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
         df = [df]
     if not isinstance(w, list):
         w = [w]
+    if not isinstance(credible_interval, list):
+        credible_interval = [credible_interval,]
 
     all_observations = []
     model_names = []
+    plot_observations = []
     for i, modelfile in enumerate(modelfiles):
         if masks is not None and masks[i] is not None:
             experiment_list = [experiments[j] for j,val in enumerate(masks[i])
@@ -98,6 +104,10 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
                                                         prev_runs=prev_runs,
                                                         additional_pars=additional_pars,
                                                         normalise=False)
+
+        # save the correct observations for plotting later
+        if temp_match_model==i:
+            plot_observations = observations
 
         m = myokit.load_model(modelfile)
         name = m.name()
@@ -172,7 +182,7 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
                      yerr=np.sqrt(measurements.loc[measurements['exp_id']==exp]['variance']),
                      ls='None', marker='x', c='k')
 
-    # Actually make the plot
+        # Actually make the plot
     grid = sns.relplot(x='x', y='y',
                        col='exp_id', kind='line',
                        hue='model', style='model',
@@ -191,33 +201,29 @@ def plot_sim_results(modelfiles: Union[str,List[str]],
         for mi, model in enumerate(model_samples['model'].unique()):
             data = model_samples[(model_samples['exp_id']==exp_id) & \
                                  (model_samples['model']==model)]
-            hpd67 = np.zeros((len(data['x'].unique()), 2))
-            hpd89 = np.zeros((len(data['x'].unique()), 2))
-            hpd97 = np.zeros((len(data['x'].unique()), 2))
+            hpd = []
+            for ci in credible_interval:
+                hpd.append(np.zeros((len(data['x'].unique()), 2)))
+
             for i, xi in enumerate(data['x'].unique()):
                 data_xi = data[data['x']==xi]
-                hpd67[i,:] = pymc3.stats.hpd(data_xi['y'],
-                                             credible_interval=0.67)
-                hpd89[i,:] = pymc3.stats.hpd(data_xi['y'],
-                                             credible_interval=0.89)
-                hpd97[i,:] = pymc3.stats.hpd(data_xi['y'],
-                                             credible_interval=0.97)
+                for cnt, hpdi in enumerate(hpd):
+                    hpdi[i,:] = pymc3.stats.hpd(data_xi['y'],
+                                                credible_interval=credible_interval[cnt])
 
 
             # plot on graph
-            ax.fill_between(data['x'].unique(), hpd67[:,0], hpd67[:,1],
-                            alpha=alpha, color=current_palette[mi])
-            ax.fill_between(data['x'].unique(), hpd89[:,0], hpd89[:,1],
-                            alpha=alpha, color=current_palette[mi])
-            ax.fill_between(data['x'].unique(), hpd97[:,0], hpd97[:,1],
-                            alpha=alpha, color=current_palette[mi])
+            for hpdi in hpd:
+                ax.fill_between(data['x'].unique(), hpdi[:,0], hpdi[:,1],
+                                alpha=alpha, color=current_palette[mi])
 
     # Format lines in all plots
     for ax in grid.axes.flatten():
         for l in ax.lines:
             l.set_linestyle('-')
 
-    grid = grid.map_dataframe(measured_plot, measurements=observations)
+    # Plot observations
+    grid = grid.map_dataframe(measured_plot, measurements=plot_observations)
 
     return grid
 
@@ -230,7 +236,7 @@ def plot_experiment_traces(modelfile: str,
                            w: np.ndarray=None,
                            prev_runs: List[str]=[],
                            additional_pars: Distribution=None,
-                           #credible_interval: float=0.89,
+                           credible_interval: float=0.89,
                            alpha: float=0.2,
                            pacevar: str='membrane.V',
                            timevar: str='engine.time',
@@ -293,9 +299,11 @@ def plot_experiment_traces(modelfile: str,
                                                'step': k,
                                                'exp_id': j})
                     output = output.append(output_exp, ignore_index=True)
+
         output['sample'] = i
         model_samples = model_samples.append(output, ignore_index=True)
 
+    # plotting code
     grid = sns.relplot(x='time', y='y',
                        hue='step',
                        col='exp_id', row='measure',
@@ -308,38 +316,29 @@ def plot_experiment_traces(modelfile: str,
                        facet_kws={'sharex': 'col',
                                   'sharey': 'row'})
 
-    current_palette = sns.color_palette()
 
-    # calculate HPDI for each sample
-    for j, exp_id in enumerate(model_samples['exp_id'].unique()):
-        for k, measure in enumerate(model_samples['measure'].unique()):
-            ax = grid.axes.flatten()[j]
-            for si, step_id in enumerate(model_samples['step'].unique()):
-                data = model_samples[(model_samples['exp_id']==exp_id)   & \
-                                     (model_samples['measure']==measure) & \
-                                     (model_samples['step']==step_id)]
-                hpd67 = np.zeros((len(data['time'].unique()), 2))
-                hpd89 = np.zeros((len(data['time'].unique()), 2))
-                hpd97 = np.zeros((len(data['time'].unique()), 2))
-                for i, ti in enumerate(data['time'].unique()):
-                    data_ti = data[data['time']==ti]
-                    hpd67[i,:] = pymc3.stats.hpd(data_ti['y'],
-                                                 credible_interval=0.67)
-                    hpd89[i,:] = pymc3.stats.hpd(data_ti['y'],
-                                                 credible_interval=0.89)
-                    hpd97[i,:] = pymc3.stats.hpd(data_ti['y'],
-                                                 credible_interval=0.97)
+    if len(model_samples['sample'].unique()) > 1:
+        # calculate HPDI for each sample
+        for j, exp_id in enumerate(model_samples['exp_id'].unique()):
+            exp_samples = model_samples[model_samples['exp_id']==exp_id]
+            for k, measure in enumerate(exp_samples['measure'].unique()):
+                if measure == 'pace':
+                    continue
+                measure_samples = exp_samples[exp_samples['measure']==measure]
+                palette = sns.color_palette("viridis", len(measure_samples['step'].unique()))
+                for si, step_id in enumerate(measure_samples['step'].unique()):
+                    data = measure_samples[(measure_samples['step']==step_id)]
+                    hpd = np.zeros((len(data['time'].unique()), 2))
+                    for i, ti in enumerate(data['time'].unique()):
+                        data_ti = data[data['time']==ti]
+                        hpd[i,:] = pymc3.stats.hpd(data_ti['y'],
+                                                   credible_interval=credible_interval)
 
-                # plot on graph
-                ax.fill_between(data['time'].unique(), hpd67[:,0], hpd67[:,1],
-                                alpha=alpha, color=current_palette[si])
-                ax.fill_between(data['time'].unique(), hpd89[:,0], hpd89[:,1],
-                                alpha=alpha, color=current_palette[si])
-                ax.fill_between(data['time'].unique(), hpd97[:,0], hpd97[:,1],
-                                alpha=alpha, color=current_palette[si])
+                    # plot on graph
+                    grid.axes[k,j].fill_between(data['time'].unique(), hpd[:,0], hpd[:,1],
+                                                alpha=alpha, color=palette[si])
 
     return grid
-
 
 def plot_distance_weights(
         observations: pd.DataFrame,
@@ -383,7 +382,7 @@ def plot_variables(v: np.ndarray,
                    modelfiles: Union[str,List[str]],
                    par_samples: Union[dict,List[dict]]=None,
                    original: Union[bool,List[bool]]=False,
-                   #credible_interval: float=0.89,
+                   credible_interval: Union[float,List[float]]=0.89,
                    alpha: float=0.2,
                    figshape: Tuple[int]=None):
     """Plot model variables over voltage range.
@@ -396,6 +395,9 @@ def plot_variables(v: np.ndarray,
         plot summarised results.
     original (bool): Whether to plot original parameter values as
         dashed lines.
+    credible_interval (float, List[float]): % interval to plot for high density
+        posterior interval.
+    alpha (float): Transparency value for shaded region.
     figshape (Tuple[int]): Shape of figure. Defaults to single row
     """
     if original:
@@ -409,6 +411,8 @@ def plot_variables(v: np.ndarray,
         par_samples = [par_samples,]*len(variables)
     if not isinstance(original, list):
         original = [original,]*len(variables)
+    if not isinstance(credible_interval, list):
+        credible_interval = [credible_interval,]
 
     if figshape is None:
         ncols = len(variables[0])
@@ -479,25 +483,21 @@ def plot_variables(v: np.ndarray,
         sns.despine(ax=ax.flatten()[i])
         for mi, model in enumerate(samples['model'].unique()):
             data = samples[(samples['model']==model)]
-            hpd67 = np.zeros((len(data['V'].unique()), 2))
-            hpd89 = np.zeros((len(data['V'].unique()), 2))
-            hpd97 = np.zeros((len(data['V'].unique()), 2))
+            hpd = []
+            for ci in credible_interval:
+                hpd.append(np.zeros((len(data['V'].unique()), 2)))
+
             for k, vk in enumerate(data['V'].unique()):
                 data_vk = data[data['V']==vk]
-                hpd67[k,:] = pymc3.stats.hpd(data_vk[key],
-                                             credible_interval=0.67)
-                hpd89[k,:] = pymc3.stats.hpd(data_vk[key],
-                                             credible_interval=0.89)
-                hpd97[k,:] = pymc3.stats.hpd(data_vk[key],
-                                             credible_interval=0.97)
+                for cnt, hpdi in enumerate(hpd):
+                    hpdi[k,:] = pymc3.stats.hpd(data_vk[key],
+                                                credible_interval=credible_interval[cnt])
 
             # plot on graph
-            ax.flatten()[i].fill_between(data['V'].unique(), hpd67[:,0], hpd67[:,1],
-                                         alpha=alpha, color=current_palette[mi])
-            ax.flatten()[i].fill_between(data['V'].unique(), hpd89[:,0], hpd89[:,1],
-                                         alpha=alpha, color=current_palette[mi])
-            ax.flatten()[i].fill_between(data['V'].unique(), hpd97[:,0], hpd97[:,1],
-                                         alpha=alpha, color=current_palette[mi])
+            for hpdi in hpd:
+                ax.flatten()[i].fill_between(
+                        data['V'].unique(), hpdi[:,0], hpdi[:,1],
+                        alpha=alpha, color=current_palette[mi])
 
     plt.tight_layout()
 
