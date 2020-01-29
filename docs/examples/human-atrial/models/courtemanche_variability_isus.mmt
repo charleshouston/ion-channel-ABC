@@ -1,0 +1,566 @@
+[[model]]
+author: Cellml converter
+desc: """
+    Full Courtemanche model with parameterised Courtemanche channel models
+    added for ina, ical, ito. isus (ikur) is replaced with the 
+    standardised form.
+    """
+name: courtemanche_1998
+# Initial values
+membrane.V                                        = -81.18
+ina.m                      = 0.002908
+ina.h                      = 0.9649
+ina.j                      = 0.9775
+ito.oa            = 0.03043
+ito.oi            = 0.9992
+isus.r = 0.004966
+isus.s = 0.9986
+rapid_delayed_rectifier_K_current_xr_gate.xr      = 3.296e-5
+slow_delayed_rectifier_K_current_xs_gate.xs       = 0.01869
+ical.d                        = 0.0001367
+ical.f                        = 0.9996
+ical.f_Ca                  = 0.7755
+Ca_release_current_from_JSR_u_gate.u              = 2.35e-112
+Ca_release_current_from_JSR_v_gate.v              = 1
+Ca_release_current_from_JSR_w_gate.w              = 0.9992
+intracellular_ion_concentrations.Na_i             = 11.17
+intracellular_ion_concentrations.K_i              = 139
+intracellular_ion_concentrations.Ca_i             = 0.0001013
+intracellular_ion_concentrations.Ca_up            = 1.488
+intracellular_ion_concentrations.Ca_rel           = 1.488
+
+[Ca_buffers]
+CMDN_max = 0.05
+    in [mM]
+CSQN_max = 10
+    in [mM]
+Ca_CMDN = CMDN_max * intracellular_ion_concentrations.Ca_i / (intracellular_ion_concentrations.Ca_i + Km_CMDN)
+    in [mM]
+Ca_CSQN = CSQN_max * intracellular_ion_concentrations.Ca_rel / (intracellular_ion_concentrations.Ca_rel + Km_CSQN)
+    in [mM]
+Ca_TRPN = TRPN_max * intracellular_ion_concentrations.Ca_i / (intracellular_ion_concentrations.Ca_i + Km_TRPN)
+    in [mM]
+Km_CMDN = 0.00238
+    in [mM]
+Km_CSQN = 0.8
+    in [mM]
+Km_TRPN = 0.0005
+    in [mM]
+TRPN_max = 0.07
+    in [mM]
+
+[Ca_leak_current_by_the_NSR]
+Ca_up_max = 15
+    in [mM]
+i_up_leak = Ca_uptake_current_by_the_NSR.I_up_max * intracellular_ion_concentrations.Ca_up / Ca_up_max
+    in [mM/ms]
+
+[Ca_release_current_from_JSR]
+Fn = 1000 [m^3*s/mol (0.001)] * (1e-15 [1/m^3 (1000000000000000000)] * intracellular_ion_concentrations.V_rel * i_rel - 1e-15 [1/m^3 (1000000000000000000)] / (2 * membrane.F) * (0.5 * ical.i_CaL - 0.2 * Na_Ca_exchanger_current.i_NaCa))
+    in [1]
+K_rel = 30
+    in [mS/uF]
+i_rel = K_rel * Ca_release_current_from_JSR_u_gate.u ^ 2 * Ca_release_current_from_JSR_v_gate.v * Ca_release_current_from_JSR_w_gate.w * (intracellular_ion_concentrations.Ca_rel - intracellular_ion_concentrations.Ca_i)
+    in [mM/ms]
+
+[Ca_release_current_from_JSR_u_gate]
+tau_u = 8 [ms]
+    in [ms]
+dot(u) = (u_infinity - u) / tau_u
+    in [1]
+u_infinity = (1 + exp(-(Ca_release_current_from_JSR.Fn -  3.41749999999999983e-13) / 1.367e-15)) ^ (-1)
+    in [1]
+
+[Ca_release_current_from_JSR_v_gate]
+tau_v = 1.91 [ms] + 2.09 [ms] * (1 + exp(-(Ca_release_current_from_JSR.Fn -  3.41749999999999983e-13) / 1.367e-15)) ^ (-1)
+    in [ms]
+dot(v) = (v_infinity - v) / tau_v
+    in [1]
+v_infinity = 1 - (1 + exp(-(Ca_release_current_from_JSR.Fn - 6.835e-14) / 1.367e-15)) ^ (-1)
+    in [1]
+
+[Ca_release_current_from_JSR_w_gate]
+tau_w = piecewise(abs(membrane.V - 7.9 [mV]) < 1e-10 [mV], 6 [ms] * 0.2 / 1.3, 6 [ms] * (1 - exp(-(membrane.V - 7.9 [mV]) / 5 [mV])) / ((1 + 0.3 * exp(-(membrane.V - 7.9 [mV]) / 5 [mV])) * 1 [1/mV] * (membrane.V - 7.9 [mV])))
+    in [ms]
+dot(w) = (w_infinity - w) / tau_w
+    in [1]
+w_infinity = 1 - (1 + exp(-(membrane.V - 40 [mV]) / 17 [mV])) ^ (-1)
+    in [1]
+
+[Ca_uptake_current_by_the_NSR]
+I_up_max = 0.005
+    in [mM/ms]
+K_up = 0.00092
+    in [mM]
+i_up = I_up_max / (1 + K_up / intracellular_ion_concentrations.Ca_i)
+    in [mM/ms]
+
+
+[ical]
+use membrane.V as V
+use membrane.Cm as Cm
+use intracellular_ion_concentrations.Ca_i as Ca_i
+
+i_CaL = Cm * g_CaL * g * (V - E_Ca_app)
+    in [pA]
+g = d * f * f_Ca
+    in [1]
+E_Ca_app = 65
+    in [mV]
+g_CaL = 0.1238 * cond_factor
+    in [mS/uF]
+cond_factor = 1
+    in [1]
+
+# Gating constants for d
+p1 = 10
+p2 = 6.24
+p3 = 0.035
+p4 = 10 
+p5 = 8
+
+dot(d) = (d_inf - d) / tau_d
+    in [1]
+tau_d = piecewise(
+    abs(V + p1) < 1e-10, 1 / (2*p2*p3),
+    (1 - exp((V + p1) / -p2)) / (p3 * (V + p1) * (1 + exp((V + p1) / -p2)))
+    )
+    in [ms]
+d_inf = 1 / (1 + exp((V + p4) / -p5))
+    in [1]
+
+# Gating constants for f
+q1 = 9
+q2 = 0.0197
+q3 = 0.0337
+q4 = 10
+q5 = 0.02
+q6 = 28
+q7 = 6.9
+
+dot(f) = (f_inf - f) / tau_f
+    in [1]
+tau_f = q1 / (q2 * exp(-q3 ^ 2 * (V + q4) ^ 2) + q5)
+    in [ms]
+f_inf = 1 / (1 + exp((V + q6) / q7))
+    in [1]
+
+# Gating constants for f_Ca
+r1 = 0.00035
+
+#f_Ca = 0.5 # eliminating calcium-inactivation for calibration
+#    in [1]
+dot(f_Ca) = (f_Ca_inf - f_Ca) / tau_f_Ca
+    in [1]
+tau_f_Ca = 2
+    in [ms]
+f_Ca_inf = 1 / (1 + (Ca_i / r1))
+    in [1]
+
+
+[Na_Ca_exchanger_current]
+I_NaCa_max = 1600
+    in [A/F]
+K_mCa = 1.38
+    in [mM]
+K_mNa = 87.5
+    in [mM]
+K_sat = 0.1
+    in [1]
+gamma = 0.35
+    in [1]
+i_NaCa = membrane.Cm * I_NaCa_max * (exp(gamma * membrane.F * membrane.V / (membrane.R * membrane.T)) * intracellular_ion_concentrations.Na_i ^ 3 * standard_ionic_concentrations.Ca_o - exp((gamma - 1) * membrane.F * membrane.V / (membrane.R * membrane.T)) * standard_ionic_concentrations.Na_o ^ 3 * intracellular_ion_concentrations.Ca_i) / ((K_mNa ^ 3 + standard_ionic_concentrations.Na_o ^ 3) * (K_mCa + standard_ionic_concentrations.Ca_o) * (1 + K_sat * exp((gamma - 1) * membrane.V * membrane.F / (membrane.R * membrane.T))))
+    in [pA]
+
+[background_currents]
+E_Ca = membrane.R * membrane.T / (2 * membrane.F) * log(standard_ionic_concentrations.Ca_o / intracellular_ion_concentrations.Ca_i)
+    in [mV]
+g_B_Ca = 0.001131
+    in [mS/uF]
+g_B_K = 0
+    in [mS/uF]
+g_B_Na =  6.74437500000000015e-4
+    in [mS/uF]
+i_B_Ca = membrane.Cm * g_B_Ca * (membrane.V - E_Ca)
+    in [pA]
+i_B_K = membrane.Cm * g_B_K * (membrane.V - time_independent_potassium_current.E_K)
+    in [pA]
+i_B_Na = membrane.Cm * g_B_Na * (membrane.V - ina.E_Na)
+    in [pA]
+
+[environment]
+time = 0 bind time
+    in [ms]
+
+[ina]
+use membrane.V as V
+use membrane.Cm as Cm
+use membrane.F as F
+use membrane.T as T
+use membrane.R as R
+use standard_ionic_concentrations.Na_o as Na_o
+use intracellular_ion_concentrations.Na_i as Na_i
+
+g_Na = 7.8 * cond_factor
+    in [mS/uF]
+cond_factor = 1
+    in [1]
+g = m^3 * h * j
+forcing = V - E_Na
+    in [mV]
+i_Na = Cm * g_Na * g * forcing 
+    in [pA]
+
+E_Na = R * T / F * log(Na_o/Na_i)
+
+# M Gate
+dot(m) = (m_inf - m) / tau_m
+    in [1]
+tau_m = 1 / (alpha_m + beta_m)
+    in [ms]
+m_inf = alpha_m * tau_m
+    in [1]
+m_inf_cube = m ^ 3 
+    in [1]
+    
+# Gating constants for m
+a1_m = -47.13
+a2_m = 0.32
+a3_m = 0.1
+a4_m = 3.2
+b1_m = 0.08
+b2_m = 11
+
+alpha_m = piecewise(
+    V == a1_m, 
+    a4_m,
+    (a2_m * (V - a1_m)) / (1 - exp(-a3_m * (V - a1_m)))
+    )
+    in [1/ms]
+beta_m = b1_m * exp(-V/b2_m)
+    in [1/ms]
+
+
+# H Gate
+dot(h) = (h_inf - h) / tau_h
+    in [1]
+h_inf = alpha_h / (alpha_h + beta_h)
+    in [1]
+tau_h = 1 / (alpha_h + beta_h)
+    in [ms]
+
+# Gating constants for h
+c1_h = -40
+a1_h = 0.135
+a2_h = 6.8
+a3_h = 80
+# ensure continuity of alpha_h
+a4_h = a1_h * exp(-(c1_h+a3_h)/a2_h)
+
+# ensure continuity of beta_h
+b1_h = (b4_h*exp(b5_h*c1_h) + b6_h*exp(b7_h*c1_h))^(-1) * (1+exp(-(c1_h+b2_h)/b3_h))^(-1)
+#b1_h = 0.13
+b2_h = 10.66
+b3_h = 11.1
+b4_h = 3.56
+b5_h = 0.079
+b6_h = 3.1e5
+b7_h = 0.35
+
+alpha_h = piecewise(
+    V >= c1_h, 
+    a4_h, #(0,) original
+    a1_h * exp(-(V + a3_h) / a2_h)
+    )
+    in [1/ms]
+beta_h = piecewise(
+    V >= c1_h, 
+    (b1_h * (1 + exp(-(V + b2_h) / b3_h)))^(-1),
+    b4_h * exp(b5_h * V) + b6_h * exp(b7_h * V)
+    )
+    in [1/ms]
+
+# J Gate
+dot(j) = (j_inf - j) / tau_j
+    in [1]
+j_inf = alpha_j / (alpha_j + beta_j)
+    in [1]
+tau_j = 1 / (alpha_j + beta_j)
+    in [ms]
+    
+# Gating constants for j
+c1_j = -40
+a1_j = 127140
+a2_j = 0.2444
+a3_j = 3.474e-5
+a4_j = 0.04391
+#a5_j = 37.78
+a6_j = 0.311
+a7_j = 79.23
+# enforce continuity at change point
+a5_j = -c1_j
+#a1_j = -a3_j * exp(-a4_j * c1_j) / exp(a2_j * c1_j) * ((c1_j + a5_j) / (1 + exp(a6_j * (c1_j + a7_j))))
+#a8_j = (-a1_j * exp(a2_j * c1_j) - a3_j * exp(-a4_j * c1_j)) * ((c1_j + a5_j) / (1 + exp(a6_j * (c1_j + a7_j))))
+
+# Ensure continuity of beta_j
+b1_j = b5_j * exp(-b6_j * c1_j)/(1 + exp(-b7_j * (c1_j + b8_j))) / (exp(-b2_j * c1_j)/(1 + exp(-b3_j * (c1_j + b4_j))))
+#b1_j = 0.3
+b2_j = 0.0 #2.535e-7 # set exponent to one
+b3_j = 0.1
+b4_j = 32
+#b5_j = b1_j / (exp(-b6_j * c1_j)/(1 + exp(-b7_j * (c1_j + b8_j))) / (exp(-b2_j * c1_j)/(1 + exp(-b3_j * (c1_j + b4_j)))))
+b5_j = 0.1212
+b6_j = 0.01052
+b7_j = 0.1378
+b8_j  = 40.14
+
+alpha_j = piecewise(
+    V >= c1_j, 
+    0.0,
+    (-a1_j * exp(a2_j * V) - a3_j * exp(-a4_j * V)) * ((V + a5_j) / (1 + exp(a6_j * (V + a7_j))))
+    )
+    in [1/ms]
+beta_j = piecewise(
+    V >= c1_j, (b1_j * exp(-b2_j * V)) / (1 + exp(-b3_j * (V + b4_j))),
+    b5_j * exp(-b6_j * V)/(1 + exp(-b7_j * (V + b8_j)))
+    )
+    in [1/ms]
+
+
+[intracellular_ion_concentrations]
+B1 = (2 * Na_Ca_exchanger_current.i_NaCa - (sarcolemmal_calcium_pump_current.i_CaP + ical.i_CaL + background_currents.i_B_Ca)) / (2 * V_i * membrane.F) + (V_up * (Ca_leak_current_by_the_NSR.i_up_leak - Ca_uptake_current_by_the_NSR.i_up) + Ca_release_current_from_JSR.i_rel * V_rel) / V_i
+    in [mM/ms]
+B2 = 1 + Ca_buffers.TRPN_max * Ca_buffers.Km_TRPN / (Ca_i + Ca_buffers.Km_TRPN) ^ 2 + Ca_buffers.CMDN_max * Ca_buffers.Km_CMDN / (Ca_i + Ca_buffers.Km_CMDN) ^ 2
+    in [1]
+dot(Ca_i) = B1 / B2
+    in [mM]
+dot(Ca_rel) = (transfer_current_from_NSR_to_JSR.i_tr - Ca_release_current_from_JSR.i_rel) * (1 + Ca_buffers.CSQN_max * Ca_buffers.Km_CSQN / (Ca_rel + Ca_buffers.Km_CSQN) ^ 2) ^ (-1)
+    in [mM]
+dot(Ca_up) = Ca_uptake_current_by_the_NSR.i_up - (Ca_leak_current_by_the_NSR.i_up_leak + transfer_current_from_NSR_to_JSR.i_tr * V_rel / V_up)
+    in [mM]
+dot(K_i) = (2 * sodium_potassium_pump.i_NaK - (time_independent_potassium_current.i_K1 + ito.i_to + isus.i_sus + rapid_delayed_rectifier_K_current.i_Kr + slow_delayed_rectifier_K_current.i_Ks + background_currents.i_B_K)) / (V_i * membrane.F)
+    in [mM]
+dot(Na_i) = (-3 * sodium_potassium_pump.i_NaK - (3 * Na_Ca_exchanger_current.i_NaCa + background_currents.i_B_Na + ina.i_Na)) / (V_i * membrane.F)
+    in [mM]
+V_cell = 20100
+    in [um^3]
+V_i = V_cell * 0.68
+    in [um^3]
+V_rel = 0.0048 * V_cell
+    in [um^3]
+V_up = 0.0552 * V_cell
+    in [um^3]
+
+[membrane]
+Cm = 100
+    in [pF]
+F = 96.4867
+    in [C/mmol]
+R = 8.3143
+    in [J/mol/K]
+T = 310
+    in [K]
+dot(V) = -(ina.i_Na + time_independent_potassium_current.i_K1 + ito.i_to + isus.i_sus + rapid_delayed_rectifier_K_current.i_Kr + slow_delayed_rectifier_K_current.i_Ks + background_currents.i_B_Na + background_currents.i_B_Ca + sodium_potassium_pump.i_NaK + sarcolemmal_calcium_pump_current.i_CaP + Na_Ca_exchanger_current.i_NaCa + ical.i_CaL + i_st) / Cm
+    in [mV]
+i_st = piecewise(environment.time >= stim_start and environment.time <= stim_end and environment.time - stim_start - floor((environment.time - stim_start) / stim_period) * stim_period <= stim_duration, stim_amplitude, 0 [pA])
+    in [pA]
+stim_amplitude = -2000
+    in [pA]
+stim_duration = 2
+    in [ms]
+stim_end = 50000
+    in [ms]
+stim_period = 1000
+    in [ms]
+stim_start = 50
+    in [ms]
+
+[rapid_delayed_rectifier_K_current]
+g_Kr =  2.94117649999999994e-2
+    in [mS/uF]
+i_Kr = membrane.Cm * g_Kr * rapid_delayed_rectifier_K_current_xr_gate.xr * (membrane.V - time_independent_potassium_current.E_K) / (1 + exp((membrane.V + 15 [mV]) / 22.4 [mV]))
+    in [pA]
+
+[rapid_delayed_rectifier_K_current_xr_gate]
+alpha_xr = piecewise(abs(membrane.V + 14.1 [mV]) < 1e-10 [mV], 0.0015 [mS/uF], 0.0003 [1/mV/ms] * (membrane.V + 14.1 [mV]) / (1 - exp((membrane.V + 14.1 [mV]) / -5 [mV])))
+    in [mS/uF]
+beta_xr = piecewise(abs(membrane.V - 3.3328 [mV]) < 1e-10 [mV],  3.78361180000000004e-4 [mS/uF],  7.38980000000000030e-5 [1/mV/ms] * (membrane.V - 3.3328 [mV]) / (exp((membrane.V - 3.3328 [mV]) / 5.1237 [mV]) - 1))
+    in [mS/uF]
+tau_xr = (alpha_xr + beta_xr) ^ (-1)
+    in [ms]
+dot(xr) = (xr_infinity - xr) / tau_xr
+    in [1]
+xr_infinity = (1 + exp((membrane.V + 14.1 [mV]) / -6.5 [mV])) ^ (-1)
+    in [1]
+
+[sarcolemmal_calcium_pump_current]
+i_CaP = membrane.Cm * i_CaP_max * intracellular_ion_concentrations.Ca_i / (0.0005 [mM] + intracellular_ion_concentrations.Ca_i)
+    in [pA]
+i_CaP_max = 0.275
+    in [A/F]
+
+[slow_delayed_rectifier_K_current]
+g_Ks =  1.29411759999999987e-1
+    in [mS/uF]
+i_Ks = membrane.Cm * g_Ks * slow_delayed_rectifier_K_current_xs_gate.xs ^ 2 * (membrane.V - time_independent_potassium_current.E_K)
+    in [pA]
+
+[slow_delayed_rectifier_K_current_xs_gate]
+alpha_xs = piecewise(abs(membrane.V - 19.9 [mV]) < 1e-10 [mV], 0.00068 [mS/uF], 4e-5 [1/mV/ms] * (membrane.V - 19.9 [mV]) / (1 - exp((membrane.V - 19.9 [mV]) / -17 [mV])))
+    in [mS/uF]
+beta_xs = piecewise(abs(membrane.V - 19.9 [mV]) < 1e-10 [mV], 0.000315 [mS/uF], 3.5e-5 [1/mV/ms] * (membrane.V - 19.9 [mV]) / (exp((membrane.V - 19.9 [mV]) / 9 [mV]) - 1))
+    in [mS/uF]
+tau_xs = 0.5 * (alpha_xs + beta_xs) ^ (-1)
+    in [ms]
+dot(xs) = (xs_infinity - xs) / tau_xs
+    in [1]
+xs_infinity = (1 + exp((membrane.V - 19.9 [mV]) / -12.7 [mV])) ^ (-0.5)
+    in [1]
+
+[sodium_potassium_pump]
+Km_K_o = 1.5
+    in [mM]
+Km_Na_i = 10
+    in [mM]
+f_NaK = (1 + 0.1245 * exp(-0.1 * membrane.F * membrane.V / (membrane.R * membrane.T)) + 0.0365 * sigma * exp(-membrane.F * membrane.V / (membrane.R * membrane.T))) ^ (-1)
+    in [1]
+i_NaK = membrane.Cm * i_NaK_max * f_NaK * 1 / (1 + (Km_Na_i / intracellular_ion_concentrations.Na_i) ^ 1.5) * standard_ionic_concentrations.K_o / (standard_ionic_concentrations.K_o + Km_K_o)
+    in [pA]
+i_NaK_max =  5.99338739999999981e-1
+    in [A/F]
+sigma = 1 / 7 * (exp(standard_ionic_concentrations.Na_o / 67.3 [mM]) - 1)
+    in [1]
+
+[standard_ionic_concentrations]
+Ca_o = 1.8
+    in [mM]
+K_o = 5.4
+    in [mM]
+Na_o = 140
+    in [mM]
+
+[time_independent_potassium_current]
+E_K = membrane.R * membrane.T / membrane.F * log(standard_ionic_concentrations.K_o / intracellular_ion_concentrations.K_i)
+    in [mV]
+g_K1 = 0.09
+    in [mS/uF]
+i_K1 = membrane.Cm * g_K1 * (membrane.V - E_K) / (1 + exp(0.07 [1/mV] * (membrane.V + 80 [mV])))
+    in [pA]
+
+[transfer_current_from_NSR_to_JSR]
+i_tr = (intracellular_ion_concentrations.Ca_up - intracellular_ion_concentrations.Ca_rel) / tau_tr
+    in [mM/ms]
+tau_tr = 180
+    in [ms]
+
+
+[ito]
+use membrane.V as V
+use time_independent_potassium_current.E_K as E_K 
+use membrane.Cm as Cm
+
+i_to = Cm * g_to * g * (V - E_K)
+    in [pA]
+g = oa^3 * oi
+    in [1]
+g_to = 0.1652 * cond_factor
+    in [mS/uF]
+cond_factor = 1
+    in [1]
+K_Q10 = 3
+    in [1]
+
+# Gating constants for a
+p1 = 20.47 [mV]
+p2 = 17.54 [mV]
+p3 = 0.65 [ms]
+p4 = 10 [mV]
+p5 = 8.5 [mV]
+p6 = -30 [mV]
+p7 = 59 [mV]
+p8 = 2.5 
+p9 = 82 [mV]
+p10 = 17 [mV]
+
+dot(oa) = (a_inf - oa) / tau_a
+    in [1]
+a_inf = (1 + exp((V + p1) / -p2))^(-1)
+    in [1]
+alpha_a = p3*(exp((V + p4) / -p5) + exp((V + p6) / -p7))^(-1)
+    in [ms]
+beta_a = p3*(p8 + exp((V + p9)/p10))^(-1)
+    in [ms]
+tau_a = (alpha_a + beta_a)^(-1) / K_Q10 # adjusted for temperature
+
+
+# Gating constants for i
+q1 = 43.1 [mV]
+q2 = 5.3 [mV]
+q3 = 18.53 [ms]
+q4 = 113.7 [mV]
+q5 = 10.95 [mV] 
+q6 = 35.56 [ms]
+q7 = 1.26 [mV]
+q8 = 7.44 [mV]
+
+dot(oi) = (i_inf - oi) / tau_i
+    in [1]
+i_inf = (1 + exp((V + q1) / q2))^(-1)
+    in [1]
+alpha_i = (q3 + exp((V+q4)/q5))^(-1)
+    in [1/ms]
+beta_i = (q6 + exp((V+q7)/-q8))^(-1)
+    in [1/ms]
+tau_i = (alpha_i + beta_i)^(-1) / K_Q10 # adjusted for temperature
+    in [ms]
+
+
+[isus]
+use membrane.V as V
+use time_independent_potassium_current.E_K as E_K 
+use membrane.Cm as Cm
+
+g_sus = 0.1652 * cond_factor
+    in [S/F]
+cond_factor = 1
+    in [1]
+g = r * s
+    in [1]
+i_sus = Cm * g_sus * g * (V - E_K)
+    in [pA/pF]
+
+dot(r) = (r_ss - r) / tau_r
+    in [1]
+tau_r = 1 / (k_1 + k_2)
+    in [ms]
+r_ss = k_1 * tau_r
+    in [1]
+
+dot(s) = (s_ss - s) / tau_s
+    in [1]
+tau_s = 1 / (k_3 + k_4)
+    in [ms]
+s_ss = k_4 * tau_s
+    in [1]
+
+k_1 = p_1*exp(p_2 * V)
+    in [1/ms]
+k_2 = p_3*exp(-p_4 * V)
+    in [1/ms]
+k_3 = p_5*exp(p_6 * V)
+    in [1/ms]
+k_4 = p_7*exp(-p_8 * V)
+    in [1/ms]
+
+p_1 = 10^(-0.96)
+    in [1/ms]
+p_2 = 0.13 [1/mV]
+p_3 = 10^(-0.97)
+    in [1/ms]
+p_4 = 0.022 [1/mV]
+p_5 = 10^(-2.4) 
+    in [1/ms]
+p_6 = 0.0015 [1/mV]
+p_7 = 10^(-5.9) 
+    in [1/ms]
+p_8 = 0.029 [1/mV]

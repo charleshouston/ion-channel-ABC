@@ -32,14 +32,14 @@ use membrane.V as V
 use ca_conc.Ca_i as Ca_i
 use membrane.Cm as Cm
 
-i_CaL = g_CaL * g * (V - E_Ca_app) / Cm
-    in [pA/pF]
+i_CaL = g_CaL * g * (V - E_Ca_app) * Cm
+    in [pA]
 g = d*f*f_Ca
     in [1]
 E_Ca_app = 65
     in [mV]
 g_CaL = 0.1238
-    in [nS/pF]
+    in [mS/uF]
 
 # Gating constants for d
 p1 = 10

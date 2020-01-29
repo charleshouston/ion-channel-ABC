@@ -45,12 +45,12 @@ use membrane.V as V
 use membrane.Cm as Cm
 use na_conc.E_Na as E_Na
 
-g_Na = 7.8e3 [pS/pF]
+g_Na = 7.8 [mS/uF]
 g = m^3 * h * j
 forcing = V - E_Na
     in [mV]
-i_Na = g_Na * g * forcing / Cm 
-    in [pA/pF]
+i_Na = g_Na * g * forcing * Cm
+    in [pA]
 
 # M Gate
 dot(m) = (m_inf - m) / tau_m
@@ -133,14 +133,14 @@ a1_j = 127140
 a2_j = 0.2444
 a3_j = 3.474e-5
 a4_j = 0.04391
-a5_j = 37.78
+#a5_j = 37.78
 a6_j = 0.311
 a7_j = 79.23
-# enforce continuity
-a8_j = (-a1_j * exp(a2_j * c1_j) - a3_j * exp(-a4_j * c1_j)) * ((c1_j + a5_j) / (1 + exp(a6_j * (c1_j + a7_j))))
+# enforce continuity at change point by forcing alpha to zero
+a5_j = -c1_j
 
 # Ensure continuity of beta_j
-b1_j = b5_j * exp(-b6_j * c1_j)/(1 + exp(-b7_j * (c1_j + b8_j))) * (exp(-b2_j * c1_j) / (1 + exp(-b3_j * (c1_j + b4_j))))^(-1)
+b1_j = b5_j * exp(-b6_j * c1_j)/(1 + exp(-b7_j * (c1_j + b8_j))) / (exp(-b2_j * c1_j)/(1 + exp(-b3_j * (c1_j + b4_j))))
 #b1_j = 0.3
 b2_j = 2.535e-7
 b3_j = 0.1
@@ -152,7 +152,7 @@ b8_j  = 40.14
 
 alpha_j = piecewise(
     V >= c1_j, 
-    a8_j,
+    0.0,
     (-a1_j * exp(a2_j * V) - a3_j * exp(-a4_j * V)) * ((V + a5_j) / (1 + exp(a6_j * (V + a7_j))))
     )
     in [1/ms]

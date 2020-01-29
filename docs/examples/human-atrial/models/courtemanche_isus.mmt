@@ -30,7 +30,7 @@ FoRT = F/(R*T)
 
 [k_conc]
 use phys.FoRT as FoRT
-K_i = 139 [mM]
+K_i = 130 [mM]
 K_o = 5.4 [mM]
 E_K = 1/FoRT * log(K_o/K_i)
 
@@ -39,11 +39,11 @@ use membrane.V as V
 use k_conc.E_K as E_K 
 use membrane.Cm as Cm
 
-i_sus = g_sus * g * (V - E_K) / Cm
-    in [pA/pF]
+i_sus = g_sus * g * (V - E_K) * Cm
+    in [pA]
 g = a^3*i*(1 + r1/(1+exp((V+r2)/-r3)))
     in [1]
-r1 = 10 [nS/pF]
+r1 = 10
 r2 = -15 [mV]
 r3 = 13 [mV]
 
