@@ -8,8 +8,9 @@ import numpy as np
 import myokit
 
 
-Q10_tau = 0.9  # calculated from [Li1997]
-Q10_cond = 1.2 # calculated from [Li1997]
+Q10_cond = 1.6      # [Li1997]
+Q10_tau_act = 1.7   # [Li1997]
+Q10_tau_inact = 1.3 # [Li1997]
 
 
 #
@@ -46,8 +47,12 @@ def mewes_act_sum_stats(data):
         act_gate = d['ical.g']
         output = output + [max(act_gate, key=abs)]
     norm = max(output)
-    for i in range(len(output)):
-        output[i] /= norm
+    if norm > 0:
+        for i in range(len(output)):
+            output[i] /= norm
+    else:
+        for i in range(len(output)):
+            output[i] = norm
     return output
 
 mewes_act = Experiment(

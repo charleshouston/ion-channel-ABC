@@ -8,8 +8,10 @@ from scipy.optimize import OptimizeWarning
 import scipy.optimize as so
 
 
-Q10_tau = 2.1  # [tenTusscher2004]
-Q10_cond = 2.3 # [Kiyosue1993]
+Q10_cond = 1.6      # [Li1997]
+Q10_tau_act = 1.7   # [Li1997]
+Q10_tau_inact = 1.3 # [Li1997]
+
 
 fit_threshold = 0.9
 
@@ -133,7 +135,7 @@ sun_inact_kin = Experiment(
     conditions=sun_conditions,
     sum_stats=sun_inact_kin_sum_stats,
     description=sun_inact_kin_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 sun_inact_kin_fast = Experiment(
@@ -142,7 +144,7 @@ sun_inact_kin_fast = Experiment(
     conditions=sun_conditions,
     sum_stats=sun_inact_kin_sum_stats_tf,
     description=sun_inact_kin_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 sun_inact_kin_slow = Experiment(
@@ -151,7 +153,7 @@ sun_inact_kin_slow = Experiment(
     conditions=sun_conditions,
     sum_stats=sun_inact_kin_sum_stats_ts,
     description=sun_inact_kin_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 sun_rel_inact = Experiment(
@@ -283,7 +285,7 @@ sun_inact_kin = Experiment(
     conditions=sun_conditions,
     sum_stats=sun_inact_kin_sum_stats,
     description=sun_inact_kin_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 

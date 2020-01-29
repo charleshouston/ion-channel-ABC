@@ -17,11 +17,9 @@ from scipy.optimize import OptimizeWarning
 import scipy.optimize as so
 
 
-#Q10_tau = 2.1  # [tenTusscher2004]
-#Q10_cond = 2.3 # [Kiyosue1993]
-
-Q10_tau = 0.9  # [Li1997]
-Q10_cond = 1.2 # [Li1997]
+Q10_cond = 1.6      # [Li1997]
+Q10_tau_act = 1.7   # [Li1997]
+Q10_tau_inact = 1.3 # [Li1997]
 
 fit_threshold = 0.9
 
@@ -224,7 +222,7 @@ li_act_tau = Experiment(
     conditions=li_conditions,
     sum_stats=li_act_tau_sum_stats,
     description=li_act_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_act,
     Q10_factor=-1)
 
 li_act_and_tau = Experiment(
@@ -234,7 +232,7 @@ li_act_and_tau = Experiment(
     conditions=li_conditions,
     sum_stats=li_act_and_tau_sum_stats,
     description=li_act_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_act,
     Q10_factor=[0,-1])
 
 
@@ -462,7 +460,7 @@ li_inact_kin_80 = Experiment(
     conditions=li_conditions,
     sum_stats=li_inact_kin_sum_stats,
     description=li_inact_kin_80_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 li_inact_kin_taus_80 = Experiment(
@@ -471,7 +469,7 @@ li_inact_kin_taus_80 = Experiment(
     conditions=li_conditions,
     sum_stats=li_inact_kin_taus_sum_stats,
     description=li_inact_kin_80_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 li_inact_kin_tauf_80 = Experiment(
     dataset=li_inact_kin_80_tauf_dataset,
@@ -479,7 +477,7 @@ li_inact_kin_tauf_80 = Experiment(
     conditions=li_conditions,
     sum_stats=li_inact_kin_tauf_sum_stats,
     description=li_inact_kin_80_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 li_inact_kin_60 = Experiment(
@@ -488,7 +486,7 @@ li_inact_kin_60 = Experiment(
     conditions=li_conditions,
     sum_stats=li_inact_kin_sum_stats,
     description=li_inact_kin_60_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 li_inact_kin_40 = Experiment(
     dataset=li_inact_kin_40_dataset,
@@ -496,7 +494,7 @@ li_inact_kin_40 = Experiment(
     conditions=li_conditions,
     sum_stats=li_inact_kin_sum_stats,
     description=li_inact_kin_40_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 
@@ -648,7 +646,7 @@ li_recov = Experiment(
     conditions=li_conditions,
     sum_stats=li_recov_sum_stats,
     description=li_recov_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 li_recov_taus = Experiment(
     dataset=li_recov_taus_dataset,
@@ -656,7 +654,7 @@ li_recov_taus = Experiment(
     conditions=li_conditions,
     sum_stats=li_recov_taus_sum_stats,
     description=li_recov_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 li_recov_tauf = Experiment(
     dataset=li_recov_tauf_dataset,
@@ -664,7 +662,7 @@ li_recov_tauf = Experiment(
     conditions=li_conditions,
     sum_stats=li_recov_tauf_sum_stats,
     description=li_recov_desc,
-    Q10=Q10_tau,
+    Q10=Q10_tau_inact,
     Q10_factor=-1)
 
 
